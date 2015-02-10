@@ -1,0 +1,9 @@
+
+QtSingleApplication/*
+QtSource/*
+UnitTests/build/*
+
+*.qbs.user
+*.autosave
+qgit_*
+.svn/*
