@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <unistd.h>
 #include <pthread.h>
 #include "thread_up.h"
@@ -32,8 +33,11 @@ int ThreadUp::priorityUp(int schedulAlgorithm, int priority)
         if (err == EPERM)
             s = "Perhaps insufficiently right for a performance of this operation. ";
 
+        char buff[34] = {0};
+        snprintf(buff, sizeof(buff)-1, "%d", err);
+
         _priorityUpError = "Couldn't increase priority of a thread. "
-                         + s + "Code error: " + std::to_string(err);
+                         + s + "Code error: " + buff;
     }
 #endif // _POSIX_PRIORITY_SCHEDULING
 
