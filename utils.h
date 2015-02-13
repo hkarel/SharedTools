@@ -74,4 +74,7 @@ inline bool assign(atomic_bool& a, bool value)
     return a.compare_exchange_strong(b, value);
 }
 
-} //namespace lbutl
+// Выполняет преобразование в строку
+string toString(int val);
+
+} // namespace utl

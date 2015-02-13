@@ -6,11 +6,11 @@
 #include <boost/filesystem.hpp>
 
 #include "common/Logger/logger.h"
-
-
 #include "utils.h"
 
-namespace utl {
+
+namespace utl
+{
 
 string& ltrim(string& s)
 {
@@ -82,7 +82,14 @@ bool mkDir(const string& dir, bool throwExcept)
     return false;
 }
 
-} //namespace lbutl
+string toString(int val)
+{
+    char buff[34] = {0};
+    snprintf(buff, sizeof(buff)-1, "%d", val);
+    return buff;
+}
+
+} // namespace utl
 
 
 
