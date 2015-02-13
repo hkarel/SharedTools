@@ -95,7 +95,7 @@ struct counter_ptr_t
     //counter_ptr_t() : ptr(0), count(0), fake(0) {}
     //counter_ptr_t() {init();}
     //void init() {count = 1, fake = 0, join = 0, ptr = 0;}
-    constexpr counter_ptr_t() noexcept
+    counter_ptr_t() noexcept
         : count(1), fake(0), join(0), reserved(0), ptr(0)
     {}
 
