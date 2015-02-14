@@ -18,12 +18,7 @@
 
 #include <exception>
 #include <string.h>
-
-// Поддержка стандарта С++11.
-#include "cxx11.h"
-
 #include "break_point.h"
-
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -31,14 +26,13 @@
 //#pragma clang diagnostic push
 //#pragma clang diagnostic ignored "-Wmultichar"
 
-
 namespace lst
 {
 
 #if defined(_MSC_VER)
 #define DECLSPEC_SELECTANY_LST extern "C" __declspec(selectany)
 #else
-#define DECLSPEC_SELECTANY_LST static
+#define DECLSPEC_SELECTANY_LST constexpr
 #endif
 
 DECLSPEC_SELECTANY_LST const bool CONTAINER_CLASS = true;
@@ -115,12 +109,7 @@ public:
     strcat(_msg, msg);
     //memcpy(msg, msg, strlen(msg));
   }
-#ifdef __SUPPORT_CXX_11__
-  virtual const char* what() const NOEXCEPT {return _msg;}
-#else
-  virtual const char* what() const throw() {return _msg;}
-#endif
-  //virtual void raise() const {throw *this;}
+  virtual const char* what() const noexcept {return _msg;}
 };
 
 DECLSPEC_SELECTANY_LST const char* ERR_NOCREATEOBJ =
@@ -131,7 +120,8 @@ DECLSPEC_SELECTANY_LST const char* ERR_NOCREATEOBJ =
 #elif defined(_MSC_VER)
 #define  LIST_FUNC_NAME  __FUNCTION__
 #else
-#define  LIST_FUNC_NAME  __PRETTY_FUNCTION__
+//#define  LIST_FUNC_NAME  __PRETTY_FUNCTION__
+#define  LIST_FUNC_NAME  __func__
 #endif
 
 
@@ -580,17 +570,11 @@ private:
   ~CustomList() {}
 
 private:
-#ifdef __SUPPORT_CXX_11__
   CustomList(CustomListType&&) = delete;
   CustomList(const CustomListType&) = delete;
 
   CustomListType& operator= (CustomListType&&) = delete;
   CustomListType& operator= (const CustomListType&) = delete;
-#else
-  // Без реализации
-  CustomList(const CustomListType&);
-  CustomListType& operator= (const CustomListType&);
-#endif
 
 private:
   template<typename DataT> struct Data
@@ -637,19 +621,15 @@ public:
 public:
   explicit List(bool container = CONTAINER_CLASS);
   explicit List(const Allocator&, bool container = CONTAINER_CLASS);
-  //explicit List(const Allocator&);
-  List(const CustomListType&);
-  //List(const SelfListType&);
-#ifdef __SUPPORT_CXX_11__
+
+  List(CustomListType&&);
   List(SelfListType&&);
-  SelfListType& operator= (SelfListType&&) = delete;
-  SelfListType& operator= (const SelfListType&) = delete;
-#endif
+
   ~List();
 
-  SelfListType& operator= (const CustomListType&);
-  //SelfListType& operator= (const SelfListType&);
-
+  List(const SelfListType&) = delete;
+  SelfListType& operator= (SelfListType&&) = delete;
+  SelfListType& operator= (const SelfListType&) = delete;
 
   /// @brief Добавляет новый элемент T в конец списка.
   ///
@@ -941,14 +921,12 @@ private:
 //   assign(list);
 // }
 
-// #ifdef __SUPPORT_CXX_11__
 // DECL_IMPL_CUSTLIST_CONSTR::CustomList(CustomListType&& list)
 // {
 //   //move(list);
 //   d = list.d;
 //   list.d = 0;
 // }
-// #endif
 
 //DECL_IMPL_CUSTLIST_DESTR::~CustomList()
 //{
@@ -1272,17 +1250,17 @@ DECL_IMPL_LIST_CONSTR::List(const Allocator& allocator, bool container)
   setAllocator(allocator);
 }
 
-//DECL_IMPL_LIST_CONSTR::List(const Allocator& allocator)
+//DECL_IMPL_LIST_CONSTR::List(const CustomListType& list)
 //{
 //  init(CONTAINER_CLASS);
-//  setAllocator(allocator);
+//  assign(list);
 //}
 
-DECL_IMPL_LIST_CONSTR::List(const CustomListType& list)
-{
-  init(CONTAINER_CLASS);
-  assign(list);
-}
+//DECL_IMPL_LIST_CONSTR::List(const SelfListType& list)
+//{
+//  init(CONTAINER_CLASS);
+//  assign(list);
+//}
 
 DECL_IMPL_LIST_DESTR::~List()
 {
@@ -1305,40 +1283,29 @@ DECL_IMPL_LIST(void)::init(bool container/*, const Allocator& allocator*/)
   //CustomListType::d->allocator = allocator;
 }
 
-// DECL_IMPL_LIST_CONSTR::List(const SelfListType& list)
-// //  : CustomList<T, Compare, Allocator>(list)
-//   : CustomList<T, Compare, Allocator>(CONTAINER_CLASS, Allocator())
-//
-// {
-//   assign(list);
-// }
+DECL_IMPL_LIST_CONSTR::List(CustomListType&& list)
+{
+  CustomListType::d = list.d;
+  list.d = 0;
+}
 
-#ifdef __SUPPORT_CXX_11__
 DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
 {
   CustomListType::d = list.d;
   list.d = 0;
 }
-#endif
 
-DECL_IMPL_LIST(DECL_LIST_SELFTYPE &)::operator= (const CustomListType& list)
-{
-  assign(list);
-  return *this;
-}
+//DECL_IMPL_LIST(DECL_LIST_SELFTYPE &)::operator= (const CustomListType& list)
+//{
+//  assign(list);
+//  return *this;
+//}
 
-// DECL_IMPL_LIST(DECL_LIST_SELFTYPE &)::operator= (const SelfListType& list)
-// {
-//   assign(list);
-//   return *this;
-// }
-
-// DECL_IMPL_LIST(DECL_LIST_SELFTYPE &)::operator= (SelfListType&& list)
-// {
-//   move(list, true);
-//   return *this;
-// }
-
+//DECL_IMPL_LIST(DECL_LIST_SELFTYPE &)::operator= (const SelfListType& list)
+//{
+//  assign(list);
+//  return *this;
+//}
 
 DECL_IMPL_LIST(T*)::add()
 {
