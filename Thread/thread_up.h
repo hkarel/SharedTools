@@ -1,5 +1,8 @@
 #pragma once
+
+#include <string>
 #include "thread_base.h"
+
 
 namespace trd
 {
