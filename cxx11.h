@@ -41,12 +41,3 @@
 #    endif
 #  endif
 #endif
-
-#ifndef NOEXCEPT
-#  ifdef _MSC_VER
-#    define NOEXCEPT
-#  else
-#    define NOEXCEPT noexcept
-#  endif
-#endif
-
