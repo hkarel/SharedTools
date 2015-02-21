@@ -7,7 +7,6 @@
 
 #pragma once
 #include "allocator_ptr.h"
-//#include <assert.h>
 
 
 /**

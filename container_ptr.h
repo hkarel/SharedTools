@@ -11,7 +11,6 @@
 #include <atomic>
 #include <type_traits>
 #include "allocator_ptr.h"
-//#include <assert.h>
 
 
 /**
