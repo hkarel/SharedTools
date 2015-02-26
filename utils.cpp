@@ -1,9 +1,11 @@
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
+#include <algorithm>
 
-//#define BOOST_FILESYSTEM_VERSION 3
+#ifdef USE_BOOST
 #include <boost/filesystem.hpp>
+#endif
 
 #include "common/Logger/logger.h"
 #include "utils.h"
@@ -56,6 +58,7 @@ void savePidFile(const string& fileName)
     }
 }
 
+#ifdef USE_BOOST
 bool mkDir(const string& dir, bool throwExcept)
 {
     try
@@ -81,6 +84,7 @@ bool mkDir(const string& dir, bool throwExcept)
     }
     return false;
 }
+#endif
 
 string toString(int val)
 {
