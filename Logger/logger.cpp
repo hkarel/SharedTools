@@ -60,13 +60,19 @@ void prefixFormatter(Message& message)
     localtime_r(&time, &t);
 
     if (message.level == Level::DEBUG2)
+    {
         snprintf(buff, sizeof(buff) - 1,
 #ifdef __x86_64__
                  "%02d.%02d.%04d %02d:%02d:%02d.%06ld ",
 #else
+  #ifdef __MINGW32__
+                 "%02d.%02d.%04d %02d:%02d:%02d.%06ld ",
+  #else
                  "%02d.%02d.%04d %02d:%02d:%02d.%06lld ",
+  #endif
 #endif
                  t.tm_mday, t.tm_mon + 1, t.tm_year + 1900, t.tm_hour, t.tm_min, t.tm_sec, message.timeVal.tv_usec);
+    }
     else
         snprintf(buff, sizeof(buff) - 1,
                  "%02d.%02d.%04d %02d:%02d:%02d ",
