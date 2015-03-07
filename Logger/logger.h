@@ -86,7 +86,7 @@ class Saver : public clife_base
 public:
     enum Type {STDOUT, STDERROR, CUSTOM};
 
-    Saver(const string& name, Level level = ERROR );
+    Saver(const string& name, Level level = ERROR);
     virtual ~Saver() {}
 
     Type type() const {return _type;}
@@ -203,18 +203,10 @@ struct Line
 };
 
 template<typename T>
-Line& operator<< (Line& line, const T& t)
-{
-    line.impl->buff << t;
-    return line;
-}
+Line& operator<< (Line& line, const T& t);
 
 template<typename T>
-Line operator<< (Line&& line, const T& t)
-{
-    line.impl->buff << t;
-    return std::move(line);
-}
+Line operator<< (Line&& line, const T& t);
 
 
 /**
@@ -275,12 +267,12 @@ public:
     void flush(int pauseDuration = 0);
 
     // Добавляет вывод логов в stdout. Если вывод уже был добавлен ранее, то
-    // функция вернет FALSE иначе TRUE.
-    bool addSaverStdOut(Level level = ERROR);
+    // вывод будет пересоздан с новым уровнем логгирования.
+    void addSaverStdOut(Level level = ERROR);
 
     // Добавляет вывод логов в stderr. Если вывод уже был добавлен ранее, то
-    // функция вернет FALSE иначе TRUE.
-    bool addSaverStdErr(Level level = ERROR);
+    // вывод будет пересоздан с новым уровнем логгирования.
+    void addSaverStdErr(Level level = ERROR);
 
     // Запрещает вывод логов в stdout
     void removeSaverStdOut();
@@ -312,6 +304,10 @@ public:
     // Возвращает snapshot пользовательских сэйверов
     SaverList savers() const;
 
+    // Возвращает максимальный уровень логгирования для сейверов зарегистированных
+    // на данный момент в логгере.
+    Level level() const {return _level;}
+
 private:
     Logger();
     Logger(Logger&&) = delete;
@@ -321,6 +317,8 @@ private:
 
     void addMessage(MessagePtr&&);
     void run() override;
+
+    void redefineLevel();
 
 private:
     MessageList _messages;
@@ -334,8 +332,10 @@ private:
     mutable atomic_flag  _saversLock = ATOMIC_FLAG_INIT;
     //mutable std::mutex  _saversLock;
 
-    int _flushTime = 300;
-    int _flushSize = 1000;
+    volatile Level _level = {NONE};
+
+    int _flushTime = {300};
+    int _flushSize = {1000};
     volatile bool _forceFlush = {false};
     volatile bool _on = {true};
 
@@ -344,6 +344,26 @@ private:
 };
 
 inline Logger& logger() {return ::safe_singleton<Logger>();}
+
+
+//---------------------------- Line operators -------------------------------
+
+template<typename T>
+Line& operator<< (Line& line, const T& t)
+{
+    if (line.impl->level <= line.impl->logger->level())
+        line.impl->buff << t;
+    return line;
+}
+
+template<typename T>
+Line operator<< (Line&& line, const T& t)
+{
+    if (line.impl->level <= line.impl->logger->level())
+        line.impl->buff << t;
+    return std::move(line);
+}
+
 
 
 } // namespace lblog

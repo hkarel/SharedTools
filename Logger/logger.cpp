@@ -143,7 +143,8 @@ void SaverStdOut::flushImpl(const MessageList& messages)
     for (int i = 0; i < messages.count(); ++i)
     {
         const Message& m = messages[i];
-        if (m.level > level()) continue;
+        if (m.level > level())
+            continue;
 
         (*_out) << m.prefix;
         if ((level() == Level::DEBUG2) && (m.level != Level::DEBUG2))
@@ -236,6 +237,9 @@ Line::~Line()
         return;
 
     if (impl->logger->threadStop() || !impl->logger->_on)
+        return;
+
+    if (impl->level > impl->logger->level())
         return;
 
     try
@@ -487,38 +491,32 @@ LevelProxy Logger::debug2_f(const char* file, const char* func, int line, const 
     return std::move(lp);
 }
 
-bool Logger::addSaverStdOut(Level level)
+void Logger::addSaverStdOut(Level level)
 {
     SpinLocker locker(_saversLock); (void) locker;
-    if (_saverOut.empty())
-    {
-        _saverOut = SaverLPtr(new SaverStdOut(level));
-        return true;
-    }
-    return false;
+    _saverOut = SaverLPtr(new SaverStdOut(level));
+    redefineLevel();
 }
 
-bool Logger::addSaverStdErr(Level level)
+void Logger::addSaverStdErr(Level level)
 {
     SpinLocker locker(_saversLock); (void) locker;
-    if (_saverErr.empty())
-    {
-        _saverErr = SaverLPtr(new SaverStdErr(level));
-        return true;
-    }
-    return false;
+    _saverErr = SaverLPtr(new SaverStdErr(level));
+    redefineLevel();
 }
 
 void Logger::removeSaverStdOut()
 {
     SpinLocker locker(_saversLock); (void) locker;
     _saverOut.reset();
+    redefineLevel();
 }
 
 void Logger::removeSaverStdErr()
 {
     SpinLocker locker(_saversLock); (void) locker;
     _saverErr.reset();
+    redefineLevel();
 }
 
 void Logger::addSaver(const SaverLPtr& saver)
@@ -529,6 +527,7 @@ void Logger::addSaver(const SaverLPtr& saver)
 
     saver->add_ref();
     _savers.add(saver.get());
+    redefineLevel();
 }
 
 void Logger::removeSaver(const string& name)
@@ -536,6 +535,7 @@ void Logger::removeSaver(const string& name)
     SpinLocker locker(_saversLock); (void) locker;
     if (lst::FindResult fr = _savers.findRef(name, lst::BRUTE_FORCE))
         _savers.remove(fr.index());
+    redefineLevel();
 }
 
 SaverList Logger::savers() const
@@ -550,6 +550,29 @@ SaverList Logger::savers() const
     }
     return std::move(savers_);
 }
+
+void Logger::redefineLevel()
+{
+    Level level = NONE;
+    if (_saverOut && _saverOut->level() > level)
+        level = _saverOut->level();
+    if (_saverErr && _saverErr->level() > level)
+        level = _saverErr->level();
+
+    for (int i = 0; i < _savers.count(); ++i)
+    {
+        Saver* s = _savers.item(i);
+        if (s->level() > level)
+            level = s->level();
+    }
+    _level = level;
+}
+
+//Level Logger::level() const
+//{
+//    SpinLocker locker(_saversLock); (void) locker;
+//    return _level;
+//}
 
 } // namespace lblog
 
