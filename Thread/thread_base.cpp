@@ -7,16 +7,31 @@ namespace trd
 using namespace std;
 
 ThreadBase::ThreadBase()
-{}
+{
+    _threadStop = true;
+    _waitThreadStart = false;
+}
 
 ThreadBase::~ThreadBase()
 {}
 
 void ThreadBase::start()
 {
+    startImpl();
+}
+
+void ThreadBase::startImpl()
+{
     lock_guard<mutex> locker(_startStopLock); (void) locker;
 
     //break_point
+
+    // Для ситуаций когда метод start() будет вызван несколько раз подряд,
+    // при этом метод _thread.joinable() не сразу вернет TRUE, и мы получим
+    // перезатирание переменной _thread при повторных вызовах метода start().
+    // Чтобы этого избежать ждем пока поток начнет работать и условие
+    // _thread.joinable() == TRUE будет выполнятся.
+    while (_waitThreadStart) {}
 
     if (_thread.joinable())
         return;
@@ -24,10 +39,15 @@ void ThreadBase::start()
     _waitThreadStart = true;
     _threadStop = false;
 
-    _thread = thread(&ThreadBase::runImpl, this);
+    _thread = thread(&ThreadBase::runHandler, this);
 }
 
-void ThreadBase::stop()
+void ThreadBase::stop(bool wait)
+{
+    stopImpl(wait);
+}
+
+void ThreadBase::stopImpl(bool wait)
 {
     lock_guard<mutex> locker(_startStopLock); (void) locker;
 
@@ -40,37 +60,15 @@ void ThreadBase::stop()
     // Проверка на _thread.joinable() должна быть обязательно. Это нужно для
     // случаев, когда stop() вызвали раньше чем start() - без проверки получим
     // SIGABRT.
-    if (_thread.joinable())
+    if (wait && _thread.joinable())
         _thread.join();
 }
 
-void ThreadBase::runImpl()
+void ThreadBase::runHandler()
 {
     _waitThreadStart = false;
     run();
+    _threadStop = true;
 }
-
-//int ThreadBase::priority()
-//{
-//    sched_param sch;
-//    int policy;
-//    pthread_getschedparam(_thread.native_handle(), &policy, &sch);
-//    return sch.sched_priority;
-//}
-
-//int ThreadBase::setPriority(int val)
-//{
-//    sched_param sch;
-//    int policy;
-//    pthread_getschedparam(_thread.native_handle(), &policy, &sch);
-//    //sch.sched_priority = val;
-//    //sch.sched_priority = 1;
-//    //return pthread_setschedparam(_thread.native_handle(), SCHED_FIFO, &sch);
-//    return pthread_setschedparam(_thread.native_handle(), SCHED_BATCH, &sch);
-//    //return pthread_setschedparam(_thread.native_handle(), SCHED_OTHER, &sch);
-
-//    //return pthread_setschedprio(_thread.native_handle(), 100);
-//}
-
 
 } // namespace trd
