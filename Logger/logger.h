@@ -322,7 +322,7 @@ private:
 
 private:
     MessageList _messages;
-    MessageList _messagesBuff;
+    //MessageList _messagesBuff;
     mutable atomic_flag  _messagesLock = ATOMIC_FLAG_INIT;
     //mutable std::mutex _messagesLock;
 

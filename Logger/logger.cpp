@@ -311,6 +311,8 @@ void Logger::run()
     // Примечание: _threadStop для этой цели использовать нельзя.
     bool thread_stop = false;
 
+    MessageList messages_buff;
+
     while (true)
     {
         int messages_count;
@@ -321,7 +323,7 @@ void Logger::run()
 
         if (!threadStop() && (messages_count == 0))
         {
-            static chrono::milliseconds sleep_thread(20);
+            static chrono::milliseconds sleep_thread {20};
             this_thread::sleep_for(sleep_thread);
         }
 
@@ -332,7 +334,7 @@ void Logger::run()
         }
         if (!threadStop()
             && messages.count() == 0
-            && _messagesBuff.count() == 0)
+            && messages_buff.count() == 0)
             continue;
 
         if (messages.count())
@@ -404,7 +406,7 @@ void Logger::run()
             }
 
             for (int i = 0; i < messages.count(); ++i)
-                _messagesBuff.add(messages.release(i, !lst::COMPRESS_LIST));
+                messages_buff.add(messages.release(i, !lst::COMPRESS_LIST));
             messages.clear();
 
         } //if (messages.count())
@@ -415,18 +417,18 @@ void Logger::run()
         if (thread_stop
             || _forceFlush
             || elapsed.count() > _flushTime
-            || _messagesBuff.count() > _flushSize)
+            || messages_buff.count() > _flushSize)
         {
             _forceFlush = false;
             last_flush_time = exact_clock::now();
 
-            if (_messagesBuff.count())
+            if (messages_buff.count())
             {
                 SaverList savers_ = savers();
                 for (int i = 0; i < savers_.count(); ++i)
                 {
                     try {
-                        savers_[i].flush(_messagesBuff);
+                        savers_[i].flush(messages_buff);
                     }
                     catch (std::exception& e) {
                         loggerPanic(savers_[i].name().c_str(), e.what());
@@ -436,7 +438,7 @@ void Logger::run()
                     }
                 }
             }
-            _messagesBuff.clear();
+            messages_buff.clear();
         }
 
         if (thread_stop)  break;
