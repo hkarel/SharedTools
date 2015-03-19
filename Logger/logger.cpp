@@ -406,7 +406,7 @@ void Logger::run()
             }
 
             for (int i = 0; i < messages.count(); ++i)
-                messages_buff.add(messages.release(i, !lst::COMPRESS_LIST));
+                messages_buff.add(messages.release(i, lst::NO_COMPRESS_LIST));
             messages.clear();
 
         } //if (messages.count())
