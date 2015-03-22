@@ -84,12 +84,12 @@ typedef simple_ptr<Message> MessagePtr;
 class Saver : public clife_base
 {
 public:
-    enum Type {STDOUT, STDERROR, CUSTOM};
+    //enum Type {STDOUT, STDERROR, CUSTOM};
 
     Saver(const string& name, Level level = ERROR);
     virtual ~Saver() {}
 
-    Type type() const {return _type;}
+    //Type type() const {return _type;}
     const string& name() const {return _name;}
 
     // Уровень логгирования
@@ -108,8 +108,8 @@ public:
         int operator() (const string* name, const Saver* item2, void* = 0) const
             {return name->compare(item2->name());}
 
-        int operator() (const Type* type, const Saver* item2, void* = 0) const
-            {return LIST_COMPARE_ITEM(*type, item2->type());}
+        //int operator() (const Type* type, const Saver* item2, void* = 0) const
+        //    {return LIST_COMPARE_ITEM(*type, item2->type());}
     };
 
 protected:
@@ -117,7 +117,7 @@ protected:
 
 private:
     Level  _level = ERROR;
-    Type   _type  = CUSTOM;
+    //Type   _type  = CUSTOM;
     string _name;
 
     friend class SaverStdOut;

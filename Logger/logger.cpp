@@ -118,7 +118,7 @@ void prefixFormatter2(Message& message)
 //--------------------------------- Saver -----------------------------------
 
 Saver::Saver(const string& name, Level level)
-    : _level(level), _type(CUSTOM), _name(name)
+    : _level(level), /*_type(CUSTOM),*/ _name(name)
 {}
 
 void Saver::flush(const MessageList& messages)
@@ -133,7 +133,7 @@ void Saver::flush(const MessageList& messages)
 
 SaverStdOut::SaverStdOut(Level level) : Saver("", level)
 {
-    _type = STDOUT;
+    //_type = STDOUT;
     _out = &std::cout;
 }
 
@@ -165,17 +165,17 @@ void SaverStdOut::flushImpl(const MessageList& messages)
 
 SaverStdErr::SaverStdErr(Level level) : SaverStdOut(level)
 {
-    _type = STDERROR;
+    //_type = STDERROR;
     _out = &std::cerr;
 }
+
+//------------------------------ SaverFile ----------------------------------
 
 SaverFile::SaverFile(const string& name, const string& fileName, Level level)
     : Saver(name, level),
       _fileName(fileName)
 {
 }
-
-//------------------------------ SaverFile ----------------------------------
 
 void SaverFile::flushImpl(const MessageList& messages)
 {
