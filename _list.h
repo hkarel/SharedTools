@@ -1389,7 +1389,7 @@ DECL_IMPL_LIST(int)::removeItem(T *item, bool compressList_)
   //return i;
 
   int index;
-  if (indexOf2(item, index)) {
+  if (CustomListType::indexOf2(item, index)) {
     remove(index, compressList_);
   }
   return index;
