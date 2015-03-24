@@ -682,6 +682,7 @@ public:
 
   /// @brief Удаляет элемент из списка.
   ///
+  /// При удалении элемента из списка происходит его разрушение.
   /// @param[in] item Элемент удаляемый из списка.
   /// @param[in] compressList Признак сжатия списка.
   /// @return Индекс удаленного элемента, если элемент не присутствовал
@@ -689,10 +690,21 @@ public:
   int removeItem(T* item, bool compressList = true);
 
   /// @brief Удаляет последний элемент из списка.
+  ///
+  /// При удалении элемента из списка происходит его разрушение.
   void removeLast();
+
+  /// @brief Удаляет элементы из списка согласно условию condition.
+  ///
+  /// При удалении элементов из списка происходит их разрушение.
+  /// @param[in] cond Функор или функция с сигнатурой bool condition(T*).
+  /// @param[in] compressList Признак сжатия списка.
+  template<typename Condition>
+  void removesCond(const Condition& condition, bool compressList = true);
 
   /// @brief Удаляет элементы из списка.
   ///
+  /// При удалении элементов из списка происходит их разрушение.
   /// @param[in] index Индекс с которого начнется удаление элементов.
   /// @param[in] count Количество удаляемых элементов.
   /// @param[in] compressList Признак сжатия списка.
@@ -712,11 +724,11 @@ public:
   /// @return Возвращает указатель на удаленный из списка элемент.
   T* release(int index, bool compressList = true);
 
-  /// @brief Перегруженная функция, (перегруженная функция).
+  /// @brief Удаляет элемент из списка, при этом разрушения элемента не происходит.
   ///
   /// @param[in] item Удаляемый элемент.
   /// @param[in] compressList Признак сжатия списка (см. описание в функции remove()).
-  /// @return В случае успешного удаления возвращает TRUE.
+  /// @return В случае успешного удаления возвращает индекс удаленного элемента.
   int releaseItem(T* item, bool compressList = true);
 
   /// @brief Удаляет последний элемент из списка при этом разрушения элемента
@@ -1403,6 +1415,26 @@ DECL_IMPL_LIST(void)::removeLast()
     d->allocator.destroy(item);
 }
 
+DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removesCond(const Condition& condition,
+                                                      bool compressList_)
+{
+  DataType* d = d_func();
+  T** item_ = CustomListType::listBegin();
+  T** end_  = CustomListType::listEnd();
+  while (item_ != end_)
+  {
+    if (*item_ && condition(*item_))
+    {
+      if (d->container)
+        d->allocator.destroy(*item_);
+      *item_ = 0;
+    }
+    ++item_;
+  }
+  if (compressList_)
+    this->compressList();
+}
+
 DECL_IMPL_LIST(void)::removes(int index, int count, bool compressList_)
 {
   DataType* d = d_func();
@@ -1414,7 +1446,7 @@ DECL_IMPL_LIST(void)::removes(int index, int count, bool compressList_)
 
   for (int i = index; i < count; ++i)
   {
-    T *item = release(i, !COMPRESS_LIST);
+    T *item = release(i, NO_COMPRESS_LIST);
     if (d->container && item)
       d->allocator.destroy(item);
   }
