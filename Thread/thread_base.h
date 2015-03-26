@@ -25,20 +25,23 @@ public:
     void stop(bool wait = true);
 
     // Возвращает состояние потока остановлен/запущен
-    bool joinable() const noexcept {return _thread.joinable();}
+    //bool joinable() const noexcept {return _thread.joinable();}
 
     // Возвращает TRUE если была вызвана функция stop(), сбрасывается в FALSE
-    // после вызова start() или после окончания вызова функции run().
+    // после вызова start() или после окончания вызова функции обработчика потока.
     // Эта функция в основном используется в классах наследниках, в методе run(),
     // для проверки необходимости завершения работы потока.
-    bool threadStop() const noexcept {return _threadStop;}
+    bool threadStop() const noexcept;
+
+    // Возвращает TRUE сразу после того как была вызвана функция обработчика
+    // потока, после выхода из функции обработчика будет возвращаться FALSE.
+    // Эта функция в основном используется в тех случаях, когда была вызвана
+    // функция stop() в асинхронном режиме и вызывающей стороне нужно убедиться
+    // что поток уже остановил свою работу.
+    bool threadRun() const noexcept;
 
     // Возвращает нативный идентификатор потока
-    thread::native_handle_type nativeHandle() noexcept {return _thread.native_handle();}
-
-    //const thread thread_() const {return _thread;}
-    //int priority();
-    //int setPriority(int val);
+    thread::native_handle_type nativeHandle() noexcept;
 
 protected:
     virtual void startImpl();
@@ -56,6 +59,8 @@ private:
 
 private:
     thread _thread;
+
+    volatile bool _threadRun;
     volatile bool _threadStop;
 
     // Вспомогательная переменная используется для предотвращения вызова функ-
@@ -63,6 +68,9 @@ private:
     // функции stop() может произойти до начала старта потока, как следствие
     // при вызове stop() не произойдет ожидание окончания потока.
     atomic_bool _waitThreadStart;
+
+    // *** Неудачная попытка завершить работу потока асинхронно ***
+    //atomic_bool _waitThreadStop;
 
     // Используется для исключения одновременного вызова функций start()/stop()
     mutex _startStopLock;
