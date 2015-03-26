@@ -183,11 +183,12 @@ class FindResult
 {
 public:
   FindResult() : _index(-1), _success(false), _bruteForce(false) {}
-  bool success()    const {return  _success;}
-  bool failed()     const {return !_success;}
-  int  index()      const {return _index;}
-  bool bruteForce() const {return _bruteForce;}
-  operator bool()   const {return _success;}
+  bool success()    const noexcept {return  _success;}
+  bool failed()     const noexcept {return !_success;}
+  int  index()      const noexcept {return _index;}
+  bool bruteForce() const noexcept {return _bruteForce;}
+
+  explicit operator bool() const noexcept {return _success;}
 
 private:
   int      _index;
@@ -330,7 +331,7 @@ public:
 
 public:
   ValueType* first() const {return *_begin;}
-  ValueType* last() const {return *(_end - 1);}
+  ValueType* last()  const {return *(_end - 1);}
   ValueType* operator-> () const {return *_item;}
   bool next() {return (++_item != _end);}
 
