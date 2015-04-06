@@ -189,6 +189,10 @@ struct Line
     Line& operator= (Line&&) = delete;
     Line& operator= (const Line&) = delete;
 
+    // Сервисная функция, выполняет проверку уровня логирования и определяет
+    // нужно ли добавлять сообщение в логер.
+    inline bool toLogger() const;
+
     struct Impl
     {
         Logger*       logger;
@@ -348,10 +352,16 @@ inline Logger& logger() {return ::safe_singleton<Logger>();}
 
 //---------------------------- Line operators -------------------------------
 
+inline bool Line::toLogger() const
+{
+    return (impl) ? (impl->level <= impl->logger->level()) : false;
+}
+
 template<typename T>
 Line& operator<< (Line& line, const T& t)
 {
-    if (line.impl->level <= line.impl->logger->level())
+    //if (line.impl->level <= line.impl->logger->level())
+    if (line.toLogger())
         line.impl->buff << t;
     return line;
 }
@@ -359,7 +369,8 @@ Line& operator<< (Line& line, const T& t)
 template<typename T>
 Line operator<< (Line&& line, const T& t)
 {
-    if (line.impl->level <= line.impl->logger->level())
+    //if (line.impl->level <= line.impl->logger->level())
+    if (line.toLogger())
         line.impl->buff << t;
     return std::move(line);
 }
