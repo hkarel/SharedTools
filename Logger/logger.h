@@ -14,6 +14,7 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <set>
 #include <chrono>
 #include <thread>
 #include <mutex>
@@ -37,7 +38,7 @@ class Logger;
 enum Level {NONE, ERROR, WARNING, INFO, VERBOSE, DEBUG, DEBUG2};
 
 // Вспомогательная функция, используется для преобразования строкового
-// обозначения уровня логгирования в enum Level{};
+// обозначения уровня логирования в enum Level{};
 Level levelFromString(const string& level);
 
 
@@ -52,7 +53,7 @@ struct Message //: public clife_base
 
     // Буферы prefix и prefix2 хранят результаты функций prefixFormatter2().
     // Основное назначение минимизировать количество вызовов prefixFormatter2()
-    // при записи сообщения сразу в несколько сейверов. Причина: большое потреб-
+    // при записи сообщения сразу в несколько сэйверов. Причина: большое потреб-
     // ление системных ресурсов при многократном вызове prefixFormatter2().
     // Важно: prefix-буферы специально сделаны выделяемыми на стеке,
     // т.к. память для них должна выделяться в момент создания объекта, а не
@@ -79,51 +80,159 @@ typedef simple_ptr<Message> MessagePtr;
 
 
 /**
+  Аллокатор используется для управления жизнью объектов Filter и Saver.
+*/
+template<typename T>
+struct AllocatorItem
+{
+    void destroy(T* x) {if (x) x->release();}
+};
+
+/**
+  Функтор поиска, используется для поиска объектов Filter и Saver.
+*/
+template<typename T>
+struct FindItem
+{
+    int operator() (const string* name, const T* item2, void* = 0) const
+        {return name->compare(item2->name());}
+
+    //int operator() (const Type* type, const Saver* item2, void* = 0) const
+    //    {return LIST_COMPARE_ITEM(*type, item2->type());}
+};
+
+
+/**
+  Базовый класс механизма фильтрации.
+
+  Для того чтобы механизм фильтрации мог работать в нескольких потоках без допол-
+  нительных блокировок в Filter предусмотрен механизм запирания. Суть его сводится
+  к следующему: сразу после создания экземпляра Filter - он является не запертым.
+  В это время ему можно назначить необходимые критерии фильтрации. После того как
+  параметры фильтрации сконфигурированы фильтр запирается. Теперь фильтр может
+  использоваться в механизмах фильтрации, но изменить критерии фильтрации для него
+  уже нельзя. Если для запертого фильтра необходимо изменить критерии фильтрации,
+  то необходимо выполнить следующие шаги: создать новый фильтр, с сконфигурировать
+  его соответствующим образом, запереть новый фильтр, и заменить старый фильтр
+  новым.
+*/
+class Filter : public clife_base
+{
+public:
+    // Режим работы фильта: включающий/исключающий.
+    enum Mode {Include, Exclude};
+
+    Filter(const string& name, Mode mode = Include);
+    virtual ~Filter() {}
+
+    // Имя фильтра
+    const string& name() const {return _name;}
+
+    // Возвращает режим в котором работает фильтр: включающий/исключающий.
+    Mode mode() const {return _mode;}
+
+
+    // Возвращает значение большее нуля в случае если сообщение соответствует
+    // критериям фильтрации, если сообщение не соответствует критериям фильтрации
+    // будет возвращен нуль. В случае если фильтр не заперт - будет возвращено
+    // значение меньшее нуля.
+    int check(const Message&) const;
+
+    // Возвращает статус фильта: заперт/не заперт.
+    bool locked() const {return _locked;}
+
+    // Запирает фильтр.
+    void lock() {_locked = true;}
+
+private:
+    Filter() = delete;
+    Filter(Filter&&) = default;
+    Filter(const Filter&) = delete;
+    Filter& operator= (Filter&&) = delete;
+    Filter& operator= (const Filter&) = delete;
+
+    virtual bool checkImpl(const Message&) const = 0;
+
+private:
+    string _name;
+    Mode   _mode;
+    bool   _locked = {false};
+};
+typedef lst::List<Filter, FindItem<Filter>, AllocatorItem<Filter>> FilterList;
+typedef clife_ptr<Filter> FilterLPtr;
+
+
+/**
+  Фильтр по именам модулей
+*/
+class FilterModule : public Filter
+{
+public:
+    FilterModule(const string& name, Mode mode);
+    void addModule(const string& name);
+
+private:
+    bool checkImpl(const Message&) const override;
+    set<string> _modules;
+};
+typedef clife_ptr<FilterModule> FilterModuleLPtr;
+
+
+/**
   Базовый класс механизма сохранения
 */
 class Saver : public clife_base
 {
 public:
-    //enum Type {STDOUT, STDERROR, CUSTOM};
-
     Saver(const string& name, Level level = ERROR);
     virtual ~Saver() {}
 
-    //Type type() const {return _type;}
+    Saver() = delete;
+    Saver(Saver&&) = default;
+    Saver(const Saver&) = delete;
+    Saver& operator= (Saver&&) = delete;
+    Saver& operator= (const Saver&) = delete;
+
+    // Имя сэйвера
     const string& name() const {return _name;}
 
-    // Уровень логгирования
+    // Уровень логирования
     Level level() const {return _level;}
     void setLevel(Level val) {_level = val;}
 
     // Выполняет запись буфера сообщений
     void flush(const MessageList&);
 
-    struct Allocator
-    {
-        void destroy(Saver* x) {if (x) x->release();}
-    };
-    struct Find
-    {
-        int operator() (const string* name, const Saver* item2, void* = 0) const
-            {return name->compare(item2->name());}
+    // Возвращает список фильтров
+    FilterList filters() const;
 
-        //int operator() (const Type* type, const Saver* item2, void* = 0) const
-        //    {return LIST_COMPARE_ITEM(*type, item2->type());}
-    };
+    // Добавляет фильтр в список фильтров. Если фильтр с указанным именем уже
+    // существует, то он будет заменен новым.
+    void addFilter(FilterLPtr);
+
+    // Удаляет фильтр
+    void removeFilter(const string& name);
+
+    // Очищает список фильтров
+    void clearFilters();
+
+    // Проверяет принадлежит ли сообщение фильтрам
+    static bool skipMessage(const Message& m, const FilterList& filters);
 
 protected:
     virtual void flushImpl(const MessageList&) = 0;
 
 private:
-    Level  _level = ERROR;
-    //Type   _type  = CUSTOM;
     string _name;
+    Level  _level = {ERROR};
+
+    FilterList _filters;
+    mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
 
     friend class SaverStdOut;
     friend class SaverStdErr;
 };
-typedef lst::List<Saver, Saver::Find, Saver::Allocator> SaverList;
+typedef lst::List<Saver, FindItem<Saver>, AllocatorItem<Saver>> SaverList;
 typedef clife_ptr<Saver> SaverLPtr;
 
 
@@ -271,11 +380,11 @@ public:
     void flush(int pauseDuration = 0);
 
     // Добавляет вывод логов в stdout. Если вывод уже был добавлен ранее, то
-    // вывод будет пересоздан с новым уровнем логгирования.
+    // вывод будет пересоздан с новым уровнем логирования.
     void addSaverStdOut(Level level = ERROR);
 
     // Добавляет вывод логов в stderr. Если вывод уже был добавлен ранее, то
-    // вывод будет пересоздан с новым уровнем логгирования.
+    // вывод будет пересоздан с новым уровнем логирования.
     void addSaverStdErr(Level level = ERROR);
 
     // Запрещает вывод логов в stdout
@@ -290,8 +399,8 @@ public:
     // Позволяет верменно отключить вывод данных в логи
     void off() noexcept {_on = false;}
 
-    // Определяет интерывал записи сообщений для CUSTOM-сэйверов. Измеряется
-    // в миллисекундах, значение по умолчанию 300 ms.
+    // Определяет интерывал записи сообщений для сэйверов.
+    // Измеряется в миллисекундах, значение по умолчанию 300 ms.
     int  flushTime() const {return _flushTime;}
     void setFlushTime(int val) {_flushTime = val;}
 
@@ -302,13 +411,18 @@ public:
 
     // Добавляет сэйвер в список сэйверов. Если сэйвер с указанным именем уже
     // существует, то он будет заменен новым.
-    void addSaver(const SaverLPtr&);
+    void addSaver(SaverLPtr);
+
+    // Удаляет сэйвер.
     void removeSaver(const string& name);
+
+    // Очищает список сэйверов
+    void clearSavers();
 
     // Возвращает snapshot пользовательских сэйверов
     SaverList savers() const;
 
-    // Возвращает максимальный уровень логгирования для сейверов зарегистированных
+    // Возвращает максимальный уровень логирования для сэйверов зарегистированных
     // на данный момент в логгере.
     Level level() const {return _level;}
 

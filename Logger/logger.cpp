@@ -49,7 +49,7 @@ Level levelFromString(const string& level)
 
 
 // Формирует префикс строки лога. В префикс входит время и дата записи, уровень
-// логгирования,  номер потока, наименование функции из которой выполнен вызов.
+// логирования,  номер потока, наименование функции из которой выполнен вызов.
 void prefixFormatter(Message& message)
 {
     char buff[sizeof(Message::prefix)] = {0};
@@ -115,10 +115,45 @@ void prefixFormatter2(Message& message)
     memcpy(message.prefix2, buff, sizeof(buff));
 }
 
+//-------------------------------- Filter -----------------------------------
+
+Filter::Filter(const string& name, Mode mode)
+    : _name(name),
+      _mode(mode)
+{}
+
+int Filter::check(const Message& m) const
+{
+    return (_locked) ? checkImpl(m) : -1;
+}
+
+//------------------------------ FilterModule -------------------------------
+
+FilterModule::FilterModule(const string& name, Mode mode)
+    : Filter(name, mode)
+{}
+
+void FilterModule::addModule(const string& name)
+{
+    if (locked()) return;
+    _modules.insert(name);
+}
+
+bool FilterModule::checkImpl(const Message& m) const
+{
+    // Не фильтруем сообщения у которых не определено имя модуля
+    if (m.module.empty())
+        return true;
+
+    bool res  = (_modules.find(m.module) != _modules.end());
+    return (mode() == Exclude) ? !res : res;
+}
+
 //--------------------------------- Saver -----------------------------------
 
 Saver::Saver(const string& name, Level level)
-    : _level(level), /*_type(CUSTOM),*/ _name(name)
+    : _name(name),
+      _level(level)
 {}
 
 void Saver::flush(const MessageList& messages)
@@ -127,6 +162,55 @@ void Saver::flush(const MessageList& messages)
         return;
 
     flushImpl(messages);
+}
+
+FilterList Saver::filters() const
+{
+    FilterList filters_;
+    SpinLocker locker(_filtersLock); (void) locker;
+    for (int i = 0; i < _filters.count(); ++i)
+    {
+        Filter* f = _filters.item(i);
+        f->add_ref();
+        filters_.add(f);
+    }
+    return std::move(filters_);
+}
+
+void Saver::addFilter(FilterLPtr filter)
+{
+    SpinLocker locker(_filtersLock); (void) locker;
+    if (lst::FindResult fr = _filters.findRef(filter->name(), lst::BRUTE_FORCE))
+        _filters.remove(fr.index());
+
+    filter->lock();
+    filter->add_ref();
+    _filters.add(filter.get());
+}
+
+void Saver::removeFilter(const string& name)
+{
+    SpinLocker locker(_filtersLock); (void) locker;
+    if (lst::FindResult fr = _filters.findRef(name, lst::BRUTE_FORCE))
+        _filters.remove(fr.index());
+}
+
+void Saver::clearFilters()
+{
+    SpinLocker locker(_filtersLock); (void) locker;
+    _filters.clear();
+}
+
+bool Saver::skipMessage(const Message& m, const FilterList& filters)
+{
+    if (filters.empty())
+        return false;
+
+    for (Filter* f : filters)
+        if (f->check(m) != 0)
+            return false;
+
+    return true;
 }
 
 //------------------------------ SaverStdOut --------------------------------
@@ -140,17 +224,21 @@ SaverStdOut::SaverStdOut(Level level) : Saver("", level)
 void SaverStdOut::flushImpl(const MessageList& messages)
 {
     int flush_count = 0;
-    for (int i = 0; i < messages.count(); ++i)
+    FilterList filters_ = filters();
+
+    for (Message* m : messages)
     {
-        const Message& m = messages[i];
-        if (m.level > level())
+        if (m->level > level())
             continue;
 
-        (*_out) << m.prefix;
-        if ((level() == Level::DEBUG2) && (m.level != Level::DEBUG2))
+        if (skipMessage(*m, filters_))
+            continue;
+
+        (*_out) << m->prefix;
+        if ((level() == Level::DEBUG2) && (m->level != Level::DEBUG2))
             (*_out) << "       ";
 
-        (*_out) << m.prefix2 << m.str << "\n";
+        (*_out) << m->prefix2 << m->str << "\n";
 
         if (++flush_count > 50)
         {
@@ -185,18 +273,22 @@ void SaverFile::flushImpl(const MessageList& messages)
     if (FILE* f = fopen(_fileName.c_str(),  "a"))
     {
         int flush_count = 0;
-        for (int i = 0; i < messages.count(); ++i)
+        FilterList filters_ = filters();
+
+        for (Message* m : messages)
         {
-            const Message& m = messages[i];
-            if (m.level > level())
+            if (m->level > level())
                 continue;
 
-            fputs(m.prefix, f);
-            if ((level() == Level::DEBUG2) && (m.level != Level::DEBUG2))
+            if (skipMessage(*m, filters_))
+                continue;
+
+            fputs(m->prefix, f);
+            if ((level() == Level::DEBUG2) && (m->level != Level::DEBUG2))
                 fputs("       ", f);
 
-            fputs(m.prefix2, f);
-            fputs(m.str.c_str(), f);
+            fputs(m->prefix2, f);
+            fputs(m->str.c_str(), f);
             fputs("\n", f);
             if (++flush_count > 500)
             {
@@ -204,7 +296,7 @@ void SaverFile::flushImpl(const MessageList& messages)
                 fflush(f);
             }
         }
-        //fflush(f);
+        fflush(f);
         fclose(f);
     }
     else
@@ -373,37 +465,32 @@ void Logger::run()
 
             SaverLPtr saver_out;
             SaverLPtr saver_err;
+
             { //Блок для SpinLocker
                 SpinLocker locker(_saversLock); (void) locker;
                 saver_out = _saverOut;
                 saver_err = _saverErr;
             }
 
-            if (saver_out)
+            auto saver_console = [&messages] (const SaverLPtr& saver, const char* out) -> void
             {
-                try {
-                    saver_out->flush(messages);
+                if (saver.empty())
+                    return;
+                try
+                {
+                    saver->flush(messages);
                 }
-                catch (std::exception& e) {
-                    loggerPanic("stdout", e.what());
+                catch (std::exception& e)
+                {
+                    loggerPanic(out, e.what());
                 }
-                catch (...) {
-                    loggerPanic("stdout", "unknown error");
+                catch (...)
+                {
+                    loggerPanic(out, "unknown error");
                 }
-            }
-
-            if (saver_err)
-            {
-                try {
-                    saver_err->flush(messages);
-                }
-                catch (std::exception& e) {
-                    loggerPanic("stderr", e.what());
-                }
-                catch (...) {
-                    loggerPanic("stderr", "unknown error");
-                }
-            }
+            };
+            saver_console(saver_out, "stdout");
+            saver_console(saver_err, "stderr");
 
             for (int i = 0; i < messages.count(); ++i)
                 messages_buff.add(messages.release(i, lst::NO_COMPRESS_LIST));
@@ -425,16 +512,19 @@ void Logger::run()
             if (messages_buff.count())
             {
                 SaverList savers_ = savers();
-                for (int i = 0; i < savers_.count(); ++i)
+                for (Saver* saver : savers_)
                 {
-                    try {
-                        savers_[i].flush(messages_buff);
+                    try
+                    {
+                        saver->flush(messages_buff);
                     }
-                    catch (std::exception& e) {
-                        loggerPanic(savers_[i].name().c_str(), e.what());
+                    catch (std::exception& e)
+                    {
+                        loggerPanic(saver->name().c_str(), e.what());
                     }
-                    catch (...) {
-                        loggerPanic(savers_[i].name().c_str(), "unknown error");
+                    catch (...)
+                    {
+                        loggerPanic(saver->name().c_str(), "unknown error");
                     }
                 }
             }
@@ -521,7 +611,7 @@ void Logger::removeSaverStdErr()
     redefineLevel();
 }
 
-void Logger::addSaver(const SaverLPtr& saver)
+void Logger::addSaver(SaverLPtr saver)
 {
     SpinLocker locker(_saversLock); (void) locker;
     if (lst::FindResult fr = _savers.findRef(saver->name(), lst::BRUTE_FORCE))
@@ -540,13 +630,21 @@ void Logger::removeSaver(const string& name)
     redefineLevel();
 }
 
+void Logger::clearSavers()
+{
+    SpinLocker locker(_saversLock); (void) locker;
+    _saverOut.reset();
+    _saverErr.reset();
+    _savers.clear();
+    redefineLevel();
+}
+
 SaverList Logger::savers() const
 {
     SaverList savers_;
     SpinLocker locker(_saversLock); (void) locker;
-    for (int i = 0; i < _savers.count(); ++i)
+    for (Saver* s : _savers)
     {
-        Saver* s = _savers.item(i);
         s->add_ref();
         savers_.add(s);
     }
@@ -561,12 +659,10 @@ void Logger::redefineLevel()
     if (_saverErr && _saverErr->level() > level)
         level = _saverErr->level();
 
-    for (int i = 0; i < _savers.count(); ++i)
-    {
-        Saver* s = _savers.item(i);
+    for (Saver* s : _savers)
         if (s->level() > level)
             level = s->level();
-    }
+
     _level = level;
 }
 
