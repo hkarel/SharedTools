@@ -167,6 +167,8 @@ private:
 private:
     T* _ptr = 0;
     //std::atomic_flag _assign_lock = ATOMIC_FLAG_INIT;
+
+    template <typename> friend class clife_ptr;
 };
 
 
