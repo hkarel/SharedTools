@@ -74,12 +74,12 @@ bool mkDir(const string& dir, bool throwExcept)
     }
     catch (boost::system::system_error& e)
     {
-        log_error << "Can not create directory: " << dir << "; Detail: " << e.what();
+        log_error << "Cannot create directory: " << dir << "; Detail: " << e.what();
         if (throwExcept) throw;
     }
     catch (...)
     {
-        log_error << "Can not create directory " << dir << "; Unknown error.";
+        log_error << "Cannot create directory: " << dir << "; Unknown error.";
         if (throwExcept) throw;
     }
     return false;
