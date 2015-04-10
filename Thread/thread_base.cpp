@@ -14,9 +14,6 @@ ThreadBase::ThreadBase()
     //_waitThreadStop = true;
 }
 
-ThreadBase::~ThreadBase()
-{}
-
 bool ThreadBase::threadStop() const noexcept
 {
     return _threadStop;

@@ -16,7 +16,7 @@ class ThreadBase
 {
 public:
     ThreadBase();
-    virtual ~ThreadBase();
+    virtual ~ThreadBase() = default;
 
     // Запускает поток.
     void start();
