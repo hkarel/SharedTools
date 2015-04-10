@@ -60,7 +60,6 @@ public:
         assign(p);
     }
     self_t& operator= (const self_t& p) {
-        //spin_locker locker(_assign_lock); (void) locker;
         assign(p);
         return *this;
     }
@@ -72,7 +71,6 @@ public:
     }
     template<typename otherT>
     self_t& operator= (const clife_ptr<otherT> & p) {
-        //spin_locker locker(_assign_lock); (void) locker;
         assign(p);
         return *this;
     }
@@ -82,7 +80,6 @@ public:
         assign(p, true);
     }
     self_t& operator= (self_t&& p) {
-        //spin_locker locker(_assign_lock); (void) locker;
         assign(p, true);
         return *this;
     }
@@ -94,11 +91,9 @@ public:
     }
     template<typename otherT>
     self_t& operator= (clife_ptr<otherT> && p) {
-        //spin_locker locker(_assign_lock); (void) locker;
         assign(p, true);
         return *this;
     }
-
 
     void release() {if (_ptr) {_ptr->release(); _ptr = 0;}}
     void reset()   {if (_ptr) {_ptr->release(); _ptr = 0;}}
@@ -150,23 +145,8 @@ private:
         }
     }
 
-//    struct spin_locker
-//    {
-//        explicit spin_locker(std::atomic_flag& locker_) : locker(locker_) {
-//            while (locker.test_and_set(std::memory_order_acquire)) {}
-//        }
-//        ~spin_locker() {
-//            locker.clear(std::memory_order_release);
-//        }
-//        std::atomic_flag& locker;
-
-//        spin_locker(const spin_locker&) = delete;
-//        spin_locker& operator= (const spin_locker&) = delete;
-//    };
-
 private:
-    T* _ptr = 0;
-    //std::atomic_flag _assign_lock = ATOMIC_FLAG_INIT;
+    T* _ptr = {0};
 
     template <typename> friend class clife_ptr;
 };
