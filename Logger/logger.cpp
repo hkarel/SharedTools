@@ -117,20 +117,38 @@ void prefixFormatter2(Message& message)
 
 //-------------------------------- Filter -----------------------------------
 
-Filter::Filter(const string& name, Mode mode)
-    : _name(name),
-      _mode(mode)
+Filter::Filter(const string& name)
+    : _name(name)
 {}
+
+void Filter::setMode(Mode val)
+{
+    if (locked()) return;
+    _mode = val;
+}
+
+void Filter::setFilteringErrors(bool val)
+{
+    if (locked()) return;
+    _filteringErrors = val;
+}
 
 int Filter::check(const Message& m) const
 {
-    return (_locked) ? checkImpl(m) : -1;
+    if (_locked)
+    {
+        if ((m.level == ERROR) && !filteringErrors())
+            return 1;
+
+        return checkImpl(m);
+    }
+    return -1;
 }
 
 //------------------------------ FilterModule -------------------------------
 
-FilterModule::FilterModule(const string& name, Mode mode)
-    : Filter(name, mode)
+FilterModule::FilterModule(const string& name)
+    : Filter(name)
 {}
 
 void FilterModule::addModule(const string& name)

@@ -122,7 +122,7 @@ public:
     // Режим работы фильта: включающий/исключающий.
     enum Mode {Include, Exclude};
 
-    Filter(const string& name, Mode mode = Include);
+    Filter(const string& name);
     virtual ~Filter() {}
 
     // Имя фильтра
@@ -130,7 +130,12 @@ public:
 
     // Возвращает режим в котором работает фильтр: включающий/исключающий.
     Mode mode() const {return _mode;}
+    void setMode(Mode val);
 
+    // Определяет будут ли сообщения об ошибках фильтроваться так же, как и все
+    // остальные сообщения. По умолчанию сообщения об ошибках не фильтруются.
+    bool filteringErrors() const {return _filteringErrors;}
+    void setFilteringErrors(bool val);
 
     // Возвращает значение большее нуля в случае если сообщение соответствует
     // критериям фильтрации, если сообщение не соответствует критериям фильтрации
@@ -157,6 +162,7 @@ private:
     string _name;
     Mode   _mode;
     bool   _locked = {false};
+    bool   _filteringErrors = {false};
 };
 typedef lst::List<Filter, FindItem<Filter>, AllocatorItem<Filter>> FilterList;
 typedef clife_ptr<Filter> FilterLPtr;
@@ -168,7 +174,7 @@ typedef clife_ptr<Filter> FilterLPtr;
 class FilterModule : public Filter
 {
 public:
-    FilterModule(const string& name, Mode mode);
+    FilterModule(const string& name);
     void addModule(const string& name);
 
 private:
