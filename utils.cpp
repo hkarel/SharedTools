@@ -3,10 +3,6 @@
 #include <unistd.h>
 #include <algorithm>
 
-#ifdef USE_BOOST
-#include <boost/filesystem.hpp>
-#endif
-
 #include "Logger/logger.h"
 #include "utils.h"
 
@@ -57,34 +53,6 @@ void savePidFile(const string& fileName)
             log_error << "Can not open pid-file " << fileName << " for writing.";
     }
 }
-
-#ifdef USE_BOOST
-bool mkDir(const string& dir, bool throwExcept)
-{
-    try
-    {
-        boost::filesystem::create_directories(dir);
-//        if (!boost::filesystem::is_directory(data_dir))
-//        {
-//            log_error << "Can not create directory " << data_dir;
-//            logger().stop();
-//            return -1;
-//        }
-        return true;
-    }
-    catch (boost::system::system_error& e)
-    {
-        log_error << "Cannot create directory: " << dir << "; Detail: " << e.what();
-        if (throwExcept) throw;
-    }
-    catch (...)
-    {
-        log_error << "Cannot create directory: " << dir << "; Unknown error.";
-        if (throwExcept) throw;
-    }
-    return false;
-}
-#endif
 
 string toString(int val)
 {
