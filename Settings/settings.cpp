@@ -112,7 +112,7 @@ std::vector<std::string> Settings::names() const
 
 std::string Settings::value(const std::string& name,
                             const std::string& defaultVal,
-                            bool logWarnings)
+                            bool logWarnings) const
 {
     std::string value;
     if (!exists(name, &value))

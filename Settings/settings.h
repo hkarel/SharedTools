@@ -42,7 +42,7 @@ public:
     // Возвращает значение параметра по имени
     std::string value(const std::string& name,
                       const std::string& defaultVal = "",
-                      bool logWarnings = true);
+                      bool logWarnings = true) const;
 
     // Возвращает список пар (имя:значение)
     NameValList values() const;
@@ -61,7 +61,7 @@ public:
     template<typename T>
     T valueTo(const std::string& name,
               const T& defaultVal = T(),
-              bool logWarnings = true);
+              bool logWarnings = true) const;
 
     // Возвращает полное имя файла конфигурации
     std::string fileName() const;
@@ -139,7 +139,7 @@ char* Settings::typeName()
 template<typename T>
 T Settings::valueTo(const std::string& name,
                     const T& defaultVal,
-                    bool logWarnings)
+                    bool logWarnings) const
 {
     std::string value;
     if (!exists(name, &value))
