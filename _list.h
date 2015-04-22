@@ -74,6 +74,12 @@ class FindResult;
 template<typename ListT, typename CompareT>
 FindResult find(const ListT&, const CompareT&);
 
+template<typename ListT, typename LCompare>
+FindResult firstFindResultL(const ListT&, const LCompare&, const FindResult&);
+
+template<typename ListT, typename LCompare>
+FindResult lastFindResultL(const ListT&, const LCompare&, const FindResult&);
+
 template <typename, typename, typename> class CustomList;
 template <typename, typename, typename> class List;
 
@@ -199,105 +205,100 @@ private:
     : _index(index), _success(success), _bruteForce(bruteForce)
   {}
   template <typename, typename, typename> friend class CustomList;
+
   template<typename ListT, typename CompareT>
   friend FindResult find(const ListT&, const CompareT&);
+
+  template<typename ListT, typename LCompare>
+  friend FindResult firstFindResultL(const ListT&, const LCompare&, const FindResult&);
+
+  template<typename ListT, typename LCompare>
+  friend FindResult lastFindResultL(const ListT&, const LCompare&, const FindResult&);
 };
 
 
 /**
   @brief Функции выполняют поиск перебором (грубый поиск).
 
-  Первые две функции выполнены для использования с lambda-функциями с сигнатурой
-  int [](const Type* item) где item элемент списка;  следующие три функции в ка-
-  честве compare-элемента используют функции или функтор со следующей сигнатурой:
-  int function(const Type1* item1, const Type2* item2); и последние три функции
-  качестве compare-элемента используют функции или функторы с сигнатурой:
-  int function(const Type1* item1, const Type2* item2, void* extParam).
+  Первые две функции выполнены для использования с lambda-функциями с сигнатурой:
+  int [](const ListT::ValueType* item) где item элемент списка;
+  следующие три функции в качестве compare-элемента используют функции или функтор
+  со следующей сигнатурой:
+  int function(const T* item1, const ListT::ValueType* item2);
+  и последние три функции качестве compare-элемента используют функции или функторы
+  с сигнатурой:
+  int function(const T* item1, const ListT::ValueType* item2, void* extParam).
   Дополнительные пояснения по параметру extParam можно посмотреть в описании
   к функциям поиска List::find().
+  Примечание: в качестве контейнера ListT можно использовать std::vector.
 */
 template<typename ListT, typename CompareT>
-FindResult find(const ListT& list, const CompareT& compare)
-{
-  for (decltype(list.size()) i = 0; i < list.size(); ++i)
-    if (compare(&list.at(i)) == 0)
-      return FindResult(true, BRUTE_FORCE, i);
-
-  return FindResult(false, BRUTE_FORCE, list.size());
-}
+FindResult find(const ListT& list, const CompareT& compare);
 
 template<typename ListT, typename CompareT>
-auto findItem(const ListT& list, const CompareT& compare) -> typename ListT::pointer
-{
-  FindResult fr = find<ListT, CompareT>(list, compare);
-  return fr.success() ? const_cast<typename ListT::pointer>(&list.at(fr.index())) : 0;
-}
+auto findItem(const ListT& list, const CompareT& compare) -> typename ListT::pointer;
 
 //---
 template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare)
-{
-  auto l = [item, &compare](typename ListT::const_pointer item2) -> int
-  {
-    return compare(item, item2);
-  };
-  return find(list, l);
-}
+FindResult find(const T* item, const ListT& list, const CompareT& compare);
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare)
-{
-  FindResult fr = find<T, ListT, CompareT>(item, list, compare);
-  return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
-}
+T* findItem(const T* item, const ListT& list, const CompareT& compare);
 
 template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare)
-{
-  return find<T, ListT, CompareT>(&item, list, compare);
-}
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare);
 
 //---
 template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare, void* extParam)
-{
-  auto l = [item, &compare, extParam](typename ListT::const_pointer item2) -> int
-  {
-    return compare(item, item2, extParam);
-  };
-  return find(list, l);
-}
+FindResult find(const T* item, const ListT& list, const CompareT& compare, void* extParam);
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare, void* extParam)
-{
-  FindResult fr = find<T, ListT, CompareT>(item, list, compare, extParam);
-  return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
-}
+T* findItem(const T* item, const ListT& list, const CompareT& compare, void* extParam);
 
 template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare, void* extParam)
-{
-  return find<T, ListT, CompareT>(&item, list, compare, extParam);
-}
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare, void* extParam);
 
 
 /**
-  @brief Выполняет поиск первого элемента в последовательности одинаковых значений.
+  @brief Группа функций выполняет поиск первого или последнего элемента в после-
+         довательности одинаковых значений.
 
-  Если список содержит неуникальные значения, то при сортировке такого списка
+  Если список содержит не уникальные значения, то при сортировке такого списка
   одинаковые значения будут идти друг за другом. При использовании функций быст-
-  рого поиска в таком списке найденное значение наиболее часто будет не первым
-  в последовательности одинаковых значений. Тем не менее наиболее часто нужно
-  именно первое значение в последовательности. Данная функция как раз и выполняет
-  поиск первого элемента в последовательности одинаковых значений.
+  рого поиска в таком списке найденное значение наиболее часто будет не первым и
+  не последним в последовательности одинаковых значений. Тем не менее наиболее
+  часто нужно именно первое или последнее значение в последовательности.
+  Данные функции как раз и выполняют поиск первого/последнего элемента в после-
+  довательности одинаковых значений.
+  В качестве результата возвращается индекс первого/последнего элемента в после-
+  довательности.
 */
-// !!! Для функции нужно unit-тестирование (реализация временно закоментированна) !!!
+
+// Примечание: в качестве compare-элемента используется lambda-функция с сигнатурой:
+//             int [](const ListT::ValueType* item) где item элемент списка.
+template<typename ListT, typename LCompare>
+FindResult firstFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr);
+
+template<typename ListT, typename LCompare>
+FindResult lastFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr);
+
+// Примечание: в качестве compare-элемента используют функции или функтор с сигнатурой:
+//             int function(const ListT::ValueType* item1, const ListT::ValueType* item2).
 template<typename ListT, typename CompareT>
-int beginingFindResult2(const ListT& list,
-                        const CompareT& compare,
-                        const FindResult& fr,
-                        void* extParam = 0);
+FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr);
+
+template<typename ListT, typename CompareT>
+FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr);
+
+// Примечание: в качестве compare-элемента используют функции или функтор с сигнатурой:
+//             int function(const ListT::ValueType* item1, const ListT::ValueType* item2, void* extParam).
+template<typename ListT, typename CompareT>
+FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
+                           void* extParam);
+
+template<typename ListT, typename CompareT>
+FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
+                          void* extParam);
 
 
 /**
@@ -433,7 +434,7 @@ public:
   FindResult find(const U* item, void* extParam,
                   bool bruteForce = false, int startFindIndex = 0) const;
 
-  /// @brief Перегруженная функция поиска, определена для удобства использования.
+  /// @brief Перегруженные функции поиска, определена для удобства использования.
   ///
   /// @return Возвращает указатель на искомый элемент, если элемент
   /// не найден - возвращает 0.
@@ -445,7 +446,7 @@ public:
   T* findItem(const U* item, void* extParam,
               bool bruteForce = false, int startFindIndex = 0) const;
 
-  /// @brief Перегруженная функция поиска, определена для удобства использования.
+  /// @brief Перегруженные функции поиска, определена для удобства использования.
   ///
   /// @param[in] item Искомый элемент передаваемый по ссылке.
   template<typename U>
@@ -488,7 +489,7 @@ public:
   /// @brief Функции поиска.
   ///
   /// В качестве стратегии поиска используется lambda-функция с сигнатурой
-  /// int [](const Type* item2)
+  /// int [](const List::ValueType* item)
   template<typename LCompare>
   FindResult findL(const LCompare& compare,
                    bool bruteForce = false, int startFindIndex = 0) const;
@@ -1863,6 +1864,155 @@ DECL_IMPL_LIST(void)::swap(SelfListType& list)
 //  }
 //  return int(-1);
 //}
+
+
+template<typename ListT, typename CompareT>
+FindResult find(const ListT& list, const CompareT& compare)
+{
+  for (decltype(list.size()) i = 0; i < list.size(); ++i)
+    if (compare(&list.at(i)) == 0)
+      return FindResult(true, BRUTE_FORCE, i);
+
+  return FindResult(false, BRUTE_FORCE, list.size());
+}
+
+template<typename ListT, typename CompareT>
+auto findItem(const ListT& list, const CompareT& compare) -> typename ListT::pointer
+{
+  FindResult fr = find<ListT, CompareT>(list, compare);
+  return fr.success() ? const_cast<typename ListT::pointer>(&list.at(fr.index())) : 0;
+}
+
+//---
+template<typename T, typename ListT, typename CompareT>
+FindResult find(const T* item, const ListT& list, const CompareT& compare)
+{
+  auto l = [item, &compare](typename ListT::const_pointer item2) -> int
+  {
+    return compare(item, item2);
+  };
+  return find(list, l);
+}
+
+template<typename T, typename ListT, typename CompareT>
+T* findItem(const T* item, const ListT& list, const CompareT& compare)
+{
+  FindResult fr = find<T, ListT, CompareT>(item, list, compare);
+  return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
+}
+
+template<typename T, typename ListT, typename CompareT>
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare)
+{
+  return find<T, ListT, CompareT>(&item, list, compare);
+}
+
+//---
+template<typename T, typename ListT, typename CompareT>
+FindResult find(const T* item, const ListT& list, const CompareT& compare, void* extParam)
+{
+  auto l = [item, &compare, extParam](typename ListT::const_pointer item2) -> int
+  {
+    return compare(item, item2, extParam);
+  };
+  return find(list, l);
+}
+
+template<typename T, typename ListT, typename CompareT>
+T* findItem(const T* item, const ListT& list, const CompareT& compare, void* extParam)
+{
+  FindResult fr = find<T, ListT, CompareT>(item, list, compare, extParam);
+  return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
+}
+
+template<typename T, typename ListT, typename CompareT>
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare, void* extParam)
+{
+  return find<T, ListT, CompareT>(&item, list, compare, extParam);
+}
+
+//---
+template<typename ListT, typename LCompare>
+FindResult firstFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr)
+{
+  if (fr.success())
+    for (int i = fr.index(); i >= 0; --i)
+    {
+      if (compare(&list.at(i)) != 0)
+        return FindResult(true, BRUTE_FORCE, i + 1);
+    }
+  return fr;
+}
+
+template<typename ListT, typename LCompare>
+FindResult lastFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr)
+{
+  if (fr.success())
+    for (int i = fr.index(); i < list.count(); ++i)
+    {
+      if (compare(&list.at(i)) != 0)
+        return FindResult(true, BRUTE_FORCE, i - 1);
+    }
+  return fr;
+}
+
+template<typename ListT, typename CompareT>
+FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr)
+{
+  if (fr.failed())
+    return fr;
+
+  const typename ListT::ValueType* item = &list.at(fr.index());
+  auto l = [item, &compare](const typename ListT::ValueType* item2) -> int
+  {
+    return compare(item, item2);
+  };
+  return firstFindResultL(list, l, fr);
+}
+
+template<typename ListT, typename CompareT>
+FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr)
+{
+  if (fr.failed())
+    return fr;
+
+  const typename ListT::ValueType* item = &list.at(fr.index());
+  auto l = [item, &compare](const typename ListT::ValueType* item2) -> int
+  {
+    return compare(item, item2);
+  };
+  return lastFindResultL(list, l, fr);
+}
+
+template<typename ListT, typename CompareT>
+FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
+                           void* extParam)
+{
+  if (fr.failed())
+    return fr;
+
+  const typename ListT::ValueType* item = &list.at(fr.index());
+  auto l = [item, &compare, extParam](const typename ListT::ValueType* item2) -> int
+  {
+    return compare(item, item2, extParam);
+  };
+  return firstFindResultL(list, l, fr);
+}
+
+template<typename ListT, typename CompareT>
+FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
+                          void* extParam)
+{
+  if (fr.failed())
+    return fr;
+
+  const typename ListT::ValueType* item = &list.at(fr.index());
+  auto l = [item, &compare, extParam](const typename ListT::ValueType* item2) -> int
+  {
+    return compare(item, item2, extParam);
+  };
+  return lastFindResultL(list, l, fr);
+}
 
 
 

@@ -2,10 +2,9 @@ import qbs 1.0
 
 CppApplication {
     name: "list_utest"
-
     consoleApplication: true
+    destinationDirectory: "./"
 
-    //cpp.includePaths: includePaths
     cpp.cxxFlags: [
         "-std=c++11",
         "-Wno-unused-parameter",
