@@ -379,7 +379,7 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i1, int i2, int i
     lst::FindResult fr;
     lst::FindResult fr_first;
     lst::FindResult fr_last;
-    int index, result_index, i;
+    int index, i;
 
     auto lambda_find = [&i] (const int* item) -> int
     {
@@ -620,7 +620,7 @@ struct SortTwoVal
             else if (item1->val1 < item2->val1)
                 return -1;
 
-            return LIST_COMPARE_ITEM(item1->val2, item2->val2);
+            return LIST_COMPARE_ITEM(item2->val2, item1->val2);
         }
     };
 
@@ -673,7 +673,7 @@ int main()
     // выполнена по двум полям и оба не уникальные.
     // Требования к поиску: искомое значение должно быть >= поля1 и <= поля2.
     // Так же нужно вернуть граничные значения удовлетворяющие условию.
-    //findNotuniqueStructTest();
+    findNotuniqueStructTest();
 
 
     return 0;
