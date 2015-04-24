@@ -1866,6 +1866,8 @@ DECL_IMPL_LIST(void)::swap(SelfListType& list)
 //}
 
 
+//------------------------ Implementation Functions -------------------------
+
 template<typename ListT, typename CompareT>
 FindResult find(const ListT& list, const CompareT& compare)
 {
