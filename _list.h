@@ -306,6 +306,24 @@ FindResult lastFindResult(const ListT& list, const CompareT& compare, const Find
 */
 #define LIST_COMPARE_ITEM(ITEM1, ITEM2) ((ITEM1 > ITEM2) ? 1 : ((ITEM1 < ITEM2) ? -1 : 0))
 
+/**
+  @brief Макрос используется в классе-стратегии сортировки и поиска в тех случаях,
+         когда сортировка или поиск выполняются по нескольким полям.
+         Ниже приведен пример использования. Здесь сортировка выполняется по трем
+         полям с убывающим приоритетом сравнения от field1 к field3.
+         struct Compare
+         {
+           int operator() (const Type* item1, const Type* item2, void* = 0) const
+           {
+             LIST_COMPARE_MULTI_ITEM( item1->field1, item2->field1)
+             LIST_COMPARE_MULTI_ITEM( item1->field2, item2->field2)
+             return LIST_COMPARE_ITEM(item1->field3, item2->field3);
+           }
+         };
+*/
+#define LIST_COMPARE_MULTI_ITEM(ITEM1, ITEM2) \
+   {if (ITEM1 > ITEM2) return  1; else if (ITEM1 < ITEM2) return -1;}
+
 
 /**
   @brief Класс-стратегия используется для сортировки и поиска.
