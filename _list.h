@@ -216,6 +216,12 @@ private:
   friend FindResult lastFindResultL(const ListT&, const LCompare&, const FindResult&);
 };
 
+struct FindResultRange
+{
+  FindResult first;
+  FindResult last;
+};
+
 
 /**
   @brief Функции выполняют поиск перебором (грубый поиск).
@@ -250,13 +256,16 @@ FindResult findRef(const T& item, const ListT& list, const CompareT& compare);
 
 //---
 template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare, void* extParam);
+FindResult find(const T* item, const ListT& list, const CompareT& compare,
+                void* extParam);
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare, void* extParam);
+T* findItem(const T* item, const ListT& list, const CompareT& compare,
+            void* extParam);
 
 template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare, void* extParam);
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
+                   void* extParam);
 
 
 /**
@@ -274,31 +283,54 @@ FindResult findRef(const T& item, const ListT& list, const CompareT& compare, vo
   довательности.
 */
 
-// Примечание: в качестве compare-элемента используется lambda-функция с сигнатурой:
-//             int [](const ListT::ValueType* item) где item элемент списка.
+/// Примечание: в качестве compare-элемента используется lambda-функция с сигна-
+/// турой: int [](const ListT::ValueType* item) где item элемент списка.
 template<typename ListT, typename LCompare>
-FindResult firstFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr);
+FindResult firstFindResultL(const ListT& list, const LCompare& compare,
+                            const FindResult& fr);
 
 template<typename ListT, typename LCompare>
-FindResult lastFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr);
+FindResult lastFindResultL(const ListT& list, const LCompare& compare,
+                           const FindResult& fr);
 
-// Примечание: в качестве compare-элемента используют функции или функтор с сигнатурой:
-//             int function(const ListT::ValueType* item1, const ListT::ValueType* item2).
+/// Примечание: в качестве compare-элемента используют функции или функтор
+/// с сигнатурой:
+/// int function(const ListT::ValueType* item1, const ListT::ValueType* item2).
 template<typename ListT, typename CompareT>
-FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr);
-
-template<typename ListT, typename CompareT>
-FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr);
-
-// Примечание: в качестве compare-элемента используют функции или функтор с сигнатурой:
-//             int function(const ListT::ValueType* item1, const ListT::ValueType* item2, void* extParam).
-template<typename ListT, typename CompareT>
-FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
-                           void* extParam);
+FindResult firstFindResult(const ListT& list, const CompareT& compare,
+                           const FindResult& fr);
 
 template<typename ListT, typename CompareT>
-FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
-                          void* extParam);
+FindResult lastFindResult(const ListT& list, const CompareT& compare,
+                          const FindResult& fr);
+
+/// Примечание: в качестве compare-элемента используют функции или функтор
+/// с сигнатурой:
+/// int function(const ListT::ValueType* item1, const ListT::ValueType* item2,
+///              void* extParam).
+template<typename ListT, typename CompareT>
+FindResult firstFindResult(const ListT& list, const CompareT& compare,
+                           const FindResult& fr, void* extParam);
+
+template<typename ListT, typename CompareT>
+FindResult lastFindResult(const ListT& list, const CompareT& compare,
+                          const FindResult& fr, void* extParam);
+
+/**
+  @brief Группа функций выполняет поиск первого и последнего элемента в после-
+         довательности одинаковых значений.
+*/
+template<typename ListT, typename LCompare>
+FindResultRange rangeFindResultL(const ListT& list, const LCompare& compare,
+                                 const FindResult& fr);
+
+template<typename ListT, typename CompareT>
+FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
+                                const FindResult& fr);
+
+template<typename ListT, typename CompareT>
+FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
+                                const FindResult& fr, void* extParam);
 
 
 /**
@@ -1929,7 +1961,8 @@ FindResult findRef(const T& item, const ListT& list, const CompareT& compare)
 
 //---
 template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare, void* extParam)
+FindResult find(const T* item, const ListT& list, const CompareT& compare,
+                void* extParam)
 {
   auto l = [item, &compare, extParam](typename ListT::const_pointer item2) -> int
   {
@@ -1939,21 +1972,24 @@ FindResult find(const T* item, const ListT& list, const CompareT& compare, void*
 }
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare, void* extParam)
+T* findItem(const T* item, const ListT& list, const CompareT& compare,
+            void* extParam)
 {
   FindResult fr = find<T, ListT, CompareT>(item, list, compare, extParam);
   return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
 }
 
 template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare, void* extParam)
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
+                   void* extParam)
 {
   return find<T, ListT, CompareT>(&item, list, compare, extParam);
 }
 
 //---
 template<typename ListT, typename LCompare>
-FindResult firstFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr)
+FindResult firstFindResultL(const ListT& list, const LCompare& compare,
+                            const FindResult& fr)
 {
   if (fr.success())
     for (int i = fr.index(); i >= 0; --i)
@@ -1965,7 +2001,8 @@ FindResult firstFindResultL(const ListT& list, const LCompare& compare, const Fi
 }
 
 template<typename ListT, typename LCompare>
-FindResult lastFindResultL(const ListT& list, const LCompare& compare, const FindResult& fr)
+FindResult lastFindResultL(const ListT& list, const LCompare& compare,
+                           const FindResult& fr)
 {
   if (fr.success())
     for (int i = fr.index(); i < list.count(); ++i)
@@ -1977,7 +2014,8 @@ FindResult lastFindResultL(const ListT& list, const LCompare& compare, const Fin
 }
 
 template<typename ListT, typename CompareT>
-FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr)
+FindResult firstFindResult(const ListT& list, const CompareT& compare,
+                           const FindResult& fr)
 {
   if (fr.failed())
     return fr;
@@ -1991,7 +2029,8 @@ FindResult firstFindResult(const ListT& list, const CompareT& compare, const Fin
 }
 
 template<typename ListT, typename CompareT>
-FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr)
+FindResult lastFindResult(const ListT& list, const CompareT& compare,
+                          const FindResult& fr)
 {
   if (fr.failed())
     return fr;
@@ -2005,8 +2044,8 @@ FindResult lastFindResult(const ListT& list, const CompareT& compare, const Find
 }
 
 template<typename ListT, typename CompareT>
-FindResult firstFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
-                           void* extParam)
+FindResult firstFindResult(const ListT& list, const CompareT& compare,
+                           const FindResult& fr, void* extParam)
 {
   if (fr.failed())
     return fr;
@@ -2020,8 +2059,8 @@ FindResult firstFindResult(const ListT& list, const CompareT& compare, const Fin
 }
 
 template<typename ListT, typename CompareT>
-FindResult lastFindResult(const ListT& list, const CompareT& compare, const FindResult& fr,
-                          void* extParam)
+FindResult lastFindResult(const ListT& list, const CompareT& compare,
+                          const FindResult& fr, void* extParam)
 {
   if (fr.failed())
     return fr;
@@ -2033,6 +2072,38 @@ FindResult lastFindResult(const ListT& list, const CompareT& compare, const Find
   };
   return lastFindResultL(list, l, fr);
 }
+
+//---
+template<typename ListT, typename LCompare>
+FindResultRange rangeFindResultL(const ListT& list, const LCompare& compare,
+                                 const FindResult& fr)
+{
+  FindResultRange frr;
+  frr.first = firstFindResultL(list, compare, fr);
+  frr.last  = lastFindResultL (list, compare, fr);
+  return frr;
+}
+
+template<typename ListT, typename CompareT>
+FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
+                                const FindResult& fr)
+{
+  FindResultRange frr;
+  frr.first = firstFindResult(list, compare, fr);
+  frr.last  = lastFindResult (list, compare, fr);
+  return frr;
+}
+
+template<typename ListT, typename CompareT>
+FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
+                                const FindResult& fr, void* extParam)
+{
+  FindResultRange frr;
+  frr.first = firstFindResult(list, compare, fr, extParam);
+  frr.last  = lastFindResult (list, compare, fr, extParam);
+  return frr;
+}
+
 
 
 
