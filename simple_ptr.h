@@ -166,6 +166,6 @@ private:
     }
 
 private:
-    T* _ptr = 0;
+    T* _ptr = {0};
 };
 
