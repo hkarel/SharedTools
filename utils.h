@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <sys/types.h>
 #include <atomic>
 #include <string>
 #include <cstdarg>
@@ -71,5 +72,9 @@ inline bool assign(atomic_bool& a, bool value)
 
 // Выполняет преобразование в строку
 string toString(int val);
+
+// Выполняет преобразование UUID в шестнадцатеричное строковое представление.
+// Входящий параметр должен иметь следующие тип и размерность: uint8_t uuid[16].
+string uuidToHexString(const uint8_t* uuid);
 
 } // namespace utl
