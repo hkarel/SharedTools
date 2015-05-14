@@ -244,6 +244,13 @@ void SaverStdOut::flushImpl(const MessageList& messages)
     int flush_count = 0;
     FilterList filters_ = filters();
 
+    vector<char> line_buff;
+    if (maxLineSize() > 0)
+    {
+        line_buff.resize(maxLineSize() + 1);
+        line_buff[maxLineSize()] = '\0';
+    }
+
     for (Message* m : messages)
     {
         if (m->level > level())
@@ -256,7 +263,17 @@ void SaverStdOut::flushImpl(const MessageList& messages)
         if ((level() == Level::DEBUG2) && (m->level != Level::DEBUG2))
             (*_out) << "       ";
 
-        (*_out) << m->prefix2 << m->str << "\n";
+        (*_out) << m->prefix2;
+
+        if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
+        {
+            strncpy(&line_buff[0], m->str.c_str(), maxLineSize());
+            (*_out) << (char*) &line_buff[0];
+        }
+        else
+            (*_out) << m->str;
+
+        (*_out) << "\n";
 
         if (++flush_count > 50)
         {
@@ -293,6 +310,13 @@ void SaverFile::flushImpl(const MessageList& messages)
         int flush_count = 0;
         FilterList filters_ = filters();
 
+        vector<char> line_buff;
+        if (maxLineSize() > 0)
+        {
+            line_buff.resize(maxLineSize() + 1);
+            line_buff[maxLineSize()] = '\0';
+        }
+
         for (Message* m : messages)
         {
             if (m->level > level())
@@ -306,8 +330,17 @@ void SaverFile::flushImpl(const MessageList& messages)
                 fputs("       ", f);
 
             fputs(m->prefix2, f);
-            fputs(m->str.c_str(), f);
+
+            if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
+            {
+                strncpy(&line_buff[0], m->str.c_str(), maxLineSize());
+                fputs(&line_buff[0], f);
+            }
+            else
+                fputs(m->str.c_str(), f);
+
             fputs("\n", f);
+
             if (++flush_count > 500)
             {
                 flush_count = 0;

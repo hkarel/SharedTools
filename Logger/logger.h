@@ -209,6 +209,14 @@ public:
     // Выполняет запись буфера сообщений
     void flush(const MessageList&);
 
+    // Устанавливает ограничение на максимальную длину строки сообщения.
+    // Длина строки не ограничивается если значение меньше либо равно 0.
+    // Значение по умолчанию 5000.
+    // TODO: Для utf8 кодировки учесть, чтобы обрезка не происходила посередине
+    //       символов.
+    int  maxLineSize() const {return _maxLineSize;}
+    void setMaxLineSize(int val) {_maxLineSize = val;}
+
     // Возвращает список фильтров
     FilterList filters() const;
 
@@ -231,6 +239,8 @@ protected:
 private:
     string _name;
     Level  _level = {ERROR};
+
+    int _maxLineSize = {5000};
 
     FilterList _filters;
     mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
