@@ -7,6 +7,7 @@ CppApplication {
 
     cpp.cxxFlags: [
         "-std=c++11",
+        "-ggdb3",
         "-Wno-unused-parameter",
     ]
 
