@@ -166,7 +166,7 @@ public:
         // Если в этом месте получили ошибку компиляции - это означает, что размер
         // элемента меньше размера его указателя. Для данного менеджера памяти эта
         // ситуация недопустима.
-        static_assert((sizeof(T) > sizeof(T*)), "Element size should be larger than the size of its pointer");
+        static_assert((sizeof(T) >= sizeof(T*)), "Element size should be larger than the size of its pointer");
     }
     //~MemManager()
     //{
