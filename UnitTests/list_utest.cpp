@@ -615,11 +615,7 @@ struct SortTwoVal
     {
         int operator() (const SortTwoVal* item1, const SortTwoVal* item2, void* = 0) const
         {
-            if (item1->val1 > item2->val1)
-                return 1;
-            else if (item1->val1 < item2->val1)
-                return -1;
-
+            LIST_COMPARE_MULTI_ITEM(item1->val1,  item2->val1)
             return LIST_COMPARE_ITEM(item2->val2, item1->val2);
         }
     };
@@ -647,6 +643,14 @@ void findNotuniqueStructTest()
     v = list.add(); v->val1 = 6; v->val2 = 15;
     v = list.add(); v->val1 = 6; v->val2 = 99;
 
+    list.sort(lst::SortUp);
+    printf("List of SortTwoVal was sorted up:\n");
+    for (SortTwoVal* v : list)
+    {
+        printf("val1: %d  val2: %d\n", v->val1, v->val2);
+    }
+    printf("\n");
+
     list.sort(lst::SortDown);
     printf("List of SortTwoVal was sorted down:\n");
     for (SortTwoVal* v : list)
@@ -661,13 +665,13 @@ int main()
     findTestCheckOverloads();
 
     // Тест поиска по отсортированному списку
-    findTest();
+    //findTest();
 
     // Тест поиска по не отсортированному списку (поиск перебором)
-    bruteFindTest();
+    //bruteFindTest();
 
     // Тест поиска по не уникальному отсортированному списку
-    findNotuniqueTest();
+    //findNotuniqueTest();
 
     // Тест поиска по не уникальному отсортированному списку. Причем сортировка
     // выполнена по двум полям и оба не уникальные.
