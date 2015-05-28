@@ -1,8 +1,7 @@
 /****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
-  В модуле реализован класс-список (List) с доступом к элементам
-  по индексу.
+  В модуле реализован класс-список (List) с доступом к элементам по индексу.
 
   Реализованы механизмы:
     - быстрой сортировки
@@ -18,12 +17,6 @@
 #include <exception>
 #include <string.h>
 #include "break_point.h"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
-//#pragma clang diagnostic push
-//#pragma clang diagnostic ignored "-Wmultichar"
 
 namespace lst
 {
@@ -156,7 +149,7 @@ DECLSPEC_SELECTANY_LST const char* ERR_NOCREATEOBJ =
 #  define CHECK_BORDERS(index)
 #  define CHECK_NOTLESS(index, less_)
 #  define CHECK_INTERNAL_DATA_PTR(D_)
-#endif //NDEBUG
+#endif // NDEBUG
 
 
 
@@ -249,10 +242,10 @@ template<typename T, typename ListT, typename CompareT>
 FindResult find(const T* item, const ListT& list, const CompareT& compare);
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare);
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare);
 
 template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare);
+T* findItem(const T* item, const ListT& list, const CompareT& compare);
 
 //---
 template<typename T, typename ListT, typename CompareT>
@@ -260,12 +253,12 @@ FindResult find(const T* item, const ListT& list, const CompareT& compare,
                 void* extParam);
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare,
-            void* extParam);
-
-template<typename T, typename ListT, typename CompareT>
 FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
                    void* extParam);
+
+template<typename T, typename ListT, typename CompareT>
+T* findItem(const T* item, const ListT& list, const CompareT& compare,
+            void* extParam);
 
 
 /**
@@ -374,7 +367,7 @@ template<typename T> struct CompareItem
   /// виртуальным, то для каждого инстанциируемого класса придется определять
   /// операторы "<", ">", "==", что сводит "на нет" идею класса-стратегии
   /// применительно к сортировке.
-  int operator() (const T* item1, const T* item2, void* extParam = 0) const
+  int operator() (const T* item1, const T* item2, void* /*extParam*/ = 0) const
   {
     return LIST_COMPARE_ITEM(*item1, *item2);
   }
@@ -1697,6 +1690,7 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   setSortState(list.sortState());
 }
 
+// --- Код оставлен в качестве примера ---
 //DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::QuickSort(T** sortList,
 //                                                   int L, int R,
 //                                                   UCompare& u_compare,
@@ -1832,6 +1826,9 @@ DECL_IMPL_LIST(void)::swap(SelfListType& list)
   CustomListType::d = p;
 }
 
+/*
+  Функции временно заблокированы, необходимо тестирование
+*/
 //template<typename T, typename Compare, typename Allocator>
 //void List<T, Compare, Allocator>::shift(ShiftMode shiftMode, int shift)
 //{
@@ -1883,38 +1880,6 @@ DECL_IMPL_LIST(void)::swap(SelfListType& list)
 //  delete [] ListTmp;
 //}
 
-//template<typename ListT, typename CompareT>
-//int beginingFindResult2(const ListT& list,
-//                           const CompareT& compare,
-//                           const FindResult& fr, void* extParam)
-//{
-//  if (fr.success())
-//  {
-//    if (fr.index() == 0)
-//      return 0;
-//
-//    //int low = -1;
-//    int low = 0;
-//    int high = fr.index();
-//    int mid;
-//    intptr_t result;
-//    while (1)
-//    {
-//      mid = (low + high) >> 1;
-//      result = compare(list.item(fr.index()), list.item(mid), extParam);
-//      if (result == 0)
-//        high = mid;
-//      else
-//        low = mid;
-//
-//      //if ((high - low) <= 1)
-//      if ((high - low) < 1)
-//        return high;
-//    }
-//  }
-//  return int(-1);
-//}
-
 
 //------------------------ Implementation Functions -------------------------
 
@@ -1947,16 +1912,16 @@ FindResult find(const T* item, const ListT& list, const CompareT& compare)
 }
 
 template<typename T, typename ListT, typename CompareT>
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare)
+{
+  return find<T, ListT, CompareT>(&item, list, compare);
+}
+
+template<typename T, typename ListT, typename CompareT>
 T* findItem(const T* item, const ListT& list, const CompareT& compare)
 {
   FindResult fr = find<T, ListT, CompareT>(item, list, compare);
   return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
-}
-
-template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare)
-{
-  return find<T, ListT, CompareT>(&item, list, compare);
 }
 
 //---
@@ -1972,18 +1937,18 @@ FindResult find(const T* item, const ListT& list, const CompareT& compare,
 }
 
 template<typename T, typename ListT, typename CompareT>
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
+                   void* extParam)
+{
+  return find<T, ListT, CompareT>(&item, list, compare, extParam);
+}
+
+template<typename T, typename ListT, typename CompareT>
 T* findItem(const T* item, const ListT& list, const CompareT& compare,
             void* extParam)
 {
   FindResult fr = find<T, ListT, CompareT>(item, list, compare, extParam);
   return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
-}
-
-template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
-                   void* extParam)
-{
-  return find<T, ListT, CompareT>(&item, list, compare, extParam);
 }
 
 //---
@@ -2122,7 +2087,4 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
 
 #undef DECLSPEC_SELECTANY_LST
 
-} /*namespace lst*/
-
-#pragma GCC diagnostic pop
-
+} // namespace lst
