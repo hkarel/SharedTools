@@ -160,7 +160,7 @@ private:
 
 private:
     string _name;
-    Mode   _mode;
+    Mode   _mode = {Include};
     bool   _locked = {false};
     bool   _filteringErrors = {false};
 };
