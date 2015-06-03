@@ -33,17 +33,9 @@ public:
     // оператор присваивания.
     simple_ptr(self_t&) = delete;
     simple_ptr(const self_t&) = delete;
-    //simple_ptr(self_t& p) {
-    //    _ptr = 0;
-    //    assign(p);
-    //}
 
     self_t& operator= (self_t&) = delete;
     self_t& operator= (const self_t&) = delete;
-    //self_t& operator= (self_t& p) {
-    //    assign(p);
-    //    return *this;
-    //}
 
     simple_ptr(self_t&& p) {
         _ptr = 0;
@@ -54,42 +46,6 @@ public:
         assign(p);
         return *this;
     }
-
-
-    // Допускается использование копирующего конструктора для объектов, только
-    // если аллокаторы идентичны.
-    // Допускается запись вида:
-    // simple_ptr<base-class> base_ptr;
-    // simple_ptr<derived-class> derived_ptr;
-    // base_ptr = derived_ptr - Верно,
-    // simple_ptr<base-class> base_ptr2(derived_ptr) - Верно,
-    // при условии, что для base-class и derived-class используется один и тот же
-    // аллокатор.
-    // Не допускается запись вида:
-    // simple_ptr<int, allocator_ptr> p1;
-    // simple_ptr<int, allocator_array_ptr> p2;
-    // simple_ptr<int, allocator_array_ptr> p3(p1) - Ошибка
-    // Так же не допускаются аналогичные преобразования для оператора operator= ()
-    // p2 = p1 - Ошибка
-    // p1 = p2 - Ошибка
-    // (p1) p2 - Ошибка
-    // (p2) p1 - Ошибка
-    //
-    // По аналогии с unique_ptr запрещаем конструктор копирования и
-    // оператор присваивания.
-    //
-    //template<typename otherT, template<typename> class otherA>
-    //simple_ptr(simple_ptr<otherT, otherA> & p) {
-    //    _ptr = 0;
-    //    assign(p);
-    //}
-
-    //// См. комментарии к simple_ptr(simple_ptr<otherT, Allocator> & sptr)
-    //template<typename otherT, template<typename> class otherA>
-    //self_t& operator= (simple_ptr<otherT, otherA> & p) {
-    //    assign(p);
-    //    return *this;
-    //}
 
     template<typename otherT, template<typename> class otherA>
     simple_ptr(simple_ptr<otherT, otherA> && p) {
