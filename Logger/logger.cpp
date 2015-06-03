@@ -117,9 +117,11 @@ void prefixFormatter2(Message& message)
 
 //-------------------------------- Filter -----------------------------------
 
-Filter::Filter(const string& name)
-    : _name(name)
-{}
+void Filter::setName(const string& name)
+{
+    if (locked()) return;
+    _name = name;
+}
 
 void Filter::setMode(Mode val)
 {
@@ -147,10 +149,6 @@ int Filter::check(const Message& m) const
 
 //------------------------------ FilterModule -------------------------------
 
-FilterModule::FilterModule(const string& name)
-    : Filter(name)
-{}
-
 void FilterModule::addModule(const string& name)
 {
     if (locked()) return;
@@ -165,6 +163,38 @@ bool FilterModule::checkImpl(const Message& m) const
 
     bool res  = (_modules.find(m.module) != _modules.end());
     return (mode() == Exclude) ? !res : res;
+}
+
+//----------------------------- FilterLevel ---------------------------------
+
+void FilterLevel::setLevel(Level val)
+{
+    if (locked()) return;
+    _level = val;
+}
+
+bool FilterLevel::checkImpl(const Message& m) const
+{
+    // Не фильтруем сообщения у которых не определено имя модуля
+    if (m.module.empty())
+        return true;
+
+    if (_level == NONE)
+        return true;
+
+    if (mode() == Include)
+    {
+        if (modules().find(m.module) == modules().end())
+            return true;
+
+        return (m.level <= _level);
+    }
+
+    // Для mode() == Exclude
+    if (modules().find(m.module) != modules().end())
+        return true;
+
+    return (m.level <= _level);
 }
 
 //--------------------------------- Saver -----------------------------------

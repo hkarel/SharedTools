@@ -122,15 +122,16 @@ public:
     // Режим работы фильта: включающий/исключающий.
     enum Mode {Include, Exclude};
 
-    Filter(const string& name);
+    Filter() {}
     virtual ~Filter() {}
 
     // Имя фильтра
     const string& name() const {return _name;}
+    void setName(const string&);
 
     // Возвращает режим в котором работает фильтр: включающий/исключающий.
     Mode mode() const {return _mode;}
-    void setMode(Mode val);
+    void setMode(Mode);
 
     // Определяет будут ли сообщения об ошибках фильтроваться так же, как и все
     // остальные сообщения. По умолчанию сообщения об ошибках не фильтруются.
@@ -150,7 +151,6 @@ public:
     void lock() {_locked = true;}
 
 private:
-    Filter() = delete;
     Filter(Filter&&) = default;
     Filter(const Filter&) = delete;
     Filter& operator= (Filter&&) = delete;
@@ -171,10 +171,12 @@ typedef clife_ptr<Filter> FilterLPtr;
 /**
   Фильтр по именам модулей
 */
-class FilterModule : public Filter
+class FilterModule : public virtual Filter
 {
 public:
-    FilterModule(const string& name);
+    const set<string>& modules() const {return _modules;}
+
+    // Добавляет модули на которые будет распространяться действие этого фильтра
     void addModule(const string& name);
 
 private:
@@ -182,6 +184,22 @@ private:
     set<string> _modules;
 };
 typedef clife_ptr<FilterModule> FilterModuleLPtr;
+
+
+/**
+  Фильтр по уровню логирования
+*/
+class FilterLevel : public FilterModule
+{
+public:
+    Level leve() const {return _level;}
+    void setLevel(Level);
+
+private:
+    bool checkImpl(const Message&) const override;
+    Level _level = {NONE};
+};
+typedef clife_ptr<FilterLevel> FilterLevelPtr;
 
 
 /**
