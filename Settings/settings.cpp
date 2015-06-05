@@ -33,18 +33,18 @@ void settingsWrite(const Settings& s, const std::string& fileName)
     }
 }
 
-bool Settings::read(const std::string& fileName)
+bool Settings::read(const std::string& filePath)
 {
-    if (fileName.empty())
+    if (filePath.empty())
     {
         log_error_m << "Config file name is empty";
         return false;
     }
 
-    std::ifstream file(fileName, std::ifstream::in);
+    std::ifstream file(filePath, std::ifstream::in);
     if (!file.is_open())
     {
-        log_error_m << "Can not open config file: " << fileName;
+        log_error_m << "Can not open config file: " << filePath;
         return false;
     }
 
@@ -59,7 +59,7 @@ bool Settings::read(const std::string& fileName)
 
         if (!file.good())
         {
-            log_error_m << "Can not read from config file: " << fileName;
+            log_error_m << "Can not read from config file: " << filePath;
             return false;
         }
 
@@ -84,7 +84,7 @@ bool Settings::read(const std::string& fileName)
 
     { //For SpinLocker
         SpinLocker locker(_settingsLock); (void) locker;
-        if (&_fileName != &fileName) _fileName = fileName;
+        if (&_filePath != &filePath) _filePath = filePath;
     }
 
     setValues(nv);
@@ -93,13 +93,13 @@ bool Settings::read(const std::string& fileName)
 
 bool Settings::reRead()
 {
-    return read(_fileName);
+    return read(_filePath);
 }
 
-std::string Settings::fileName() const
+std::string Settings::filePath() const
 {
     SpinLocker locker(_settingsLock); (void) locker;
-    return _fileName;
+    return _filePath;
 }
 
 std::vector<std::string> Settings::names() const

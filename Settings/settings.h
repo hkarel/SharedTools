@@ -30,8 +30,8 @@ public:
 
     Settings() {}
 
-    // Читает файл конфигурации.
-    bool read(const std::string& fileName);
+    // Читает файл конфигурации. filePath - полное имя файла.
+    bool read(const std::string& filePath);
 
     // Перечитывает файл конфигурации
     bool reRead();
@@ -64,7 +64,7 @@ public:
               bool logWarnings = true) const;
 
     // Возвращает полное имя файла конфигурации
-    std::string fileName() const;
+    std::string filePath() const;
 
     // Возврашает TRUE если список элементов пуст
     bool empty() const;
@@ -89,7 +89,7 @@ private:
     Settings& operator= (Settings&&) = delete;
     Settings& operator= (const Settings&) = delete;
 
-    std::string _fileName;
+    std::string _filePath;
     std::map<std::string, std::string> _settings;
     mutable std::atomic_flag  _settingsLock = ATOMIC_FLAG_INIT;
 };
