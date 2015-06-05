@@ -333,7 +333,7 @@ struct Line
     Line& operator= (const Line&) = delete;
 
     // Сервисная функция, выполняет проверку уровня логирования и определяет
-    // нужно ли добавлять сообщение в логер.
+    // нужно ли добавлять сообщение в логгер.
     inline bool toLogger() const;
 
     struct Impl
