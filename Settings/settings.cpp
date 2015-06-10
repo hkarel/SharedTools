@@ -1,7 +1,6 @@
 #include <fstream>
 #include "Logger/logger.h"
 #include "utils.h"
-#include "simple_ptr.h"
 #include "spin_locker.h"
 #include "settings.h"
 

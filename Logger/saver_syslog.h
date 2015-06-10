@@ -12,13 +12,9 @@ using namespace std;
 */
 class SaverSyslog : public Saver
 {
-
 public:
     SaverSyslog(const char* ident, Level level = ERROR);
     void flushImpl(const MessageList&) override;
-
-protected:
-    //ostream* _out;
 };
 
 } // namespace lblog
