@@ -31,8 +31,15 @@
       эффективность использования выделенной памяти будет не так высока.
 */
 
-
 #pragma once
+
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
 
 #include <atomic>
 #include "break_point.h"
@@ -44,7 +51,6 @@
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
-
 
 
 /**
@@ -123,8 +129,8 @@ struct MemLockSpinQt // spin lock
 struct MemLockSpin // spin lock
 {
     MemLockSpin() {}
-    void lock()   noexcept {while (atomic.test_and_set(std::memory_order_acquire));}
-    void unlock() noexcept {atomic.clear(std::memory_order_release);}
+    void lock()   NOEXCEPT {while (atomic.test_and_set(std::memory_order_acquire));}
+    void unlock() NOEXCEPT {atomic.clear(std::memory_order_release);}
     std::atomic_flag atomic = ATOMIC_FLAG_INIT;
 };
 

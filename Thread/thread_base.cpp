@@ -14,12 +14,12 @@ ThreadBase::ThreadBase()
     //_waitThreadStop = true;
 }
 
-bool ThreadBase::threadStop() const noexcept
+bool ThreadBase::threadStop() const NOEXCEPT
 {
     return _threadStop;
 }
 
-bool ThreadBase::threadRun() const noexcept
+bool ThreadBase::threadRun() const NOEXCEPT
 {
 //    thread::native_handle_type thr = nativeHandle();
 //    if (thr != 0)
@@ -32,7 +32,7 @@ bool ThreadBase::threadRun() const noexcept
     return _threadRun;
 }
 
-thread::native_handle_type ThreadBase::nativeHandle() noexcept
+thread::native_handle_type ThreadBase::nativeHandle() NOEXCEPT
 {
     return _thread.native_handle();
 }

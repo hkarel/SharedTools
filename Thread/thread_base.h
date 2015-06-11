@@ -1,5 +1,13 @@
 #pragma once
 
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 #include <atomic>
 #include <thread>
 #include <mutex>
@@ -25,23 +33,23 @@ public:
     void stop(bool wait = true);
 
     // Возвращает состояние потока остановлен/запущен
-    //bool joinable() const noexcept {return _thread.joinable();}
+    //bool joinable() const NOEXCEPT {return _thread.joinable();}
 
     // Возвращает TRUE если была вызвана функция stop(), сбрасывается в FALSE
     // после вызова start() или после окончания вызова функции обработчика потока.
     // Эта функция в основном используется в классах наследниках, в методе run(),
     // для проверки необходимости завершения работы потока.
-    bool threadStop() const noexcept;
+    bool threadStop() const NOEXCEPT;
 
     // Возвращает TRUE сразу после того как была вызвана функция обработчика
     // потока, после выхода из функции обработчика будет возвращаться FALSE.
     // Эта функция в основном используется в тех случаях, когда была вызвана
     // функция stop() в асинхронном режиме и вызывающей стороне нужно убедиться
     // что поток уже остановил свою работу.
-    bool threadRun() const noexcept;
+    bool threadRun() const NOEXCEPT;
 
     // Возвращает нативный идентификатор потока
-    thread::native_handle_type nativeHandle() noexcept;
+    thread::native_handle_type nativeHandle() NOEXCEPT;
 
 protected:
     virtual void startImpl();

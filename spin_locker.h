@@ -9,14 +9,23 @@
 ****************************************************************************/
 
 #pragma once
+
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 #include <atomic>
 
 struct SpinLocker
 {
-    explicit SpinLocker(std::atomic_flag& locker) noexcept : locker(locker) {
+    explicit SpinLocker(std::atomic_flag& locker) NOEXCEPT : locker(locker) {
         while (this->locker.test_and_set(std::memory_order_acquire)) {}
     }
-    ~SpinLocker() noexcept {
+    ~SpinLocker() NOEXCEPT {
         locker.clear(std::memory_order_release);
     }
     std::atomic_flag& locker;

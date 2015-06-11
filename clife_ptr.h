@@ -8,6 +8,14 @@
 
 #pragma  once
 
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 #include <atomic>
 #include <assert.h>
 
@@ -98,11 +106,11 @@ public:
     void release() {if (_ptr) {_ptr->release(); _ptr = 0;}}
     void reset()   {if (_ptr) {_ptr->release(); _ptr = 0;}}
 
-    T*  get() const noexcept {return _ptr;}
+    T*  get() const NOEXCEPT {return _ptr;}
 
-    T* operator-> () const noexcept {return  _ptr;}
-    T& operator*  () const noexcept {return *_ptr;}
-    operator T*   () const noexcept {return  _ptr;}
+    T* operator-> () const NOEXCEPT {return  _ptr;}
+    T& operator*  () const NOEXCEPT {return *_ptr;}
+    operator T*   () const NOEXCEPT {return  _ptr;}
 
 
     // Допускается использовать только для инициализации
@@ -116,15 +124,15 @@ public:
         _ptr = p;
     }
 
-    T* detach() noexcept {
+    T* detach() NOEXCEPT {
         T* p = _ptr; _ptr = 0; return p;
     }
 
-    bool empty()    const noexcept {return (_ptr == 0);}
-    bool is_empty() const noexcept {return (_ptr == 0);}
+    bool empty()    const NOEXCEPT {return (_ptr == 0);}
+    bool is_empty() const NOEXCEPT {return (_ptr == 0);}
 
-    bool operator! () const noexcept {return (_ptr == 0);}
-    operator bool  () const noexcept {return (_ptr != 0);}
+    bool operator! () const NOEXCEPT {return (_ptr == 0);}
+    operator bool  () const NOEXCEPT {return (_ptr != 0);}
 
     // Фиктивная функция, введена для обеспечения возможности компиляции
     // шаблонных функций использующих как clife_ptr, так и container_ptr.

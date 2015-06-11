@@ -37,6 +37,14 @@
 
 #pragma once
 
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 #include <atomic>
 #include <mutex>
 #include <vector>
@@ -44,7 +52,6 @@
 #include "Closure/closure3.h"
 #include "spin_locker.h"
 #include "break_point.h"
-
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
@@ -109,8 +116,8 @@ private:
     struct ResetSlotIndex
     {
         std::atomic_int* p;
-        ResetSlotIndex(std::atomic_int* p) noexcept : p(p) {}
-        ~ResetSlotIndex() noexcept {(*p) = -1;}
+        ResetSlotIndex(std::atomic_int* p) NOEXCEPT : p(p) {}
+        ~ResetSlotIndex() NOEXCEPT {(*p) = -1;}
     };
 
     template<typename Res>

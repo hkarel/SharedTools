@@ -26,6 +26,14 @@
 
 #pragma once
 
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 
 // Обобщенная декларация
 template <typename, typename... > class Closure;
@@ -53,18 +61,18 @@ protected:
     void* proxy = {0};
 
 public:
-    bool equal(const ClosureBase& c) const noexcept
+    bool equal(const ClosureBase& c) const NOEXCEPT
     {
         return (self == c.self) && (proxy == c.proxy);
     }
 };
 
-inline bool operator== (const ClosureBase& c1, const ClosureBase& c2) noexcept
+inline bool operator== (const ClosureBase& c1, const ClosureBase& c2) NOEXCEPT
 {
     return c1.equal(c2);
 }
 
-inline bool operator!= (const ClosureBase& c1, const ClosureBase& c2) noexcept
+inline bool operator!= (const ClosureBase& c1, const ClosureBase& c2) NOEXCEPT
 {
     return !c1.equal(c2);
 }
@@ -100,21 +108,21 @@ public:
                : ( (proxy) ? ((proxy_f)proxy)(args...)       : R() );
     }
 
-    bool empty() const noexcept {return (proxy == 0);}
+    bool empty() const NOEXCEPT {return (proxy == 0);}
 
-    explicit operator bool () const noexcept {return !empty();}
-    bool operator! () const noexcept {return empty();}
+    explicit operator bool () const NOEXCEPT {return !empty();}
+    bool operator! () const NOEXCEPT {return empty();}
 
     void reset(const Closure& c = Closure()) {*this = c;}
 
 private:
-    Closure(void *self, proxy_m proxy) noexcept
+    Closure(void *self, proxy_m proxy) NOEXCEPT
     {
         this->self = self;
         this->proxy = (void*)proxy;
     }
 
-    Closure(proxy_f proxy) noexcept
+    Closure(proxy_f proxy) NOEXCEPT
     {
         this->self = 0;
         this->proxy = (void*)proxy;
@@ -156,7 +164,7 @@ namespace closure
         //typedef Closure<R (Args...)> ClosureType;
 
         template <R (B::*mem_func)(Args...), typename D>
-        Closure<R (Args...)> Init(D *d) noexcept
+        Closure<R (Args...)> Init(D *d) NOEXCEPT
         {
             // Проверяем корректность преобразования типа. Допускается преобразование
             // только от классов-наследников к базовым классам.
@@ -169,7 +177,7 @@ namespace closure
     struct CreateHelperConst
     {
         template <R (B::*mem_func)(Args...) const, typename D>
-        Closure<R (Args...)> Init(D *d) noexcept
+        Closure<R (Args...)> Init(D *d) NOEXCEPT
         {
             B* b = d;
             return Closure<R (Args...)>(b, ProxyFunc<Args...>::template Func<B, R, mem_func>);

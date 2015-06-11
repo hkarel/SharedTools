@@ -14,6 +14,14 @@
 
 #pragma once
 
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 #include <exception>
 #include <string.h>
 #include "break_point.h"
@@ -109,7 +117,7 @@ public:
     strcat(_msg, msg);
     //memcpy(msg, msg, strlen(msg));
   }
-  virtual const char* what() const noexcept {return _msg;}
+  virtual const char* what() const NOEXCEPT {return _msg;}
 };
 
 DECLSPEC_SELECTANY_LST const char* ERR_NOCREATEOBJ =
@@ -181,12 +189,12 @@ class FindResult
 {
 public:
   FindResult() : _index(-1), _success(false), _bruteForce(false) {}
-  bool success()    const noexcept {return  _success;}
-  bool failed()     const noexcept {return !_success;}
-  int  index()      const noexcept {return _index;}
-  bool bruteForce() const noexcept {return _bruteForce;}
+  bool success()    const NOEXCEPT {return  _success;}
+  bool failed()     const NOEXCEPT {return !_success;}
+  int  index()      const NOEXCEPT {return _index;}
+  bool bruteForce() const NOEXCEPT {return _bruteForce;}
 
-  explicit operator bool() const noexcept {return _success;}
+  explicit operator bool() const NOEXCEPT {return _success;}
 
 private:
   int      _index;

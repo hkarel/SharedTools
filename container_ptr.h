@@ -7,6 +7,14 @@
 
 #pragma once
 
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 #include <new>
 #include <atomic>
 #include <type_traits>
@@ -94,11 +102,11 @@ struct counter_ptr_t
     //counter_ptr_t() : ptr(0), count(0), fake(0) {}
     //counter_ptr_t() {init();}
     //void init() {count = 1, fake = 0, join = 0, ptr = 0;}
-    counter_ptr_t() noexcept
+    counter_ptr_t() NOEXCEPT
         : count(1), fake(0), join(0), reserved(0), ptr(0)
     {}
 
-    ~counter_ptr_t() noexcept = default;
+    ~counter_ptr_t() NOEXCEPT = default;
 
     counter_ptr_t(counter_ptr_t&&) = delete;
     counter_ptr_t(const counter_ptr_t&) = delete;
@@ -285,11 +293,11 @@ public:
     //    STATIC_CHECK_CPTR(1, No_implement)
     //}
 
-    T* get() const noexcept {return get(_counter);}
+    T* get() const NOEXCEPT {return get(_counter);}
 
-    T* operator-> () const noexcept {return  get();}
-    T& operator*  () const noexcept {return *get();}
-    operator T*   () const noexcept {return  get();}
+    T* operator-> () const NOEXCEPT {return  get();}
+    T& operator*  () const NOEXCEPT {return *get();}
+    operator T*   () const NOEXCEPT {return  get();}
 
     // Функция reset() введена вместо функции release(), это сделано
     // для того, чтобы осуществить однотипное поведение одноименных
@@ -298,14 +306,14 @@ public:
     //             дополнительный расход ресурсов на создание объекта counter_ptr_t.
     void reset() {assign(self_t(/*0*/));}
 
-    bool empty() const noexcept {return (get() == 0);}
+    bool empty() const NOEXCEPT {return (get() == 0);}
 
-    explicit operator bool () const noexcept {return (get() != 0);}
-    bool operator! () const noexcept {return (get() == 0);}
+    explicit operator bool () const NOEXCEPT {return (get() != 0);}
+    bool operator! () const NOEXCEPT {return (get() == 0);}
 
     // Функции совместимости с Qt
-    T* data() const noexcept {return get();}
-    bool isNull() const noexcept {return empty();}
+    T* data() const NOEXCEPT {return get();}
+    bool isNull() const NOEXCEPT {return empty();}
 
     // Вспомогательные функции.
     static T* create() {return allocator_t::create();}
@@ -371,7 +379,7 @@ private:
             }
     }
 
-    static T* get(counter_ptr_t* counter) noexcept {
+    static T* get(counter_ptr_t* counter) NOEXCEPT {
         return static_cast<T*>(counter ? counter->__ptr() : 0);
     }
 

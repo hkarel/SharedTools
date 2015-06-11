@@ -8,6 +8,14 @@
 
 #pragma once
 
+#ifndef NOEXCEPT
+#  ifdef _MSC_VER
+#    define NOEXCEPT
+#  else
+#    define NOEXCEPT noexcept
+#  endif
+#endif
+
 #include <sys/time.h>
 #include <iostream>
 #include <sstream>
@@ -428,10 +436,10 @@ public:
     void removeSaverStdErr();
 
     // Включает вывод информации в логи (по умолчанию включено)
-    void on() noexcept {_on = true;}
+    void on() NOEXCEPT {_on = true;}
 
     // Позволяет верменно отключить вывод данных в логи
-    void off() noexcept {_on = false;}
+    void off() NOEXCEPT {_on = false;}
 
     // Определяет интерывал записи сообщений для сэйверов.
     // Измеряется в миллисекундах, значение по умолчанию 300 ms.
