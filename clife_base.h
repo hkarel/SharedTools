@@ -19,11 +19,12 @@ struct clife_base
     // Если же при создании объекта clife_base не планируется его немедленная
     // передача во владение clife_ptr<>(), то целесообразно счетчик жизни выстав-
     // лять в 1. В этом случае в коде будет меньше вызовов метода add_ref().
-    clife_base(bool add_ref = false) : clife_count(add_ref ? 1 : 0) {}
+    clife_base() : clife_count(0) {}
+    clife_base(bool add_ref) : clife_count(add_ref ? 1 : 0) {}
     virtual ~clife_base() = default;
 
     inline void add_ref() const {++clife_count;}
     inline void release() const {if (--clife_count == 0) delete this;}
 
-    mutable  std::atomic_long clife_count;
+    mutable std::atomic<uint32_t> clife_count;
 };

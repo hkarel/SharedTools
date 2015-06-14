@@ -54,9 +54,10 @@ const bool fake_ptr = true;
 */
 struct counter_ptr_t
 {
-    std::atomic_int count;
+    std::atomic<uint32_t> count;
+
     void add_ref() {++count;}
-    long release() {return --count;}
+    uint32_t release() {return --count;}
 
     // Флаг fake - определяет состояние ложного счетчика ссылок.
     // Если fake == true, то при уничтожении counter_ptr - объект владения
