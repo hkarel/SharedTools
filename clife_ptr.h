@@ -139,18 +139,23 @@ public:
     static self_t create_join_ptr() {return self_t();}
 
 private:
+    // Для использования в обычных операторах присваивания и копирования.
     template<typename otherT>
-    void assign(const clife_ptr<otherT> & p, bool rvalue = false) {
+    void assign(const clife_ptr<otherT> & p) {
         if (_ptr) _ptr->release();
         // Проверяем корректность преобразования типа. Допускается преобразование
         // только от классов-наследников к базовым классам.
         _ptr = p.get();
-        if (!rvalue) {
-            if (_ptr) _ptr->add_ref();
-        }
-        else {
-            const_cast<clife_ptr<otherT> & >(p)._ptr = 0;
-        }
+        if (_ptr)
+            _ptr->add_ref();
+    }
+
+    // Для использования в rvalue-операторах присваивания и копирования.
+    template<typename otherT>
+    void assign(clife_ptr<otherT> & p, bool /*rvalue*/) {
+        if (_ptr) _ptr->release();
+        _ptr = p.get();
+        p._ptr = 0;
     }
 
 private:
