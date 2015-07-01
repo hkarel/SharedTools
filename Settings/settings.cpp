@@ -5,12 +5,12 @@
 #include "settings.h"
 
 
-#define log_error_m   logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_warn_m    logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_info_m    logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_verbose_m logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_debug_m   logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_debug2_m  logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
+#define log_error_m   lblog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
+#define log_warn_m    lblog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
+#define log_info_m    lblog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
+#define log_verbose_m lblog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
+#define log_debug_m   lblog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
+#define log_debug2_m  lblog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
 
 
 void settingsWrite(const Settings& s, const std::string& fileName)

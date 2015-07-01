@@ -26,6 +26,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <string>
 
 #include "Thread/thread_base.h"
 #include "_list.h"
@@ -503,7 +504,11 @@ private:
     template<typename T, int> friend T& ::safe_singleton();
 };
 
-inline Logger& logger() {return ::safe_singleton<Logger>();}
+// Реализация функции logger() должна быть выполнена в модуле main.cpp, это
+// требование связано с особенностью сборки и работы so-модулей проекта LBcore.
+// Если это требование не выполнять, то каждый so-модуль в LBcore будет иметь
+// собственный экземпляр logger(), т.е. единого логгера в системе не будет.
+Logger& logger(); // {return ::safe_singleton<Logger>();}
 
 
 //---------------------------- Line operators -------------------------------
@@ -531,11 +536,9 @@ Line operator<< (Line&& line, const T& t)
     return std::move(line);
 }
 
-
-
 } // namespace lblog
 
-inline lblog::Logger& logger() {return lblog::logger();}
+//inline lblog::Logger& logger() {return lblog::logger();}
 
 
 //#if defined(_MSC_VER)
@@ -545,9 +548,9 @@ inline lblog::Logger& logger() {return lblog::logger();}
 //#endif
 #define LOGGER_FUNC_NAME  __func__
 
-#define log_error   logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_warn    logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_info    logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_verbose logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_debug   logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_debug2  logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_error   lblog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_warn    lblog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_info    lblog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_verbose lblog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_debug   lblog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_debug2  lblog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__)
