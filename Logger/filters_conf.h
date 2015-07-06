@@ -11,7 +11,7 @@
 #include <map>
 #include "logger.h"
 
-namespace lblog
+namespace alog
 {
 using namespace std;
 
@@ -42,4 +42,4 @@ void configParser(const string& filePath, Logger&);
 
 
 
-} // namespace lblog
+} // namespace alog

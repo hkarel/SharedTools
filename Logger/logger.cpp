@@ -8,7 +8,7 @@
 #include "logger.h"
 
 
-namespace lblog
+namespace alog
 {
 using namespace std;
 
@@ -753,6 +753,6 @@ void Logger::redefineLevel()
 //    return _level;
 //}
 
-} // namespace lblog
+} // namespace alog
 
 

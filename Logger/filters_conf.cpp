@@ -1,6 +1,6 @@
 #include "filters_conf.h"
 
-namespace lblog
+namespace alog
 {
 
 void configParser(const string& filePath, Logger& logger)
@@ -12,4 +12,4 @@ void configParser(const string& filePath, Logger& logger)
 
 
 
-} // namespace lblog
+} // namespace alog

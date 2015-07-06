@@ -3,7 +3,7 @@
 #include "logger.h"
 
 
-namespace lblog
+namespace alog
 {
 using namespace std;
 
@@ -17,4 +17,4 @@ public:
     void flushImpl(const MessageList&) override;
 };
 
-} // namespace lblog
+} // namespace alog

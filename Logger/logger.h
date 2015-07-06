@@ -36,7 +36,7 @@
 #include "safe_singleton.h"
 
 
-namespace lblog
+namespace alog // Акроним от "async logger".
 {
 using namespace std;
 
@@ -536,9 +536,9 @@ Line operator<< (Line&& line, const T& t)
     return std::move(line);
 }
 
-} // namespace lblog
+} // namespace alog
 
-//inline lblog::Logger& logger() {return lblog::logger();}
+//inline alog::Logger& logger() {return alog::logger();}
 
 
 //#if defined(_MSC_VER)
@@ -548,9 +548,9 @@ Line operator<< (Line&& line, const T& t)
 //#endif
 #define LOGGER_FUNC_NAME  __func__
 
-#define log_error   lblog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_warn    lblog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_info    lblog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_verbose lblog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_debug   lblog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_debug2  lblog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_error   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_warn    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_info    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_verbose alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_debug   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_debug2  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__)

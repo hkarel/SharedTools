@@ -1,7 +1,7 @@
 #include <syslog.h>
 #include "saver_syslog.h"
 
-namespace lblog
+namespace alog
 {
 
 SaverSyslog::SaverSyslog(const char* ident, Level level)
@@ -41,4 +41,4 @@ void SaverSyslog::flushImpl(const MessageList& messages)
     }
 }
 
-} // namespace lblog
+} // namespace alog
