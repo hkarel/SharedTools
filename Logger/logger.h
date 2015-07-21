@@ -196,7 +196,8 @@ typedef clife_ptr<FilterModule> FilterModuleLPtr;
 
 
 /**
-  Фильтр по уровню логирования
+  Фильтр по уровню логирования. Действие фильтра распространяется только
+  на именованные модули.
 */
 class FilterLevel : public FilterModule
 {
@@ -208,7 +209,7 @@ private:
     bool checkImpl(const Message&) const override;
     Level _level = {NONE};
 };
-typedef clife_ptr<FilterLevel> FilterLevelPtr;
+typedef clife_ptr<FilterLevel> FilterLevelLPtr;
 
 
 /**
