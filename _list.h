@@ -1965,11 +1965,15 @@ FindResult firstFindResultL(const ListT& list, const LCompare& compare,
                             const FindResult& fr)
 {
   if (fr.success())
-    for (int i = fr.index(); i >= 0; --i)
+  {
+    int i = fr.index();
+    for (; i >= 0; --i)
     {
       if (compare(&list.at(i)) != 0)
-        return FindResult(true, BRUTE_FORCE, i + 1);
+        break;
     }
+    return FindResult(true, BRUTE_FORCE, i + 1);
+  }
   return fr;
 }
 
@@ -1978,11 +1982,15 @@ FindResult lastFindResultL(const ListT& list, const LCompare& compare,
                            const FindResult& fr)
 {
   if (fr.success())
-    for (int i = fr.index(); i < list.count(); ++i)
+  {
+    int i = fr.index();
+    for (; i < list.count(); ++i)
     {
       if (compare(&list.at(i)) != 0)
-        return FindResult(true, BRUTE_FORCE, i - 1);
+        break;
     }
+    return FindResult(true, BRUTE_FORCE, i - 1);
+  }
   return fr;
 }
 

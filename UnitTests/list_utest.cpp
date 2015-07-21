@@ -374,7 +374,7 @@ void findTestCheckOverloads()
 
 }
 
-void findNotuniqueTest(const lst::List<int>& list, int i0, int i1, int i2, int i21, int i22, int i4, int i5, int i7)
+void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int i21, int i22, int i4, int i51, int i52, int i7)
 {
     lst::FindResult fr;
     lst::FindResult fr_first;
@@ -426,29 +426,29 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i1, int i2, int i
     i = 1;
     fr_first = lst::firstFindResultL(list, lambda_find, fr);
     index = fr_first.index();
-    printf("firstFindResult(L) : 1 : %s : %s (------ index: %i)\n", fres(index == i1), fsucc(index == i1), index); fsucc_check(index == i1);
+    printf("firstFindResult(L) : 1 : %s : %s (------ index: %i)\n", fres(index == i11), fsucc(index == i11), index); fsucc_check(index == i11);
 
     fr_last = lst::lastFindResultL(list, lambda_find, fr);
     index = fr_last.index();
-    printf("lastFindResult (L) : 1 : %s : %s (------ index: %i)\n", fres(index == i1), fsucc(index == i1), index); fsucc_check(index == i1);
+    printf("lastFindResult (L) : 1 : %s : %s (------ index: %i)\n", fres(index == i12), fsucc(index == i12), index); fsucc_check(index == i12);
 
     // Тест для compare с двумя параметрами
     fr_first = lst::firstFindResult(list, compareFunc2, fr);
     index = fr_first.index();
-    printf("firstFindResult(2) : 1 : %s : %s (------ index: %i)\n", fres(index == i1), fsucc(index == i1), index); fsucc_check(index == i1);
+    printf("firstFindResult(2) : 1 : %s : %s (------ index: %i)\n", fres(index == i11), fsucc(index == i11), index); fsucc_check(index == i11);
 
     fr_last = lst::lastFindResult(list, compareFunc2, fr);
     index = fr_last.index();
-    printf("lastFindResult (2) : 1 : %s : %s (------ index: %i)\n", fres(index == i1), fsucc(index == i1), index); fsucc_check(index == i1);
+    printf("lastFindResult (2) : 1 : %s : %s (------ index: %i)\n", fres(index == i12), fsucc(index == i12), index); fsucc_check(index == i12);
 
     // Тест для compare с тремя параметрами
     fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
     index = fr_first.index();
-    printf("firstFindResult(3) : 1 : %s : %s (------ index: %i)\n", fres(index == i1), fsucc(index == i1), index); fsucc_check(index == i1);
+    printf("firstFindResult(3) : 1 : %s : %s (------ index: %i)\n", fres(index == i11), fsucc(index == i11), index); fsucc_check(index == i11);
 
     fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
     index = fr_last.index();
-    printf("lastFindResult (3) : 1 : %s : %s (------ index: %i)\n", fres(index == i1), fsucc(index == i1), index); fsucc_check(index == i1);
+    printf("lastFindResult (3) : 1 : %s : %s (------ index: %i)\n", fres(index == i12), fsucc(index == i12), index); fsucc_check(index == i12);
 
     // === Поиск числа 2 ===
     fr = list.findRef(2);
@@ -522,29 +522,29 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i1, int i2, int i
     i = 5;
     fr_first = lst::firstFindResultL(list, lambda_find, fr);
     index = fr_first.index();
-    printf("firstFindResult(L) : 5 : %s : %s (------ index: %i)\n", fres(index == i5), fsucc(index == i5), index); fsucc_check(index == i5);
+    printf("firstFindResult(L) : 5 : %s : %s (------ index: %i)\n", fres(index == i51), fsucc(index == i51), index); fsucc_check(index == i51);
 
     fr_last = lst::lastFindResultL(list, lambda_find, fr);
     index = fr_last.index();
-    printf("lastFindResult (L) : 5 : %s : %s (------ index: %i)\n", fres(index == i5), fsucc(index == i5), index); fsucc_check(index == i5);
+    printf("lastFindResult (L) : 5 : %s : %s (------ index: %i)\n", fres(index == i52), fsucc(index == i52), index); fsucc_check(index == i52);
 
     // Тест для compare с двумя параметрами
     fr_first = lst::firstFindResult(list, compareFunc2, fr);
     index = fr_first.index();
-    printf("firstFindResult(2) : 5 : %s : %s (------ index: %i)\n", fres(index == i5), fsucc(index == i5), index); fsucc_check(index == i5);
+    printf("firstFindResult(2) : 5 : %s : %s (------ index: %i)\n", fres(index == i51), fsucc(index == i51), index); fsucc_check(index == i51);
 
     fr_last = lst::lastFindResult(list, compareFunc2, fr);
     index = fr_last.index();
-    printf("lastFindResult (2) : 5 : %s : %s (------ index: %i)\n", fres(index == i5), fsucc(index == i5), index); fsucc_check(index == i5);
+    printf("lastFindResult (2) : 5 : %s : %s (------ index: %i)\n", fres(index == i52), fsucc(index == i52), index); fsucc_check(index == i52);
 
     // Тест для compare с тремя параметрами
     fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
     index = fr_first.index();
-    printf("firstFindResult(3) : 5 : %s : %s (------ index: %i)\n", fres(index == i5), fsucc(index == i5), index); fsucc_check(index == i5);
+    printf("firstFindResult(3) : 5 : %s : %s (------ index: %i)\n", fres(index == i51), fsucc(index == i51), index); fsucc_check(index == i51);
 
     fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
     index = fr_last.index();
-    printf("lastFindResult (3) : 5 : %s : %s (------ index: %i)\n", fres(index == i5), fsucc(index == i5), index); fsucc_check(index == i5);
+    printf("lastFindResult (3) : 5 : %s : %s (------ index: %i)\n", fres(index == i52), fsucc(index == i52), index); fsucc_check(index == i52);
 
     // === Поиск числа 7 ===
     fr = list.findRef(7);
@@ -585,8 +585,9 @@ void findNotuniqueTest()
 
     lst::List<int> list;
 
-    printf("\n=== Test ascend, 6 elements (1,2,2,2,2,4,5) ===\n");
+    printf("\n=== Test ascend, 10 elements (1,1,2,2,2,2,4,5,5,5) ===\n");
     list.clear();
+    list.addCopy(1);
     list.addCopy(1);
     list.addCopy(2);
     list.addCopy(2);
@@ -594,16 +595,18 @@ void findNotuniqueTest()
     list.addCopy(2);
     list.addCopy(4);
     list.addCopy(5);
+    list.addCopy(5);
+    list.addCopy(5);
     list.sort();
 
-    //                      i0  i1 i2 i21 i22 i4 i5 i7
-    findNotuniqueTest(list, -1, 0, 3, 1,  4,  5, 6, -1);
+    //                      i0  i11 i12 i21 i22 i4  i51 i52 i7
+    findNotuniqueTest(list, -1, 0,  1,  2,  5,  6,  7,  9, -1);
 
-    printf("\n=== Test descend, 6 elements (5,4,2,2,2,2,1) ===\n");
+    printf("\n=== Test descend, 10 elements (5,5,5,4,2,2,2,2,1,1) ===\n");
     list.sort(lst::SortDown);
 
-    //                      i0  i1 i2 i21 i22 i4 i5 i7
-    findNotuniqueTest(list, -1, 6, 3, 2,  5,  1, 0, -1);
+    //                      i0  i11 i12 i21 i22 i4 i51  i52 i7
+    findNotuniqueTest(list, -1, 8,  9,  4,  7,  3, 0,   2,  -1);
 }
 
 struct SortTwoVal
@@ -678,7 +681,6 @@ int main()
     // Требования к поиску: искомое значение должно быть >= поля1 и <= поля2.
     // Так же нужно вернуть граничные значения удовлетворяющие условию.
     findNotuniqueStructTest();
-
 
     return 0;
 }
