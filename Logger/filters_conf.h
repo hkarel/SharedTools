@@ -33,7 +33,8 @@ using namespace std;
 
   [FILTER_LEVEL]   Наименование группы параметров для фильтра по уровню логирования
     name           Наименование фильтра
-    level          Режим работы фильтра (include/exclude)
+    mode           Режим работы фильтра (include/exclude)
+    level          Уровень логирования (error, warning, info, verbose, debug, debug2)
     modules        Список модулей по которым осуществляется фильтрование
                    (перечисляются через запятую).
 */

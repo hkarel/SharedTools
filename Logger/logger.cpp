@@ -14,10 +14,10 @@ using namespace std;
 
 
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.
-// Информация сохраняется в файле /tmp/lblogger.log
+// Информация сохраняется в файле /tmp/alogger.log
 void loggerPanic(const char* saverName, const char* error)
 {
-    if (FILE* f = fopen("/tmp/lblogger.log", "a"))
+    if (FILE* f = fopen("/tmp/alogger.log", "a"))
     {
         fputs("Saver name: ", f);
         fputs(saverName, f);
