@@ -50,7 +50,7 @@ bool findTest()
     lst::List<int> list;
     lst::FindResult fr;
 
-    printf("\n=== Test ascend, 1 elements (1) ===\n");
+    printf("\n--- Test ascend, 1 elements (1) ---\n");
     list.clear();
     list.addCopy(1);
     list.sort();
@@ -63,7 +63,7 @@ bool findTest()
     printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
 
-    printf("\n=== Test ascend, 2 elements (1,2) ===\n");
+    printf("\n--- Test ascend, 2 elements (1,2) ---\n");
     list.clear();
     list.addCopy(1);
     list.addCopy(2);
@@ -79,7 +79,7 @@ bool findTest()
     printf("3 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
 
-    printf("\n=== Test ascend, 3 elements (1,2,3) ===\n");
+    printf("\n--- Test ascend, 3 elements (1,2,3) ---\n");
     list.clear();
     list.addCopy(1);
     list.addCopy(2);
@@ -97,7 +97,7 @@ bool findTest()
     fr = list.findRef(6);
     printf("6 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
-    printf("\n=== Test ascend, 4 elements (1,2,3,5) ===\n");
+    printf("\n--- Test ascend, 4 elements (1,2,3,5) ---\n");
     list.clear();
     list.addCopy(1);
     list.addCopy(2);
@@ -121,7 +121,7 @@ bool findTest()
     printf("6 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
 
-    printf("\n=== Test descend, 1 elements (1) ===\n");
+    printf("\n--- Test descend, 1 elements (1) ---\n");
     list.clear();
     list.addCopy(1);
     list.sort(lst::SortDown);
@@ -133,7 +133,7 @@ bool findTest()
     fr = list.findRef(0);
     printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
-    printf("\n=== Test descend, 2 elements (2,1) ===\n");
+    printf("\n--- Test descend, 2 elements (2,1) ---\n");
     list.clear();
     list.addCopy(1);
     list.addCopy(2);
@@ -149,7 +149,7 @@ bool findTest()
     printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
 
-    printf("\n=== Test descend, 3 elements (3,2,1) ===\n");
+    printf("\n--- Test descend, 3 elements (3,2,1) ---\n");
     list.clear();
     list.addCopy(1);
     list.addCopy(2);
@@ -168,7 +168,7 @@ bool findTest()
     printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
 
-    printf("\n=== Test descend, 4 elements (5,4,3,1) ===\n");
+    printf("\n--- Test descend, 4 elements (5,4,3,1) ---\n");
     list.clear();
     list.addCopy(1);
     list.addCopy(3);
@@ -191,7 +191,7 @@ bool findTest()
     fr = list.findRef(0);
     printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
-
+    printf("TEST PASSED\n");
     return true;
 }
 
@@ -304,6 +304,8 @@ template<typename ListT> void bruteFindTestT(const ListT& list)
     i = 4;
     ptr = lst::findItem(list, lambda_find);
     printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
+
+    printf("SUCCESS\n");
 }
 
 void bruteFindTest()
@@ -311,12 +313,12 @@ void bruteFindTest()
     printf("\n\n=== Brute Find Test ===\n");
 
     std::vector<int> vec = {1, 2, 3, 4, 5};
-    printf("Find in std::vector: 1, 2, 3, 4, 5 \n");
+    printf("\n--- Find in std::vector: 1, 2, 3, 4, 5 ---");
 
     bruteFindTestT(vec);
 
     lst::List<int> list;
-    printf("\n\nFind in lst::List: 1, 2, 3, 4, 5 \n");
+    printf("\n--- Find in lst::List: 1, 2, 3, 4, 5 ---");
     list.clear();
     list.addCopy(1);
     list.addCopy(2);
@@ -325,6 +327,8 @@ void bruteFindTest()
     list.addCopy(5);
 
     bruteFindTestT(list);
+
+    printf("TEST PASSED\n");
 }
 
 // Функция проверяет корректное разрешение имен функций, проверка идет
@@ -577,6 +581,8 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
     index = fr_last.index();
     printf("firstFindResult(L) : 7 : %s : %s (------ index: %i)\n", fres(fr_last),  ffail(fr_last), index); ffail_check(fr_last);
+
+    printf("SUCCESS\n");
 }
 
 void findNotuniqueTest()
@@ -585,7 +591,7 @@ void findNotuniqueTest()
 
     lst::List<int> list;
 
-    printf("\n=== Test ascend, 10 elements (1,1,2,2,2,2,4,5,5,5) ===\n");
+    printf("\n--- Test ascend, 10 elements (1,1,2,2,2,2,4,5,5,5) ---\n");
     list.clear();
     list.addCopy(1);
     list.addCopy(1);
@@ -602,11 +608,13 @@ void findNotuniqueTest()
     //                      i0  i11 i12 i21 i22 i4  i51 i52 i7
     findNotuniqueTest(list, -1, 0,  1,  2,  5,  6,  7,  9, -1);
 
-    printf("\n=== Test descend, 10 elements (5,5,5,4,2,2,2,2,1,1) ===\n");
+    printf("\n--- Test descend, 10 elements (5,5,5,4,2,2,2,2,1,1) ---\n");
     list.sort(lst::SortDown);
 
     //                      i0  i11 i12 i21 i22 i4 i51  i52 i7
     findNotuniqueTest(list, -1, 8,  9,  4,  7,  3, 0,   2,  -1);
+
+    printf("TEST PASSED\n");
 }
 
 struct SortTwoVal
@@ -647,7 +655,7 @@ void findNotuniqueStructTest()
     v = list.add(); v->val1 = 6; v->val2 = 99;
 
     list.sort(lst::SortUp);
-    printf("List of SortTwoVal was sorted up:\n");
+    printf("\n--- List of SortTwoVal was sorted up: ---\n");
     for (SortTwoVal* v : list)
     {
         printf("val1: %d  val2: %d\n", v->val1, v->val2);
@@ -655,11 +663,175 @@ void findNotuniqueStructTest()
     printf("\n");
 
     list.sort(lst::SortDown);
-    printf("List of SortTwoVal was sorted down:\n");
+    printf("\n--- List of SortTwoVal was sorted down: ---\n");
     for (SortTwoVal* v : list)
     {
         printf("val1: %d  val2: %d\n", v->val1, v->val2);
     }
+
+    printf("TEST PASSED\n");
+}
+
+void checkRangeFunc()
+{
+    printf("\n\n=== Check range() function ===\n");
+
+    lst::FindResult fr;
+    lst::FindResultRange frr;
+    lst::List<int> list;
+    int index, i;
+
+    auto lambda_find = [&i] (const int* item) -> int
+    {
+        return LIST_COMPARE_ITEM(i, *item);
+    };
+
+    printf("\n--- Test for empty list ---\n");
+    lst::List<int>::RangeType range = list.range(frr);
+    for (int* val : range)
+    {
+        (void) val;
+        printf("TEST FAIL");
+        exit(1);
+    }
+    printf("range.begin() == list.end() : %s \n", fsucc(range.begin() == list.end())); fsucc_check(range.begin() == list.end());
+    printf("range.end()   == list.end() : %s \n", fsucc(range.end()   == list.end())); fsucc_check(range.end()   == list.end());
+    printf("SUCCESS\n");
+
+    printf("\n--- Test for 10 elements (1,1,2,2,2,2,4,5,5,5) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(2);
+    list.addCopy(2);
+    list.addCopy(2);
+    list.addCopy(4);
+    list.addCopy(5);
+    list.addCopy(5);
+    list.addCopy(5);
+    list.sort();
+
+    // === Диапазон для числа 0 ===
+    i = 0;
+    fr = list.findRef(i);
+    printf("findRef : %i : %s : %s \n", i, fres(fr), ffail(fr)); ffail_check(fr);
+
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+
+    printf("          %i : range.begin() == list.end() : %s \n", i, fsucc(range.begin() == list.end())); fsucc_check(range.begin() == list.end());
+    printf("          %i : range.end()   == list.end() : %s \n", i, fsucc(range.end()   == list.end())); fsucc_check(range.end()   == list.end());
+    for (int* val : range)
+    {
+        (void) val;
+        printf("TEST FAIL");
+        exit(1);
+    }
+
+    // === Диапазон для числа 1 ===
+    i = 1;
+    fr = list.findRef(i);
+    printf("findRef : %i : %s : %s \n", i, fres(fr), fsucc(fr)); fsucc_check(fr);
+
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+
+    printf("          %i : range.begin() != list.end() : %s \n", i, fsucc(range.begin() != list.end())); fsucc_check(range.begin() != list.end());
+    printf("          %i : range.end()   != list.end() : %s \n", i, fsucc(range.end()   != list.end())); fsucc_check(range.end()   != list.end());
+
+    index = list.indexOf(*range.begin());
+    printf("          %i : index first element: %i, %s \n", i, index, fsucc(index == 0)); fsucc_check(index == 0);
+
+    index = list.indexOf(*(range.end() - 1));
+    printf("          %i : index last  element: %i, %s \n", i, index, fsucc(index == 1)); fsucc_check(index == 1);
+
+    printf("          %i : Print : ", i);
+    for (int* val : range) {printf("%i, ", *val);}
+    printf("\n");
+
+    // === Диапазон для числа 2 ===
+    i = 2;
+    fr = list.findRef(i);
+    printf("findRef : %i : %s : %s \n", i, fres(fr), fsucc(fr)); fsucc_check(fr);
+
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+
+    printf("          %i : range.begin() != list.end() : %s \n", i, fsucc(range.begin() != list.end())); fsucc_check(range.begin() != list.end());
+    printf("          %i : range.end()   != list.end() : %s \n", i, fsucc(range.end()   != list.end())); fsucc_check(range.end()   != list.end());
+
+    index = list.indexOf(*range.begin());
+    printf("          %i : index first element: %i, %s \n", i, index, fsucc(index == 2)); fsucc_check(index == 2);
+
+    index = list.indexOf(*(range.end() - 1));
+    printf("          %i : index last  element: %i, %s \n", i, index, fsucc(index == 5)); fsucc_check(index == 5);
+
+    printf("          %i : Print : ", i);
+    for (int* val : range) {printf("%i, ", *val);}
+    printf("\n");
+
+    // === Диапазон для числа 4 ===
+    i = 4;
+    fr = list.findRef(i);
+    printf("findRef : %i : %s : %s \n", i, fres(fr), fsucc(fr)); fsucc_check(fr);
+
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+
+    printf("          %i : range.begin() != list.end() : %s \n", i, fsucc(range.begin() != list.end())); fsucc_check(range.begin() != list.end());
+    printf("          %i : range.end()   != list.end() : %s \n", i, fsucc(range.end()   != list.end())); fsucc_check(range.end()   != list.end());
+
+    index = list.indexOf(*range.begin());
+    printf("          %i : index first element: %i, %s \n", i, index, fsucc(index == 6)); fsucc_check(index == 6);
+
+    index = list.indexOf(*(range.end() - 1));
+    printf("          %i : index last  element: %i, %s \n", i, index, fsucc(index == 6)); fsucc_check(index == 6);
+
+    printf("          %i : Print : ", i);
+    for (int* val : range) {printf("%i, ", *val);}
+    printf("\n");
+
+    // === Диапазон для числа 5 ===
+    i = 5;
+    fr = list.findRef(i);
+    printf("findRef : %i : %s : %s \n", i, fres(fr), fsucc(fr)); fsucc_check(fr);
+
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+
+    printf("          %i : range.begin() != list.end() : %s \n", i, fsucc(range.begin() != list.end())); fsucc_check(range.begin() != list.end());
+    printf("          %i : range.end()   == list.end() : %s \n", i, fsucc(range.end()   == list.end())); fsucc_check(range.end()   == list.end());
+
+    index = list.indexOf(*range.begin());
+    printf("          %i : index first element: %i, %s \n", i, index, fsucc(index == 7)); fsucc_check(index == 7);
+
+    index = list.indexOf(*(range.end() - 1));
+    printf("          %i : index last  element: %i, %s \n", i, index, fsucc(index == 9)); fsucc_check(index == 9);
+
+    printf("          %i : Print : ", i);
+    for (int* val : range) {printf("%i, ", *val);}
+    printf("\n");
+
+    // === Диапазон для числа 7 ===
+    i = 7;
+    fr = list.findRef(i);
+    printf("findRef : %i : %s : %s \n", i, fres(fr), ffail(fr)); ffail_check(fr);
+
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+
+    printf("          %i : range.begin() == list.end() : %s \n", i, fsucc(range.begin() == list.end())); fsucc_check(range.begin() == list.end());
+    printf("          %i : range.end()   == list.end() : %s \n", i, fsucc(range.end()   == list.end())); fsucc_check(range.end()   == list.end());
+    for (int* val : range)
+    {
+        (void) val;
+        printf("TEST FAIL");
+        exit(1);
+    }
+    printf("SUCCESS\n");
+
+    printf("TEST PASSED\n");
 }
 
 int main()
@@ -681,6 +853,9 @@ int main()
     // Требования к поиску: искомое значение должно быть >= поля1 и <= поля2.
     // Так же нужно вернуть граничные значения удовлетворяющие условию.
     findNotuniqueStructTest();
+
+    // Проверка работы функции range()
+    checkRangeFunc();
 
     return 0;
 }

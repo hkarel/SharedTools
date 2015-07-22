@@ -1,4 +1,4 @@
-/****************************************************************************
+/*****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
   В модуле реализован класс-список (List) с доступом к элементам по индексу.
@@ -10,7 +10,7 @@
     - грубого поиска
     - возможность добавлять элементы в список без нарушения порядка сортировки
 
-****************************************************************************/
+*****************************************************************************/
 
 #pragma once
 
@@ -633,6 +633,31 @@ public:
   /// Если список пустой, то возвращает нуль.
   T* last() const {return (d_func()->count) ? d->list[d->count - 1] : 0;}
 
+  template<typename IteratorT> class Range
+  {
+  public:
+    IteratorT** begin() const {return _begin;}
+    IteratorT** end()   const {return _end;}
+  private:
+    Range() {}
+    IteratorT** _begin;
+    IteratorT** _end;
+    template <typename, typename, typename> friend class CustomList;
+  };
+  typedef Range<T> RangeType;
+
+  /// @brief Сервисные функции, возвращают структуру Range содержащую пару
+  ///        итераторов указывающих на первый элемент и на элемент идущий
+  ///        за последним для заданного диапазона значений.
+  ///
+  /// Основное назначение этих функций - это использование в конструкции
+  /// вида: for (T* t : range).
+  /// @param[in] index1 Индекс первого элемента в диапазоне.
+  /// @param[in] index2 Индекс последнего элемента в диапазоне.
+  /// @return Структура Range определяющая диапазон.
+  RangeType range(int index1, int index2) const;
+  RangeType range(const FindResultRange&) const;
+
 private:
   CustomList() {}
   ~CustomList() {}
@@ -647,15 +672,14 @@ private:
 private:
   template<typename DataT> struct Data
   {
-    DataT**   list;
-    int       count;
-    int       capacity;
+    DataT**   list      = {0};
+    int       count     = {0};
+    int       capacity  = {0};
+    SortState sortState = {NoSorted};
+    bool      container = {CONTAINER_CLASS};
     Compare   compare;
     Allocator allocator;
-    SortState sortState;
-    bool      container;
   };
-
   typedef Data<T> DataType;
   DataType* d;
 
@@ -685,6 +709,7 @@ public:
   typedef typename CustomListType::ValueType        ValueType;
   typedef typename CustomListType::CompareType      CompareType;
   typedef typename CustomListType::AllocatorType    AllocatorType;
+  typedef typename CustomListType::RangeType        RangeType;
 
   // Для совместимости с STL
   typedef typename CustomListType::pointer          pointer;
@@ -975,6 +1000,10 @@ private:
   template<typename T, typename Compare, typename Allocator> \
   TYPE_ CustomList<T, Compare, Allocator>
 
+#define DECL_IMPL_CUSTLIST_INTERN_TYPE(TYPE_) \
+  template<typename T, typename Compare, typename Allocator> \
+  typename CustomList<T, Compare, Allocator>::TYPE_ CustomList<T, Compare, Allocator>
+
 #define DECL_IMPL_CUSTLIST_SUBTMPL1(TYPE_, SUBT1) \
   template<typename T, typename Compare, typename Allocator> \
     template<typename SUBT1> \
@@ -1225,12 +1254,45 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(T*, LCompare)::findItemL(const LCompare& l_compare,
   return fr.success() ? d->list[fr.index()] : 0;
 }
 
+DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(int index1, int index2) const
+{
+  CHECK_INTERNAL_DATA_PTR(d)
+
+  RangeType r;
+  if (d->count == 0)
+  {
+    r._begin = this->listEnd();
+    r._end   = this->listEnd();
+    return r;
+  }
+
+  CHECK_BORDERS(index1)
+  CHECK_BORDERS(index2)
+  CHECK_NOTLESS(index2, index1)
+
+  r._begin = this->listBegin() + index1;
+  r._end   = this->listBegin() + index2 + 1;
+  return r;
+}
+
+DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) const
+{
+  if (frr.first.failed() || frr.last.failed())
+  {
+    RangeType r;
+    r._begin = this->listEnd();
+    r._end   = this->listEnd();
+    return r;
+  }
+  return range(frr.first.index(), frr.last.index());
+}
+
 #undef DECL_IMPL_CUSTLIST_CONSTR
 #undef DECL_IMPL_CUSTLIST_DESTR
 #undef DECL_IMPL_CUSTLIST
+#undef DECL_IMPL_CUSTLIST_INTERN_TYPE
 #undef DECL_IMPL_CUSTLIST_SUBTMPL1
 #undef DECL_IMPL_CUSTLIST_SUBTMPL2
-
 
 
 
@@ -2084,9 +2146,6 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
   frr.last  = lastFindResult (list, compare, fr, extParam);
   return frr;
 }
-
-
-
 
 #undef DECL_IMPL_LIST_CONSTR
 #undef DECL_IMPL_LIST_DESTR
