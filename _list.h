@@ -407,7 +407,10 @@ template<typename T> struct AllocatorItem
   T* create(const T* x) {return (x) ? new T(*x) : new T();}
 
   /// @brief Функция разрушения элементов.
-  void destroy(T* x) {delete x;}
+  void destroy(T* x) {
+    static_assert(sizeof(T) > 0, "Can't delete pointer to incomplete type");
+    delete x;
+  }
 };
 
 

@@ -25,12 +25,16 @@ template<typename T> struct allocator_ptr
     static T* create(const T* x) {return (x) ? new T(*x) : new T();}
 
     // Функция разрушения объектов.
-    static void destroy(T* x) {delete x;}
+    static void destroy(T* x) {
+        static_assert(sizeof(T) > 0, "Can't delete pointer to incomplete type");
+        delete x;
+    }
 
     // Функция используется при разрушении объектов хранимых в container_ptr,
     // join - признак использования единого сегмента памяти целевого объекта
     // и экземпляра counter_ptr_t.
     static void destroy(T* x, bool join) {
+        static_assert(sizeof(T) > 0, "Can't delete pointer to incomplete type");
         if (x) {if (join) x->~T(); else delete x;}
     }
 };
@@ -45,7 +49,10 @@ template<typename T> struct allocator_array_ptr
 {
     // Функция разрушения объектов
     // Второй параметр введен для совместимости с аллокаторами container_ptr.
-    static void destroy(T* x /*, bool*/) {delete [] x;}
+    static void destroy(T* x /*, bool*/) {
+        static_assert(sizeof(T) > 0, "Can't delete pointer to incomplete type");
+        delete [] x;
+    }
 };
 
 
