@@ -1,19 +1,20 @@
 #pragma once
 
-#include "simple_ptr.h"
-#include "spin_locker.h"
+#include <mutex>
+#include <memory>
 
-// Безопасно создает singleton
+// Безопасно создает singleton. Второй шаблонный параметр дает возможность
+// создавать несколько экземпляров singleton-ов для одного и того же типа T.
 template<typename T, int = 0>
 T& safe_singleton()
 {
-    static simple_ptr<T> t;
-    static std::atomic_flag lock{ATOMIC_FLAG_INIT};
+    static std::unique_ptr<T> t;
+    static std::mutex lock;
     if (!t)
     {
-        SpinLocker locker(lock); (void) locker;
+        std::lock_guard<std::mutex> locker(lock); (void) locker;
         if (!t)
-            t = simple_ptr<T>(new T());
+            t = std::unique_ptr<T>(new T());
     }
     return *t;
 }
