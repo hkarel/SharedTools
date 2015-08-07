@@ -42,7 +42,8 @@ DECLSPEC_SELECTANY_LST const bool REFERENCE_CLASS = !CONTAINER_CLASS;
 DECLSPEC_SELECTANY_LST const bool COMPRESS_LIST = true;
 DECLSPEC_SELECTANY_LST const bool NO_COMPRESS_LIST = !COMPRESS_LIST;
 
-DECLSPEC_SELECTANY_LST const bool BRUTE_FORCE = true;
+//DECLSPEC_SELECTANY_LST const bool BRUTE_FORCE = true;
+enum class BruteForce {No = 0, Yes = 1};
 
 
 /// @brief Флаги направления сортировки.
@@ -160,14 +161,12 @@ DECLSPEC_SELECTANY_LST const char* ERR_NOCREATEOBJ =
 #endif // NDEBUG
 
 
-
 /**
   @brief Класс BreakCompare.
   Используется в функциях/стратегиях сравнения элементов
   для прерырания процессов сортировки или поиска.
 */
 struct BreakCompare {};
-
 
 
 /**
@@ -202,8 +201,8 @@ private:
   unsigned _bruteForce : 1;
   unsigned _reserved   : 30;
 
-  FindResult(bool success, bool bruteForce, int index)
-    : _index(index), _success(success), _bruteForce(bruteForce)
+  FindResult(bool success, BruteForce bruteForce, int index)
+    : _index(index), _success(success), _bruteForce(unsigned(bruteForce))
   {}
   template <typename, typename, typename> friend class CustomList;
 
@@ -225,18 +224,74 @@ struct FindResultRange
 
 
 /**
+  @brief Сервисная структура, используется для агрегации расширенных
+         параметров поиска.
+*/
+struct FindExtParams
+{
+  /// Указатель на дополнительные параметры передаваемые в функцию поиска.
+  /// Если в качестве стратегии поиска используется не функтор, а обычная функ-
+  /// ция, то extParam - это единственный способ передать в эту функцию внешние
+  /// данные.
+  void *extParam = {0};
+
+  /// Определяет поиск простым перебором (метод грубой силы).
+  /// Если bruteForce = Yes поиск будет происходить простым перебором, даже
+  /// для отсортированного списка.
+  BruteForce bruteForce = {BruteForce::No};
+
+  /// Индекс с которого начинается поиск.
+  /// Если startFindIndex >= list::count(), то функция поиска вернет результат
+  /// со статусом FindResult::failed() = TRUE. При этом если элемент с данным
+  /// статусом будет добавлен в отсортированный список через функцию addInSort(),
+  /// то флаг сортировки будет сброшен (см. пояснения к функции list::addInSort()).
+  int startFindIndex = {0};
+
+  FindExtParams() = default;
+  explicit FindExtParams(BruteForce bruteForce)
+    : extParam(0), bruteForce(bruteForce), startFindIndex(0)
+  {}
+};
+
+
+/**
+  @brief Сервисная структура, используется для агрегации расширенных
+         параметров сортировки.
+*/
+struct SortExtParams
+{
+  /// Используется для передачи в функцию сортировки дополнительных параметров.
+  /// Применяется, как правило, если в качестве стратегии сортировки используется
+  /// не функтор, а обычная функция.
+  void *extParam = {0};
+
+  /// loSortBorder, hiSortBorder Границы сортировки, позволяют производить
+  /// сортировку по указанному диапазону. При назначении диапазона соблюдаются
+  /// следующие требования:
+  /// 1) 0 <= loSortBorder < count(), в противном случае LoSortBorder
+  ///    выставляется в 0.
+  /// 2) loSortBorder < hiSortBorder <= count(), в противном случае
+  ///    hiSortBorder выставляется в count (количество элементов в списке).
+  /// Значения по умолчанию равные -1 предполагают сортировку по всему диапазону.
+  int loSortBorder = {0};
+  int hiSortBorder = {-1};
+
+  SortExtParams() = default;
+  SortExtParams(void *extParam, int loSortBorder = 0, int hiSortBorder = -1)
+    : extParam(extParam), loSortBorder(loSortBorder), hiSortBorder(hiSortBorder)
+  {}
+};
+
+/**
   @brief Функции выполняют поиск перебором (грубый поиск).
 
   Первые две функции выполнены для использования с lambda-функциями с сигнатурой:
   int [](const ListT::ValueType* item) где item элемент списка;
-  следующие три функции в качестве compare-элемента используют функции или функтор
+  следующие три функции в качестве compare-элемента используют функцию или функтор
   со следующей сигнатурой:
-  int function(const T* item1, const ListT::ValueType* item2);
-  и последние три функции качестве compare-элемента используют функции или функторы
-  с сигнатурой:
   int function(const T* item1, const ListT::ValueType* item2, void* extParam).
   Дополнительные пояснения по параметру extParam можно посмотреть в описании
-  к функциям поиска List::find().
+  к параметру FindExtParams::extParam.
   Примечание: в качестве контейнера ListT можно использовать std::vector.
 */
 template<typename ListT, typename CompareT>
@@ -247,26 +302,16 @@ auto findItem(const ListT& list, const CompareT& compare) -> typename ListT::poi
 
 //---
 template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare);
-
-template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare);
-
-template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare);
-
-//---
-template<typename T, typename ListT, typename CompareT>
 FindResult find(const T* item, const ListT& list, const CompareT& compare,
-                void* extParam);
+                void* extParam = 0);
 
 template<typename T, typename ListT, typename CompareT>
 FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
-                   void* extParam);
+                   void* extParam = 0);
 
 template<typename T, typename ListT, typename CompareT>
 T* findItem(const T* item, const ListT& list, const CompareT& compare,
-            void* extParam);
+            void* extParam = 0);
 
 
 /**
@@ -294,28 +339,17 @@ template<typename ListT, typename LCompare>
 FindResult lastFindResultL(const ListT& list, const LCompare& compare,
                            const FindResult& fr);
 
-/// Примечание: в качестве compare-элемента используют функции или функтор
-/// с сигнатурой:
-/// int function(const ListT::ValueType* item1, const ListT::ValueType* item2).
-template<typename ListT, typename CompareT>
-FindResult firstFindResult(const ListT& list, const CompareT& compare,
-                           const FindResult& fr);
-
-template<typename ListT, typename CompareT>
-FindResult lastFindResult(const ListT& list, const CompareT& compare,
-                          const FindResult& fr);
-
-/// Примечание: в качестве compare-элемента используют функции или функтор
+/// Примечание: в качестве compare-элемента используется функция или функтор
 /// с сигнатурой:
 /// int function(const ListT::ValueType* item1, const ListT::ValueType* item2,
 ///              void* extParam).
 template<typename ListT, typename CompareT>
 FindResult firstFindResult(const ListT& list, const CompareT& compare,
-                           const FindResult& fr, void* extParam);
+                           const FindResult& fr, void* extParam = 0);
 
 template<typename ListT, typename CompareT>
 FindResult lastFindResult(const ListT& list, const CompareT& compare,
-                          const FindResult& fr, void* extParam);
+                          const FindResult& fr, void* extParam = 0);
 
 /**
   @brief Группа функций выполняет поиск первого и последнего элемента в после-
@@ -327,11 +361,7 @@ FindResultRange rangeFindResultL(const ListT& list, const LCompare& compare,
 
 template<typename ListT, typename CompareT>
 FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
-                                const FindResult& fr);
-
-template<typename ListT, typename CompareT>
-FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
-                                const FindResult& fr, void* extParam);
+                                const FindResult& fr, void* extParam = 0);
 
 
 /**
@@ -346,7 +376,7 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
          полям с убывающим приоритетом сравнения от field1 к field3.
          struct Compare
          {
-           int operator() (const Type* item1, const Type* item2, void* = 0) const
+           int operator() (const Type* item1, const Type* item2, void*) const
            {
              LIST_COMPARE_MULTI_ITEM( item1->field1, item2->field1)
              LIST_COMPARE_MULTI_ITEM( item1->field2, item2->field2)
@@ -375,7 +405,7 @@ template<typename T> struct CompareItem
   /// виртуальным, то для каждого инстанциируемого класса придется определять
   /// операторы "<", ">", "==", что сводит "на нет" идею класса-стратегии
   /// применительно к сортировке.
-  int operator() (const T* item1, const T* item2, void* /*extParam*/ = 0) const
+  int operator() (const T* item1, const T* item2, void* /*extParam*/) const
   {
     return LIST_COMPARE_ITEM(*item1, *item2);
   }
@@ -467,26 +497,12 @@ public:
   /// @brief Функции поиска.
   ///
   /// @param[in] item Искомый элемент.
-  /// @param[in] bruteForce Определяет поиск простым перебором (метод грубой силы)
-  ///     Если bruteForce = TRUE поиск будет происходить простым перебором, даже
-  ///     для отсортированного списка.
-  /// @param[in] startFindIndex Индекс с которого начинается поиск.
-  ///     Если startFindIndex >= count(), то функция поиска вернет результат
-  ///     со статусом FindResult::failed() = TRUE. При этом если элемент с данным
-  ///     статусом будет добавлен в отсортированный список через функцию addInSort(),
-  ///     то флаг сортировки будет сброшен (см. пояснения к функции addInSort()).
-  /// @param[in] extParam Указатель на дополнительные параметры передаваемые в
-  ///     функцию сортировки. Если в качестве стратегии сортировки/поиска исполь-
-  ///     зуется не функтор, а обычная функция, то extParam - это единственный
-  ///     способ передать в эту функцию внешние данные (см. комментарии к sort()).
+  /// @param[in] extParams Используется для задания расширенных параметров
+  ///            поиска.
   /// @return Структура с результатом поиска.
   template<typename U>
   FindResult find(const U* item,
-                  bool bruteForce = false, int startFindIndex = 0)  const;
-
-  template<typename U>
-  FindResult find(const U* item, void* extParam,
-                  bool bruteForce = false, int startFindIndex = 0) const;
+                  const FindExtParams& extParams = FindExtParams()) const;
 
   /// @brief Перегруженные функции поиска, определена для удобства использования.
   ///
@@ -494,22 +510,14 @@ public:
   /// не найден - возвращает 0.
   template<typename U>
   T* findItem(const U* item,
-              bool bruteForce = false, int startFindIndex = 0) const;
-
-  template<typename U>
-  T* findItem(const U* item, void* extParam,
-              bool bruteForce = false, int startFindIndex = 0) const;
+              const FindExtParams& extParams = FindExtParams()) const;
 
   /// @brief Перегруженные функции поиска, определена для удобства использования.
   ///
   /// @param[in] item Искомый элемент передаваемый по ссылке.
   template<typename U>
   FindResult findRef(const U& item,
-                     bool bruteForce = false, int startFindIndex = 0) const;
-
-  template<typename U>
-  FindResult findRef(const U& item, void* extParam,
-                     bool bruteForce = false, int startFindIndex = 0) const;
+                     const FindExtParams& extParams = FindExtParams()) const;
 
   /// @brief Перегруженные функции поиска, определены для удобства использовния.
   ///
@@ -517,28 +525,15 @@ public:
   /// что была определена в классе-контейнере.
   template<typename U, typename UCompare>
   FindResult find(const U* item, const UCompare& compare,
-                  bool bruteForce = false, int startFindIndex = 0) const;
-
-  template<typename U, typename UCompare>
-  FindResult find(const U* item, const UCompare& compare, void* extParam,
-                  bool bruteForce = false, int startFindIndex = 0) const;
+                  const FindExtParams& extParams = FindExtParams()) const;
 
   template<typename U, typename UCompare>
   T* findItem(const U* item, const UCompare& compare,
-              bool bruteForce = false, int startFindIndex = 0) const;
-
-  template<typename U, typename UCompare>
-  T* findItem(const U* item, const UCompare& compare, void* extParam,
-              bool bruteForce = false, int startFindIndex = 0) const;
-
+              const FindExtParams& extParams = FindExtParams()) const;
 
   template<typename U, typename UCompare>
   FindResult findRef(const U& item, const UCompare& compare,
-                     bool bruteForce = false, int startFindIndex = 0) const;
-
-  template<typename U, typename UCompare>
-  FindResult findRef(const U& item, const UCompare& compare, void* extParam,
-                     bool bruteForce = false, int startFindIndex = 0) const;
+                     const FindExtParams& extParams = FindExtParams()) const;
 
   /// @brief Функции поиска.
   ///
@@ -546,11 +541,11 @@ public:
   /// int [](const List::ValueType* item)
   template<typename LCompare>
   FindResult findL(const LCompare& compare,
-                   bool bruteForce = false, int startFindIndex = 0) const;
+                   const FindExtParams& extParams = FindExtParams()) const;
 
   template<typename LCompare>
   T* findItemL(const LCompare& compare,
-               bool bruteForce = false, int startFindIndex = 0) const;
+               const FindExtParams& extParams = FindExtParams()) const;
 
   /// @brief Доступ к элементу списка по индексу.
   ///
@@ -689,7 +684,6 @@ private:
   DataType* d_func() const {CHECK_INTERNAL_DATA_PTR(d); return d;}
   template <typename, typename, typename> friend class List;
 };
-
 
 
 /**
@@ -920,33 +914,22 @@ public:
   /// Функция сортировки может быть вызвана для пустого списка или для списка
   /// с одним элементом, при этом выставляется соответствующий флаг сортировки.
   /// Это сделано для того чтобы функция addInSort() могла отрабатывать корректно.
-  /// @param[in] compare Cтратегия сортировки (в качестве примера см. класс CompareItem).
-  ///     Пареметр стратегии сортировки специально сделан неконстантной ссылкой,
-  ///     это дает возможность менять состояние элемента compare в процессе
-  ///     сортировки.
+  /// @param[in] compare Стратегия сортировки (в качестве примера см. класс CompareItem).
+  ///            Параметр стратегии сортировки специально сделан не константной
+  ///            ссылкой, это дает возможность менять состояние элемента compare
+  ///            в процессе сортировки.
   /// @param[in] sortMode Определяет направление сортировки - по возрастанию
-  ///     или убыванию.
-  /// @param[in] extParam Используется для передачи в функцию сортировки
-  ///     дополнительных параметров. Применяется, как правило, если в качестве
-  ///     стратегии сортировки используется не функтор, а обычная функция
-  ///     (см. комментраии к find()).
-  /// @param[in] loSortBorder, hiSortBorder Границы сортировки, позволяют
-  ///     производить сортировку по указанному диапазону. При назначении диапазона
-  ///     соблюдаются следующие требования:
-  ///         1. 0 <= loSortBorder < count(), в противном случае LoSortBorder
-  ///            выставляется в 0.
-  ///         2. loSortBorder < hiSortBorder <= count(), в противном случае
-  ///            hiSortBorder выставляется в count (количество элементов в списке).
-  ///     Значения по умолчанию равные -1 предполагают сортировку по всему диапазону.
+  ///            или убыванию.
+  /// @param[in] extParams Используется для задания расширенных параметров
+  ///            сортировки.
   template<typename UCompare>
-  void sort(UCompare& compare,
-            SortMode sortMode = SortUp, void *extParam = 0,
-            int loSortBorder = 0, int hiSortBorder = int(-1));
+  void sort(UCompare& compare, SortMode sortMode = SortUp,
+            const SortExtParams& extParams = SortExtParams());
 
   /// @brief Функция сортировки, используется стратегия сортировки по умолчанию.
   ///
-  void sort(SortMode sortMode = SortUp, void *extParam = 0,
-            int loSortBorder = 0, int hiSortBorder = int(-1));
+  void sort(SortMode sortMode = SortUp,
+            const SortExtParams& extParams = SortExtParams());
 
   /// @brief Функция для расширенной сортировки.
   ///
@@ -954,8 +937,8 @@ public:
   /// избежать конфликта имен в компиляторе от Borland.
   /// Объект стратегии сортировки UCompare создается внутри функции.
   template<typename UCompare>
-  void sort2(SortMode sortMode = SortUp, void *extParam = 0,
-             int loSortBorder = 0, int hiSortBorder = int(-1));
+  void sort2(SortMode sortMode = SortUp,
+             const SortExtParams& extParams = SortExtParams());
 
   /// @brief Выполняет обмен данных между списками.
   void swap(SelfListType&);
@@ -1045,125 +1028,65 @@ DECL_IMPL_CUSTLIST(bool)::indexOf2(const T* item, int& index) const
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, U)::find(const U* item,
-                                                 bool bruteForce,
-                                                 int startFindIndex) const
+                                                 const FindExtParams& extParams) const
 {
-  return find<U, Compare>(item, compare(), bruteForce, startFindIndex);
-}
-
-DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, U)::find(const U* item,
-                                                 void* extParam,
-                                                 bool bruteForce,
-                                                 int startFindIndex) const
-{
-  return find<U, Compare>(item, compare(), extParam, bruteForce, startFindIndex);
+  return find<U, Compare>(item, compare(), extParams);
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL1(T*, U)::findItem(const U* item,
-                                             bool bruteForce,
-                                             int startFindIndex) const
+                                             const FindExtParams& extParams) const
 {
-  return findItem<U, Compare>(item, compare(), bruteForce, startFindIndex);
-}
-
-DECL_IMPL_CUSTLIST_SUBTMPL1(T*, U)::findItem(const U* item,
-                                             void* extParam,
-                                             bool bruteForce,
-                                             int startFindIndex) const
-{
-  return findItem<U, Compare>(item, compare(), extParam, bruteForce, startFindIndex);
+  return findItem<U, Compare>(item, compare(), extParams);
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, U)::findRef(const U& item,
-                                                    bool bruteForce,
-                                                    int startFindIndex) const
+                                                    const FindExtParams& extParams) const
 {
-  return findRef<U, Compare>(item, compare(), bruteForce, startFindIndex);;
-}
-
-DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, U)::findRef(const U& item,
-                                                    void* extParam,
-                                                    bool bruteForce,
-                                                    int startFindIndex) const
-{
-  return findRef<U, Compare>(item, compare(), extParam, bruteForce, startFindIndex);;
+  return findRef<U, Compare>(item, compare(), extParams);
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, UCompare)::find(const U* item,
                                                            const UCompare& u_compare,
-                                                           bool bruteForce,
-                                                           int startFindIndex) const
+                                                           const FindExtParams& extParams) const
 {
-  auto l = [item, &u_compare](const T* item2) -> int
+  auto l = [item, &u_compare, &extParams](const T* item2) -> int
   {
-    return u_compare(item, item2);
+    return u_compare(item, item2, extParams.extParam);
   };
-  return findL(l, bruteForce, startFindIndex);
-}
-
-DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, UCompare)::find(const U* item,
-                                                           const UCompare& u_compare,
-                                                           void* extParam,
-                                                           bool bruteForce,
-                                                           int startFindIndex) const
-{
-  auto l = [item, &u_compare, extParam](const T* item2) -> int
-  {
-    return u_compare(item, item2, extParam);
-  };
-  return findL(l, bruteForce, startFindIndex);
+  return findL(l, extParams);
 }
 
 
 DECL_IMPL_CUSTLIST_SUBTMPL2(T*, U, UCompare)::findItem(const U* item,
                                                        const UCompare& u_compare,
-                                                       bool bruteForce,
-                                                       int startFindIndex) const
+                                                       const FindExtParams& extParams) const
 {
-  FindResult fr = find<U, UCompare>(item, u_compare, bruteForce, startFindIndex);
-  return fr.success() ? d->list[fr.index()] : 0;
-}
-
-DECL_IMPL_CUSTLIST_SUBTMPL2(T*, U, UCompare)::findItem(const U* item,
-                                                       const UCompare& u_compare,
-                                                       void* extParam,
-                                                       bool bruteForce,
-                                                       int startFindIndex) const
-{
-  FindResult fr = find<U, UCompare>(item, u_compare, extParam, bruteForce, startFindIndex);
+  FindResult fr = find<U, UCompare>(item, u_compare, extParams);
   return fr.success() ? d->list[fr.index()] : 0;
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, UCompare)::findRef(const U& item,
                                                               const UCompare& u_compare,
-                                                              bool bruteForce,
-                                                              int startFindIndex) const
+                                                              const FindExtParams& extParams) const
 {
-  return find<U, UCompare>(&item, u_compare, bruteForce, startFindIndex);
-}
-
-DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, UCompare)::findRef(const U &item,
-                                                              const UCompare &u_compare,
-                                                              void *extParam,
-                                                              bool bruteForce,
-                                                              int startFindIndex) const
-{
-  return find<U, UCompare>(&item, u_compare, extParam, bruteForce, startFindIndex);
+  return find<U, UCompare>(&item, u_compare, extParams);
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compare,
-                                                         bool bruteForce,
-                                                         int startFindIndex) const
+                                                         const FindExtParams& extParams) const
 {
   CHECK_INTERNAL_DATA_PTR(d)
 
   try
   {
+    BruteForce bruteForce = extParams.bruteForce;
+    int startFindIndex = extParams.startFindIndex;
+
     if (d->count == 0)
-      return FindResult(false, BRUTE_FORCE, 0);
+      return FindResult(false, BruteForce::Yes, 0);
 
     if (startFindIndex >= d->count)
-      return FindResult(false, BRUTE_FORCE, d->count);
+      return FindResult(false, BruteForce::Yes, d->count);
 
     // Функция поиска перебором
     auto bruteFind = [this, &l_compare, startFindIndex] () -> FindResult
@@ -1177,10 +1100,10 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
       while (item_ < /*не использовать оператор != */ end_)
       {
         if (l_compare(*item_) == 0)
-          return FindResult(true, BRUTE_FORCE, int(item_ - this->listBegin()));
+          return FindResult(true, BruteForce::Yes, int(item_ - this->listBegin()));
         ++item_;
       }
-      return FindResult(false, BRUTE_FORCE, d->count);
+      return FindResult(false, BruteForce::Yes, d->count);
     };
 
     if (/*(FCount < 4)*/ // Нельзя использовать данное условие для отсортированного
@@ -1189,7 +1112,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
                          // в функции addInSort() для отсортированного списка приведет
                          // к тому, что список окажется неотсортированным, но флаг
                          // состояния сортировки (sortState) при этом сброшен не будет.
-      bruteForce
+      bruteForce == BruteForce::Yes
       || (d->sortState == NoSorted)
       || (d->sortState == CustomUpSorted)
       || (d->sortState == CustomDownSorted))
@@ -1201,7 +1124,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
     int high = d->count;
     int mid;
     int result;
-    SortState sort_state = (bruteForce) ? NoSorted : d->sortState;
+    SortState sort_state = (bruteForce == BruteForce::Yes) ? NoSorted : d->sortState;
     switch (sort_state)
     {
       case UpSorted:
@@ -1216,11 +1139,11 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
             //           выполняться условие (low + high) / 2 == mid
             low = (low == mid) ? mid + 1 : mid;
           else
-            return FindResult(true, !BRUTE_FORCE, mid); //совпадение
+            return FindResult(true, BruteForce::No, mid); //совпадение
 
           //if ((high - low) <= 1) При такой проверке не находятся граничные значения
           if ((high - low) < 1)
-            return FindResult(false, !BRUTE_FORCE, (result > 0) ? mid + 1 : mid);
+            return FindResult(false, BruteForce::No, (result > 0) ? mid + 1 : mid);
         }
       case DownSorted:
         while (true)
@@ -1234,11 +1157,11 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
             //           выполняться условие (low + high) / 2 == mid
             low = (low == mid) ? mid + 1 : mid;
           else
-            return FindResult(true, !BRUTE_FORCE, mid); //совпадение
+            return FindResult(true, BruteForce::No, mid); //совпадение
 
           //if ((high - low) <= 1) При такой проверке не находятся граничные значения
           if ((high - low) < 1)
-            return FindResult(false, !BRUTE_FORCE, (result < 0) ? mid + 1 : mid);
+            return FindResult(false, BruteForce::No, (result < 0) ? mid + 1 : mid);
         }
       default:
         return bruteFind();
@@ -1246,14 +1169,13 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
   }
   catch (BreakCompare &)
   {}
-  return FindResult(false, BRUTE_FORCE, d->count);
+  return FindResult(false, BruteForce::Yes, d->count);
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL1(T*, LCompare)::findItemL(const LCompare& l_compare,
-                                                     bool bruteForce,
-                                                     int startFindIndex) const
+                                                     const FindExtParams& extParams) const
 {
-  FindResult fr = findL(l_compare, bruteForce, startFindIndex);
+  FindResult fr = findL(l_compare, extParams);
   return fr.success() ? d->list[fr.index()] : 0;
 }
 
@@ -1836,9 +1758,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::QSort(T** sortList,
 
 DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort(UCompare& u_compare,
                                               SortMode sortMode,
-                                              void* extParam,
-                                              int loSortBorder,
-                                              int hiSortBorder)
+                                              const SortExtParams& extParams)
 {
   DataType* d = d_func();
 
@@ -1852,6 +1772,9 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort(UCompare& u_compare,
   {
     try
     {
+      int loSortBorder = extParams.loSortBorder;
+      int hiSortBorder = extParams.hiSortBorder;
+
       //setSortState((sortMode == SortUp) ? UpSorted : DownSorted);
       if (!inRange(loSortBorder, 0, d->count))
         loSortBorder = 0;
@@ -1862,7 +1785,8 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort(UCompare& u_compare,
       if ((loSortBorder != 0) || (hiSortBorder != d->count))
         setSortState((sortMode == SortUp) ? CustomUpSorted : CustomDownSorted);
 
-      QSort<UCompare>(d->list, loSortBorder, hiSortBorder - 1, u_compare, sortMode, extParam);
+      QSort<UCompare>(d->list, loSortBorder, hiSortBorder - 1,
+                      u_compare, sortMode, extParams.extParam);
     }
     catch (BreakCompare &)
     {
@@ -1876,20 +1800,16 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort(UCompare& u_compare,
 }
 
 DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort2(SortMode sortMode,
-                                               void* extParam,
-                                               int loSortBorder,
-                                               int hiSortBorder)
+                                               const SortExtParams& extParams)
 {
   UCompare u_compare;
-  sort<UCompare>(u_compare, sortMode, extParam, loSortBorder, hiSortBorder);
+  sort<UCompare>(u_compare, sortMode, extParams);
 }
 
 DECL_IMPL_LIST(void)::sort(SortMode sortMode,
-                           void* extParam,
-                           int loSortBorder,
-                           int hiSortBorder)
+                           const SortExtParams& extParams)
 {
-  sort<Compare>(CustomListType::compare(), sortMode, extParam, loSortBorder, hiSortBorder);
+  sort<Compare>(CustomListType::compare(), sortMode, extParams);
 }
 
 DECL_IMPL_LIST(void)::swap(SelfListType& list)
@@ -1961,9 +1881,9 @@ FindResult find(const ListT& list, const CompareT& compare)
 {
   for (decltype(list.size()) i = 0; i < list.size(); ++i)
     if (compare(&list.at(i)) == 0)
-      return FindResult(true, BRUTE_FORCE, i);
+      return FindResult(true, BruteForce::Yes, i);
 
-  return FindResult(false, BRUTE_FORCE, list.size());
+  return FindResult(false, BruteForce::Yes, list.size());
 }
 
 template<typename ListT, typename CompareT>
@@ -1971,30 +1891,6 @@ auto findItem(const ListT& list, const CompareT& compare) -> typename ListT::poi
 {
   FindResult fr = find<ListT, CompareT>(list, compare);
   return fr.success() ? const_cast<typename ListT::pointer>(&list.at(fr.index())) : 0;
-}
-
-//---
-template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare)
-{
-  auto l = [item, &compare](typename ListT::const_pointer item2) -> int
-  {
-    return compare(item, item2);
-  };
-  return find(list, l);
-}
-
-template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare)
-{
-  return find<T, ListT, CompareT>(&item, list, compare);
-}
-
-template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare)
-{
-  FindResult fr = find<T, ListT, CompareT>(item, list, compare);
-  return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
 }
 
 //---
@@ -2037,7 +1933,7 @@ FindResult firstFindResultL(const ListT& list, const LCompare& compare,
       if (compare(&list.at(i)) != 0)
         break;
     }
-    return FindResult(true, BRUTE_FORCE, i + 1);
+    return FindResult(true, BruteForce::Yes, i + 1);
   }
   return fr;
 }
@@ -2054,39 +1950,9 @@ FindResult lastFindResultL(const ListT& list, const LCompare& compare,
       if (compare(&list.at(i)) != 0)
         break;
     }
-    return FindResult(true, BRUTE_FORCE, i - 1);
+    return FindResult(true, BruteForce::Yes, i - 1);
   }
   return fr;
-}
-
-template<typename ListT, typename CompareT>
-FindResult firstFindResult(const ListT& list, const CompareT& compare,
-                           const FindResult& fr)
-{
-  if (fr.failed())
-    return fr;
-
-  const typename ListT::ValueType* item = &list.at(fr.index());
-  auto l = [item, &compare](const typename ListT::ValueType* item2) -> int
-  {
-    return compare(item, item2);
-  };
-  return firstFindResultL(list, l, fr);
-}
-
-template<typename ListT, typename CompareT>
-FindResult lastFindResult(const ListT& list, const CompareT& compare,
-                          const FindResult& fr)
-{
-  if (fr.failed())
-    return fr;
-
-  const typename ListT::ValueType* item = &list.at(fr.index());
-  auto l = [item, &compare](const typename ListT::ValueType* item2) -> int
-  {
-    return compare(item, item2);
-  };
-  return lastFindResultL(list, l, fr);
 }
 
 template<typename ListT, typename CompareT>
@@ -2127,16 +1993,6 @@ FindResultRange rangeFindResultL(const ListT& list, const LCompare& compare,
   FindResultRange frr;
   frr.first = firstFindResultL(list, compare, fr);
   frr.last  = lastFindResultL (list, compare, fr);
-  return frr;
-}
-
-template<typename ListT, typename CompareT>
-FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
-                                const FindResult& fr)
-{
-  FindResultRange frr;
-  frr.first = firstFindResult(list, compare, fr);
-  frr.last  = lastFindResult (list, compare, fr);
   return frr;
 }
 

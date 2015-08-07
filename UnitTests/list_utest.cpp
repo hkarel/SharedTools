@@ -195,12 +195,7 @@ bool findTest()
     return true;
 }
 
-int compareFunc2(const int* item1, const int* item2)
-{
-    return LIST_COMPARE_ITEM(*item1, *item2);
-}
-
-int compareFunc3(const int* item1, const int* item2, void*)
+int compareFunc(const int* item1, const int* item2, void*)
 {
     return LIST_COMPARE_ITEM(*item1, *item2);
 }
@@ -208,11 +203,6 @@ int compareFunc3(const int* item1, const int* item2, void*)
 struct CompareFunctor
 {
     int operator() (const int* item1, const int* item2, void* extParam) const
-    {
-      return LIST_COMPARE_ITEM(*item1, *item2);
-    }
-
-    int operator() (const int* item1, const int* item2) const
     {
       return LIST_COMPARE_ITEM(*item1, *item2);
     }
@@ -224,36 +214,21 @@ template<typename ListT> void bruteFindTestT(const ListT& list)
     int* ptr;
     lst::FindResult fr;
 
-    printf("\nFind use function compareFunc, 3 param\n");
+    printf("\nFind use function compareFunc\n");
     i = 0;
-    fr = lst::find(&i, list, compareFunc3, 0);
+    fr = lst::find(&i, list, compareFunc);
     printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
-    fr = lst::findRef(2, list, compareFunc3, 0);
+    fr = lst::findRef(2, list, compareFunc);
     printf("findRef : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
-    fr = lst::findRef(5, list, compareFunc3, 0);
+    fr = lst::findRef(5, list, compareFunc);
     printf("findRef : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
-    fr = lst::findRef(7, list, compareFunc3, 0);
+    fr = lst::findRef(7, list, compareFunc);
     printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
     i = 4;
-    ptr = lst::findItem(&i, list, compareFunc3, 0);
+    ptr = lst::findItem(&i, list, compareFunc);
     printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
 
-    printf("\nFind use function compareFunc2, 2 param\n");
-    i = 0;
-    fr = lst::find(&i, list, compareFunc2);
-    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
-    fr = lst::findRef(2, list, compareFunc2);
-    printf("findRef : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
-    fr = lst::findRef(5, list, compareFunc2);
-    printf("findRef : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
-    fr = lst::findRef(7, list, compareFunc2);
-    printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
-    i = 4;
-    ptr = lst::findItem(&i, list, compareFunc2);
-    printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
-
-
-    printf("\nFind use function CompareFunctor, 2 param \n");
+    printf("\nFind use functor CompareFunctor \n");
     CompareFunctor compare_functor;
     i = 0;
     fr = lst::find(&i, list, compare_functor);
@@ -266,20 +241,6 @@ template<typename ListT> void bruteFindTestT(const ListT& list)
     printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
     i = 4;
     ptr = lst::findItem(&i, list, compare_functor);
-    printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
-
-    printf("\nFind use function CompareFunctor, 3 param \n");
-    i = 0;
-    fr = lst::find(&i, list, compare_functor, 0);
-    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
-    fr = lst::findRef(2, list, compare_functor, 0);
-    printf("findRef : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
-    fr = lst::findRef(5, list, compare_functor, 0);
-    printf("findRef : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
-    fr = lst::findRef(7, list, compare_functor, 0);
-    printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
-    i = 4;
-    ptr = lst::findItem(&i, list, compare_functor, 0);
     printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
 
     void* exp_param = 0;
@@ -340,31 +301,22 @@ void findTestCheckOverloads()
     lst::List<int> list;
 
     list.find(&i);
-    list.find(&i, (void*)0);
 
     list.findItem(&i);
-    list.findItem(&i, (void*)0);
 
     list.findRef(0);
-    list.findRef(0, (void*)0);
 
-    list.find(&i, compareFunc3, (void*)0);
-    list.find(&i, compareFunc2);
+    list.find(&i, compareFunc);
 
-    list.findItem(&i, compareFunc3, (void*)0);
-    list.findItem(&i, compareFunc2);
+    list.findItem(&i, compareFunc);
 
-    list.findRef(0, compareFunc3, (void*)0);
-    list.findRef(0, compareFunc2);
+    list.findRef(0, compareFunc);
 
     CompareFunctor compare_functor;
-    list.find(&i, compare_functor, (void*)0);
     list.find(&i, compare_functor);
 
-    list.findItem(&i, compare_functor, (void*)0);
     list.findItem(&i, compare_functor);
 
-    list.findRef(0, compare_functor, (void*)0);
     list.findRef(0, compare_functor);
 
     void* exp_param = 0;
@@ -404,23 +356,14 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     index = fr_last.index();
     printf("lastFindResult (L) : 0 : %s : %s (------ index: %i)\n", fres(fr_last), ffail(fr_last), index); ffail_check(fr_last);
 
-    // Тест для compare с двумя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc2, fr);
+    // Тест для compare
+    fr_first = lst::firstFindResult(list, compareFunc, fr);
     index = fr_first.index();
-    printf("lastFindResult (2) : 0 : %s : %s (------ index: %i)\n", fres(fr_first), ffail(fr_first), index); ffail_check(fr_first);
+    printf("lastFindResult     : 0 : %s : %s (------ index: %i)\n", fres(fr_first), ffail(fr_first), index); ffail_check(fr_first);
 
-    fr_last = lst::lastFindResult(list, compareFunc2, fr);
+    fr_last = lst::lastFindResult(list, compareFunc, fr);
     index = fr_last.index();
-    printf("lastFindResult (2) : 0 : %s : %s (------ index: %i)\n", fres(fr_last), ffail(fr_last), index); ffail_check(fr_last);
-
-    // Тест для compare с тремя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
-    index = fr_first.index();
-    printf("lastFindResult (3) : 0 : %s : %s (------ index: %i)\n", fres(fr_first), ffail(fr_first), index); ffail_check(fr_first);
-
-    fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
-    index = fr_last.index();
-    printf("lastFindResult (3) : 0 : %s : %s (------ index: %i)\n", fres(fr_last), ffail(fr_last), index); ffail_check(fr_last);
+    printf("lastFindResult     : 0 : %s : %s (------ index: %i)\n", fres(fr_last), ffail(fr_last), index); ffail_check(fr_last);
 
     // === Поиск числа 1 ===
     fr = list.findRef(1);
@@ -436,23 +379,14 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     index = fr_last.index();
     printf("lastFindResult (L) : 1 : %s : %s (------ index: %i)\n", fres(index == i12), fsucc(index == i12), index); fsucc_check(index == i12);
 
-    // Тест для compare с двумя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc2, fr);
+    // Тест для compare
+    fr_first = lst::firstFindResult(list, compareFunc, fr);
     index = fr_first.index();
-    printf("firstFindResult(2) : 1 : %s : %s (------ index: %i)\n", fres(index == i11), fsucc(index == i11), index); fsucc_check(index == i11);
+    printf("firstFindResult    : 1 : %s : %s (------ index: %i)\n", fres(index == i11), fsucc(index == i11), index); fsucc_check(index == i11);
 
-    fr_last = lst::lastFindResult(list, compareFunc2, fr);
+    fr_last = lst::lastFindResult(list, compareFunc, fr);
     index = fr_last.index();
-    printf("lastFindResult (2) : 1 : %s : %s (------ index: %i)\n", fres(index == i12), fsucc(index == i12), index); fsucc_check(index == i12);
-
-    // Тест для compare с тремя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
-    index = fr_first.index();
-    printf("firstFindResult(3) : 1 : %s : %s (------ index: %i)\n", fres(index == i11), fsucc(index == i11), index); fsucc_check(index == i11);
-
-    fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
-    index = fr_last.index();
-    printf("lastFindResult (3) : 1 : %s : %s (------ index: %i)\n", fres(index == i12), fsucc(index == i12), index); fsucc_check(index == i12);
+    printf("lastFindResult     : 1 : %s : %s (------ index: %i)\n", fres(index == i12), fsucc(index == i12), index); fsucc_check(index == i12);
 
     // === Поиск числа 2 ===
     fr = list.findRef(2);
@@ -468,23 +402,14 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     index = fr_last.index();
     printf("lastFindResult (L) : 2 : %s : %s (------ index: %i)\n", fres(index == i22), fsucc(index == i22), index); fsucc_check(index == i22);
 
-    // Тест для compare с двумя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc2, fr);
+    // Тест для compare
+    fr_first = lst::firstFindResult(list, compareFunc, fr);
     index = fr_first.index();
-    printf("firstFindResult(2) : 2 : %s : %s (------ index: %i)\n", fres(index == i21), fsucc(index == i21), index); fsucc_check(index == i21);
+    printf("firstFindResult    : 2 : %s : %s (------ index: %i)\n", fres(index == i21), fsucc(index == i21), index); fsucc_check(index == i21);
 
-    fr_last = lst::lastFindResult(list, compareFunc2, fr);
+    fr_last = lst::lastFindResult(list, compareFunc, fr);
     index = fr_last.index();
-    printf("lastFindResult (2) : 2 : %s : %s (------ index: %i)\n", fres(index == i22), fsucc(index == i22), index); fsucc_check(index == i22);
-
-    // Тест для compare с тремя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
-    index = fr_first.index();
-    printf("firstFindResult(3) : 2 : %s : %s (------ index: %i)\n", fres(index == i21), fsucc(index == i21), index); fsucc_check(index == i21);
-
-    fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
-    index = fr_last.index();
-    printf("lastFindResult (3) : 2 : %s : %s (------ index: %i)\n", fres(index == i22), fsucc(index == i22), index); fsucc_check(index == i22);
+    printf("lastFindResult     : 2 : %s : %s (------ index: %i)\n", fres(index == i22), fsucc(index == i22), index); fsucc_check(index == i22);
 
     // === Поиск числа 4 ===
     fr = list.findRef(4);
@@ -500,23 +425,14 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     index = fr_last.index();
     printf("lastFindResult (L) : 4 : %s : %s (------ index: %i)\n", fres(index == i4), fsucc(index == i4), index); fsucc_check(index == i4);
 
-    // Тест для compare с двумя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc2, fr);
+    // Тест для compare
+    fr_first = lst::firstFindResult(list, compareFunc, fr);
     index = fr_first.index();
-    printf("firstFindResult(2) : 4 : %s : %s (------ index: %i)\n", fres(index == i4), fsucc(index == i4), index); fsucc_check(index == i4);
+    printf("firstFindResult    : 4 : %s : %s (------ index: %i)\n", fres(index == i4), fsucc(index == i4), index); fsucc_check(index == i4);
 
-    fr_last = lst::lastFindResult(list, compareFunc2, fr);
+    fr_last = lst::lastFindResult(list, compareFunc, fr);
     index = fr_last.index();
-    printf("lastFindResult (2) : 4 : %s : %s (------ index: %i)\n", fres(index == i4), fsucc(index == i4), index); fsucc_check(index == i4);
-
-    // Тест для compare с тремя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
-    index = fr_first.index();
-    printf("firstFindResult(3) : 4 : %s : %s (------ index: %i)\n", fres(index == i4), fsucc(index == i4), index); fsucc_check(index == i4);
-
-    fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
-    index = fr_last.index();
-    printf("lastFindResult (3) : 4 : %s : %s (------ index: %i)\n", fres(index == i4), fsucc(index == i4), index); fsucc_check(index == i4);
+    printf("lastFindResult     : 4 : %s : %s (------ index: %i)\n", fres(index == i4), fsucc(index == i4), index); fsucc_check(index == i4);
 
     // === Поиск числа 5 ===
     fr = list.findRef(5);
@@ -532,23 +448,14 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     index = fr_last.index();
     printf("lastFindResult (L) : 5 : %s : %s (------ index: %i)\n", fres(index == i52), fsucc(index == i52), index); fsucc_check(index == i52);
 
-    // Тест для compare с двумя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc2, fr);
+    // Тест для compare
+    fr_first = lst::firstFindResult(list, compareFunc, fr);
     index = fr_first.index();
-    printf("firstFindResult(2) : 5 : %s : %s (------ index: %i)\n", fres(index == i51), fsucc(index == i51), index); fsucc_check(index == i51);
+    printf("firstFindResult    : 5 : %s : %s (------ index: %i)\n", fres(index == i51), fsucc(index == i51), index); fsucc_check(index == i51);
 
-    fr_last = lst::lastFindResult(list, compareFunc2, fr);
+    fr_last = lst::lastFindResult(list, compareFunc, fr);
     index = fr_last.index();
-    printf("lastFindResult (2) : 5 : %s : %s (------ index: %i)\n", fres(index == i52), fsucc(index == i52), index); fsucc_check(index == i52);
-
-    // Тест для compare с тремя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
-    index = fr_first.index();
-    printf("firstFindResult(3) : 5 : %s : %s (------ index: %i)\n", fres(index == i51), fsucc(index == i51), index); fsucc_check(index == i51);
-
-    fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
-    index = fr_last.index();
-    printf("lastFindResult (3) : 5 : %s : %s (------ index: %i)\n", fres(index == i52), fsucc(index == i52), index); fsucc_check(index == i52);
+    printf("lastFindResult     : 5 : %s : %s (------ index: %i)\n", fres(index == i52), fsucc(index == i52), index); fsucc_check(index == i52);
 
     // === Поиск числа 7 ===
     fr = list.findRef(7);
@@ -564,23 +471,14 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     index = fr_last.index();
     printf("firstFindResult(L) : 7 : %s : %s (------ index: %i)\n", fres(fr_last),  ffail(fr_last), index); ffail_check(fr_last);
 
-    // Тест для compare с двумя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc2, fr);
+    // Тест для compare
+    fr_first = lst::firstFindResult(list, compareFunc, fr);
     index = fr_first.index();
-    printf("firstFindResult(L) : 7 : %s : %s (------ index: %i)\n", fres(fr_first), ffail(fr_first), index); ffail_check(fr_first);
+    printf("firstFindResult    : 7 : %s : %s (------ index: %i)\n", fres(fr_first), ffail(fr_first), index); ffail_check(fr_first);
 
-    fr_last = lst::lastFindResult(list, compareFunc2, fr);
+    fr_last = lst::lastFindResult(list, compareFunc, fr);
     index = fr_last.index();
-    printf("firstFindResult(L) : 7 : %s : %s (------ index: %i)\n", fres(fr_last),  ffail(fr_last), index); ffail_check(fr_last);
-
-    // Тест для compare с тремя параметрами
-    fr_first = lst::firstFindResult(list, compareFunc3, fr, 0);
-    index = fr_first.index();
-    printf("firstFindResult(L) : 7 : %s : %s (------ index: %i)\n", fres(fr_first), ffail(fr_first), index); ffail_check(fr_first);
-
-    fr_last = lst::lastFindResult(list, compareFunc3, fr, 0);
-    index = fr_last.index();
-    printf("firstFindResult(L) : 7 : %s : %s (------ index: %i)\n", fres(fr_last),  ffail(fr_last), index); ffail_check(fr_last);
+    printf("firstFindResult    : 7 : %s : %s (------ index: %i)\n", fres(fr_last),  ffail(fr_last), index); ffail_check(fr_last);
 
     printf("SUCCESS\n");
 }

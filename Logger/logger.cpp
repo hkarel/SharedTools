@@ -228,7 +228,9 @@ FilterList Saver::filters() const
 void Saver::addFilter(FilterLPtr filter)
 {
     SpinLocker locker(_filtersLock); (void) locker;
-    if (lst::FindResult fr = _filters.findRef(filter->name(), lst::BRUTE_FORCE))
+    lst::FindResult fr = _filters.findRef(filter->name(),
+                                          lst::FindExtParams(lst::BruteForce::Yes));
+    if (fr.success())
         _filters.remove(fr.index());
 
     filter->lock();
@@ -239,7 +241,8 @@ void Saver::addFilter(FilterLPtr filter)
 void Saver::removeFilter(const string& name)
 {
     SpinLocker locker(_filtersLock); (void) locker;
-    if (lst::FindResult fr = _filters.findRef(name, lst::BRUTE_FORCE))
+    lst::FindResult fr = _filters.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
+    if (fr.success())
         _filters.remove(fr.index());
 }
 
@@ -695,7 +698,9 @@ void Logger::removeSaverStdErr()
 void Logger::addSaver(SaverLPtr saver)
 {
     SpinLocker locker(_saversLock); (void) locker;
-    if (lst::FindResult fr = _savers.findRef(saver->name(), lst::BRUTE_FORCE))
+    lst::FindResult fr = _savers.findRef(saver->name(),
+                                         lst::FindExtParams(lst::BruteForce::Yes));
+    if (fr.success())
         _savers.remove(fr.index());
 
     saver->add_ref();
@@ -706,7 +711,8 @@ void Logger::addSaver(SaverLPtr saver)
 void Logger::removeSaver(const string& name)
 {
     SpinLocker locker(_saversLock); (void) locker;
-    if (lst::FindResult fr = _savers.findRef(name, lst::BRUTE_FORCE))
+    lst::FindResult fr = _savers.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
+    if (fr.success())
         _savers.remove(fr.index());
     redefineLevel();
 }
