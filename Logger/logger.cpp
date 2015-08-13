@@ -1,4 +1,5 @@
 
+#include <ctime>
 #include <stdexcept>
 #include <algorithm>
 #include <string.h>
@@ -55,23 +56,16 @@ void prefixFormatter(Message& message)
     char buff[sizeof(Message::prefix)] = {0};
 
     time_t time = message.timeVal.tv_sec;
-    struct tm t;
+    std::tm t;
     memset(&t, 0, sizeof(t));
     localtime_r(&time, &t);
 
     if (message.level == Level::DEBUG2)
     {
+        long tv_usec = long(message.timeVal.tv_usec);
         snprintf(buff, sizeof(buff) - 1,
-#ifdef __x86_64__
                  "%02d.%02d.%04d %02d:%02d:%02d.%06ld ",
-#else
-  #ifdef __MINGW32__
-                 "%02d.%02d.%04d %02d:%02d:%02d.%06ld ",
-  #else
-                 "%02d.%02d.%04d %02d:%02d:%02d.%06lld ",
-  #endif
-#endif
-                 t.tm_mday, t.tm_mon + 1, t.tm_year + 1900, t.tm_hour, t.tm_min, t.tm_sec, message.timeVal.tv_usec);
+                 t.tm_mday, t.tm_mon + 1, t.tm_year + 1900, t.tm_hour, t.tm_min, t.tm_sec, tv_usec);
     }
     else
         snprintf(buff, sizeof(buff) - 1,
