@@ -24,11 +24,11 @@ struct DummyStruct
     DummyStruct()
     {
         // Имитируем затраты на выполнение конструктора
-        this_thread::sleep_for(chrono::milliseconds(50));
+        this_thread::sleep_for(chrono::milliseconds(10));
     }
 };
 
-constexpr int thread_count = 10;
+constexpr int thread_count = 50;
 vector<DummyStruct*> thread_ptrs;
 vector<thread::id> thread_ids;
 
