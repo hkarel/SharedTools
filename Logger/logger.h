@@ -103,10 +103,10 @@ struct AllocatorItem
 template<typename T>
 struct FindItem
 {
-    int operator() (const string* name, const T* item2, void* = 0) const
+    int operator() (const string* name, const T* item2, void*) const
         {return name->compare(item2->name());}
 
-    //int operator() (const Type* type, const Saver* item2, void* = 0) const
+    //int operator() (const Type* type, const Saver* item2, void*) const
     //    {return LIST_COMPARE_ITEM(*type, item2->type());}
 };
 
@@ -188,16 +188,21 @@ public:
     // Добавляет модули на которые будет распространяться действие этого фильтра
     void addModule(const string& name);
 
+    // Определяет будут ли неименованные модули обрабатываться данным фильтром.
+    // По умолчанию неименованные модули не фильтруются.
+    bool filteringNoNamedModules() const {return _filteringNoNamedModules;}
+    void setFilteringNoNamedModules(bool val);
+
 private:
     bool checkImpl(const Message&) const override;
     set<string> _modules;
+    bool _filteringNoNamedModules = {false};
 };
 typedef clife_ptr<FilterModule> FilterModuleLPtr;
 
 
 /**
-  Фильтр по уровню логирования. Действие фильтра распространяется только
-  на именованные модули.
+  Фильтр по уровню логирования.
 */
 class FilterLevel : public FilterModule
 {
@@ -311,12 +316,16 @@ public:
 class SaverFile : public Saver
 {
 public:
-    SaverFile(const string& name, const string& fileName, Level level = ERROR);
+    SaverFile(const string& name, const string& filePath, Level level = ERROR);
     void flushImpl(const MessageList&) override;
 
+    // Возвращает полный путь до лог-файла
+    string filePath() const {return _filePath;}
+
 private:
-    string _fileName;
+    string _filePath;
 };
+typedef clife_ptr<SaverFile> SaverFileLPtr;
 
 
 /**
@@ -459,6 +468,9 @@ public:
 
     // Удаляет сэйвер.
     void removeSaver(const string& name);
+
+    // Выполняет поиск сэйвера по имени.
+    SaverLPtr findSaver(const string& name);
 
     // Очищает список сэйверов
     void clearSavers();

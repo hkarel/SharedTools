@@ -149,10 +149,15 @@ void FilterModule::addModule(const string& name)
     _modules.insert(name);
 }
 
+void FilterModule::setFilteringNoNamedModules(bool val)
+{
+    if (locked()) return;
+    _filteringNoNamedModules = val;
+}
+
 bool FilterModule::checkImpl(const Message& m) const
 {
-    // Не фильтруем сообщения у которых не определено имя модуля
-    if (m.module.empty())
+    if (m.module.empty() && !_filteringNoNamedModules)
         return true;
 
     bool res  = (_modules.find(m.module) != _modules.end());
@@ -169,8 +174,7 @@ void FilterLevel::setLevel(Level val)
 
 bool FilterLevel::checkImpl(const Message& m) const
 {
-    // Не фильтруем сообщения у которых не определено имя модуля
-    if (m.module.empty())
+    if (m.module.empty() && !filteringNoNamedModules())
         return true;
 
     if (_level == NONE)
@@ -321,9 +325,9 @@ SaverStdErr::SaverStdErr(Level level) : SaverStdOut(level)
 
 //------------------------------ SaverFile ----------------------------------
 
-SaverFile::SaverFile(const string& name, const string& fileName, Level level)
+SaverFile::SaverFile(const string& name, const string& filePath, Level level)
     : Saver(name, level),
-      _fileName(fileName)
+      _filePath(filePath)
 {
 }
 
@@ -332,7 +336,7 @@ void SaverFile::flushImpl(const MessageList& messages)
     if (messages.size() == 0)
         return;
 
-    if (FILE* f = fopen(_fileName.c_str(),  "a"))
+    if (FILE* f = fopen(_filePath.c_str(),  "a"))
     {
         int flush_count = 0;
         FilterList filters_ = filters();
@@ -379,7 +383,7 @@ void SaverFile::flushImpl(const MessageList& messages)
     }
     else
     {
-        throw std::logic_error("Could not open file: " + _fileName);
+        throw std::logic_error("Could not open file: " + _filePath);
     }
 }
 
@@ -709,6 +713,13 @@ void Logger::removeSaver(const string& name)
     if (fr.success())
         _savers.remove(fr.index());
     redefineLevel();
+}
+
+SaverLPtr Logger::findSaver(const string& name)
+{
+    SaverList savers = this->savers();
+    Saver* saver = savers.findItem(&name, lst::FindExtParams(lst::BruteForce::Yes));
+    return SaverLPtr(saver);
 }
 
 void Logger::clearSavers()
