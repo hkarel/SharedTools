@@ -16,8 +16,7 @@
 #  endif
 #endif
 
-#include <atomic>
-#include <assert.h>
+#include <type_traits>
 
 //#pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wparentheses"
@@ -103,6 +102,20 @@ public:
         return *this;
     }
 
+    // Динамическое преобразование типа.
+    template<typename other_cptrT>
+    other_cptrT dynamic_cast_to() const {
+        typedef typename other_cptrT::element_t other_element_t;
+        // Проверка на эквивалентность типов
+        static_assert(std::is_same<other_cptrT, clife_ptr<other_element_t>>::value,
+                      "Types must be identical");
+        if (!empty()) {
+            if (other_element_t* other_element = dynamic_cast<other_element_t*>(get()))
+                return other_cptrT(other_element);
+        }
+        return other_cptrT();
+    }
+
     void release() {if (_ptr) {_ptr->release(); _ptr = 0;}}
     void reset()   {if (_ptr) {_ptr->release(); _ptr = 0;}}
 
@@ -112,8 +125,7 @@ public:
     T& operator*  () const NOEXCEPT {return *_ptr;}
     operator T*   () const NOEXCEPT {return  _ptr;}
 
-
-    // Допускается использовать только для инициализации
+    // Допускается использовать только для инициализации.
     T** ref() {
         assert(_ptr == 0);
         return &_ptr;
@@ -139,18 +151,18 @@ public:
     static self_t create_join_ptr() {return self_t();}
 
 private:
-    // Для использования в обычных операторах присваивания и копирования.
+    // Используется в обычных операторах присваивания и копирования.
     template<typename otherT>
     void assign(const clife_ptr<otherT> & p) {
         if (_ptr) _ptr->release();
-        // Проверяем корректность преобразования типа. Допускается преобразование
-        // только от классов-наследников к базовым классам.
+        // Проверка на корректность преобразования типа. Допускается преобразо-
+        // вание только от классов-наследников к базовым классам.
         _ptr = p.get();
         if (_ptr)
             _ptr->add_ref();
     }
 
-    // Для использования в rvalue-операторах присваивания и копирования.
+    // Используется в rvalue-операторах присваивания и копирования.
     template<typename otherT>
     void assign(clife_ptr<otherT> & p, bool /*rvalue*/) {
         if (_ptr) _ptr->release();
@@ -163,7 +175,5 @@ private:
 
     template <typename> friend class clife_ptr;
 };
-
-
 
 //#pragma GCC diagnostic pop
