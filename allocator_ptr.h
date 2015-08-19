@@ -58,7 +58,7 @@ template<typename T> struct allocator_array_ptr
 
 /**
   @brief Используется для определения эквивалентных аллокаторов
-  Примечание: реализация взяла из STL cpp_type_traits.h
+  Примечание: реализация взята из STL cpp_type_traits.h
 */
 template<template<typename> class A1, template<typename> class A2 > struct allocator_ptr_equal
 {

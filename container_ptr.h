@@ -267,7 +267,7 @@ public:
     }
 
 
-    // Динамическое преобразования типа.
+    // Динамическое преобразование типа.
     template<typename other_cptrT>
     other_cptrT dynamic_cast_to() const {
         if (!empty()) {
@@ -280,7 +280,7 @@ public:
         return other_cptrT();
     }
 
-    // Проверяет возможность динамического преобразования к указанному типу
+    // Проверяет возможность динамического преобразования к указанному типу.
     template<typename other_cptrT>
     bool dynamic_cast_to(int) const {
         if (!empty()) {
