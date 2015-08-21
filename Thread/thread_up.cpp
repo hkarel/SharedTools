@@ -6,10 +6,11 @@
 
 namespace trd
 {
-using namespace std;
 
 int ThreadUp::priorityUp(int schedulAlgorithm, int priority)
 {
+    int err = 0;
+
 #ifdef _POSIX_PRIORITY_SCHEDULING
     //
     // Повышаем приоритет потока
@@ -20,7 +21,7 @@ int ThreadUp::priorityUp(int schedulAlgorithm, int priority)
     int sched_policy;
     pthread_getschedparam(nativeHandle(), &sched_policy, &sch);
     sch.sched_priority = priority;
-    int err = pthread_setschedparam(nativeHandle(), schedulAlgorithm, &sch);
+    err = pthread_setschedparam(nativeHandle(), schedulAlgorithm, &sch);
     //int err = pthread_setschedparam(nativeHandle(), SCHED_FIFO, &sch);
     //int err = pthread_setschedparam(nativeHandle(), SCHED_BATCH, &sch);
     //int err = pthread_setschedparam(nativeHandle(), SCHED_OTHER, &sch);
