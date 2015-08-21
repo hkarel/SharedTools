@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <string.h>
+#include <signal.h>
 
 #include "spin_locker.h"
 #include "break_point.h"
@@ -109,7 +110,7 @@ void prefixFormatter2(Message& message)
     memcpy(message.prefix2, buff, sizeof(buff));
 }
 
-//-------------------------------- Filter -----------------------------------
+//-------------------------------- Filter ------------------------------------
 
 void Filter::setName(const string& name)
 {
@@ -129,19 +130,65 @@ void Filter::setFilteringErrors(bool val)
     _filteringErrors = val;
 }
 
-int Filter::check(const Message& m) const
+void Filter::setFollowThreadContext(bool val)
 {
-    if (_locked)
-    {
-        if ((m.level == ERROR) && !filteringErrors())
-            return 1;
-
-        return checkImpl(m);
-    }
-    return -1;
+    if (locked()) return;
+    _followThreadContext = val;
 }
 
-//------------------------------ FilterModule -------------------------------
+Filter::Check Filter::check(const Message& m) const
+{
+    if (!_locked)
+        return Check::NoLock;
+
+    if ((m.level == ERROR) && !_filteringErrors)
+        return Check::MessError;
+
+    if (checkImpl(m))
+    {
+        if (_followThreadContext)
+        {
+            if (_mode == Mode::Include)
+                _threadContextIds.insert(m.threadId);
+
+            if (_mode == Mode::Exclude)
+            {
+                if (_threadContextIds.find(m.threadId) != _threadContextIds.end())
+                    return Check::Fail;
+            }
+        }
+        return Check::Success;
+    }
+
+    if (_followThreadContext)
+    {
+        if (_mode == Mode::Exclude)
+            _threadContextIds.insert(m.threadId);
+
+        if (_mode == Mode::Include)
+        {
+            if (_threadContextIds.find(m.threadId) != _threadContextIds.end())
+                return Check::Success;
+        }
+    }
+    return Check::Fail;
+}
+
+void Filter::removeIdsCompletedThreads()
+{
+    if (_threadContextIds.empty())
+        return;
+
+    vector<pthread_t> ids;
+    for (pthread_t id : _threadContextIds)
+        if (ESRCH == pthread_kill(id, 0))
+            ids.push_back(id);
+
+    for (pthread_t id : ids)
+        _threadContextIds.erase(id);
+}
+
+//------------------------------ FilterModule --------------------------------
 
 void FilterModule::addModule(const string& name)
 {
@@ -149,22 +196,22 @@ void FilterModule::addModule(const string& name)
     _modules.insert(name);
 }
 
-void FilterModule::setFilteringNoNamedModules(bool val)
+void FilterModule::setFilteringNoNameModules(bool val)
 {
     if (locked()) return;
-    _filteringNoNamedModules = val;
+    _filteringNoNameModules = val;
 }
 
 bool FilterModule::checkImpl(const Message& m) const
 {
-    if (m.module.empty() && !_filteringNoNamedModules)
+    if (m.module.empty() && !_filteringNoNameModules)
         return true;
 
     bool res  = (_modules.find(m.module) != _modules.end());
-    return (mode() == Exclude) ? !res : res;
+    return (mode() == Mode::Exclude) ? !res : res;
 }
 
-//----------------------------- FilterLevel ---------------------------------
+//----------------------------- FilterLevel ----------------------------------
 
 void FilterLevel::setLevel(Level val)
 {
@@ -174,13 +221,13 @@ void FilterLevel::setLevel(Level val)
 
 bool FilterLevel::checkImpl(const Message& m) const
 {
-    if (m.module.empty() && !filteringNoNamedModules())
+    if (m.module.empty() && !filteringNoNameModules())
         return true;
 
     if (_level == NONE)
         return true;
 
-    if (mode() == Include)
+    if (mode() == Mode::Include)
     {
         if (modules().find(m.module) == modules().end())
             return true;
@@ -188,14 +235,42 @@ bool FilterLevel::checkImpl(const Message& m) const
         return (m.level <= _level);
     }
 
-    // Для mode() == Exclude
+    // Для mode() == Mode::Exclude
     if (modules().find(m.module) != modules().end())
         return true;
 
     return (m.level <= _level);
 }
 
-//--------------------------------- Saver -----------------------------------
+//------------------------------ FilterFile ----------------------------------
+
+void FilterFile::addFile(const string& name)
+{
+    if (locked()) return;
+    _files.insert(name);
+}
+
+bool FilterFile::checkImpl(const Message& m) const
+{
+    bool res  = (_files.find(m.file) != _files.end());
+    return (mode() == Mode::Exclude) ? !res : res;
+}
+
+//------------------------------- FilterFunc ---------------------------------
+
+void FilterFunc::addFunc(const string& name)
+{
+    if (locked()) return;
+    _funcs.insert(name);
+}
+
+bool FilterFunc::checkImpl(const Message& m) const
+{
+    bool res  = (_funcs.find(m.func) != _funcs.end());
+    return (mode() == Mode::Exclude) ? !res : res;
+}
+
+//--------------------------------- Saver ------------------------------------
 
 Saver::Saver(const string& name, Level level)
     : _name(name),
@@ -255,14 +330,40 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
     if (filters.empty())
         return false;
 
-    for (Filter* f : filters)
-        if (f->check(m) != 0)
+    for (Filter* filter : filters)
+    {
+        Filter::Check res = filter->check(m);
+        if (res == Filter::Check::MessError)
+        {
+            // Прерываем фильтрацию на первом фильтре, который не фильтрует
+            // сообщения об ошибках.
             return false;
+        }
+        else if (res == Filter::Check::Fail)
+            return true;
+    }
 
-    return true;
+    // Если попали в эту точку - значит результат проверки последнего фильтра
+    // равен Filter::Check::Success или Filter::Check::NoLock. В обоих случаях
+    // сообщение не должно исключаться из вывода в лог-файл.
+    return false;
 }
 
-//------------------------------ SaverStdOut --------------------------------
+void Saver::removeIdsCompletedThreads()
+{
+    chrono::milliseconds elapsed =
+        chrono::duration_cast<chrono::milliseconds>(exact_clock::now() - _completedThreadsTimer);
+    if (elapsed.count() > 5000 /*5 сек*/)
+    {
+        FilterList filters = this->filters();
+        for (Filter* filter : filters)
+            filter->removeIdsCompletedThreads();
+
+        _completedThreadsTimer = exact_clock::now();
+    }
+}
+
+//------------------------------ SaverStdOut ---------------------------------
 
 SaverStdOut::SaverStdOut(Level level) : Saver("", level)
 {
@@ -272,8 +373,10 @@ SaverStdOut::SaverStdOut(Level level) : Saver("", level)
 
 void SaverStdOut::flushImpl(const MessageList& messages)
 {
-    int flush_count = 0;
-    FilterList filters_ = filters();
+    if (messages.size() == 0)
+        return;
+
+    removeIdsCompletedThreads();
 
     vector<char> line_buff;
     if (maxLineSize() > 0)
@@ -282,12 +385,15 @@ void SaverStdOut::flushImpl(const MessageList& messages)
         line_buff[maxLineSize()] = '\0';
     }
 
+    unsigned flush_count = 0;
+    FilterList filters = this->filters();
+
     for (Message* m : messages)
     {
         if (m->level > level())
             continue;
 
-        if (skipMessage(*m, filters_))
+        if (skipMessage(*m, filters))
             continue;
 
         (*_out) << m->prefix;
@@ -306,16 +412,13 @@ void SaverStdOut::flushImpl(const MessageList& messages)
 
         (*_out) << "\n";
 
-        if (++flush_count > 50)
-        {
-            flush_count = 0;
+        if (++flush_count % 50 == 0)
             _out->flush();
-        }
     }
     _out->flush();
 }
 
-//------------------------------ SaverStdErr --------------------------------
+//------------------------------ SaverStdErr ---------------------------------
 
 SaverStdErr::SaverStdErr(Level level) : SaverStdOut(level)
 {
@@ -323,7 +426,7 @@ SaverStdErr::SaverStdErr(Level level) : SaverStdOut(level)
     _out = &std::cerr;
 }
 
-//------------------------------ SaverFile ----------------------------------
+//------------------------------ SaverFile -----------------------------------
 
 SaverFile::SaverFile(const string& name, const string& filePath, Level level)
     : Saver(name, level),
@@ -338,8 +441,7 @@ void SaverFile::flushImpl(const MessageList& messages)
 
     if (FILE* f = fopen(_filePath.c_str(),  "a"))
     {
-        int flush_count = 0;
-        FilterList filters_ = filters();
+        removeIdsCompletedThreads();
 
         vector<char> line_buff;
         if (maxLineSize() > 0)
@@ -348,12 +450,15 @@ void SaverFile::flushImpl(const MessageList& messages)
             line_buff[maxLineSize()] = '\0';
         }
 
+        unsigned flush_count = 0;
+        FilterList filters = this->filters();
+
         for (Message* m : messages)
         {
             if (m->level > level())
                 continue;
 
-            if (skipMessage(*m, filters_))
+            if (skipMessage(*m, filters))
                 continue;
 
             fputs(m->prefix, f);
@@ -372,11 +477,8 @@ void SaverFile::flushImpl(const MessageList& messages)
 
             fputs("\n", f);
 
-            if (++flush_count > 500)
-            {
-                flush_count = 0;
+            if (++flush_count % 500 == 0)
                 fflush(f);
-            }
         }
         fflush(f);
         fclose(f);
@@ -387,7 +489,7 @@ void SaverFile::flushImpl(const MessageList& messages)
     }
 }
 
-//--------------------------------- Line ------------------------------------
+//--------------------------------- Line -------------------------------------
 
 Line::Line(Logger*     logger,
            Level       level,
@@ -444,7 +546,7 @@ Line::~Line()
     {}
 }
 
-//------------------------------ LevelProxy ---------------------------------
+//------------------------------ LevelProxy ----------------------------------
 
 LevelProxy::LevelProxy(Logger*     logger,
                        Level       level,
@@ -460,7 +562,7 @@ LevelProxy::LevelProxy(Logger*     logger,
       module(module)
 {}
 
-//--------------------------------- Logger ----------------------------------
+//--------------------------------- Logger -----------------------------------
 
 Logger::Logger()
 {}
@@ -541,7 +643,7 @@ void Logger::run()
                 }
             }
             prefix_formatter(messages, thread_index * step, messages.count());
-            //std::for_each(threads.begin(), threads.end(), [](thread &t){t.join();});
+
             for (size_t i = 0; i < threads.size(); ++i)
                 threads[i].join();
 
@@ -758,12 +860,4 @@ void Logger::redefineLevel()
     _level = level;
 }
 
-//Level Logger::level() const
-//{
-//    SpinLocker locker(_saversLock); (void) locker;
-//    return _level;
-//}
-
 } // namespace alog
-
-

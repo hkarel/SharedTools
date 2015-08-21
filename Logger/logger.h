@@ -1,10 +1,10 @@
-/****************************************************************************
+/*****************************************************************************
   Огиринальная идея логгера: Евдокимов Михаил
   Переработка: Карелин Павел
 
   Реализация высоконагруженного асинхронного логгера.
 
-****************************************************************************/
+*****************************************************************************/
 
 #pragma once
 
@@ -40,8 +40,9 @@ namespace alog // Акроним от "async logger".
 {
 using namespace std;
 
+class Saver;
 class Logger;
-
+typedef chrono::high_resolution_clock exact_clock;
 
 // Уровни log-сообщений
 enum Level {NONE, ERROR, WARNING, INFO, VERBOSE, DEBUG, DEBUG2};
@@ -105,9 +106,6 @@ struct FindItem
 {
     int operator() (const string* name, const T* item2, void*) const
         {return name->compare(item2->name());}
-
-    //int operator() (const Type* type, const Saver* item2, void*) const
-    //    {return LIST_COMPARE_ITEM(*type, item2->type());}
 };
 
 
@@ -129,7 +127,7 @@ class Filter : public clife_base
 {
 public:
     // Режим работы фильта: включающий/исключающий.
-    enum Mode {Include, Exclude};
+    enum class Mode {Include, Exclude};
 
     Filter() {}
     virtual ~Filter() {}
@@ -147,11 +145,35 @@ public:
     bool filteringErrors() const {return _filteringErrors;}
     void setFilteringErrors(bool val);
 
-    // Возвращает значение большее нуля в случае если сообщение соответствует
-    // критериям фильтрации, если сообщение не соответствует критериям фильтрации
-    // будет возвращен нуль. В случае если фильтр не заперт - будет возвращено
-    // значение меньшее нуля.
-    int check(const Message&) const;
+    // Определяет будут ли в лог-файл включены дополнительные сообщения
+    // которые находятся в одном и том же потоке с основными фильтруемыми
+    // сообщениями.
+    // Рассмотрим пример: имеется программный модуль ImportData и по нему
+    // выполняется фильтрация сообщений. При этом модуль ImportData активно
+    // использует sql-запросы, которые отрабатывают в модуле SqlQuery.
+    // Если просто включить модуль SqlQuery в фильтр, то будут выводиться
+    // все запросы выполняемые в программе, что создаст неудобства при
+    // диагностике работы модуля ImportData. Параметр followThreadContext
+    // позволит выводить только те sql-запросы, которые относятся к работе
+    // модуля ImportData.
+    // Особенности работы механизма: для фильтра работающего в режиме
+    // Mode::Include сообщения идущие в контексте потока будут выводиться
+    // в лог-файл; для фильтра Mode::Exclude сообщения идущие в контексте
+    // потока не будут выводиться в лог-файл.
+    // По умолчанию сообщения по контексту потока не фильтруются.
+    bool followThreadContext() const {return _followThreadContext;}
+    void setFollowThreadContext(bool val);
+
+    enum class Check
+    {
+        NoLock    = -1, // Фильтр не заперт
+        Fail      =  0, // Сообщение не соответствует критериям фильтрации
+        Success   =  1, // Сообщение соответствует критериям фильтрации
+        MessError =  2  // Cообщение является сообщением об ошибке
+    };
+
+    // Проверяет сообщение на соответствие критериям фильтрации
+    Check check(const Message&) const;
 
     // Возвращает статус фильта: заперт/не заперт.
     bool locked() const {return _locked;}
@@ -167,11 +189,21 @@ private:
 
     virtual bool checkImpl(const Message&) const = 0;
 
+    // Удаляет идентификаторы завершенных потоков из списка _threadContextIds
+    void removeIdsCompletedThreads();
+
 private:
     string _name;
-    Mode   _mode = {Include};
+    Mode   _mode = {Mode::Include};
     bool   _locked = {false};
     bool   _filteringErrors = {false};
+    bool   _followThreadContext = {false};
+
+    // Список идентификаторов потоков, используется для фильтрации сообщений
+    // по контексту потока.
+    mutable set<pthread_t> _threadContextIds;
+
+    friend class Saver;
 };
 typedef lst::List<Filter, FindItem<Filter>, AllocatorItem<Filter>> FilterList;
 typedef clife_ptr<Filter> FilterLPtr;
@@ -190,13 +222,13 @@ public:
 
     // Определяет будут ли неименованные модули обрабатываться данным фильтром.
     // По умолчанию неименованные модули не фильтруются.
-    bool filteringNoNamedModules() const {return _filteringNoNamedModules;}
-    void setFilteringNoNamedModules(bool val);
+    bool filteringNoNameModules() const {return _filteringNoNameModules;}
+    void setFilteringNoNameModules(bool val);
 
 private:
     bool checkImpl(const Message&) const override;
     set<string> _modules;
-    bool _filteringNoNamedModules = {false};
+    bool _filteringNoNameModules = {false};
 };
 typedef clife_ptr<FilterModule> FilterModuleLPtr;
 
@@ -215,6 +247,42 @@ private:
     Level _level = {NONE};
 };
 typedef clife_ptr<FilterLevel> FilterLevelLPtr;
+
+
+/**
+  Фильтр по именам файлов
+*/
+class FilterFile : public virtual Filter
+{
+public:
+    const set<string>& files() const {return _files;}
+
+    // Добавляет файлы на которые будет распространяться действие этого фильтра
+    void addFile(const string& name);
+
+private:
+    bool checkImpl(const Message&) const override;
+    set<string> _files;
+};
+typedef clife_ptr<FilterFile> FilterFileLPtr;
+
+
+/**
+  Фильтр по именам функций
+*/
+class FilterFunc : public virtual Filter
+{
+public:
+    const set<string>& funcs() const {return _funcs;}
+
+    // Добавляет функции на которые будет распространяться действие этого фильтра
+    void addFunc(const string& name);
+
+private:
+    bool checkImpl(const Message&) const override;
+    set<string> _funcs;
+};
+typedef clife_ptr<FilterFunc> FilterFuncLPtr;
 
 
 /**
@@ -250,7 +318,7 @@ public:
     int  maxLineSize() const {return _maxLineSize;}
     void setMaxLineSize(int val) {_maxLineSize = val;}
 
-    // Возвращает список фильтров
+    // Возвращает snapshot-список фильтров
     FilterList filters() const;
 
     // Добавляет фильтр в список фильтров. Если фильтр с указанным именем уже
@@ -263,20 +331,28 @@ public:
     // Очищает список фильтров
     void clearFilters();
 
-    // Проверяет принадлежит ли сообщение фильтрам
-    static bool skipMessage(const Message& m, const FilterList& filters);
-
 protected:
     virtual void flushImpl(const MessageList&) = 0;
+
+    // Определяет будет ли сообщение выводиться в лог-файл, возвращает TRUE
+    // если сообщение не удовлетворяет условиям фильтрации.
+    // Порядок работы функции: сообщение m последовательно обрабатывается всеми
+    // фильтрами filters. Если сообщение не удовлетворяет критериям фильтрации
+    // очередного фильтра, то функция завершает работу с результатом TRUE.
+    bool skipMessage(const Message& m, const FilterList& filters);
+
+    void removeIdsCompletedThreads();
 
 private:
     string _name;
     Level  _level = {ERROR};
-
-    int _maxLineSize = {5000};
+    int    _maxLineSize = {5000};
 
     FilterList _filters;
     mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
+
+    // Таймер проверки завершенных потоков
+    exact_clock::time_point _completedThreadsTimer = {exact_clock::now()};
 
     friend class SaverStdOut;
     friend class SaverStdErr;
@@ -406,8 +482,6 @@ struct LevelProxy
 */
 class Logger : public trd::ThreadBase
 {
-    typedef chrono::high_resolution_clock exact_clock;
-
 public:
     ~Logger();
 
@@ -524,7 +598,7 @@ private:
 Logger& logger(); // {return ::safe_singleton<Logger>();}
 
 
-//---------------------------- Line operators -------------------------------
+//---------------------------- Line operators --------------------------------
 
 inline bool Line::toLogger() const
 {
