@@ -15,7 +15,6 @@
 
 namespace trd
 {
-using namespace std;
 
 /**
   Примитивный базовый класс для работы с потоками
@@ -49,7 +48,7 @@ public:
     bool threadRun() const NOEXCEPT;
 
     // Возвращает нативный идентификатор потока
-    thread::native_handle_type nativeHandle() NOEXCEPT;
+    std::thread::native_handle_type nativeHandle() NOEXCEPT;
 
 protected:
     virtual void startImpl();
@@ -66,7 +65,9 @@ private:
     void runHandler();
 
 private:
-    thread _thread;
+    // Для BSD-систем нужно явно указывать пространство 'std' при определении
+    // типа 'thread'.
+    std::thread _thread;
 
     volatile bool _threadRun;
     volatile bool _threadStop;
@@ -75,13 +76,13 @@ private:
     // ции stop() сразу после вызова функции start(). В этой ситуации вызов
     // функции stop() может произойти до начала старта потока, как следствие
     // при вызове stop() не произойдет ожидание окончания потока.
-    atomic_bool _waitThreadStart;
+    std::atomic_bool _waitThreadStart;
 
     // *** Неудачная попытка завершить работу потока асинхронно ***
     //atomic_bool _waitThreadStop;
 
     // Используется для исключения одновременного вызова функций start()/stop()
-    mutex _startStopLock;
+    std::mutex _startStopLock;
 
 };
 

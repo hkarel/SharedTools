@@ -4,7 +4,6 @@
 
 namespace trd
 {
-using namespace std;
 
 ThreadBase::ThreadBase()
 {
@@ -32,7 +31,7 @@ bool ThreadBase::threadRun() const NOEXCEPT
     return _threadRun;
 }
 
-thread::native_handle_type ThreadBase::nativeHandle() NOEXCEPT
+std::thread::native_handle_type ThreadBase::nativeHandle() NOEXCEPT
 {
     return _thread.native_handle();
 }
@@ -44,7 +43,7 @@ void ThreadBase::start()
 
 void ThreadBase::startImpl()
 {
-    lock_guard<mutex> locker(_startStopLock); (void) locker;
+    std::lock_guard<std::mutex> locker(_startStopLock); (void) locker;
 
     //break_point
 
@@ -62,7 +61,7 @@ void ThreadBase::startImpl()
     _threadStop = false;
     _threadRun = true;
 
-    _thread = thread(&ThreadBase::runHandler, this);
+    _thread = std::thread(&ThreadBase::runHandler, this);
 }
 
 void ThreadBase::stop(bool wait)
@@ -72,7 +71,7 @@ void ThreadBase::stop(bool wait)
 
 void ThreadBase::stopImpl(bool /*wait*/)
 {
-    lock_guard<mutex> locker(_startStopLock); (void) locker;
+    std::lock_guard<std::mutex> locker(_startStopLock); (void) locker;
 
     // Примечание: входящий параметр wait на данный момент не используется,
     // так как не удалось добиться стабильной работы системы при асинхронном
