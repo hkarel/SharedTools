@@ -76,10 +76,13 @@ bool Settings::read(const std::string& filePath)
         }
     }
 
-    std::string s = "Readed settings: ";
-    for (const auto& x : nv)
-        s += x.first + " : " + x.second + "; ";
-    log_debug_m << s;
+    if (alog::logger().level() >= alog::Level::DEBUG)
+    {
+        std::string s = "Read: ";
+        for (const auto& x : nv)
+            s += x.first + " : " + x.second + "; ";
+        log_debug_m << s;
+    }
 
     { //For SpinLocker
         SpinLocker locker(_settingsLock); (void) locker;

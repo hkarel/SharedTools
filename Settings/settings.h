@@ -92,7 +92,11 @@ private:
     mutable std::atomic_flag  _settingsLock = ATOMIC_FLAG_INIT;
 };
 
-inline Settings& settings() {return safe_singleton<Settings>();}
+// Реализация функции settings() должна быть выполнена в модуле main.cpp, это
+// требование связано с особенностью сборки и работы so-модулей проекта LBcore.
+// Если это требование не выполнять, то каждый so-модуль в LBcore будет иметь
+// собственный экземпляр settings().
+Settings& settings(); // {return safe_singleton<Settings>();}
 
 // Используется для записи настроек в отдельный файл
 void settingsWrite(const Settings&, const std::string& fileName);
