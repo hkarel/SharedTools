@@ -61,26 +61,37 @@ string toString(int val)
     return buff;
 }
 
+static inline uint8_t toHexChar(uint8_t c) noexcept
+{
+    return (c < 10) ? ('0' + c) : ('a' + (c - 10));
+}
+
+string uuidToString(const uint8_t* uuid)
+{
+    string buff;
+    buff.reserve(36);
+    for (int i = 0; i < 16; ++i)
+    {
+        buff += toHexChar((uuid[i] >> 4) & 0x0f);
+        buff += toHexChar(uuid[i] & 0x0f);
+        if (i == 3 || i == 5 || i == 7 || i == 9)
+            buff += '-';
+    }
+    return buff;
+}
+
 string uuidToHexString(const uint8_t* uuid)
 {
-    auto to_hex_char = [](uint8_t c) -> uint8_t
-    {
-        if (c <= 9)
-            return '0' + c;
-        return 'a' + (c - 10);
-    };
-
     string buff;
-    buff.reserve(35);
+    buff.reserve(34);
     buff += "0x";
     for (int i = 0; i < 16; ++i)
     {
-        buff += to_hex_char((uuid[i] >> 4) & 0x0f);
-        buff += to_hex_char(uuid[i] & 0x0f);
+        buff += toHexChar((uuid[i] >> 4) & 0x0f);
+        buff += toHexChar(uuid[i] & 0x0f);
     }
     return buff;
 }
 
 
 } // namespace utl
-
