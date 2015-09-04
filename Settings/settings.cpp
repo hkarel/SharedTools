@@ -1,9 +1,8 @@
-#include <fstream>
-#include "Logger/logger.h"
-#include "utils.h"
-#include "spin_locker.h"
 #include "settings.h"
+#include "spin_locker.h"
+#include "utils.h"
 
+#include <fstream>
 
 #define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
 #define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")

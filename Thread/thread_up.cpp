@@ -1,8 +1,8 @@
+#include "thread_up.h"
+
 #include <cstdio>
 #include <unistd.h>
 #include <pthread.h>
-#include "thread_up.h"
-
 
 namespace trd
 {

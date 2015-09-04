@@ -1,11 +1,10 @@
+#include "utils.h"
+#include "Logger/logger.h"
+
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
 #include <algorithm>
-
-#include "Logger/logger.h"
-#include "utils.h"
-
 
 namespace utl
 {
@@ -92,6 +91,5 @@ string uuidToHexString(const uint8_t* uuid)
     }
     return buff;
 }
-
 
 } // namespace utl

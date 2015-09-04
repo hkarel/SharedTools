@@ -1,6 +1,5 @@
-#include "break_point.h"
 #include "thread_base.h"
-
+#include "break_point.h"
 
 namespace trd
 {

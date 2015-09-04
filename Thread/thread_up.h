@@ -1,8 +1,7 @@
 #pragma once
 
-#include <string>
 #include "thread_base.h"
-
+#include <string>
 
 namespace trd
 {
@@ -29,7 +28,4 @@ private:
     string _priorityUpError;
 };
 
-
 } //namespace trd
-
-

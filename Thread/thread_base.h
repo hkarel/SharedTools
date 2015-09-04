@@ -12,7 +12,6 @@
 #include <thread>
 #include <mutex>
 
-
 namespace trd
 {
 
@@ -85,7 +84,6 @@ private:
     std::mutex _startStopLock;
 
 };
-
 
 } //namespace trd
 

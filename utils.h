@@ -11,7 +11,6 @@
 #include <cstdarg>
 #include <streambuf>
 
-
 namespace utl
 {
 using namespace std;
@@ -88,5 +87,3 @@ string formatMessage(const char* format, ...)
 }
 
 } // namespace utl
-
-
