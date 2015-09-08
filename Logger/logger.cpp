@@ -1,3 +1,6 @@
+#include "logger.h"
+#include "break_point.h"
+#include "spin_locker.h"
 
 #include <ctime>
 #include <stdexcept>
@@ -5,15 +8,10 @@
 #include <string.h>
 #include <signal.h>
 
-#include "spin_locker.h"
-#include "break_point.h"
-#include "logger.h"
-
 
 namespace alog
 {
 using namespace std;
-
 
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.
 // Информация сохраняется в файле /tmp/alogger.log
@@ -351,15 +349,13 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
 
 void Saver::removeIdsCompletedThreads()
 {
-    chrono::milliseconds elapsed =
-        chrono::duration_cast<chrono::milliseconds>(exact_clock::now() - _completedThreadsTimer);
-    if (elapsed.count() > 5000 /*5 сек*/)
+    if (_completedThreadsTimer.elapsed() > 5000 /*5 сек*/)
     {
         FilterList filters = this->filters();
         for (Filter* filter : filters)
             filter->removeIdsCompletedThreads();
 
-        _completedThreadsTimer = exact_clock::now();
+        _completedThreadsTimer.reset();
     }
 }
 
@@ -580,7 +576,7 @@ void Logger::addMessage(MessagePtr&& m)
 
 void Logger::run()
 {
-    exact_clock::time_point last_flush_time = exact_clock::now();
+    simple_timer flush_timer;
 
     // Вспомогательный флаг, нужен чтобы дать возможность перед прерываением
     // потока сделать лишний цикл while (true) и сбросить все буферы в сэйверы.
@@ -682,16 +678,13 @@ void Logger::run()
 
         } //if (messages.count())
 
-        chrono::milliseconds elapsed =
-            chrono::duration_cast<chrono::milliseconds>(exact_clock::now() - last_flush_time);
-
         if (thread_stop
             || _forceFlush
-            || elapsed.count() > _flushTime
+            || flush_timer.elapsed() > _flushTime
             || messages_buff.count() > _flushSize)
         {
             _forceFlush = false;
-            last_flush_time = exact_clock::now();
+            flush_timer.reset();
 
             if (messages_buff.count())
             {

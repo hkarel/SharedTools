@@ -16,6 +16,14 @@
 #  endif
 #endif
 
+#include "_list.h"
+#include "clife_base.h"
+#include "clife_ptr.h"
+#include "simple_ptr.h"
+#include "simple_timer.h"
+#include "safe_singleton.h"
+#include "Thread/thread_base.h"
+
 #include <sys/time.h>
 #include <iostream>
 #include <sstream>
@@ -23,17 +31,9 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include <chrono>
 #include <thread>
 #include <mutex>
 #include <string>
-
-#include "Thread/thread_base.h"
-#include "_list.h"
-#include "clife_base.h"
-#include "clife_ptr.h"
-#include "simple_ptr.h"
-#include "safe_singleton.h"
 
 
 namespace alog // Акроним от "async logger".
@@ -42,7 +42,6 @@ using namespace std;
 
 class Saver;
 class Logger;
-typedef chrono::high_resolution_clock exact_clock;
 
 // Уровни log-сообщений
 enum Level {NONE, ERROR, WARNING, INFO, VERBOSE, DEBUG, DEBUG2};
@@ -352,7 +351,7 @@ private:
     mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
 
     // Таймер проверки завершенных потоков
-    exact_clock::time_point _completedThreadsTimer = {exact_clock::now()};
+    simple_timer _completedThreadsTimer;
 
     friend class SaverStdOut;
     friend class SaverStdErr;
