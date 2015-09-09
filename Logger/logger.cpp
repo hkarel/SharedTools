@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <string.h>
-#include <signal.h>
+//#include <signal.h>
 
 
 namespace alog
@@ -90,8 +90,9 @@ void prefixFormatter2(Message& message)
         default:             lvl = "UNKNOWN ";
     }
 
-    void* p = reinterpret_cast<void*>(message.threadId);
+    //void* p = reinterpret_cast<void*>(message.threadId);
     //unsigned long ll = 244234234234;
+    long tid = long(message.threadId);
 
     char module[50] = {0};
     if (!message.module.empty())
@@ -99,11 +100,11 @@ void prefixFormatter2(Message& message)
 
     if (!message.file.empty())
     {
-        snprintf(buff, sizeof(buff) - 1, "%s%p [%s:%s:%d]\t%s",
-                 lvl, p, message.file.c_str(),  message.func.c_str(), message.line, module);
+        snprintf(buff, sizeof(buff) - 1, "%s%ld [%s:%s:%d]\t%s",
+                 lvl, tid, message.file.c_str(),  message.func.c_str(), message.line, module);
     }
     else
-        snprintf(buff, sizeof(buff) - 1, "%s%p\t%s", lvl, p, module);
+        snprintf(buff, sizeof(buff) - 1, "%s%ld\t%s", lvl, tid, module);
 
     memcpy(message.prefix2, buff, sizeof(buff));
 }
@@ -177,13 +178,13 @@ void Filter::removeIdsCompletedThreads()
     if (_threadContextIds.empty())
         return;
 
-    vector<pthread_t> ids;
-    for (pthread_t id : _threadContextIds)
-        if (ESRCH == pthread_kill(id, 0))
-            ids.push_back(id);
+    vector<pid_t> tids;
+    for (pid_t tid : _threadContextIds)
+        if (!trd::thread_exists(tid))
+            tids.push_back(tid);
 
-    for (pthread_t id : ids)
-        _threadContextIds.erase(id);
+    for (pid_t tid : tids)
+        _threadContextIds.erase(tid);
 }
 
 //------------------------------ FilterModule --------------------------------
@@ -520,7 +521,8 @@ Line::~Line()
         message->level = impl->level;
         message->str = impl->buff.str();
         gettimeofday(&message->timeVal, NULL);
-        message->threadId = pthread_self();
+        message->threadId = trd::gettid();
+
         if (impl->file)
         {
             const char* f = strrchr(impl->file, '/') + 1;

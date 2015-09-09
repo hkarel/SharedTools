@@ -23,7 +23,9 @@
 #include "simple_timer.h"
 #include "safe_singleton.h"
 #include "Thread/thread_base.h"
+#include "Thread/thread_info.h"
 
+#include <sys/types.h>
 #include <sys/time.h>
 #include <iostream>
 #include <sstream>
@@ -60,13 +62,14 @@ struct Message //: public clife_base
     string str;
     string module;
 
-    // Буферы prefix и prefix2 хранят результаты функций prefixFormatter2().
-    // Основное назначение минимизировать количество вызовов prefixFormatter2()
-    // при записи сообщения сразу в несколько сэйверов. Причина: большое потреб-
-    // ление системных ресурсов при многократном вызове prefixFormatter2().
-    // Важно: prefix-буферы специально сделаны выделяемыми на стеке,
-    // т.к. память для них должна выделяться в момент создания объекта, а не
-    // в момент заполнения префиксов.
+    // Буферы prefix и prefix2 хранят результаты функций prefixFormatter{2}.
+    // Основное назначение минимизировать количество вызовов prefixFormatter{2}
+    // при записи сообщения сразу в несколько сэйверов.
+    // Причина: большое потребление системных ресурсов при многократном вызове
+    //          prefixFormatter{2}.
+    // Важно:   prefix-буферы специально сделаны выделяемыми на стеке,
+    //          так как память для них должна выделяться в момент создания
+    //          объекта, а не в момент заполнения префиксов.
     char prefix[30] = {0};
     char prefix2[300] = {0};
 
@@ -75,7 +78,7 @@ struct Message //: public clife_base
     int    line;
 
     struct timeval timeVal;
-    pthread_t threadId;
+    pid_t  threadId;
 
     Message() {}
     Message(Message&&) = default;
@@ -200,7 +203,7 @@ private:
 
     // Список идентификаторов потоков, используется для фильтрации сообщений
     // по контексту потока.
-    mutable set<pthread_t> _threadContextIds;
+    mutable set<pid_t> _threadContextIds;
 
     friend class Saver;
 };
