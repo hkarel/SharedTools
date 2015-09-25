@@ -1,6 +1,7 @@
 #include "logger.h"
 #include "break_point.h"
 #include "spin_locker.h"
+#include "simple_timer.h"
 
 #include <ctime>
 #include <stdexcept>
@@ -148,7 +149,8 @@ Filter::Check Filter::check(const Message& m) const
         if (_followThreadContext)
         {
             if (_mode == Mode::Include)
-                _threadContextIds.insert(m.threadId);
+                //_threadContextIds.insert(m.threadId);
+                _threadContextIds[m.threadId] = m.timeVal;
 
             if (_mode == Mode::Exclude)
             {
@@ -162,7 +164,8 @@ Filter::Check Filter::check(const Message& m) const
     if (_followThreadContext)
     {
         if (_mode == Mode::Exclude)
-            _threadContextIds.insert(m.threadId);
+            //_threadContextIds.insert(m.threadId);
+            _threadContextIds[m.threadId] = m.timeVal;
 
         if (_mode == Mode::Include)
         {
@@ -173,16 +176,38 @@ Filter::Check Filter::check(const Message& m) const
     return Check::Fail;
 }
 
-void Filter::removeIdsCompletedThreads()
+//void Filter::removeIdsCompletedThreads()
+//{
+//    if (_threadContextIds.empty())
+//        return;
+
+//    vector<pid_t> tids;
+//    for (pid_t tid : _threadContextIds)
+//        if (!trd::thread_exists(tid))
+//            tids.push_back(tid);
+
+//    for (pid_t tid : tids)
+//        _threadContextIds.erase(tid);
+//}
+
+void Filter::removeIdsTimeoutThreads()
 {
     if (_threadContextIds.empty())
         return;
 
     vector<pid_t> tids;
-    for (pid_t tid : _threadContextIds)
-        if (!trd::thread_exists(tid))
-            tids.push_back(tid);
-
+    struct timeval cur_time;
+    gettimeofday(&cur_time, NULL);
+    for (const auto& tid : _threadContextIds)
+    {
+        // Таймаут в 3 сек.
+        if (cur_time.tv_sec > (tid.second.tv_sec + 3)
+            || ((cur_time.tv_sec == (tid.second.tv_sec + 2))
+                && (cur_time.tv_usec > tid.second.tv_usec)))
+        {
+            tids.push_back(tid.first);
+        }
+    }
     for (pid_t tid : tids)
         _threadContextIds.erase(tid);
 }
@@ -348,16 +373,23 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
     return false;
 }
 
-void Saver::removeIdsCompletedThreads()
-{
-    if (_completedThreadsTimer.elapsed() > 5000 /*5 сек*/)
-    {
-        FilterList filters = this->filters();
-        for (Filter* filter : filters)
-            filter->removeIdsCompletedThreads();
+//void Saver::removeIdsCompletedThreads()
+//{
+//    if (_completedThreadsTimer.elapsed() > 5000 /*5 сек*/)
+//    {
+//        FilterList filters = this->filters();
+//        for (Filter* filter : filters)
+//            filter->removeIdsCompletedThreads();
 
-        _completedThreadsTimer.reset();
-    }
+//        _completedThreadsTimer.reset();
+//    }
+//}
+
+void Saver::removeIdsTimeoutThreads()
+{
+    FilterList filters = this->filters();
+    for (Filter* filter : filters)
+        filter->removeIdsTimeoutThreads();
 }
 
 //------------------------------ SaverStdOut ---------------------------------
@@ -373,7 +405,8 @@ void SaverStdOut::flushImpl(const MessageList& messages)
     if (messages.size() == 0)
         return;
 
-    removeIdsCompletedThreads();
+    //removeIdsCompletedThreads();
+    removeIdsTimeoutThreads();
 
     vector<char> line_buff;
     if (maxLineSize() > 0)
@@ -438,7 +471,8 @@ void SaverFile::flushImpl(const MessageList& messages)
 
     if (FILE* f = fopen(_filePath.c_str(),  "a"))
     {
-        removeIdsCompletedThreads();
+        //removeIdsCompletedThreads();
+        removeIdsTimeoutThreads();
 
         vector<char> line_buff;
         if (maxLineSize() > 0)

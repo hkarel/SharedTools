@@ -15,11 +15,12 @@
 #  endif
 #endif
 
-#include <new>
-#include <atomic>
-#include <type_traits>
 #include "allocator_ptr.h"
 
+#include <new>
+#include <atomic>
+#include <stdlib.h>
+#include <type_traits>
 
 /**
   Использование спец-аллокатора памяти для экземпляров counter_ptr_t

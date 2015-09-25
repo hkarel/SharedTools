@@ -41,8 +41,9 @@
 #  endif
 #endif
 
+#include <new>
 #include <atomic>
-#include "break_point.h"
+#include <stdlib.h>
 
 #if defined(QT_CORE_LIB)
 #include <QMutex>

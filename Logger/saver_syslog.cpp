@@ -1,5 +1,5 @@
-#include <syslog.h>
 #include "saver_syslog.h"
+#include <syslog.h>
 
 namespace alog
 {

@@ -5,11 +5,12 @@
 
 #pragma once
 
+#include "logger.h"
+
 #include <iostream>
 #include <sstream>
 #include <vector>
 #include <map>
-#include "logger.h"
 
 namespace alog
 {

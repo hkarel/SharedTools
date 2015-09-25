@@ -45,13 +45,13 @@
 #  endif
 #endif
 
+#include "Closure/closure3.h"
+#include "spin_locker.h"
+
 #include <atomic>
 #include <mutex>
 #include <vector>
 #include <type_traits>
-#include "Closure/closure3.h"
-#include "spin_locker.h"
-#include "break_point.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"

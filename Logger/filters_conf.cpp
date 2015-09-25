@@ -8,8 +8,4 @@ void configParser(const string& /*filePath*/, Logger& /*logger*/)
 
 }
 
-
-
-
-
 } // namespace alog

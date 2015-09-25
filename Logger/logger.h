@@ -20,7 +20,6 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "simple_ptr.h"
-#include "simple_timer.h"
 #include "safe_singleton.h"
 #include "Thread/thread_base.h"
 #include "Thread/thread_info.h"
@@ -33,6 +32,7 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <map>
 #include <thread>
 #include <mutex>
 #include <string>
@@ -192,7 +192,11 @@ private:
     virtual bool checkImpl(const Message&) const = 0;
 
     // Удаляет идентификаторы завершенных потоков из списка _threadContextIds
-    void removeIdsCompletedThreads();
+    //void removeIdsCompletedThreads();
+
+    // Удаляет идентификаторы потоков из списка _threadContextIds. Удаление
+    // происходит по истечении временного интервала в 3 секунды.
+    void removeIdsTimeoutThreads();
 
 private:
     string _name;
@@ -203,7 +207,8 @@ private:
 
     // Список идентификаторов потоков, используется для фильтрации сообщений
     // по контексту потока.
-    mutable set<pid_t> _threadContextIds;
+    //mutable set<pid_t> _threadContextIds;
+    mutable map<pid_t, struct timeval> _threadContextIds;
 
     friend class Saver;
 };
@@ -343,7 +348,8 @@ protected:
     // очередного фильтра, то функция завершает работу с результатом TRUE.
     bool skipMessage(const Message& m, const FilterList& filters);
 
-    void removeIdsCompletedThreads();
+    //void removeIdsCompletedThreads();
+    void removeIdsTimeoutThreads();
 
 private:
     string _name;
@@ -354,7 +360,7 @@ private:
     mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
 
     // Таймер проверки завершенных потоков
-    simple_timer _completedThreadsTimer;
+    //simple_timer _completedThreadsTimer;
 
     friend class SaverStdOut;
     friend class SaverStdErr;

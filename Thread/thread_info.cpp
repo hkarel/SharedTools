@@ -24,7 +24,7 @@ bool thread_exists(pid_t tid)
 #if defined(__FreeBSD__)
     long tid_ = long(tid);
     int res = syscall(SYS_thr_kill, tid_, 0);
-    return (res != ESRCH)
+    return (res != ESRCH);
 #else
     int res = syscall(SYS_tkill, tid, 0);
     return ((res == -1) && (errno == ESRCH)) ? false : true;

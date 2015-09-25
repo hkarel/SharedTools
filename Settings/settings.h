@@ -9,16 +9,16 @@
 
 #pragma once
 
+#include "safe_singleton.h"
+#include "simple_signal.h"
+#include "Logger/logger.h"
+
 #include <iostream>
 #include <sstream>
 #include <atomic>
 #include <vector>
 #include <map>
 #include <cxxabi.h>
-
-#include "safe_singleton.h"
-#include "simple_signal.h"
-#include "Logger/logger.h"
 
 
 class Settings
