@@ -6,6 +6,7 @@
 #pragma once
 
 #include <sys/types.h>
+#include <stdio.h>
 #include <atomic>
 #include <string>
 #include <cstdarg>
