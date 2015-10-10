@@ -429,10 +429,11 @@ struct Line
     // и добавление его в коллекцию сообщений логгера
     ~Line();
 
-    Line() = delete;
+    Line() = default;
     Line(Line&&) = default;
+    Line& operator= (Line&&) = default;
+
     Line(const Line&) = delete;
-    Line& operator= (Line&&) = delete;
     Line& operator= (const Line&) = delete;
 
     // Сервисная функция, выполняет проверку уровня логирования и определяет
@@ -616,8 +617,7 @@ inline bool Line::toLogger() const
 template<typename T>
 Line& operator<< (Line& line, const T& t)
 {
-    //if (line.impl->level <= line.impl->logger->level())
-    if (line.toLogger())
+    if (line.impl && line.toLogger())
         line.impl->buff << t;
     return line;
 }
@@ -625,8 +625,7 @@ Line& operator<< (Line& line, const T& t)
 template<typename T>
 Line operator<< (Line&& line, const T& t)
 {
-    //if (line.impl->level <= line.impl->logger->level())
-    if (line.toLogger())
+    if (line.impl && line.toLogger())
         line.impl->buff << t;
     return std::move(line);
 }
