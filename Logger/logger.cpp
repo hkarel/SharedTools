@@ -202,7 +202,7 @@ void Filter::removeIdsTimeoutThreads()
     {
         // Таймаут в 3 сек.
         if (cur_time.tv_sec > (tid.second.tv_sec + 3)
-            || ((cur_time.tv_sec == (tid.second.tv_sec + 2))
+            || ((cur_time.tv_sec == (tid.second.tv_sec + 3))
                 && (cur_time.tv_usec > tid.second.tv_usec)))
         {
             tids.push_back(tid.first);
