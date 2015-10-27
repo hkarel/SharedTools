@@ -49,8 +49,12 @@ class Logger;
 enum Level {NONE, ERROR, WARNING, INFO, VERBOSE, DEBUG, DEBUG2};
 
 // Вспомогательная функция, используется для преобразования строкового
-// обозначения уровня логирования в enum Level{};
+// обозначения уровня логирования в enum Level{}
 Level levelFromString(const string& level);
+
+// Вспомогательная функция, используется для получения строкового представления
+// уровня логирования.
+string levelToString(Level);
 
 
 /**
@@ -191,9 +195,6 @@ private:
 
     virtual bool checkImpl(const Message&) const = 0;
 
-    // Удаляет идентификаторы завершенных потоков из списка _threadContextIds
-    //void removeIdsCompletedThreads();
-
     // Удаляет идентификаторы потоков из списка _threadContextIds. Удаление
     // происходит по истечении временного интервала в 3 секунды.
     void removeIdsTimeoutThreads();
@@ -310,12 +311,15 @@ public:
     // Имя сэйвера
     const string& name() const {return _name;}
 
+    // В основном используется при конфигурировании логгера, для указания
+    // в конфиг-файле, что сэйвер является неактивным. При неактивном сэйвере
+    // запись в лог-файл не производится.
+    bool active() const {return _active;}
+    void setActive(bool val) {_active = val;}
+
     // Уровень логирования
     Level level() const {return _level;}
     void setLevel(Level val) {_level = val;}
-
-    // Выполняет запись буфера сообщений
-    void flush(const MessageList&);
 
     // Устанавливает ограничение на максимальную длину строки сообщения.
     // Длина строки не ограничивается если значение меньше либо равно 0.
@@ -324,6 +328,10 @@ public:
     //       символов.
     int  maxLineSize() const {return _maxLineSize;}
     void setMaxLineSize(int val) {_maxLineSize = val;}
+
+public:
+    // Выполняет запись буфера сообщений
+    void flush(const MessageList&);
 
     // Возвращает snapshot-список фильтров
     FilterList filters() const;
@@ -348,19 +356,16 @@ protected:
     // очередного фильтра, то функция завершает работу с результатом TRUE.
     bool skipMessage(const Message& m, const FilterList& filters);
 
-    //void removeIdsCompletedThreads();
     void removeIdsTimeoutThreads();
 
 private:
     string _name;
+    bool   _active = {true};
     Level  _level = {ERROR};
     int    _maxLineSize = {5000};
 
     FilterList _filters;
     mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
-
-    // Таймер проверки завершенных потоков
-    //simple_timer _completedThreadsTimer;
 
     friend class SaverStdOut;
     friend class SaverStdErr;
@@ -556,7 +561,7 @@ public:
     SaverLPtr findSaver(const string& name);
 
     // Очищает список сэйверов
-    void clearSavers();
+    void clearSavers(bool clearStd = true);
 
     // Возвращает snapshot пользовательских сэйверов
     SaverList savers() const;
@@ -615,18 +620,32 @@ inline bool Line::toLogger() const
 }
 
 template<typename T>
-Line& operator<< (Line& line, const T& t)
+inline Line& operator<< (Line& line, const T& t)
 {
-    if (line.impl && line.toLogger())
+    if (line.toLogger())
         line.impl->buff << t;
     return line;
 }
 
 template<typename T>
-Line operator<< (Line&& line, const T& t)
+inline Line operator<< (Line&& line, const T& t)
 {
-    if (line.impl && line.toLogger())
+    if (line.toLogger())
         line.impl->buff << t;
+    return std::move(line);
+}
+
+inline Line& operator<< (Line& line, bool b)
+{
+    if (line.toLogger())
+        line.impl->buff << (b ? "true" : "false");
+    return line;
+}
+
+inline Line operator<< (Line&& line, bool b)
+{
+    if (line.toLogger())
+        line.impl->buff << (b ? "true" : "false");
     return std::move(line);
 }
 

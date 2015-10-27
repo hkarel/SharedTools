@@ -2,6 +2,7 @@
 #include "break_point.h"
 #include "spin_locker.h"
 #include "simple_timer.h"
+#include "utils.h"
 
 #include <ctime>
 #include <stdexcept>
@@ -32,7 +33,9 @@ void loggerPanic(const char* saverName, const char* error)
 
 Level levelFromString(const string& level)
 {
-    if (level == "error")
+    if (level == "none")
+        return Level::NONE;
+    else if (level == "error")
         return Level::ERROR;
     else if (level == "warning")
         return Level::WARNING;
@@ -48,6 +51,28 @@ Level levelFromString(const string& level)
     return Level::INFO;
 }
 
+static const char* levelToStringImpl(Level level)
+{
+    switch (level)
+    {
+        // Примечание: пробелы в конце строк удалять нельзя, так как
+        // это скажется на производительности функции prefixFormatter2().
+        case Level::NONE:    return "NONE    ";
+        case Level::ERROR:   return "ERROR   ";
+        case Level::WARNING: return "WARNING ";
+        case Level::INFO:    return "INFO    ";
+        case Level::VERBOSE: return "VERBOSE ";
+        case Level::DEBUG:   return "DEBUG   ";
+        case Level::DEBUG2:  return "DEBUG2  ";
+        default:             return "UNKNOWN ";
+    }
+}
+
+string levelToString(Level level)
+{
+    string s = levelToStringImpl(level);
+    return utl::rtrim(s);
+}
 
 // Формирует префикс строки лога. В префикс входит время и дата записи, уровень
 // логирования,  номер потока, наименование функции из которой выполнен вызов.
@@ -79,20 +104,7 @@ void prefixFormatter2(Message& message)
 {
     char buff[sizeof(Message::prefix2)] = {0};
 
-    const char* lvl;
-    switch (message.level)
-    {
-        case Level::ERROR:   lvl = "ERROR   "; break;
-        case Level::WARNING: lvl = "WARNING "; break;
-        case Level::INFO:    lvl = "INFO    "; break;
-        case Level::VERBOSE: lvl = "VERBOSE "; break;
-        case Level::DEBUG:   lvl = "DEBUG   "; break;
-        case Level::DEBUG2:  lvl = "DEBUG2  "; break;
-        default:             lvl = "UNKNOWN ";
-    }
-
-    //void* p = reinterpret_cast<void*>(message.threadId);
-    //unsigned long ll = 244234234234;
+    const char* level = levelToStringImpl(message.level);
     long tid = long(message.threadId);
 
     char module[50] = {0};
@@ -100,12 +112,10 @@ void prefixFormatter2(Message& message)
         snprintf(module, sizeof(module) - 1, "%s : ", message.module.c_str());
 
     if (!message.file.empty())
-    {
         snprintf(buff, sizeof(buff) - 1, "%s%ld [%s:%s:%d]\t%s",
-                 lvl, tid, message.file.c_str(),  message.func.c_str(), message.line, module);
-    }
+                 level, tid, message.file.c_str(),  message.func.c_str(), message.line, module);
     else
-        snprintf(buff, sizeof(buff) - 1, "%s%ld\t%s", lvl, tid, module);
+        snprintf(buff, sizeof(buff) - 1, "%s%ld\t%s", level, tid, module);
 
     memcpy(message.prefix2, buff, sizeof(buff));
 }
@@ -176,20 +186,6 @@ Filter::Check Filter::check(const Message& m) const
     return Check::Fail;
 }
 
-//void Filter::removeIdsCompletedThreads()
-//{
-//    if (_threadContextIds.empty())
-//        return;
-
-//    vector<pid_t> tids;
-//    for (pid_t tid : _threadContextIds)
-//        if (!trd::thread_exists(tid))
-//            tids.push_back(tid);
-
-//    for (pid_t tid : tids)
-//        _threadContextIds.erase(tid);
-//}
-
 void Filter::removeIdsTimeoutThreads()
 {
     if (_threadContextIds.empty())
@@ -231,7 +227,7 @@ bool FilterModule::checkImpl(const Message& m) const
     if (m.module.empty() && !_filteringNoNameModules)
         return true;
 
-    bool res  = (_modules.find(m.module) != _modules.end());
+    bool res = (_modules.find(m.module) != _modules.end());
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
@@ -303,6 +299,9 @@ Saver::Saver(const string& name, Level level)
 
 void Saver::flush(const MessageList& messages)
 {
+    if (!_active)
+        return;
+
     if (_level == Level::NONE)
         return;
 
@@ -372,18 +371,6 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
     // сообщение не должно исключаться из вывода в лог-файл.
     return false;
 }
-
-//void Saver::removeIdsCompletedThreads()
-//{
-//    if (_completedThreadsTimer.elapsed() > 5000 /*5 сек*/)
-//    {
-//        FilterList filters = this->filters();
-//        for (Filter* filter : filters)
-//            filter->removeIdsCompletedThreads();
-
-//        _completedThreadsTimer.reset();
-//    }
-//}
 
 void Saver::removeIdsTimeoutThreads()
 {
@@ -853,11 +840,14 @@ SaverLPtr Logger::findSaver(const string& name)
     return SaverLPtr(saver);
 }
 
-void Logger::clearSavers()
+void Logger::clearSavers(bool clearStd)
 {
     SpinLocker locker(_saversLock); (void) locker;
-    _saverOut.reset();
-    _saverErr.reset();
+    if (clearStd)
+    {
+        _saverOut.reset();
+        _saverErr.reset();
+    }
     _savers.clear();
     redefineLevel();
 }
