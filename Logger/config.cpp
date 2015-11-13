@@ -1,10 +1,8 @@
 #include "config.h"
 #include "utils.h"
-#include "yaml-cpp/yaml.h"
 
+#include <yaml-cpp/yaml.h>
 #include <exception>
-#include <list>
-#include <set>
 
 #define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "LogConfig")
 #define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "LogConfig")
@@ -109,6 +107,33 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
             modules.insert(ymodule.as<string>());
     }
 
+    set<string> functions;
+    if (yfilter["functions"].IsDefined())
+    {
+        check_fied_type("functions", YAML::NodeType::Sequence);
+        const YAML::Node& yfunctions = yfilter["functions"];
+        for (const YAML::Node& yfunction : yfunctions)
+            functions.insert(yfunction.as<string>());
+    }
+
+    set<string> files;
+    if (yfilter["files"].IsDefined())
+    {
+        check_fied_type("files", YAML::NodeType::Sequence);
+        const YAML::Node& yfiles = yfilter["files"];
+        for (const YAML::Node& yfile : yfiles)
+            files.insert(yfile.as<string>());
+    }
+
+    set<long> threads;
+    if (yfilter["threads"].IsDefined())
+    {
+        check_fied_type("threads", YAML::NodeType::Sequence);
+        const YAML::Node& ythreads = yfilter["threads"];
+        for (const YAML::Node& ythread : ythreads)
+            threads.insert(ythread.as<long>());
+    }
+
     FilterLPtr filter;
     if (type == "module_name")
     {
@@ -130,6 +155,30 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
             filter_level->addModule(module);
 
         filter = filter_level;
+    }
+    else if (type == "func_name")
+    {
+        FilterFuncLPtr filter_func {new FilterFunc()};
+        for (const string& function : functions)
+            filter_func->addFunc(function);
+
+        filter = filter_func;
+    }
+    else if (type == "file_name")
+    {
+        FilterFileLPtr filter_file {new FilterFile()};
+        for (const string& file : files)
+            filter_file->addFile(file);
+
+        filter = filter_file;
+    }
+    else if (type == "thread_id")
+    {
+        FilterThreadLPtr filter_thread {new FilterThread()};
+        for (long tid : threads)
+            filter_thread->addThread(tid);
+
+        filter = filter_thread;
     }
     if (filter.empty())
         return FilterLPtr();
@@ -283,7 +332,6 @@ bool loadSavers(const string& confFile, std::list<SaverLPtr>& savers)
 void printSaversInfo()
 {
     log_info_m << "---";
-    //log_info_m << "SaversInfo Begin";
     SaverList savers = alog::logger().savers();
     for (Saver* saver : savers)
         if (SaverFile* fsaver = dynamic_cast<SaverFile*>(saver))
@@ -302,8 +350,6 @@ void printSaversInfo()
             log_line << "file: " << fsaver->filePath();
         }
 
-    //log_info_m << "SaversInfo End";
-
     // Составляем список фильтров
     FilterList filters;
     for (Saver* saver : savers)
@@ -321,7 +367,6 @@ void printSaversInfo()
         }
     }
 
-    //log_info_m << "FiltersInfo Begin";
     for (Filter* filter : filters)
     {
         alog::Line log_line = log_info_m << "Filter : ";
@@ -330,22 +375,45 @@ void printSaversInfo()
                  << "filtering_errors: " << filter->filteringErrors() << "; "
                  << "follow_thread_context: " << filter->followThreadContext() << "; ";
 
-        if (FilterModule* mfilter = dynamic_cast<FilterModule*>(filter))
+        if (FilterModule* mod_filter = dynamic_cast<FilterModule*>(filter))
         {
-            log_line << "filtering_noname_modules: " << mfilter->filteringNoNameModules() << "; ";
-
+            log_line << "type: module_name"
+                     << "filtering_noname_modules: " << mod_filter->filteringNoNameModules() << "; ";
             log_line << "modules: [ ";
-            for (const string& module : mfilter->modules())
+            for (const string& module : mod_filter->modules())
                 log_line << module << ", ";
             log_line << "]; ";
         }
-
-        if (FilterLevel* lfilter = dynamic_cast<FilterLevel*>(filter))
+        else if (FilterLevel* log_filter = dynamic_cast<FilterLevel*>(filter))
         {
-            log_line << "level: " << levelToString(lfilter->leve()) << "; ";
+            log_line << "type: log_level";
+            log_line << "level: " << levelToString(log_filter->leve()) << "; ";
+        }
+        else if (FilterFunc* func_filter = dynamic_cast<FilterFunc*>(filter))
+        {
+            log_line << "type: func_name";
+            log_line << "functions: [ ";
+            for (const string& function : func_filter->funcs())
+                log_line << function << ", ";
+            log_line << "]; ";
+        }
+        else if (FilterFile* file_filter = dynamic_cast<FilterFile*>(filter))
+        {
+            log_line << "type: file_name";
+            log_line << "files: [ ";
+            for (const string& file : file_filter->files())
+                log_line << file << ", ";
+            log_line << "]; ";
+        }
+        else if (FilterThread* file_thread = dynamic_cast<FilterThread*>(filter))
+        {
+            log_line << "type: thread_id";
+            log_line << "threads: [ ";
+            for (pid_t tid : file_thread->threads())
+                log_line << long(tid) << ", ";
+            log_line << "]; ";
         }
     }
-    //log_info_m << "FiltersInfo End";
     log_info_m << "...";
 }
 

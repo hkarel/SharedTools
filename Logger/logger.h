@@ -167,7 +167,7 @@ public:
     // в лог-файл; для фильтра Mode::Exclude сообщения идущие в контексте
     // потока не будут выводиться в лог-файл.
     // По умолчанию сообщения по контексту потока не фильтруются.
-    bool followThreadContext() const {return _followThreadContext;}
+    virtual bool followThreadContext() const;
     void setFollowThreadContext(bool val);
 
     enum class Check
@@ -208,7 +208,6 @@ private:
 
     // Список идентификаторов потоков, используется для фильтрации сообщений
     // по контексту потока.
-    //mutable set<pid_t> _threadContextIds;
     mutable map<pid_t, struct timeval> _threadContextIds;
 
     friend class Saver;
@@ -291,6 +290,25 @@ private:
     set<string> _funcs;
 };
 typedef clife_ptr<FilterFunc> FilterFuncLPtr;
+
+
+/**
+  Фильтр по идентификаторам потока
+*/
+class FilterThread : public virtual Filter
+{
+public:
+    bool followThreadContext() const override;
+    const set<pid_t>& threads() const {return _threads;}
+
+    // Добавляет функции на которые будет распространяться действие этого фильтра
+    void addThread(long id);
+
+private:
+    bool checkImpl(const Message&) const override;
+    set<pid_t> _threads;
+};
+typedef clife_ptr<FilterThread> FilterThreadLPtr;
 
 
 /**
@@ -381,11 +399,15 @@ class SaverStdOut : public Saver
 {
 
 public:
-    SaverStdOut(Level level = ERROR);
+    // Если параметр shortMessages == TRUE, то в консоль будут выводятся только
+    // сами сообщения, а расширенные параметры сообщения такие как дата, уровень
+    // логирования, идентификатор потока и пр. выводиться не будут.
+    SaverStdOut(const char* name, Level level, bool shortMessages);
     void flushImpl(const MessageList&) override;
 
 protected:
     ostream* _out;
+    bool _shortMessages = {false};
 };
 
 
@@ -395,7 +417,7 @@ protected:
 class SaverStdErr : public SaverStdOut
 {
 public:
-    SaverStdErr(Level level = ERROR);
+    SaverStdErr(const char* name, Level level, bool shortMessages);
 };
 
 
@@ -520,18 +542,21 @@ public:
     // например перед критическим завершением программы.
     void flush(int pauseDuration = 0);
 
-    // Добавляет вывод логов в stdout. Если вывод уже был добавлен ранее, то
-    // вывод будет пересоздан с новым уровнем логирования.
-    void addSaverStdOut(Level level = ERROR);
+    // Добавляет сэйвер для вывода лог-сообщений в stdout. Если сэйвер уже был
+    // добавлен ранее, то сэйвер будет пересоздан с новым уровнем логирования.
+    // Если параметр shortMessages == TRUE, то в консоль будут выводятся только
+    // сами сообщения, а расширенные параметры сообщения такие как дата, уровень
+    // логирования, идентификатор потока и пр. выводиться не будут.
+    void addSaverStdOut(Level level = ERROR, bool shortMessages = false);
 
-    // Добавляет вывод логов в stderr. Если вывод уже был добавлен ранее, то
-    // вывод будет пересоздан с новым уровнем логирования.
-    void addSaverStdErr(Level level = ERROR);
+    // Добавляет сэйвер для вывода лог-сообщений в stderr. Если сэйвер уже был
+    // добавлен ранее, то сэйвер будет пересоздан с новым уровнем логирования.
+    void addSaverStdErr(Level level = ERROR, bool shortMessages = false);
 
-    // Запрещает вывод логов в stdout
+    // Удаляет сэйвер выводящий лог-сообщения в stdout
     void removeSaverStdOut();
 
-    // Запрещает вывод логов в stderr
+    // Удаляет сэйвер выводящий лог-сообщения в stderr
     void removeSaverStdErr();
 
     // Включает вывод информации в логи (по умолчанию включено)
@@ -581,6 +606,7 @@ private:
     void run() override;
 
     void redefineLevel();
+    void waitingForceFlush();
 
 private:
     MessageList _messages;

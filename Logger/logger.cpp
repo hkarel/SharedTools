@@ -112,10 +112,10 @@ void prefixFormatter2(Message& message)
         snprintf(module, sizeof(module) - 1, "%s : ", message.module.c_str());
 
     if (!message.file.empty())
-        snprintf(buff, sizeof(buff) - 1, "%s%ld [%s:%s:%d]\t%s",
-                 level, tid, message.file.c_str(),  message.func.c_str(), message.line, module);
+        snprintf(buff, sizeof(buff) - 1, "%sLWP%ld [%s:%d:%s]\t%s",
+                 level, tid, message.file.c_str(), message.line, message.func.c_str(), module);
     else
-        snprintf(buff, sizeof(buff) - 1, "%s%ld\t%s", level, tid, module);
+        snprintf(buff, sizeof(buff) - 1, "%sLWP%ld\t%s", level, tid, module);
 
     memcpy(message.prefix2, buff, sizeof(buff));
 }
@@ -140,6 +140,11 @@ void Filter::setFilteringErrors(bool val)
     _filteringErrors = val;
 }
 
+bool Filter::followThreadContext() const
+{
+    return _followThreadContext;
+}
+
 void Filter::setFollowThreadContext(bool val)
 {
     if (locked()) return;
@@ -159,7 +164,6 @@ Filter::Check Filter::check(const Message& m) const
         if (_followThreadContext)
         {
             if (_mode == Mode::Include)
-                //_threadContextIds.insert(m.threadId);
                 _threadContextIds[m.threadId] = m.timeVal;
 
             if (_mode == Mode::Exclude)
@@ -174,7 +178,6 @@ Filter::Check Filter::check(const Message& m) const
     if (_followThreadContext)
     {
         if (_mode == Mode::Exclude)
-            //_threadContextIds.insert(m.threadId);
             _threadContextIds[m.threadId] = m.timeVal;
 
         if (_mode == Mode::Include)
@@ -290,6 +293,25 @@ bool FilterFunc::checkImpl(const Message& m) const
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
+//------------------------------ FilterThread --------------------------------
+
+bool FilterThread::followThreadContext() const
+{
+    return false;
+}
+
+void FilterThread::addThread(long id)
+{
+    if (locked()) return;
+    _threads.insert(pid_t(id));
+}
+
+bool FilterThread::checkImpl(const Message& m) const
+{
+    bool res  = (_threads.find(m.threadId) != _threads.end());
+    return (mode() == Mode::Exclude) ? !res : res;
+}
+
 //--------------------------------- Saver ------------------------------------
 
 Saver::Saver(const string& name, Level level)
@@ -381,10 +403,11 @@ void Saver::removeIdsTimeoutThreads()
 
 //------------------------------ SaverStdOut ---------------------------------
 
-SaverStdOut::SaverStdOut(Level level) : Saver("", level)
+SaverStdOut::SaverStdOut(const char* name, Level level, bool shortMessages)
+    : Saver(name, level)
 {
-    //_type = STDOUT;
     _out = &std::cout;
+    _shortMessages = shortMessages;
 }
 
 void SaverStdOut::flushImpl(const MessageList& messages)
@@ -392,7 +415,6 @@ void SaverStdOut::flushImpl(const MessageList& messages)
     if (messages.size() == 0)
         return;
 
-    //removeIdsCompletedThreads();
     removeIdsTimeoutThreads();
 
     vector<char> line_buff;
@@ -413,12 +435,14 @@ void SaverStdOut::flushImpl(const MessageList& messages)
         if (skipMessage(*m, filters))
             continue;
 
-        (*_out) << m->prefix;
-        if ((level() == Level::DEBUG2) && (m->level != Level::DEBUG2))
-            (*_out) << "       ";
+        if (!_shortMessages)
+        {
+            (*_out) << m->prefix;
+            if ((level() == Level::DEBUG2) && (m->level != Level::DEBUG2))
+                (*_out) << "       ";
 
-        (*_out) << m->prefix2;
-
+            (*_out) << m->prefix2;
+        }
         if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
         {
             strncpy(&line_buff[0], m->str.c_str(), maxLineSize());
@@ -437,9 +461,9 @@ void SaverStdOut::flushImpl(const MessageList& messages)
 
 //------------------------------ SaverStdErr ---------------------------------
 
-SaverStdErr::SaverStdErr(Level level) : SaverStdOut(level)
+SaverStdErr::SaverStdErr(const char* name, Level level, bool shortMessages)
+    : SaverStdOut(name, level, shortMessages)
 {
-    //_type = STDERROR;
     _out = &std::cerr;
 }
 
@@ -458,7 +482,6 @@ void SaverFile::flushImpl(const MessageList& messages)
 
     if (FILE* f = fopen(_filePath.c_str(),  "a"))
     {
-        //removeIdsCompletedThreads();
         removeIdsTimeoutThreads();
 
         vector<char> line_buff;
@@ -608,6 +631,24 @@ void Logger::run()
 
     MessageList messages_buff;
 
+    auto saver_func = [] (const MessageList& messages, Saver* saver)
+    {
+        if (messages.empty())
+            return;
+        try
+        {
+            saver->flush(messages);
+        }
+        catch (std::exception& e)
+        {
+            loggerPanic(saver->name().c_str(), e.what());
+        }
+        catch (...)
+        {
+            loggerPanic(saver->name().c_str(), "unknown error");
+        }
+    };
+
     while (true)
     {
         int messages_count;
@@ -634,8 +675,7 @@ void Logger::run()
 
         if (messages.count())
         {
-            void (*prefix_formatter)(MessageList&, int, int) =
-            [] (MessageList& messages, int min, int max)
+            auto prefix_formatter = [] (MessageList& messages, int min, int max)
             {
                 for (int i = min; i < max; ++i)
                 {
@@ -674,26 +714,10 @@ void Logger::run()
                 saver_out = _saverOut;
                 saver_err = _saverErr;
             }
-
-            auto saver_console = [&messages] (const SaverLPtr& saver, const char* out) -> void
-            {
-                if (saver.empty())
-                    return;
-                try
-                {
-                    saver->flush(messages);
-                }
-                catch (std::exception& e)
-                {
-                    loggerPanic(out, e.what());
-                }
-                catch (...)
-                {
-                    loggerPanic(out, "unknown error");
-                }
-            };
-            saver_console(saver_out, "stdout");
-            saver_console(saver_err, "stderr");
+            if (saver_out)
+                saver_func(messages, saver_out.get());
+            if (saver_err)
+                saver_func(messages, saver_err.get());
 
             for (int i = 0; i < messages.count(); ++i)
                 messages_buff.add(messages.release(i, lst::NO_COMPRESS_LIST));
@@ -706,28 +730,14 @@ void Logger::run()
             || flush_timer.elapsed() > _flushTime
             || messages_buff.count() > _flushSize)
         {
-            _forceFlush = false;
             flush_timer.reset();
-
             if (messages_buff.count())
             {
                 SaverList savers_ = savers();
                 for (Saver* saver : savers_)
-                {
-                    try
-                    {
-                        saver->flush(messages_buff);
-                    }
-                    catch (std::exception& e)
-                    {
-                        loggerPanic(saver->name().c_str(), e.what());
-                    }
-                    catch (...)
-                    {
-                        loggerPanic(saver->name().c_str(), "unknown error");
-                    }
-                }
+                    saver_func(messages_buff, saver);
             }
+            _forceFlush = false;
             messages_buff.clear();
         }
 
@@ -783,22 +793,37 @@ LevelProxy Logger::debug2_f(const char* file, const char* func, int line, const 
     return std::move(lp);
 }
 
-void Logger::addSaverStdOut(Level level)
+void Logger::waitingForceFlush()
 {
+    while (_forceFlush)
+    {
+        static chrono::milliseconds sleep_thread {20};
+        this_thread::sleep_for(sleep_thread);
+    }
+}
+
+void Logger::addSaverStdOut(Level level, bool shortMessages)
+{
+    waitingForceFlush();
+
     SpinLocker locker(_saversLock); (void) locker;
-    _saverOut = SaverLPtr(new SaverStdOut(level));
+    _saverOut = SaverLPtr(new SaverStdOut("stdout", level, shortMessages));
     redefineLevel();
 }
 
-void Logger::addSaverStdErr(Level level)
+void Logger::addSaverStdErr(Level level, bool shortMessages)
 {
+    waitingForceFlush();
+
     SpinLocker locker(_saversLock); (void) locker;
-    _saverErr = SaverLPtr(new SaverStdErr(level));
+    _saverErr = SaverLPtr(new SaverStdErr("stderr", level, shortMessages));
     redefineLevel();
 }
 
 void Logger::removeSaverStdOut()
 {
+    waitingForceFlush();
+
     SpinLocker locker(_saversLock); (void) locker;
     _saverOut.reset();
     redefineLevel();
@@ -806,6 +831,8 @@ void Logger::removeSaverStdOut()
 
 void Logger::removeSaverStdErr()
 {
+    waitingForceFlush();
+
     SpinLocker locker(_saversLock); (void) locker;
     _saverErr.reset();
     redefineLevel();
@@ -826,6 +853,8 @@ void Logger::addSaver(SaverLPtr saver)
 
 void Logger::removeSaver(const string& name)
 {
+    waitingForceFlush();
+
     SpinLocker locker(_saversLock); (void) locker;
     lst::FindResult fr = _savers.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
     if (fr.success())
