@@ -49,9 +49,6 @@ bool Settings::read(const std::string& filePath)
     NameValList nv;
     while (true)
     {
-        std::string str;
-        std::getline(file, str);
-
         if (file.eof())
             break;
 
@@ -60,6 +57,9 @@ bool Settings::read(const std::string& filePath)
             log_error_m << "Can not read from config file: " << filePath;
             return false;
         }
+
+        std::string str;
+        std::getline(file, str);
 
         if (str.empty() || str[0] == '#')
             continue;
@@ -75,20 +75,13 @@ bool Settings::read(const std::string& filePath)
         }
     }
 
-    if (alog::logger().level() >= alog::Level::DEBUG)
-    {
-        std::string s = "Read: ";
-        for (const auto& x : nv)
-            s += x.first + " : " + x.second + "; ";
-        log_debug_m << s;
-    }
-
     { //For SpinLocker
         SpinLocker locker(_settingsLock); (void) locker;
         if (&_filePath != &filePath) _filePath = filePath;
     }
 
     setValues(nv);
+    print();
     return true;
 }
 
@@ -187,6 +180,16 @@ bool Settings::exists(const std::string& name, std::string* value) const
     return false;
 }
 
+void Settings::print()
+{
+    if (alog::logger().level() >= alog::Level::DEBUG)
+    {
+        NameValList nv = values();
+        alog::Line log_line = log_debug_m << "Read: ";
+        for (const auto& x : nv)
+            log_line << x.first << " : " << x.second + "; ";
+    }
+}
 
 #undef log_error_m
 #undef log_warn_m

@@ -80,6 +80,9 @@ public:
     template<typename T>
     static char* typeName();
 
+    // Выводит список настроек в систему логирования
+    void print();
+
 
 private:
     Settings(Settings&&) = delete;
