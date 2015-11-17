@@ -80,29 +80,43 @@ void prefixFormatter(Message& message)
 {
     char buff[sizeof(Message::prefix)] = {0};
 
-    time_t time = message.timeVal.tv_sec;
-    std::tm t;
-    memset(&t, 0, sizeof(t));
-    localtime_r(&time, &t);
+    std::tm tm;
+    memset(&tm, 0, sizeof(tm));
 
-    if (message.level == Level::DEBUG2)
-    {
-        long tv_usec = long(message.timeVal.tv_usec);
-        snprintf(buff, sizeof(buff) - 1,
-                 "%02d.%02d.%04d %02d:%02d:%02d.%06ld ",
-                 t.tm_mday, t.tm_mon + 1, t.tm_year + 1900, t.tm_hour, t.tm_min, t.tm_sec, tv_usec);
-    }
-    else
-        snprintf(buff, sizeof(buff) - 1,
-                 "%02d.%02d.%04d %02d:%02d:%02d ",
-                 t.tm_mday, t.tm_mon + 1, t.tm_year + 1900, t.tm_hour, t.tm_min, t.tm_sec);
+    time_t t = message.timeVal.tv_sec;
+    localtime_r(&t, &tm);
 
+//    //if (message.level == Level::DEBUG2)
+//    if (logger->level() == Level::DEBUG2)
+//    {
+//        long tv_usec = long(message.timeVal.tv_usec);
+//        snprintf(buff, sizeof(buff) - 1,
+//                 "%02d.%02d.%04d %02d:%02d:%02d.%06ld ",
+//                 tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec, tv_usec);
+//    }
+//    else
+//        snprintf(buff, sizeof(buff) - 1,
+//                 "%02d.%02d.%04d %02d:%02d:%02d ",
+//                 tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    snprintf(buff, sizeof(buff) - 1,
+             "%02d.%02d.%04d %02d:%02d:%02d",
+             tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
     memcpy(message.prefix, buff, sizeof(buff));
 }
 
 void prefixFormatter2(Message& message)
 {
     char buff[sizeof(Message::prefix2)] = {0};
+    long tv_usec = long(message.timeVal.tv_usec);
+
+    snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
+    memcpy(message.prefix2, buff, sizeof(buff));
+}
+
+void prefixFormatter3(Message& message)
+{
+    char buff[sizeof(Message::prefix3)] = {0};
 
     const char* level = levelToStringImpl(message.level);
     long tid = long(message.threadId);
@@ -112,12 +126,12 @@ void prefixFormatter2(Message& message)
         snprintf(module, sizeof(module) - 1, "%s : ", message.module.c_str());
 
     if (!message.file.empty())
-        snprintf(buff, sizeof(buff) - 1, "%sLWP%ld [%s:%d:%s]\t%s",
+        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d:%s]\t%s",
                  level, tid, message.file.c_str(), message.line, message.func.c_str(), module);
     else
-        snprintf(buff, sizeof(buff) - 1, "%sLWP%ld\t%s", level, tid, module);
+        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld\t%s", level, tid, module);
 
-    memcpy(message.prefix2, buff, sizeof(buff));
+    memcpy(message.prefix3, buff, sizeof(buff));
 }
 
 //-------------------------------- Filter ------------------------------------
@@ -197,14 +211,14 @@ void Filter::removeIdsTimeoutThreads()
     vector<pid_t> tids;
     struct timeval cur_time;
     gettimeofday(&cur_time, NULL);
-    for (const auto& tid : _threadContextIds)
+    for (const auto& tci : _threadContextIds)
     {
         // Таймаут в 3 сек.
-        if (cur_time.tv_sec > (tid.second.tv_sec + 3)
-            || ((cur_time.tv_sec == (tid.second.tv_sec + 3))
-                && (cur_time.tv_usec > tid.second.tv_usec)))
+        if (cur_time.tv_sec > (tci.second.tv_sec + 3)
+            || ((cur_time.tv_sec == (tci.second.tv_sec + 3))
+                && (cur_time.tv_usec > tci.second.tv_usec)))
         {
-            tids.push_back(tid.first);
+            tids.push_back(tci.first);
         }
     }
     for (pid_t tid : tids)
@@ -318,6 +332,13 @@ Saver::Saver(const string& name, Level level)
     : _name(name),
       _level(level)
 {}
+
+void Saver::setActive(bool val)
+{
+    _active = val;
+    if (Logger* logger = _logger.load())
+        logger->redefineLevel();
+}
 
 void Saver::flush(const MessageList& messages)
 {
@@ -438,10 +459,9 @@ void SaverStdOut::flushImpl(const MessageList& messages)
         if (!_shortMessages)
         {
             (*_out) << m->prefix;
-            if ((level() == Level::DEBUG2) && (m->level != Level::DEBUG2))
-                (*_out) << "       ";
-
-            (*_out) << m->prefix2;
+            if (level() == Level::DEBUG2)
+                (*_out) << m->prefix2;
+            (*_out) << m->prefix3;
         }
         if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
         {
@@ -503,10 +523,9 @@ void SaverFile::flushImpl(const MessageList& messages)
                 continue;
 
             fputs(m->prefix, f);
-            if ((level() == Level::DEBUG2) && (m->level != Level::DEBUG2))
-                fputs("       ", f);
-
-            fputs(m->prefix2, f);
+            if (level() == Level::DEBUG2)
+                fputs(m->prefix2, f);
+            fputs(m->prefix3, f);
 
             if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
             {
@@ -631,7 +650,7 @@ void Logger::run()
 
     MessageList messages_buff;
 
-    auto saver_func = [] (const MessageList& messages, Saver* saver)
+    auto saver_flush = [] (const MessageList& messages, Saver* saver)
     {
         if (messages.empty())
             return;
@@ -675,12 +694,15 @@ void Logger::run()
 
         if (messages.count())
         {
-            auto prefix_formatter = [] (MessageList& messages, int min, int max)
+            auto prefix_formatter = [this] (MessageList& messages, int min, int max)
             {
+                Level level = this->level(); // volatile оптимизация
                 for (int i = min; i < max; ++i)
                 {
                     prefixFormatter(messages[i]);
-                    prefixFormatter2(messages[i]);
+                    if (level == Level::DEBUG2)
+                        prefixFormatter2(messages[i]);
+                    prefixFormatter3(messages[i]);
                 }
             };
 
@@ -715,9 +737,9 @@ void Logger::run()
                 saver_err = _saverErr;
             }
             if (saver_out)
-                saver_func(messages, saver_out.get());
+                saver_flush(messages, saver_out.get());
             if (saver_err)
-                saver_func(messages, saver_err.get());
+                saver_flush(messages, saver_err.get());
 
             for (int i = 0; i < messages.count(); ++i)
                 messages_buff.add(messages.release(i, lst::NO_COMPRESS_LIST));
@@ -733,9 +755,9 @@ void Logger::run()
             flush_timer.reset();
             if (messages_buff.count())
             {
-                SaverList savers_ = savers();
-                for (Saver* saver : savers_)
-                    saver_func(messages_buff, saver);
+                SaverList savers = this->savers();
+                for (Saver* saver : savers)
+                    saver_flush(messages_buff, saver);
             }
             _forceFlush = false;
             messages_buff.clear();
@@ -805,60 +827,73 @@ void Logger::waitingForceFlush()
 void Logger::addSaverStdOut(Level level, bool shortMessages)
 {
     waitingForceFlush();
-
-    SpinLocker locker(_saversLock); (void) locker;
-    _saverOut = SaverLPtr(new SaverStdOut("stdout", level, shortMessages));
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        _saverOut = SaverLPtr(new SaverStdOut("stdout", level, shortMessages));
+        _saverOut->setLogger(this);
+    }
     redefineLevel();
 }
 
 void Logger::addSaverStdErr(Level level, bool shortMessages)
 {
     waitingForceFlush();
-
-    SpinLocker locker(_saversLock); (void) locker;
-    _saverErr = SaverLPtr(new SaverStdErr("stderr", level, shortMessages));
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        _saverErr = SaverLPtr(new SaverStdErr("stderr", level, shortMessages));
+        _saverErr->setLogger(this);
+    }
     redefineLevel();
 }
 
 void Logger::removeSaverStdOut()
 {
     waitingForceFlush();
-
-    SpinLocker locker(_saversLock); (void) locker;
-    _saverOut.reset();
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        _saverOut.reset();
+    }
     redefineLevel();
 }
 
 void Logger::removeSaverStdErr()
 {
     waitingForceFlush();
-
-    SpinLocker locker(_saversLock); (void) locker;
-    _saverErr.reset();
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        _saverErr.reset();
+    }
     redefineLevel();
 }
 
 void Logger::addSaver(SaverLPtr saver)
 {
-    SpinLocker locker(_saversLock); (void) locker;
-    lst::FindResult fr = _savers.findRef(saver->name(),
-                                         lst::FindExtParams(lst::BruteForce::Yes));
-    if (fr.success())
-        _savers.remove(fr.index());
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        lst::FindResult fr = _savers.findRef(saver->name(),
+                                             lst::FindExtParams(lst::BruteForce::Yes));
+        if (fr.success())
+            _savers.remove(fr.index());
 
-    saver->add_ref();
-    _savers.add(saver.get());
+        saver->add_ref();
+        saver->setLogger(this);
+        _savers.add(saver.get());
+    }
     redefineLevel();
 }
 
 void Logger::removeSaver(const string& name)
 {
     waitingForceFlush();
-
-    SpinLocker locker(_saversLock); (void) locker;
-    lst::FindResult fr = _savers.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
-    if (fr.success())
-        _savers.remove(fr.index());
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        lst::FindResult fr = _savers.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
+        if (fr.success())
+        {
+            _savers.item(fr.index())->setLogger(0);
+            _savers.remove(fr.index());
+        }
+    }
     redefineLevel();
 }
 
@@ -871,39 +906,54 @@ SaverLPtr Logger::findSaver(const string& name)
 
 void Logger::clearSavers(bool clearStd)
 {
-    SpinLocker locker(_saversLock); (void) locker;
-    if (clearStd)
-    {
-        _saverOut.reset();
-        _saverErr.reset();
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        if (clearStd)
+        {
+            _saverOut.reset();
+            _saverErr.reset();
+        }
+        for (Saver* saver : _savers)
+            saver->setLogger(0);
+        _savers.clear();
     }
-    _savers.clear();
     redefineLevel();
 }
 
 SaverList Logger::savers() const
 {
-    SaverList savers_;
-    SpinLocker locker(_saversLock); (void) locker;
-    for (Saver* s : _savers)
-    {
-        s->add_ref();
-        savers_.add(s);
+    SaverList savers;
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        for (Saver* s : _savers)
+        {
+            s->add_ref();
+            savers.add(s);
+        }
     }
-    return std::move(savers_);
+    return std::move(savers);
 }
 
 void Logger::redefineLevel()
 {
     Level level = NONE;
-    if (_saverOut && _saverOut->level() > level)
-        level = _saverOut->level();
-    if (_saverErr && _saverErr->level() > level)
-        level = _saverErr->level();
+    SaverLPtr saver_out;
+    SaverLPtr saver_err;
 
-    for (Saver* s : _savers)
-        if (s->level() > level)
-            level = s->level();
+    { //Block for SpinLocker
+        SpinLocker locker(_saversLock); (void) locker;
+        saver_out = _saverOut;
+        saver_err = _saverErr;
+    }
+    if (saver_out && saver_out->active() && (saver_out->level() > level))
+        level = saver_out->level();
+    if (saver_err && saver_err->active() && (saver_err->level() > level))
+        level = saver_err->level();
+
+    SaverList savers = this->savers();
+    for (Saver* saver : savers)
+        if (saver->active() && (saver->level() > level))
+            level = saver->level();
 
     _level = level;
 }

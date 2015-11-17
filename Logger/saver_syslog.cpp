@@ -34,7 +34,7 @@ void SaverSyslog::flushImpl(const MessageList& messages)
         if (m->level > level())
             continue;
 
-        string str {m->prefix2};
+        string str {m->prefix3};
         str += m->str;
 
         syslog(syslogLevel(m->level), "%s", str.c_str());

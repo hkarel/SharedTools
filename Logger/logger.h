@@ -74,8 +74,9 @@ struct Message //: public clife_base
     // Важно:   prefix-буферы специально сделаны выделяемыми на стеке,
     //          так как память для них должна выделяться в момент создания
     //          объекта, а не в момент заполнения префиксов.
-    char prefix[30] = {0};
-    char prefix2[300] = {0};
+    char prefix [30]  = {0};
+    char prefix2[10]  = {0};
+    char prefix3[300] = {0};
 
     string file;
     string func;
@@ -333,11 +334,11 @@ public:
     // в конфиг-файле, что сэйвер является неактивным. При неактивном сэйвере
     // запись в лог-файл не производится.
     bool active() const {return _active;}
-    void setActive(bool val) {_active = val;}
+    void setActive(bool val);
 
     // Уровень логирования
     Level level() const {return _level;}
-    void setLevel(Level val) {_level = val;}
+    void  setLevel(Level val) {_level = val;}
 
     // Устанавливает ограничение на максимальную длину строки сообщения.
     // Длина строки не ограничивается если значение меньше либо равно 0.
@@ -347,7 +348,9 @@ public:
     int  maxLineSize() const {return _maxLineSize;}
     void setMaxLineSize(int val) {_maxLineSize = val;}
 
-public:
+    Logger* logger() const {return _logger;}
+    void setLogger(Logger* val) {_logger = val;}
+
     // Выполняет запись буфера сообщений
     void flush(const MessageList&);
 
@@ -384,6 +387,8 @@ private:
 
     FilterList _filters;
     mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
+
+    atomic<Logger*> _logger = {0};
 
     friend class SaverStdOut;
     friend class SaverStdErr;
@@ -595,6 +600,8 @@ public:
     // на данный момент в логгере.
     Level level() const {return _level;}
 
+    void redefineLevel();
+
 private:
     Logger();
     Logger(Logger&&) = delete;
@@ -605,7 +612,6 @@ private:
     void addMessage(MessagePtr&&);
     void run() override;
 
-    void redefineLevel();
     void waitingForceFlush();
 
 private:
