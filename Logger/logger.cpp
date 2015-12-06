@@ -630,6 +630,9 @@ Logger::Logger()
 
 Logger::~Logger()
 {
+    flush();
+    waitingFlush();
+
     stop();
 }
 
@@ -690,7 +693,10 @@ void Logger::run()
         if (!threadStop()
             && messages.count() == 0
             && messages_buff.count() == 0)
+        {
+            _forceFlush = false;
             continue;
+        }
 
         if (messages.count())
         {
@@ -769,13 +775,17 @@ void Logger::run()
     } //while (true)
 }
 
-void Logger::flush(int pauseDuration)
+void Logger::flush()
 {
     _forceFlush = true;
-    if (pauseDuration)
+}
+
+void Logger::waitingFlush()
+{
+    while (_forceFlush && !threadStop())
     {
-        std::chrono::milliseconds duration(pauseDuration);
-        std::this_thread::sleep_for(duration);
+        static chrono::milliseconds sleep_thread {20};
+        this_thread::sleep_for(sleep_thread);
     }
 }
 
@@ -815,18 +825,9 @@ LevelProxy Logger::debug2_f(const char* file, const char* func, int line, const 
     return std::move(lp);
 }
 
-void Logger::waitingForceFlush()
-{
-    while (_forceFlush)
-    {
-        static chrono::milliseconds sleep_thread {20};
-        this_thread::sleep_for(sleep_thread);
-    }
-}
-
 void Logger::addSaverStdOut(Level level, bool shortMessages)
 {
-    waitingForceFlush();
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
         _saverOut = SaverLPtr(new SaverStdOut("stdout", level, shortMessages));
@@ -837,7 +838,7 @@ void Logger::addSaverStdOut(Level level, bool shortMessages)
 
 void Logger::addSaverStdErr(Level level, bool shortMessages)
 {
-    waitingForceFlush();
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
         _saverErr = SaverLPtr(new SaverStdErr("stderr", level, shortMessages));
@@ -848,7 +849,7 @@ void Logger::addSaverStdErr(Level level, bool shortMessages)
 
 void Logger::removeSaverStdOut()
 {
-    waitingForceFlush();
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
         _saverOut.reset();
@@ -858,7 +859,7 @@ void Logger::removeSaverStdOut()
 
 void Logger::removeSaverStdErr()
 {
-    waitingForceFlush();
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
         _saverErr.reset();
@@ -884,7 +885,7 @@ void Logger::addSaver(SaverLPtr saver)
 
 void Logger::removeSaver(const string& name)
 {
-    waitingForceFlush();
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
         lst::FindResult fr = _savers.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
