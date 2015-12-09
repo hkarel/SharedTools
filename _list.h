@@ -797,7 +797,7 @@ public:
   /// @param[in] cond Функор или функция с сигнатурой bool condition(T*).
   /// @param[in] compressList Признак сжатия списка.
   template<typename Condition>
-  void removesCond(const Condition& condition, bool compressList = true);
+  void removeCond(const Condition& condition, bool compressList = true);
 
   /// @brief Удаляет элементы из списка.
   ///
@@ -1374,8 +1374,8 @@ DECL_IMPL_LIST(void)::removeLast()
     d->allocator.destroy(item);
 }
 
-DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removesCond(const Condition& condition,
-                                                      bool compressList_)
+DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removeCond(const Condition& condition,
+                                                     bool compressList_)
 {
   DataType* d = d_func();
   T** item_ = CustomListType::listBegin();
