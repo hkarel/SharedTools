@@ -43,12 +43,23 @@ void fsucc_check(const lst::FindResult& fr) {fsucc_check(fr.success());}
 void ffail_check(const lst::FindResult& fr) {ffail_check(fr.failed());}
 
 
-bool findTest()
+bool find_Test()
 {
     printf("\n\n=== Find Test ===\n");
 
     lst::List<int> list;
     lst::FindResult fr;
+
+    printf("\n--- Test ascend, 0 elements ---\n");
+    list.clear();
+    list.sort();
+
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
     printf("\n--- Test ascend, 1 elements (1) ---\n");
     list.clear();
@@ -120,6 +131,17 @@ bool findTest()
     fr = list.findRef(6);
     printf("6 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
+
+    printf("\n--- Test descend, 0 elements ---\n");
+    list.clear();
+    list.sort(lst::SortDown);
+
+    fr = list.findRef(2);
+    printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
 
     printf("\n--- Test descend, 1 elements (1) ---\n");
     list.clear();
@@ -195,6 +217,163 @@ bool findTest()
     return true;
 }
 
+bool find_addInSort_Test()
+{
+    printf("\n\n=== Find addInSort Test ===\n");
+
+    lst::List<int> list;
+    lst::FindResult fr;
+
+    printf("\n--- Test ascend, 0 elements ---\n");
+    list.sort();
+
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+
+    printf("\n--- Test ascend, 1 elements (1) ---\n");
+    fr = list.findRef(1);
+    list.addCopyInSort(1, fr);
+
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (insert index: 1, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 1);
+
+    printf("\n--- Test ascend, 2 elements (1,2) ---\n");
+    fr = list.findRef(2);
+    list.addCopyInSort(2, fr);
+
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(3);
+    printf("3 : %s : %s (insert index: 2, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 2);
+
+    printf("\n--- Test ascend, 3 elements (1,2,3) ---\n");
+    fr = list.findRef(3);
+    list.addCopyInSort(3, fr);
+
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(3);
+    printf("3 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(5);
+    printf("5 : %s : %s (insert index: 3, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 3);
+    fr = list.findRef(6);
+    printf("6 : %s : %s (insert index: 3, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 3);
+
+    printf("\n--- Test ascend, 4 elements (1,2,3,5) ---\n");
+    fr = list.findRef(5);
+    list.addCopyInSort(5, fr);
+
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(3);
+    printf("3 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(4);
+    printf("4 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(5);
+    printf("5 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(6);
+    printf("6 : %s : %s (insert index: 4, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 4);
+
+
+    printf("\n--- Test descend, 0 elements ---\n");
+    list.clear();
+    list.sort(lst::SortDown);
+
+    fr = list.findRef(2);
+    printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
+
+    printf("\n--- Test descend, 1 elements (1) ---\n");
+    fr = list.findRef(1);
+    list.addCopyInSort(1, fr);
+
+    fr = list.findRef(2);
+    printf("2 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 1, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 1);
+
+    printf("\n--- Test descend, 2 elements (2,1) ---\n");
+    fr = list.findRef(2);
+    list.addCopyInSort(2, fr);
+
+    fr = list.findRef(3);
+    printf("3 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 2, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 2);
+
+    printf("\n--- Test descend, 3 elements (3,2,1) ---\n");
+    fr = list.findRef(3);
+    list.addCopyInSort(3, fr);
+
+    fr = list.findRef(6);
+    printf("6 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(3);
+    printf("3 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 3, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 3);
+
+    printf("\n--- Test descend, 4 elements (5,4,3,1) ---\n");
+    list.addCopy(5);
+    list.sort(lst::SortDown);
+
+    fr = list.findRef(4);
+    list.addCopyInSort(4, fr);
+
+    list.removeCond([](int* i){return *i == 2;});
+
+    fr = list.findRef(6);
+    printf("6 : %s : %s (insert index: 0, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 0);
+    fr = list.findRef(5);
+    printf("5 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(4);
+    printf("4 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(3);
+    printf("3 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(2);
+    printf("2 : %s : %s (insert index: 3, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 3);
+    fr = list.findRef(1);
+    printf("1 : %s : %s (found  index: %i)\n", fres(fr), fsucc(fr), fr.index()); fsucc_check(fr);
+    fr = list.findRef(0);
+    printf("0 : %s : %s (insert index: 4, detect insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr); fsucc_check(fr.index() == 4);
+
+    printf("TEST PASSED\n");
+    return true;
+}
+
+
 int compareFunc(const int* item1, const int* item2, void*)
 {
     return LIST_COMPARE_ITEM(*item1, *item2);
@@ -269,7 +448,7 @@ template<typename ListT> void bruteFindTestT(const ListT& list)
     printf("SUCCESS\n");
 }
 
-void bruteFindTest()
+void bruteFind_Test()
 {
     printf("\n\n=== Brute Find Test ===\n");
 
@@ -330,7 +509,7 @@ void findTestCheckOverloads()
 
 }
 
-void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int i21, int i22, int i4, int i51, int i52, int i7)
+void findNotunique_Test(const lst::List<int>& list, int i0, int i11, int i12, int i21, int i22, int i4, int i51, int i52, int i7)
 {
     lst::FindResult fr;
     lst::FindResult fr_first;
@@ -483,7 +662,7 @@ void findNotuniqueTest(const lst::List<int>& list, int i0, int i11, int i12, int
     printf("SUCCESS\n");
 }
 
-void findNotuniqueTest()
+void findNotunique_Test()
 {
     printf("\n\n=== Not unique Find Test ===\n");
 
@@ -504,13 +683,13 @@ void findNotuniqueTest()
     list.sort();
 
     //                      i0  i11 i12 i21 i22 i4  i51 i52 i7
-    findNotuniqueTest(list, -1, 0,  1,  2,  5,  6,  7,  9, -1);
+    findNotunique_Test(list, -1, 0,  1,  2,  5,  6,  7,  9, -1);
 
     printf("\n--- Test descend, 10 elements (5,5,5,4,2,2,2,2,1,1) ---\n");
     list.sort(lst::SortDown);
 
     //                      i0  i11 i12 i21 i22 i4 i51  i52 i7
-    findNotuniqueTest(list, -1, 8,  9,  4,  7,  3, 0,   2,  -1);
+    findNotunique_Test(list, -1, 8,  9,  4,  7,  3, 0,   2,  -1);
 
     printf("TEST PASSED\n");
 }
@@ -531,7 +710,7 @@ struct SortTwoVal
 
 };
 
-void findNotuniqueStructTest()
+void findNotuniqueStruct_Test()
 {
     printf("\n\n=== Not unique Find Structure Test ===\n");
 
@@ -570,7 +749,7 @@ void findNotuniqueStructTest()
     printf("TEST PASSED\n");
 }
 
-void checkRangeFunc()
+void checkRangeFunc_Test()
 {
     printf("\n\n=== Check range() function ===\n");
 
@@ -738,22 +917,26 @@ int main()
     findTestCheckOverloads();
 
     // Тест поиска по отсортированному списку
-    findTest();
+    find_Test();
+
+    // Тест добавления новых элементов через функцию addInSort()
+    // с последующим поиском.
+    find_addInSort_Test();
 
     // Тест поиска по не отсортированному списку (поиск перебором)
-    bruteFindTest();
+    bruteFind_Test();
 
     // Тест поиска по не уникальному отсортированному списку
-    findNotuniqueTest();
+    findNotunique_Test();
 
     // Тест поиска по не уникальному отсортированному списку. Причем сортировка
     // выполнена по двум полям и оба не уникальные.
     // Требования к поиску: искомое значение должно быть >= поля1 и <= поля2.
     // Так же нужно вернуть граничные значения удовлетворяющие условию.
-    findNotuniqueStructTest();
+    findNotuniqueStruct_Test();
 
     // Проверка работы функции range()
-    checkRangeFunc();
+    checkRangeFunc_Test();
 
     return 0;
 }

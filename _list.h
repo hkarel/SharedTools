@@ -1083,7 +1083,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
     int startFindIndex = extParams.startFindIndex;
 
     if (d->count == 0)
-      return FindResult(false, BruteForce::Yes, 0);
+      return FindResult(false, bruteForce, 0);
 
     if (startFindIndex >= d->count)
       return FindResult(false, BruteForce::Yes, d->count);
