@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "thread_base.h"
 #include "break_point.h"
 

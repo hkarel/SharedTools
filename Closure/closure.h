@@ -1,3 +1,4 @@
+/* clang-format off */
 /**
   Closure library 1.1
   file "closure.h"
@@ -8,15 +9,17 @@
   Modyfied:  Karelin Pavel (hkarel), hkarel@yandex.ru
 */
 
+
+
 #pragma once
-#ifndef CLOSURE_HEADER_  
+#ifndef CLOSURE_HEADER_
 #define CLOSURE_HEADER_
 
 
-#define CLOSURE_TYPENAMES 
-#define CLOSURE_TYPES 
-#define CLOSURE_FUNC_PARAMS 
-#define CLOSURE_FUNC_ARGS 
+#define CLOSURE_TYPENAMES
+#define CLOSURE_TYPES
+#define CLOSURE_FUNC_PARAMS
+#define CLOSURE_FUNC_ARGS
 #define CLOSURE_COMMA
 #define CLOSURE_NAMESPACE Closure0
 #include "closure_impl.h"
@@ -30,7 +33,7 @@
 
 #define CLOSURE_TYPENAMES typename P0, typename P1
 #define CLOSURE_TYPES P0, P1
-#define CLOSURE_FUNC_PARAMS  P0 p0, P1 p1 
+#define CLOSURE_FUNC_PARAMS  P0 p0, P1 p1
 #define CLOSURE_FUNC_ARGS p0, p1
 #define CLOSURE_NAMESPACE Closure2
 #include "closure_impl.h"

@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "thread_info.h"
 
 #include <sys/syscall.h>

@@ -1,4 +1,4 @@
-
+/* clang-format off */
 //#include <stdio.h>
 #include <iostream>
 #include "../simple_ptr.h"

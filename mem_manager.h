@@ -1,3 +1,4 @@
+/* clang-format off */
 /****************************************************************************
   Автор: Андрей Фролов (FAL), falinc@ukr.net
   http://www.gamedev.ru/code/articles/?id=4242

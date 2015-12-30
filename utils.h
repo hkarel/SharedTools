@@ -1,3 +1,4 @@
+/* clang-format off */
 /*****************************************************************************
   В модуле собраны сервисные функции общего назначения.
 
@@ -63,15 +64,28 @@ inline bool assign(atomic_bool& a, bool value)
 }
 
 // Выполняет преобразование в строку
+string toString(short val);
+string toString(unsigned short val);
+
 string toString(int val);
+string toString(unsigned int val);
+
+string toString(long val);
+string toString(unsigned long val);
+
+string toString(long long val);
+string toString(unsigned long long val);
+
 
 // Выполняет преобразование UUID в строковое представление.
 // Входящий параметр должен иметь следующие тип и размерность: uint8_t uuid[16].
 string uuidToString(const uint8_t* uuid);
 
 // Выполняет преобразование UUID в шестнадцатеричное строковое представление.
-// Входящий параметр должен иметь следующие тип и размерность: uint8_t uuid[16].
-string uuidToHexString(const uint8_t* uuid);
+// Параметр uuid должен иметь следующие тип и размерность: uint8_t uuid[16].
+// Параметр addHexPrefix определяет будет ли в начало результирующей строки
+// добавлен признак шестнадцатеричного представления '0x'.
+string uuidToHexString(const uint8_t* uuid, bool addHexPrefix = true);
 
 
 //----------------------------- Implementation -------------------------------

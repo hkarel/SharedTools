@@ -1,3 +1,4 @@
+/* clang-format off */
 
 // Команда для сборки
 // g++ -std=c++11 -ggdb3 -Wall -Wsign-compare -Weverything list_utest.cpp -o list_utest

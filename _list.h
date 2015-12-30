@@ -1,3 +1,4 @@
+/* clang-format off */
 /*****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
@@ -42,32 +43,31 @@ DECLSPEC_SELECTANY_LST const bool REFERENCE_CLASS = !CONTAINER_CLASS;
 DECLSPEC_SELECTANY_LST const bool COMPRESS_LIST = true;
 DECLSPEC_SELECTANY_LST const bool NO_COMPRESS_LIST = !COMPRESS_LIST;
 
-//DECLSPEC_SELECTANY_LST const bool BRUTE_FORCE = true;
 enum class BruteForce {No = 0, Yes = 1};
 
 
 /// @brief Флаги направления сортировки.
 enum SortMode
 {
-  SortDown = 0,
-  SortUp = 1
+  SortDown = 0,  /// Сортировать по убыванию
+  SortUp = 1     /// Сортировать по возрастанию
 };
 
 /// @brief Флаги сдвига списка.
 enum ShiftMode
 {
-  ShiftLeft = 0,
-  ShiftRight = 1
+  ShiftLeft = 0,  /// Сдвинуть элементы списка влево
+  ShiftRight = 1  /// Сдвинуть элементы списка вправо
 };
 
 /// @brief Флаги состояний сортировки.
 enum SortState
 {
-  NoSorted = 0,
-  UpSorted = 1,
-  DownSorted = 2,
-  CustomUpSorted = 3,
-  CustomDownSorted = 4
+  NoSorted = 0,         /// Список находится в не отсортированном состоянии
+  UpSorted = 1,         /// Список отсортирован по возрастанию
+  DownSorted = 2,       /// Список отсортирован по убыванию
+  CustomUpSorted = 3,   /// Список частично отсортирован по возрастанию
+  CustomDownSorted = 4  /// Список частично отсортирован по убыванию
 };
 
 
@@ -116,7 +116,6 @@ public:
     strcat(_msg, func);
     strcat(_msg, "]: ");
     strcat(_msg, msg);
-    //memcpy(msg, msg, strlen(msg));
   }
   virtual const char* what() const NOEXCEPT {return _msg;}
 };
@@ -129,7 +128,6 @@ DECLSPEC_SELECTANY_LST const char* ERR_NOCREATEOBJ =
 #elif defined(_MSC_VER)
 #define  LIST_FUNC_NAME  __FUNCTION__
 #else
-//#define  LIST_FUNC_NAME  __PRETTY_FUNCTION__
 #define  LIST_FUNC_NAME  __func__
 #endif
 

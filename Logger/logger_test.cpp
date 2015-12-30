@@ -1,4 +1,4 @@
-
+/* clang-format off */
 #if 0
 void logger_debug()
 {

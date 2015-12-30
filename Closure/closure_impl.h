@@ -1,3 +1,4 @@
+/* clang-format off */
 /**
   Closure library 1.1
   file "closure_impl.h"

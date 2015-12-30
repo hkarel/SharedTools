@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "config.h"
 #include "utils.h"
 

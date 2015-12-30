@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "logger.h"
 #include "break_point.h"
 #include "spin_locker.h"

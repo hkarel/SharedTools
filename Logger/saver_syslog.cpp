@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "saver_syslog.h"
 #include <syslog.h>
 

@@ -1,3 +1,4 @@
+/* clang-format off */
 /****************************************************************************
   Прототипом модуля является Closure library 1.1 созданная
   Ivan Yankov aka _Winnie (woowoowoow@bk.ru)

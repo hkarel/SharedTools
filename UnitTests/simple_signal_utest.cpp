@@ -1,3 +1,4 @@
+/* clang-format off */
 
 // g++ -std=c++11 -ggdb3 -Wall -Wno-unused-but-set-variable simple_signal_utest.cpp -o simple_signal_utest
 

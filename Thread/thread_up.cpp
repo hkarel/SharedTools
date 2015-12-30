@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "thread_up.h"
 
 #include <cstdio>
@@ -32,13 +33,13 @@ int ThreadUp::priorityUp(int schedulAlgorithm, int priority)
     {
         string s;
         if (err == EPERM)
-            s = "Perhaps insufficiently right for a performance of this operation. ";
+            s = "Perhaps insufficiently right for a performance of this operation.";
 
         char buff[34] = {0};
-        snprintf(buff, sizeof(buff)-1, "%d", err);
+        snprintf(buff, sizeof(buff) - 1, "%d", err);
 
-        _priorityUpError = "Couldn't increase priority of a thread. "
-                         + s + "Code error: " + buff;
+        _priorityUpError = "Couldn't increase priority of a thread. ";
+        _priorityUpError += s + " Code error: " + buff;
     }
 #endif // _POSIX_PRIORITY_SCHEDULING
 

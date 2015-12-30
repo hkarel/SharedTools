@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "settings.h"
 
 #include "spin_locker.h"

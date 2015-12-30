@@ -1,3 +1,4 @@
+/* clang-format off */
 #include "utils.h"
 #include "Logger/logger.h"
 
@@ -53,10 +54,55 @@ void savePidFile(const string& fileName)
     }
 }
 
+string toString(short val)
+{
+    return toString(int(val));
+}
+
+string toString(unsigned short val)
+{
+    return toString(int(val));
+}
+
 string toString(int val)
 {
     char buff[34] = {0};
     snprintf(buff, sizeof(buff)-1, "%d", val);
+    return buff;
+}
+
+string toString(unsigned int val)
+{
+    char buff[34] = {0};
+    snprintf(buff, sizeof(buff)-1, "%u", val);
+    return buff;
+}
+
+string toString(long val)
+{
+    char buff[68] = {0};
+    snprintf(buff, sizeof(buff)-1, "%ld", val);
+    return buff;
+}
+
+string toString(unsigned long val)
+{
+    char buff[68] = {0};
+    snprintf(buff, sizeof(buff)-1, "%lu", val);
+    return buff;
+}
+
+string toString(long long val)
+{
+    char buff[68] = {0};
+    snprintf(buff, sizeof(buff)-1, "%lld", val);
+    return buff;
+}
+
+string toString(unsigned long long val)
+{
+    char buff[68] = {0};
+    snprintf(buff, sizeof(buff)-1, "%llu", val);
     return buff;
 }
 
@@ -76,20 +122,26 @@ string uuidToString(const uint8_t* uuid)
         if (i == 3 || i == 5 || i == 7 || i == 9)
             buff += '-';
     }
-    return buff;
+    return std::move(buff);
 }
 
-string uuidToHexString(const uint8_t* uuid)
+string uuidToHexString(const uint8_t* uuid, bool addHexPrefix)
 {
     string buff;
-    buff.reserve(34);
-    buff += "0x";
+    if (addHexPrefix)
+    {
+        buff.reserve(34);
+        buff += "0x";
+    }
+    else
+        buff.reserve(32);
+
     for (int i = 0; i < 16; ++i)
     {
         buff += toHexChar((uuid[i] >> 4) & 0x0f);
         buff += toHexChar(uuid[i] & 0x0f);
     }
-    return buff;
+    return std::move(buff);
 }
 
 } // namespace utl

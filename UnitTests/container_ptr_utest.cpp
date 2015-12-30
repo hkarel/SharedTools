@@ -1,3 +1,4 @@
+/* clang-format off */
 //#define QT_CORE_LIB
 
 #include <stdlib.h>

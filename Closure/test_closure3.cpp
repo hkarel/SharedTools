@@ -1,3 +1,4 @@
+/* clang-format off */
 /**
   Closure library 1.1 sample file.
   file "test_closure.cpp"
