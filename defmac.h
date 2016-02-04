@@ -7,23 +7,6 @@
 
 #pragma once
 
-#ifndef __SUPPORT_CXX_11__
-/* Запрет конструктора по умолчанию и копирующего конструктора */
-#define DISABLE_DEFAULT_CONSTRUCT( ClassName )    \
-    ClassName ();                                 \
-    ClassName ( const ClassName & );
-
-/* Запрет копирующего конструктора и оператора присваивания */
-#define DISABLE_DEFAULT_COPY( ClassName )         \
-    ClassName ( const ClassName & );              \
-    ClassName & operator = ( const ClassName & );
-
-/* Запрет конструктора по умолчанию, копирующего конструктора и оператора присваивания */
-#define DISABLE_DEFAULT_FUNC( ClassName )         \
-    ClassName ();                                 \
-    ClassName ( const ClassName & );              \
-    ClassName & operator = ( const ClassName & );
-#else
 /* Запрет конструктора по умолчанию и копирующего конструктора */
 #define DISABLE_DEFAULT_CONSTRUCT( ClassName )    \
     ClassName () = delete;                        \
@@ -44,8 +27,6 @@
     ClassName ( const ClassName & ) = delete;     \
     ClassName & operator = ( ClassName && ) = delete; \
     ClassName & operator = ( const ClassName & ) = delete;
-
-#endif //__SUPPORT_CXX_11__
 
 
 // Макрос chk_connect используется для проверки возвращаемого функцией результата
