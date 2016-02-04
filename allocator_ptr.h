@@ -64,24 +64,9 @@ template<typename T> struct allocator_array_ptr
 template<template<typename> class A1, template<typename> class A2 > struct allocator_ptr_equal
 {
     enum {Yes = 0};
-    //struct alloc_traits {char padding[1];};
-    //struct other_alloc_traits {char padding[8];};
-    //template<typename A>
-    //alloc_traits is_same_allocator(const A&, const A&);
-    //other_alloc_traits is_same_allocator(...);
 };
 
 template<template<typename> class A> struct allocator_ptr_equal<A, A>
 {
     enum {Yes = 1};
 };
-
-//template<typename, typename> struct allocator_ptr_equal
-//{
-//    enum {value = 0};
-//};
-//template<typename T> struct allocator_ptr_equal<T, T>
-//{
-//    enum {value = 1};
-//};
-
