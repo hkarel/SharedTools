@@ -48,5 +48,14 @@ function getVersions(filePath)
     return [verStr, verParts[0], verParts[1], verParts[2]];
 }
 
-    return [verStr, verParts[0], verParts[1], verParts[2], verRevision];
+// Функция возвращает ревизию проекта, которая представляет из себя идентификатор
+// текущего хэшь-коммита из GIT.
+function gitRevision(project)
+{
+    var revision = "";
+    var process = new Process();
+    process.setWorkingDirectory(project.sourceDirectory);
+    if (process.exec("git", ["log", "-1", "--pretty=%h"], false) === 0)
+        revision = process.readLine().trim();
+    return revision;
 }
