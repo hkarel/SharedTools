@@ -30,18 +30,25 @@
 namespace lst
 {
 
-#if defined(_MSC_VER)
-#define DECLSPEC_SELECTANY_LST extern "C" __declspec(selectany)
-#else
-#define DECLSPEC_SELECTANY_LST constexpr
-#endif
+//#if defined(_MSC_VER)
+//#define DECLSPEC_SELECTANY_LST extern "C" __declspec(selectany)
+//#else
+//#define DECLSPEC_SELECTANY_LST constexpr
+//#endif
 
-DECLSPEC_SELECTANY_LST const bool CONTAINER_CLASS = true;
-DECLSPEC_SELECTANY_LST const bool NO_CONTAINER_CLASS = !CONTAINER_CLASS;
-DECLSPEC_SELECTANY_LST const bool REFERENCE_CLASS = !CONTAINER_CLASS;
+//DECLSPEC_SELECTANY_LST const bool CONTAINER_CLASS = true;
+//DECLSPEC_SELECTANY_LST const bool NO_CONTAINER_CLASS = !CONTAINER_CLASS;
+//DECLSPEC_SELECTANY_LST const bool REFERENCE_CLASS = !CONTAINER_CLASS;
 
-DECLSPEC_SELECTANY_LST const bool COMPRESS_LIST = true;
-DECLSPEC_SELECTANY_LST const bool NO_COMPRESS_LIST = !COMPRESS_LIST;
+//DECLSPEC_SELECTANY_LST const bool COMPRESS_LIST = true;
+//DECLSPEC_SELECTANY_LST const bool NO_COMPRESS_LIST = !COMPRESS_LIST;
+
+constexpr bool CONTAINER_CLASS = true;
+constexpr bool NO_CONTAINER_CLASS = !CONTAINER_CLASS;
+constexpr bool REFERENCE_CLASS = !CONTAINER_CLASS;
+
+constexpr bool COMPRESS_LIST = true;
+constexpr bool NO_COMPRESS_LIST = !COMPRESS_LIST;
 
 enum class BruteForce {No = 0, Yes = 1};
 
@@ -120,7 +127,8 @@ public:
   virtual const char* what() const NOEXCEPT {return _msg;}
 };
 
-DECLSPEC_SELECTANY_LST const char* ERR_NOCREATEOBJ =
+/*DECLSPEC_SELECTANY_LST */
+constexpr const char* ERR_NOCREATEOBJ =
   "Impossible create object of the class. (NO_CONTAINER_CLASS)";
 
 #if defined(__BORLANDC__)
