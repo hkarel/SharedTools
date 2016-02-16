@@ -27,8 +27,7 @@
 #include <string.h>
 #include "break_point.h"
 
-namespace lst
-{
+namespace lst {
 
 //#if defined(_MSC_VER)
 //#define DECLSPEC_SELECTANY_LST extern "C" __declspec(selectany)
@@ -131,25 +130,11 @@ public:
 constexpr const char* ERR_NOCREATEOBJ =
   "Impossible create object of the class. (NO_CONTAINER_CLASS)";
 
-#if defined(__BORLANDC__)
-#define  LIST_FUNC_NAME  __FUNC__
-#elif defined(_MSC_VER)
-#define  LIST_FUNC_NAME  __FUNCTION__
+#if defined(_MSC_VER)
+#define LIST_EXCEPT(MSG) ListExcept(MSG, __FUNCTION__)
 #else
-#define  LIST_FUNC_NAME  __func__
+#define LIST_EXCEPT(MSG) ListExcept(MSG, __func__)
 #endif
-
-
-#ifdef __BORLANDC__
-#  ifdef NO_USE_VCL_EXCEPT
-#    define LIST_EXCEPT(MSG) ListExcept(MSG, LIST_FUNC_NAME)
-#  else
-#    define LIST_EXCEPT(MSG) Exception
-#  endif
-#else
-#  define LIST_EXCEPT(MSG) ListExcept(MSG, LIST_FUNC_NAME)
-#endif
-
 
 #ifndef NDEBUG
 #  define CHECK_BORDERS(index) \
@@ -2019,7 +2004,6 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
 #undef DECL_LIST_SELFTYPE
 
 #undef LIST_EXCEPT
-#undef LIST_FUNC_NAME
 
 #undef CHECK_BORDERS
 #undef CHECK_NOTLESS
