@@ -2,8 +2,7 @@
 #pragma  once
 #include <stdint.h>
 
-namespace base64
-{
+namespace base64 {
 
 //=======================================================================
 // Base64Encode/Base64Decode

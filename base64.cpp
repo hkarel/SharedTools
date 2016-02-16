@@ -2,8 +2,7 @@
 #include "base64.h"
 #include <assert.h>
 
-namespace base64
-{
+namespace base64 {
 
 int encodeRequiredLength(int srcLen, unsigned int flags) noexcept
 {
@@ -28,13 +27,11 @@ int encodeRequiredLength(int srcLen, unsigned int flags) noexcept
 
     return ret;
 }
-//---------------------------------------------------------------------------
 
 int secodeRequiredLength(int srcLen) noexcept
 {
     return srcLen;
 }
-//---------------------------------------------------------------------------
 
 bool encode(const uint8_t* src,
             int srcLen,
@@ -131,7 +128,6 @@ bool encode(const uint8_t* src,
     *destLen = written;
     return false;
 }
-//---------------------------------------------------------------------------
 
 int decodeBase64Char(unsigned int ch) noexcept
 {
@@ -151,7 +147,6 @@ int decodeBase64Char(unsigned int ch) noexcept
         return 63;
     return -1;
 }
-//---------------------------------------------------------------------------
 
 bool decode(const char* src, int srcLen, uint8_t* dest, int* destLen) noexcept
 {
@@ -221,7 +216,5 @@ bool decode(const char* src, int srcLen, uint8_t* dest, int* destLen) noexcept
     }
     return true;
 }
-//---------------------------------------------------------------------------
-
 
 } // namespace base64
