@@ -76,7 +76,7 @@
 #endif //NDEBUG
 
 
-#define DECLSP_SELECTANY  extern "C" __declspec(selectany)
+//#define DECLSP_SELECTANY  extern "C" __declspec(selectany)
 
 
 /* Фиктивные описатели для параметров функций */
