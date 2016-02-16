@@ -1,13 +1,12 @@
 /* clang-format off */
 /****************************************************************************
   Author of idea: Fedorin Denis
-
   В модуле реализована функция имитирующая breakpoint для gdb отладчика.
 ****************************************************************************/
 
 #pragma once
 
-/***
+/*** Исходный пример ***
 void sigtrap_handler(int signo)
 {}
 
@@ -38,8 +37,9 @@ int main ()
 #ifndef NDEBUG
   #if defined(_MSC_VER)
     #define break_point  _CrtDbgBreak();
-  #elif defined(_MINGW)
+  /*#elif defined(_MINGW)
     #define break_point
+  */
   #else
     #include <stdio.h>
     #include <signal.h>
