@@ -13,8 +13,8 @@
 #include <cstdarg>
 #include <streambuf>
 
-namespace utl
-{
+namespace utl {
+
 using namespace std;
 
 /**

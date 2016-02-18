@@ -1,14 +1,13 @@
 /* clang-format off */
 #include "utils.h"
-#include "Logger/logger.h"
+#include "logger/logger.h"
 
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
 #include <algorithm>
 
-namespace utl
-{
+namespace utl {
 
 string& ltrim(string& s)
 {
