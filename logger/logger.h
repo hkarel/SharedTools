@@ -640,12 +640,7 @@ private:
     friend struct Line;
     template<typename T, int> friend T& ::safe_singleton();
 };
-
-// Реализация функции logger() должна быть выполнена в модуле main.cpp, это
-// требование связано с особенностью сборки и работы so-модулей проекта LBcore.
-// Если это требование не выполнять, то каждый so-модуль в LBcore будет иметь
-// собственный экземпляр logger(), т.е. единого логгера в системе не будет.
-Logger& logger(); // {return ::safe_singleton<Logger>();}
+Logger& logger();
 
 
 //---------------------------- Line operators --------------------------------

@@ -16,6 +16,11 @@ namespace alog {
 
 using namespace std;
 
+Logger& logger()
+{
+    return ::safe_singleton<Logger>();
+}
+
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.
 // Информация сохраняется в файле /tmp/alogger.log
 void loggerPanic(const char* saverName, const char* error)
