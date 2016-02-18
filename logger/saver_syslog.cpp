@@ -2,8 +2,7 @@
 #include "saver_syslog.h"
 #include <syslog.h>
 
-namespace alog
-{
+namespace alog {
 
 SaverSyslog::SaverSyslog(const char* ident, Level level)
     : Saver("syslog", level)

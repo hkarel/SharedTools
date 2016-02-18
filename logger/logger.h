@@ -22,8 +22,8 @@
 #include "clife_ptr.h"
 #include "simple_ptr.h"
 #include "safe_singleton.h"
-#include "Thread/thread_base.h"
-#include "Thread/thread_info.h"
+#include "thread/thread_base.h"
+#include "thread/thread_info.h"
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -39,8 +39,8 @@
 #include <string>
 
 
-namespace alog // Акроним от "async logger".
-{
+namespace alog /*async logger*/ {
+
 using namespace std;
 
 class Saver;

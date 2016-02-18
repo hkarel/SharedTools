@@ -2,8 +2,8 @@
 #pragma once
 #include "logger.h"
 
-namespace alog
-{
+namespace alog {
+
 using namespace std;
 
 /**

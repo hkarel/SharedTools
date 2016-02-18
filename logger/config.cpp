@@ -13,8 +13,8 @@
 #define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "LogConfig")
 
 
-namespace alog
-{
+namespace alog {
+
 using namespace std;
 
 const char* yamlTypeName(YAML::NodeType::value type)

@@ -12,8 +12,8 @@
 //#include <signal.h>
 
 
-namespace alog
-{
+namespace alog {
+
 using namespace std;
 
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.

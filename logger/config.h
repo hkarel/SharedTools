@@ -9,8 +9,8 @@
 #include "logger.h"
 #include <list>
 
-namespace alog
-{
+namespace alog {
+
 using namespace std;
 
 /**
