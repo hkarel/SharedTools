@@ -215,14 +215,15 @@ void Filter::removeIdsTimeoutThreads()
         return;
 
     vector<pid_t> tids;
-    struct timeval cur_time;
-    gettimeofday(&cur_time, NULL);
+    struct timeval curTime;
+    gettimeofday(&curTime, NULL);
     for (const auto& tci : _threadContextIds)
     {
+        const struct timeval& timeVal = tci.second;
         // Таймаут в 3 сек.
-        if (cur_time.tv_sec > (tci.second.tv_sec + 3)
-            || ((cur_time.tv_sec == (tci.second.tv_sec + 3))
-                && (cur_time.tv_usec > tci.second.tv_usec)))
+        if (curTime.tv_sec > (timeVal.tv_sec + 3)
+            || ((curTime.tv_sec == (timeVal.tv_sec + 3))
+                && (curTime.tv_usec > timeVal.tv_usec)))
         {
             tids.push_back(tci.first);
         }
@@ -444,14 +445,14 @@ void SaverStdOut::flushImpl(const MessageList& messages)
 
     removeIdsTimeoutThreads();
 
-    vector<char> line_buff;
+    vector<char> lineBuff;
     if (maxLineSize() > 0)
     {
-        line_buff.resize(maxLineSize() + 1);
-        line_buff[maxLineSize()] = '\0';
+        lineBuff.resize(maxLineSize() + 1);
+        lineBuff[maxLineSize()] = '\0';
     }
 
-    unsigned flush_count = 0;
+    unsigned flushCount = 0;
     FilterList filters = this->filters();
 
     for (Message* m : messages)
@@ -471,15 +472,15 @@ void SaverStdOut::flushImpl(const MessageList& messages)
         }
         if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
         {
-            strncpy(&line_buff[0], m->str.c_str(), maxLineSize());
-            (*_out) << (char*) &line_buff[0];
+            strncpy(&lineBuff[0], m->str.c_str(), maxLineSize());
+            (*_out) << (char*) &lineBuff[0];
         }
         else
             (*_out) << m->str;
 
         (*_out) << "\n";
 
-        if (++flush_count % 50 == 0)
+        if (++flushCount % 50 == 0)
             _out->flush();
     }
     _out->flush();
@@ -510,14 +511,14 @@ void SaverFile::flushImpl(const MessageList& messages)
     {
         removeIdsTimeoutThreads();
 
-        vector<char> line_buff;
+        vector<char> lineBuff;
         if (maxLineSize() > 0)
         {
-            line_buff.resize(maxLineSize() + 1);
-            line_buff[maxLineSize()] = '\0';
+            lineBuff.resize(maxLineSize() + 1);
+            lineBuff[maxLineSize()] = '\0';
         }
 
-        unsigned flush_count = 0;
+        unsigned flushCount = 0;
         FilterList filters = this->filters();
 
         for (Message* m : messages)
@@ -535,15 +536,15 @@ void SaverFile::flushImpl(const MessageList& messages)
 
             if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
             {
-                strncpy(&line_buff[0], m->str.c_str(), maxLineSize());
-                fputs(&line_buff[0], f);
+                strncpy(&lineBuff[0], m->str.c_str(), maxLineSize());
+                fputs(&lineBuff[0], f);
             }
             else
                 fputs(m->str.c_str(), f);
 
             fputs("\n", f);
 
-            if (++flush_count % 500 == 0)
+            if (++flushCount % 500 == 0)
                 fflush(f);
         }
         fflush(f);
@@ -650,16 +651,15 @@ void Logger::addMessage(MessagePtr&& m)
 
 void Logger::run()
 {
-    simple_timer flush_timer;
+    simple_timer flushTimer;
+    MessageList messagesBuff;
 
     // Вспомогательный флаг, нужен чтобы дать возможность перед прерываением
     // потока сделать лишний цикл while (true) и сбросить все буферы в сэйверы.
-    // Примечание: _threadStop для этой цели использовать нельзя.
-    bool thread_stop = false;
+    // Примечание: threadStop() для этой цели использовать нельзя.
+    bool loopBreak = false;
 
-    MessageList messages_buff;
-
-    auto saver_flush = [] (const MessageList& messages, Saver* saver)
+    auto saverFlush = [] (const MessageList& messages, Saver* saver)
     {
         if (messages.empty())
             return;
@@ -679,16 +679,16 @@ void Logger::run()
 
     while (true)
     {
-        int messages_count;
+        int messagesCount;
         { //Блок для SpinLocker
             SpinLocker locker(_messagesLock); (void) locker;
-            messages_count = _messages.count();
+            messagesCount = _messages.count();
         }
 
-        if (!threadStop() && (messages_count == 0))
+        if (!threadStop() && (messagesCount == 0))
         {
-            static chrono::milliseconds sleep_thread {20};
-            this_thread::sleep_for(sleep_thread);
+            static chrono::milliseconds sleepThread {20};
+            this_thread::sleep_for(sleepThread);
         }
 
         MessageList messages;
@@ -698,7 +698,7 @@ void Logger::run()
         }
         if (!threadStop()
             && messages.count() == 0
-            && messages_buff.count() == 0)
+            && messagesBuff.count() == 0)
         {
             _forceFlush = false;
             continue;
@@ -706,7 +706,7 @@ void Logger::run()
 
         if (messages.count())
         {
-            auto prefix_formatter = [this] (MessageList& messages, int min, int max)
+            auto prefixFormatterL = [this] (MessageList& messages, int min, int max)
             {
                 Level level = this->level(); // volatile оптимизация
                 for (int i = min; i < max; ++i)
@@ -718,65 +718,65 @@ void Logger::run()
                 }
             };
 
-            int threads_count = 0;
-            if (messages.count() > 50000)  ++threads_count;
-            if (messages.count() > 100000) ++threads_count;
-            if (messages.count() > 150000) ++threads_count;
+            int threadsCount = 0;
+            if (messages.count() > 50000)  ++threadsCount;
+            if (messages.count() > 100000) ++threadsCount;
+            if (messages.count() > 150000) ++threadsCount;
 
             int step = messages.count();
-            int thread_index = 0;
+            int threadIndex = 0;
             vector<thread> threads;
-            if (threads_count)
+            if (threadsCount)
             {
-                step = messages.count() / (threads_count + 1);
-                for (; thread_index < threads_count; ++thread_index)
+                step = messages.count() / (threadsCount + 1);
+                for (; threadIndex < threadsCount; ++threadIndex)
                 {
-                    threads.push_back(thread(prefix_formatter, std::ref(messages),
-                                             thread_index * step, (thread_index + 1) * step));
+                    threads.push_back(thread(prefixFormatterL, std::ref(messages),
+                                             threadIndex * step, (threadIndex + 1) * step));
                 }
             }
-            prefix_formatter(messages, thread_index * step, messages.count());
+            prefixFormatterL(messages, threadIndex * step, messages.count());
 
             for (size_t i = 0; i < threads.size(); ++i)
                 threads[i].join();
 
-            SaverPtr saver_out;
-            SaverPtr saver_err;
+            SaverPtr saverOut;
+            SaverPtr saverErr;
 
             { //Блок для SpinLocker
                 SpinLocker locker(_saversLock); (void) locker;
-                saver_out = _saverOut;
-                saver_err = _saverErr;
+                saverOut = _saverOut;
+                saverErr = _saverErr;
             }
-            if (saver_out)
-                saver_flush(messages, saver_out.get());
-            if (saver_err)
-                saver_flush(messages, saver_err.get());
+            if (saverOut)
+                saverFlush(messages, saverOut.get());
+            if (saverErr)
+                saverFlush(messages, saverErr.get());
 
             for (int i = 0; i < messages.count(); ++i)
-                messages_buff.add(messages.release(i, lst::NO_COMPRESS_LIST));
+                messagesBuff.add(messages.release(i, lst::NO_COMPRESS_LIST));
             messages.clear();
 
         } //if (messages.count())
 
-        if (thread_stop
+        if (loopBreak
             || _forceFlush
-            || flush_timer.elapsed() > _flushTime
-            || messages_buff.count() > _flushSize)
+            || flushTimer.elapsed() > _flushTime
+            || messagesBuff.count() > _flushSize)
         {
-            flush_timer.reset();
-            if (messages_buff.count())
+            flushTimer.reset();
+            if (messagesBuff.count())
             {
                 SaverList savers = this->savers();
                 for (Saver* saver : savers)
-                    saver_flush(messages_buff, saver);
+                    saverFlush(messagesBuff, saver);
             }
             _forceFlush = false;
-            messages_buff.clear();
+            messagesBuff.clear();
         }
 
-        if (thread_stop)  break;
-        if (threadStop()) thread_stop = true;
+        if (loopBreak) break;
+        if (threadStop()) loopBreak = true;
 
     } //while (true)
 }
@@ -790,8 +790,8 @@ void Logger::waitingFlush()
 {
     while (_forceFlush && !threadStop())
     {
-        static chrono::milliseconds sleep_thread {20};
-        this_thread::sleep_for(sleep_thread);
+        static chrono::milliseconds sleepThread {20};
+        this_thread::sleep_for(sleepThread);
     }
 }
 
@@ -944,18 +944,18 @@ SaverList Logger::savers() const
 void Logger::redefineLevel()
 {
     Level level = NONE;
-    SaverPtr saver_out;
-    SaverPtr saver_err;
+    SaverPtr saverOut;
+    SaverPtr saverErr;
 
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
-        saver_out = _saverOut;
-        saver_err = _saverErr;
+        saverOut = _saverOut;
+        saverErr = _saverErr;
     }
-    if (saver_out && saver_out->active() && (saver_out->level() > level))
-        level = saver_out->level();
-    if (saver_err && saver_err->active() && (saver_err->level() > level))
-        level = saver_err->level();
+    if (saverOut && saverOut->active() && (saverOut->level() > level))
+        level = saverOut->level();
+    if (saverErr && saverErr->active() && (saverErr->level() > level))
+        level = saverErr->level();
 
     SaverList savers = this->savers();
     for (Saver* saver : savers)
