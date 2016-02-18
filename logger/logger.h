@@ -215,7 +215,7 @@ private:
     friend class Saver;
 };
 typedef lst::List<Filter, FindItem<Filter>, AllocatorItem<Filter>> FilterList;
-typedef clife_ptr<Filter> FilterLPtr;
+typedef clife_ptr<Filter> FilterPtr;
 
 
 /**
@@ -239,7 +239,7 @@ private:
     set<string> _modules;
     bool _filteringNoNameModules = {false};
 };
-typedef clife_ptr<FilterModule> FilterModuleLPtr;
+typedef clife_ptr<FilterModule> FilterModulePtr;
 
 
 /**
@@ -255,7 +255,7 @@ private:
     bool checkImpl(const Message&) const override;
     Level _level = {NONE};
 };
-typedef clife_ptr<FilterLevel> FilterLevelLPtr;
+typedef clife_ptr<FilterLevel> FilterLevelPtr;
 
 
 /**
@@ -273,7 +273,7 @@ private:
     bool checkImpl(const Message&) const override;
     set<string> _files;
 };
-typedef clife_ptr<FilterFile> FilterFileLPtr;
+typedef clife_ptr<FilterFile> FilterFilePtr;
 
 
 /**
@@ -291,7 +291,7 @@ private:
     bool checkImpl(const Message&) const override;
     set<string> _funcs;
 };
-typedef clife_ptr<FilterFunc> FilterFuncLPtr;
+typedef clife_ptr<FilterFunc> FilterFuncPtr;
 
 
 /**
@@ -310,7 +310,7 @@ private:
     bool checkImpl(const Message&) const override;
     set<pid_t> _threads;
 };
-typedef clife_ptr<FilterThread> FilterThreadLPtr;
+typedef clife_ptr<FilterThread> FilterThreadPtr;
 
 
 /**
@@ -360,7 +360,7 @@ public:
 
     // Добавляет фильтр в список фильтров. Если фильтр с указанным именем уже
     // существует, то он будет заменен новым.
-    void addFilter(FilterLPtr);
+    void addFilter(FilterPtr);
 
     // Удаляет фильтр
     void removeFilter(const string& name);
@@ -395,7 +395,7 @@ private:
     friend class SaverStdErr;
 };
 typedef lst::List<Saver, FindItem<Saver>, AllocatorItem<Saver>> SaverList;
-typedef clife_ptr<Saver> SaverLPtr;
+typedef clife_ptr<Saver> SaverPtr;
 
 
 /**
@@ -442,7 +442,7 @@ public:
 private:
     string _filePath;
 };
-typedef clife_ptr<SaverFile> SaverFileLPtr;
+typedef clife_ptr<SaverFile> SaverFilePtr;
 
 
 /**
@@ -587,13 +587,13 @@ public:
 
     // Добавляет сэйвер в список сэйверов. Если сэйвер с указанным именем уже
     // существует, то он будет заменен новым.
-    void addSaver(SaverLPtr);
+    void addSaver(SaverPtr);
 
     // Удаляет сэйвер.
     void removeSaver(const string& name);
 
     // Выполняет поиск сэйвера по имени.
-    SaverLPtr findSaver(const string& name);
+    SaverPtr findSaver(const string& name);
 
     // Очищает список сэйверов
     void clearSavers(bool clearStd = true);
@@ -617,18 +617,14 @@ private:
     void addMessage(MessagePtr&&);
     void run() override;
 
-
 private:
     MessageList _messages;
-    //MessageList _messagesBuff;
     mutable atomic_flag  _messagesLock = ATOMIC_FLAG_INIT;
-    //mutable std::mutex _messagesLock;
 
-    SaverLPtr _saverOut;  // Сэйвер для STDOUT
-    SaverLPtr _saverErr;  // Сэйвер для STDERR
+    SaverPtr  _saverOut;  // Сэйвер для STDOUT
+    SaverPtr  _saverErr;  // Сэйвер для STDERR
     SaverList _savers;    // Список CUSTOM-сэйверов
     mutable atomic_flag  _saversLock = ATOMIC_FLAG_INIT;
-    //mutable std::mutex  _saversLock;
 
     volatile Level _level = {NONE};
 

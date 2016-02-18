@@ -359,18 +359,18 @@ void Saver::flush(const MessageList& messages)
 
 FilterList Saver::filters() const
 {
-    FilterList filters_;
+    FilterList filters;
     SpinLocker locker(_filtersLock); (void) locker;
     for (int i = 0; i < _filters.count(); ++i)
     {
         Filter* f = _filters.item(i);
         f->add_ref();
-        filters_.add(f);
+        filters.add(f);
     }
-    return std::move(filters_);
+    return std::move(filters);
 }
 
-void Saver::addFilter(FilterLPtr filter)
+void Saver::addFilter(FilterPtr filter)
 {
     SpinLocker locker(_filtersLock); (void) locker;
     lst::FindResult fr = _filters.findRef(filter->name(),
@@ -740,8 +740,8 @@ void Logger::run()
             for (size_t i = 0; i < threads.size(); ++i)
                 threads[i].join();
 
-            SaverLPtr saver_out;
-            SaverLPtr saver_err;
+            SaverPtr saver_out;
+            SaverPtr saver_err;
 
             { //Блок для SpinLocker
                 SpinLocker locker(_saversLock); (void) locker;
@@ -836,7 +836,7 @@ void Logger::addSaverStdOut(Level level, bool shortMessages)
     waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
-        _saverOut = SaverLPtr(new SaverStdOut("stdout", level, shortMessages));
+        _saverOut = SaverPtr(new SaverStdOut("stdout", level, shortMessages));
         _saverOut->setLogger(this);
     }
     redefineLevel();
@@ -847,7 +847,7 @@ void Logger::addSaverStdErr(Level level, bool shortMessages)
     waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
-        _saverErr = SaverLPtr(new SaverStdErr("stderr", level, shortMessages));
+        _saverErr = SaverPtr(new SaverStdErr("stderr", level, shortMessages));
         _saverErr->setLogger(this);
     }
     redefineLevel();
@@ -873,7 +873,7 @@ void Logger::removeSaverStdErr()
     redefineLevel();
 }
 
-void Logger::addSaver(SaverLPtr saver)
+void Logger::addSaver(SaverPtr saver)
 {
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
@@ -904,11 +904,11 @@ void Logger::removeSaver(const string& name)
     redefineLevel();
 }
 
-SaverLPtr Logger::findSaver(const string& name)
+SaverPtr Logger::findSaver(const string& name)
 {
     SaverList savers = this->savers();
     Saver* saver = savers.findItem(&name, lst::FindExtParams(lst::BruteForce::Yes));
-    return SaverLPtr(saver);
+    return SaverPtr(saver);
 }
 
 void Logger::clearSavers(bool clearStd)
@@ -944,8 +944,8 @@ SaverList Logger::savers() const
 void Logger::redefineLevel()
 {
     Level level = NONE;
-    SaverLPtr saver_out;
-    SaverLPtr saver_err;
+    SaverPtr saver_out;
+    SaverPtr saver_err;
 
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
