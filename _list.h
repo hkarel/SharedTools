@@ -82,11 +82,11 @@ class FindResult;
 template<typename ListT, typename CompareT>
 FindResult find(const ListT&, const CompareT&);
 
-template<typename ListT, typename LCompare>
-FindResult firstFindResultL(const ListT&, const LCompare&, const FindResult&);
+template<typename ListT, typename CompareL>
+FindResult firstFindResultL(const ListT&, const CompareL&, const FindResult&);
 
-template<typename ListT, typename LCompare>
-FindResult lastFindResultL(const ListT&, const LCompare&, const FindResult&);
+template<typename ListT, typename CompareL>
+FindResult lastFindResultL(const ListT&, const CompareL&, const FindResult&);
 
 template <typename, typename, typename> class CustomList;
 template <typename, typename, typename> class List;
@@ -200,11 +200,11 @@ private:
   template<typename ListT, typename CompareT>
   friend FindResult find(const ListT&, const CompareT&);
 
-  template<typename ListT, typename LCompare>
-  friend FindResult firstFindResultL(const ListT&, const LCompare&, const FindResult&);
+  template<typename ListT, typename CompareL>
+  friend FindResult firstFindResultL(const ListT&, const CompareL&, const FindResult&);
 
-  template<typename ListT, typename LCompare>
-  friend FindResult lastFindResultL(const ListT&, const LCompare&, const FindResult&);
+  template<typename ListT, typename CompareL>
+  friend FindResult lastFindResultL(const ListT&, const CompareL&, const FindResult&);
 };
 
 struct FindResultRange
@@ -285,11 +285,11 @@ struct SortExtParams
   к параметру FindExtParams::extParam.
   Примечание: в качестве контейнера ListT можно использовать std::vector.
 */
-template<typename ListT, typename CompareT>
-FindResult find(const ListT& list, const CompareT& compare);
+template<typename ListT, typename CompareL>
+FindResult find(const ListT& list, const CompareL& compare);
 
-template<typename ListT, typename CompareT>
-auto findItem(const ListT& list, const CompareT& compare) -> typename ListT::pointer;
+template<typename ListT, typename CompareL>
+auto findItem(const ListT& list, const CompareL& compare) -> typename ListT::pointer;
 
 //---
 template<typename T, typename ListT, typename CompareT>
@@ -322,12 +322,12 @@ T* findItem(const T* item, const ListT& list, const CompareT& compare,
 
 /// Примечание: в качестве compare-элемента используется lambda-функция с сигна-
 /// турой: int [](const ListT::ValueType* item) где item элемент списка.
-template<typename ListT, typename LCompare>
-FindResult firstFindResultL(const ListT& list, const LCompare& compare,
+template<typename ListT, typename CompareL>
+FindResult firstFindResultL(const ListT& list, const CompareL& compare,
                             const FindResult& fr);
 
-template<typename ListT, typename LCompare>
-FindResult lastFindResultL(const ListT& list, const LCompare& compare,
+template<typename ListT, typename CompareL>
+FindResult lastFindResultL(const ListT& list, const CompareL& compare,
                            const FindResult& fr);
 
 /// Примечание: в качестве compare-элемента используется функция или функтор
@@ -346,8 +346,8 @@ FindResult lastFindResult(const ListT& list, const CompareT& compare,
   @brief Группа функций выполняет поиск первого и последнего элемента в после-
          довательности одинаковых значений.
 */
-template<typename ListT, typename LCompare>
-FindResultRange rangeFindResultL(const ListT& list, const LCompare& compare,
+template<typename ListT, typename CompareL>
+FindResultRange rangeFindResultL(const ListT& list, const CompareL& compare,
                                  const FindResult& fr);
 
 template<typename ListT, typename CompareT>
@@ -514,28 +514,28 @@ public:
   ///
   /// Позволяет выполнять поиск со стратегией поиска отличной от той,
   /// что была определена в классе-контейнере.
-  template<typename U, typename UCompare>
-  FindResult find(const U* item, const UCompare& compare,
+  template<typename U, typename CompareU>
+  FindResult find(const U* item, const CompareU& compare,
                   const FindExtParams& extParams = FindExtParams()) const;
 
-  template<typename U, typename UCompare>
-  T* findItem(const U* item, const UCompare& compare,
+  template<typename U, typename CompareU>
+  T* findItem(const U* item, const CompareU& compare,
               const FindExtParams& extParams = FindExtParams()) const;
 
-  template<typename U, typename UCompare>
-  FindResult findRef(const U& item, const UCompare& compare,
+  template<typename U, typename CompareU>
+  FindResult findRef(const U& item, const CompareU& compare,
                      const FindExtParams& extParams = FindExtParams()) const;
 
   /// @brief Функции поиска.
   ///
   /// В качестве стратегии поиска используется lambda-функция с сигнатурой
   /// int [](const List::ValueType* item)
-  template<typename LCompare>
-  FindResult findL(const LCompare& compare,
+  template<typename CompareL>
+  FindResult findL(const CompareL& compare,
                    const FindExtParams& extParams = FindExtParams()) const;
 
-  template<typename LCompare>
-  T* findItemL(const LCompare& compare,
+  template<typename CompareL>
+  T* findItemL(const CompareL& compare,
                const FindExtParams& extParams = FindExtParams()) const;
 
   /// @brief Доступ к элементу списка по индексу.
@@ -913,8 +913,8 @@ public:
   ///            или убыванию.
   /// @param[in] extParams Используется для задания расширенных параметров
   ///            сортировки.
-  template<typename UCompare>
-  void sort(UCompare& compare, SortMode sortMode = SortUp,
+  template<typename CompareU>
+  void sort(CompareU& compare, SortMode sortMode = SortUp,
             const SortExtParams& extParams = SortExtParams());
 
   /// @brief Функция сортировки, используется стратегия сортировки по умолчанию.
@@ -926,8 +926,8 @@ public:
   ///
   /// К имени функции добавлен индекс "2", это сделано для того чтобы
   /// избежать конфликта имен в компиляторе от Borland.
-  /// Объект стратегии сортировки UCompare создается внутри функции.
-  template<typename UCompare>
+  /// Объект стратегии сортировки CompareU создается внутри функции.
+  template<typename CompareU>
   void sort2(SortMode sortMode = SortUp,
              const SortExtParams& extParams = SortExtParams());
 
@@ -948,12 +948,12 @@ private:
   // Инициализирует основные параметры контейнера, используется в конструкторах.
   void init(bool container /*, const Allocator &*/);
 
-  //template<typename UCompare>
+  //template<typename CompareU>
   //void QuickSort(T** sortList, int L, int R,
-  //               UCompare& compare, SortMode sortMode, void *extParam);
-  template<typename UCompare>
+  //               CompareU& compare, SortMode sortMode, void *extParam);
+  template<typename CompareU>
   void QSort(T** sortList, int L, int R,
-             UCompare& compare, SortMode sortMode, void *extParam);
+             CompareU& compare, SortMode sortMode, void *extParam);
 
   void grow();
 
@@ -973,23 +973,23 @@ private:
 
 #define DECL_IMPL_CUSTLIST_DESTR  DECL_IMPL_CUSTLIST_CONSTR
 
-#define DECL_IMPL_CUSTLIST(TYPE_) \
+#define DECL_IMPL_CUSTLIST(TYPE) \
   template<typename T, typename Compare, typename Allocator> \
-  TYPE_ CustomList<T, Compare, Allocator>
+  TYPE CustomList<T, Compare, Allocator>
 
-#define DECL_IMPL_CUSTLIST_INTERN_TYPE(TYPE_) \
+#define DECL_IMPL_CUSTLIST_INTERN_TYPE(TYPE) \
   template<typename T, typename Compare, typename Allocator> \
-  typename CustomList<T, Compare, Allocator>::TYPE_ CustomList<T, Compare, Allocator>
+  typename CustomList<T, Compare, Allocator>::TYPE CustomList<T, Compare, Allocator>
 
-#define DECL_IMPL_CUSTLIST_SUBTMPL1(TYPE_, SUBT1) \
+#define DECL_IMPL_CUSTLIST_SUBTMPL1(TYPE, SUBT1) \
   template<typename T, typename Compare, typename Allocator> \
     template<typename SUBT1> \
-  TYPE_ CustomList<T, Compare, Allocator>
+  TYPE CustomList<T, Compare, Allocator>
 
-#define DECL_IMPL_CUSTLIST_SUBTMPL2(TYPE_, SUBT1, SUBT2) \
+#define DECL_IMPL_CUSTLIST_SUBTMPL2(TYPE, SUBT1, SUBT2) \
   template<typename T, typename Compare, typename Allocator> \
     template<typename SUBT1, typename SUBT2> \
-  TYPE_ CustomList<T, Compare, Allocator>
+  TYPE CustomList<T, Compare, Allocator>
 
 
 DECL_IMPL_CUSTLIST(int)::indexOf(const T* item) const
@@ -1001,18 +1001,16 @@ DECL_IMPL_CUSTLIST(int)::indexOf(const T* item) const
 
 DECL_IMPL_CUSTLIST(bool)::indexOf2(const T* item, int& index) const
 {
-  //CHECK_INTERNAL_DATA_PTR
-
-  T** item_ = listBegin();
-  T** end_  = listEnd();
-  while (item_ != end_)
+  T** it = listBegin();
+  T** end = listEnd();
+  while (it != end)
   {
-    if (*item_ == item)
+    if (*it == item)
     {
-      index = int(item_ - listBegin());
+      index = int(it - listBegin());
       return true;
     }
-    ++item_;
+    ++it;
   }
   index = -1;
   return false;
@@ -1036,34 +1034,34 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, U)::findRef(const U& item,
   return findRef<U, Compare>(item, compare(), extParams);
 }
 
-DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, UCompare)::find(const U* item,
-                                                           const UCompare& u_compare,
+DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, CompareU)::find(const U* item,
+                                                           const CompareU& compare,
                                                            const FindExtParams& extParams) const
 {
-  auto l = [item, &u_compare, &extParams](const T* item2) -> int
+  auto l = [item, &compare, &extParams](const T* item2) -> int
   {
-    return u_compare(item, item2, extParams.extParam);
+    return compare(item, item2, extParams.extParam);
   };
   return findL(l, extParams);
 }
 
 
-DECL_IMPL_CUSTLIST_SUBTMPL2(T*, U, UCompare)::findItem(const U* item,
-                                                       const UCompare& u_compare,
+DECL_IMPL_CUSTLIST_SUBTMPL2(T*, U, CompareU)::findItem(const U* item,
+                                                       const CompareU& compare,
                                                        const FindExtParams& extParams) const
 {
-  FindResult fr = find<U, UCompare>(item, u_compare, extParams);
+  FindResult fr = find<U, CompareU>(item, compare, extParams);
   return fr.success() ? d->list[fr.index()] : 0;
 }
 
-DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, UCompare)::findRef(const U& item,
-                                                              const UCompare& u_compare,
+DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, CompareU)::findRef(const U& item,
+                                                              const CompareU& compare,
                                                               const FindExtParams& extParams) const
 {
-  return find<U, UCompare>(&item, u_compare, extParams);
+  return find<U, CompareU>(&item, compare, extParams);
 }
 
-DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compare,
+DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare,
                                                          const FindExtParams& extParams) const
 {
   CHECK_INTERNAL_DATA_PTR(d)
@@ -1080,19 +1078,19 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
       return FindResult(false, BruteForce::Yes, d->count);
 
     // Функция поиска перебором
-    auto bruteFind = [this, &l_compare, startFindIndex] () -> FindResult
+    auto bruteFind = [this, &compare, startFindIndex] () -> FindResult
     {
-      T** item_ = this->listBegin() + startFindIndex;
-      T** end_ = this->listEnd();
-      // При сравнении item_ и end_ не использовать оператор !=, т.к. потенциально
-      // может возникнуть ситуация, когда item_ изначально окажется больше end_,
+      T** it = listBegin() + startFindIndex;
+      T** end = listEnd();
+      // При сравнении it и end не использовать оператор !=, т.к. потенциально
+      // может возникнуть ситуация, когда it изначально окажется больше end,
       // т.е. если startFindIndex окажется  больше чем число элементов в списке,
-      // то условие item_ != end_ никогда не наступит.
-      while (item_ < /*не использовать оператор != */ end_)
+      // то условие it != end никогда не наступит.
+      while (it < /*не использовать оператор != */ end)
       {
-        if (l_compare(*item_) == 0)
-          return FindResult(true, BruteForce::Yes, int(item_ - this->listBegin()));
-        ++item_;
+        if (compare(*it) == 0)
+          return FindResult(true, BruteForce::Yes, int(it - listBegin()));
+        ++it;
       }
       return FindResult(false, BruteForce::Yes, d->count);
     };
@@ -1122,7 +1120,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
         while (true)
         {
           mid = (low + high) >> 1;
-          result = l_compare(d->list[mid]);
+          result = compare(d->list[mid]);
           if (result < 0)
             high = mid;
           else if (result > 0)
@@ -1140,7 +1138,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
         while (true)
         {
           mid = (low + high) >> 1;
-          result = l_compare(d->list[mid]);
+          result = compare(d->list[mid]);
           if (result > 0)
             high = mid;
           else if (result < 0)
@@ -1163,10 +1161,10 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, LCompare)::findL(const LCompare& l_compa
   return FindResult(false, BruteForce::Yes, d->count);
 }
 
-DECL_IMPL_CUSTLIST_SUBTMPL1(T*, LCompare)::findItemL(const LCompare& l_compare,
+DECL_IMPL_CUSTLIST_SUBTMPL1(T*, CompareL)::findItemL(const CompareL& compare,
                                                      const FindExtParams& extParams) const
 {
-  FindResult fr = findL(l_compare, extParams);
+  FindResult fr = findL(compare, extParams);
   return fr.success() ? d->list[fr.index()] : 0;
 }
 
@@ -1177,8 +1175,8 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(int index1, int index2) const
   RangeType r;
   if (d->count == 0)
   {
-    r._begin = this->listEnd();
-    r._end   = this->listEnd();
+    r._begin = listEnd();
+    r._end   = listEnd();
     return r;
   }
 
@@ -1186,8 +1184,8 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(int index1, int index2) const
   CHECK_BORDERS(index2)
   CHECK_NOTLESS(index2, index1)
 
-  r._begin = this->listBegin() + index1;
-  r._end   = this->listBegin() + index2 + 1;
+  r._begin = listBegin() + index1;
+  r._end   = listBegin() + index2 + 1;
   return r;
 }
 
@@ -1196,8 +1194,8 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
   if (frr.first.failed() || frr.last.failed())
   {
     RangeType r;
-    r._begin = this->listEnd();
-    r._end   = this->listEnd();
+    r._begin = listEnd();
+    r._end   = listEnd();
     return r;
   }
   return range(frr.first.index(), frr.last.index());
@@ -1220,14 +1218,14 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
 
 #define DECL_IMPL_LIST_DESTR  DECL_IMPL_LIST_CONSTR
 
-#define DECL_IMPL_LIST(TYPE_) \
+#define DECL_IMPL_LIST(TYPE) \
   template<typename T, typename Compare, typename Allocator> \
-  TYPE_ List<T, Compare, Allocator>
+  TYPE List<T, Compare, Allocator>
 
-#define DECL_IMPL_LIST_SUBTMPL1(TYPE_, SUBT1) \
+#define DECL_IMPL_LIST_SUBTMPL1(TYPE, SUBT1) \
   template<typename T, typename Compare, typename Allocator> \
     template<typename SUBT1> \
-  TYPE_ List<T, Compare, Allocator>
+  TYPE List<T, Compare, Allocator>
 
 #define DECL_LIST_SELFTYPE List<T, Compare, Allocator>
 
@@ -1325,34 +1323,34 @@ DECL_IMPL_LIST(void)::clear()
   DataType* d = d_func();
   if (d->container)
   {
-    T** item_ = CustomListType::listBegin();
-    T** end_  = CustomListType::listEnd();
-    while (item_ != end_)
+    T** it = this->listBegin();
+    T** end = this->listEnd();
+    while (it != end)
     {
-      if (*item_)
-        d->allocator.destroy(*item_);
-      ++item_;
+      if (*it)
+        d->allocator.destroy(*it);
+      ++it;
     }
   }
   d->count = 0;
   d->sortState = NoSorted;
 }
 
-DECL_IMPL_LIST(void)::remove(int index, bool compressList_)
+DECL_IMPL_LIST(void)::remove(int index, bool compressList)
 {
   DataType* d = d_func();
   CHECK_BORDERS(index)
 
-  T *item = release(index, compressList_);
+  T *item = release(index, compressList);
   if (d->container && item)
     d->allocator.destroy(item);
 }
 
-DECL_IMPL_LIST(int)::removeItem(T* item, bool compressList_)
+DECL_IMPL_LIST(int)::removeItem(T* item, bool compressList)
 {
   int index = -1;
   if (CustomListType::indexOf2(item, index))
-    remove(index, compressList_);
+    remove(index, compressList);
 
   return index;
 }
@@ -1366,26 +1364,26 @@ DECL_IMPL_LIST(void)::removeLast()
 }
 
 DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removeCond(const Condition& condition,
-                                                     bool compressList_)
+                                                     bool compressList)
 {
   DataType* d = d_func();
-  T** item_ = CustomListType::listBegin();
-  T** end_  = CustomListType::listEnd();
-  while (item_ != end_)
+  T** it = this->listBegin();
+  T** end = this->listEnd();
+  while (it != end)
   {
-    if (*item_ && condition(*item_))
+    if (*it && condition(*it))
     {
       if (d->container)
-        d->allocator.destroy(*item_);
-      *item_ = 0;
+        d->allocator.destroy(*it);
+      *it = 0;
     }
-    ++item_;
+    ++it;
   }
-  if (compressList_)
+  if (compressList)
     this->compressList();
 }
 
-DECL_IMPL_LIST(void)::removes(int index, int count, bool compressList_)
+DECL_IMPL_LIST(void)::removes(int index, int count, bool compressList)
 {
   DataType* d = d_func();
   CHECK_BORDERS(index)
@@ -1400,7 +1398,7 @@ DECL_IMPL_LIST(void)::removes(int index, int count, bool compressList_)
     if (d->container && item)
       d->allocator.destroy(item);
   }
-  if (compressList_)
+  if (compressList)
       this->compressList();
 }
 
@@ -1409,18 +1407,18 @@ DECL_IMPL_LIST(void)::replace(int index, T* item, bool keepSortState)
   DataType* d = d_func();
   CHECK_BORDERS(index)
 
-  T** item_ = CustomListType::listBegin() + index;
-  T* item_old = *item_;
-  *item_ = item;
+  T** it = this->listBegin() + index;
+  T* itemOld = *it;
+  *it = item;
 
   if (!keepSortState)
     setSortState(NoSorted);
 
-  if (d->container && item_old)
-    d->allocator.destroy(item_old);
+  if (d->container && itemOld)
+    d->allocator.destroy(itemOld);
 }
 
-DECL_IMPL_LIST(T*)::release(int index, bool compressList_)
+DECL_IMPL_LIST(T*)::release(int index, bool compressList)
 {
   DataType* d = d_func();
   CHECK_BORDERS(index)
@@ -1429,30 +1427,30 @@ DECL_IMPL_LIST(T*)::release(int index, bool compressList_)
   // памяти. Выявить закономерности при которых происходят утечки не удалось.
   // Утечки обнаружены с помощью утилиты CodeGuard.
 
-  T** item_ = CustomListType::listBegin() + index;
-  T* res = *item_;
-  if (compressList_)
+  T** it = this->listBegin() + index;
+  T* res = *it;
+  if (compressList)
   {
     // При сжатии списка сдвигаем все элементы оставшиеся справа
     // от точки удаления элемента на одну позицию влево
-    T** end_ = CustomListType::listEnd() - 1;
-    while (item_ /*<*/ != end_)
+    T** end = this->listEnd() - 1;
+    while (it != end)
     {
-      *item_ = *(item_ + 1); ++item_;
+      *it = *(it + 1); ++it;
     }
     --d->count;
   }
   else
-    *item_ = 0;
+    *it = 0;
 
   return res;
 }
 
-DECL_IMPL_LIST(int)::releaseItem(T* item, bool compressList_)
+DECL_IMPL_LIST(int)::releaseItem(T* item, bool compressList)
 {
   int index = -1;
-  if (CustomListType::indexOf2(item, index))
-    release(index, compressList_);
+  if (this->indexOf2(item, index))
+    release(index, compressList);
 
   return index;
 }
@@ -1461,7 +1459,7 @@ DECL_IMPL_LIST(T*)::releaseLast()
 {
   DataType* d = d_func();
   if (d->count == 0) return 0;
-  T* item = *(CustomListType::listEnd() - 1);
+  T* item = *(this->listEnd() - 1);
   --d->count;
   return item;
 }
@@ -1473,24 +1471,23 @@ DECL_IMPL_LIST(void)::exchange(int index1, int index2)
   CHECK_BORDERS(index2)
 
   setSortState(NoSorted);
-  T** list_ = d->list;
-  T* item = list_[index1];
-  list_[index1] = list_[index2];
-  list_[index2] = item;
+  T* item = d->list[index1];
+  d->list[index1] = d->list[index2];
+  d->list[index2] = item;
 }
 
 DECL_IMPL_LIST(T*)::addInSort(T* item, const FindResult& fr)
 {
-  SortState sort_state = CustomListType::sortState();
+  SortState sortState = this->sortState();
   //if ((sort_state == NoSorted)
   //     || (sort_state == CustomUpSorted)
   //     || (sort_state == CustomDownSorted))
-  if ((sort_state != UpSorted) && (sort_state != DownSorted))
+  if ((sortState != UpSorted) && (sortState != DownSorted))
     return add(item);
 
   item = insert(item, fr.index());
   if (!fr.bruteForce())
-    setSortState(sort_state);
+    setSortState(sortState);
 
   return item;
 }
@@ -1526,13 +1523,13 @@ DECL_IMPL_LIST(T*)::insert(T* item, int index)
     grow();
 
   // Не используем функцию memmove() (cм. комментарии в теле проц. release()).
-  T** item_ = CustomListType::listBegin() + index;
-  T** end_  = CustomListType::listEnd();
-  while (item_ /*<*/ != end_)
+  T** it = this->listBegin() + index;
+  T** end = this->listEnd();
+  while (it != end)
   {
-    *end_ = *(end_ - 1); --end_;
+    *end = *(end - 1); --end;
   }
-  *item_ = item;
+  *it = item;
   ++d->count;
   return item;
 }
@@ -1559,7 +1556,6 @@ DECL_IMPL_LIST(void)::move(int curIndex, int newIndex)
 DECL_IMPL_LIST(void)::grow()
 {
   DataType* d = d_func();
-
   int delta = (d->capacity > 64) ? (d->capacity / 2) : 16;
   setCapacity(d->capacity + delta);
 }
@@ -1567,19 +1563,18 @@ DECL_IMPL_LIST(void)::grow()
 DECL_IMPL_LIST(void)::setCapacity(int newCapacity)
 {
   DataType* d = d_func();
-
   if (newCapacity > d->capacity)
   {
-    d->capacity = newCapacity;
-    T** temp_list = new T* [d->capacity];
-    T** temp_item = temp_list;
-    T** item_ = CustomListType::listBegin();
-    T** end_  = CustomListType::listEnd();
-    while (item_ != end_)
-      *temp_item++ = *item_++;
+    T** newList = new T* [newCapacity];
+    T** newIt = newList;
+    T** it = this->listBegin();
+    T** end = this->listEnd();
+    while (it != end)
+      *newIt++ = *it++;
 
     delete [] d->list;
-    d->list = temp_list;
+    d->list = newList;
+    d->capacity = newCapacity;
   }
 }
 
@@ -1613,37 +1608,17 @@ DECL_IMPL_LIST(void)::compressList()
 
 DECL_IMPL_LIST(void)::assign(const CustomListType& list)
 {
-  DataType* d = d_func();
-
   if (this == &list)
       return;
-
-  clear();
-
-//   setCapacity(list.capacity());
-//   setCompare(list.compare());
-//   setAllocator(list.allocator());
-//   setContainer(list.container());
-//   setSortState(NoSorted);
-//   T** item_s = list.listBegin();
-//   T** end_s = list.listEnd();
-//   T** item_d = listBegin();
-//   const bool container_ = container();
-//   while (item_s != end_s)
-//   {
-//     //FList[i] = (FContainer) ? FAllocator.create(list_.item(i)) : list_.item(i);
-//     *item_d = (container_) ? d->allocator.create(*item_s) : *item_s;
-//     ++item_d, ++item_s;
-//     // Счетчик элементов увеличиваем в цикле, это позволит корректно
-//     // освободить ресурсы в случае возникновения исключения
-//     setCount(item_s - list.listBegin());
-//   }
-//   setSortState(list.sortState());
-
 
   // Отладить
   break_point
 
+  clear();
+
+  // !!! Так делать нельзя, поэтому выполняем присвоение параметров через функции
+  //*d = *(list.d);
+  // !!!
   setCapacity(list.capacity());
   setCompare(list.compare());
   setAllocator(list.allocator());
@@ -1651,24 +1626,20 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   setCount(list.count());
   setSortState(NoSorted);
 
-  // !!! так делать нельзя
-  //*d = *(list.d);
-
-  T** item_s = list.listBegin();
-  T** end_s  = list.listEnd();
-  T** item_d = CustomListType::listBegin();
+  T** srcIt = list.listBegin();
+  T** srcEnd = list.listEnd();
+  T** dstIt = this->listBegin();
   int count = 0;
-  //const bool container_ = d->container;
-  while (item_s != end_s)
+  DataType* d = d_func();
+  while (srcIt != srcEnd)
   {
     try
     {
-      *item_d = (d->container) ? d->allocator.create(*item_s) : *item_s;
-      ++item_d, ++item_s, ++count;
+      *dstIt = (d->container) ? d->allocator.create(*srcIt) : *srcIt;
+      ++dstIt, ++srcIt, ++count;
     }
     catch (...)
     {
-      //setCount(count_);
       d->count = count;
       throw;
     }
@@ -1677,9 +1648,9 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
 }
 
 // --- Код оставлен в качестве примера ---
-//DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::QuickSort(T** sortList,
+//DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::QuickSort(T** sortList,
 //                                                   int L, int R,
-//                                                   UCompare& u_compare,
+//                                                   CompareU& compare,
 //                                                   SortMode sortMode,
 //                                                   void* extParam)
 //{
@@ -1694,12 +1665,12 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
 //    	switch (sortMode)
 //    	{
 //  	  	case SortUp:
-//          while (u_compare(sortList[I], P1, extParam) < 0) ++I;
-//          while (u_compare(sortList[J], P1, extParam) > 0) --J;
+//          while (compare(sortList[I], P1, extParam) < 0) ++I;
+//          while (compare(sortList[J], P1, extParam) > 0) --J;
 //          break;
 //        default:
-//          while (u_compare(sortList[I], P1, extParam) > 0) ++I;
-//          while (u_compare(sortList[J], P1, extParam) < 0) --J;
+//          while (compare(sortList[I], P1, extParam) > 0) ++I;
+//          while (compare(sortList[J], P1, extParam) < 0) --J;
 //      }
 //      if (I <= J)
 //      {
@@ -1708,14 +1679,14 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
 //        sortList[J--] = T1;
 //      }
 //    } while (I < J);
-//    if (L < J) QuickSort(sortList, L, J, u_compare, sortMode, extParam);
+//    if (L < J) QuickSort(sortList, L, J, compare, sortMode, extParam);
 //    L = I;
 //  } while (I <= R);
 //}
 
-DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::QSort(T** sortList,
+DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::QSort(T** sortList,
                                                int L, int R,
-                                               UCompare& u_compare,
+                                               CompareU& compare,
                                                SortMode sortMode,
                                                void* extParam)
 {
@@ -1727,12 +1698,12 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::QSort(T** sortList,
     switch (sortMode)
     {
       case SortUp:
-        while ((u_compare(sortList[i], x, extParam) < 0) && (i < R)) ++i;
-        while ((u_compare(sortList[j], x, extParam) > 0) && (j > L)) --j;
+        while ((compare(sortList[i], x, extParam) < 0) && (i < R)) ++i;
+        while ((compare(sortList[j], x, extParam) > 0) && (j > L)) --j;
         break;
       default: //SortDown
-        while ((u_compare(sortList[i], x, extParam) > 0) && (i < R)) ++i;
-        while ((u_compare(sortList[j], x, extParam) < 0) && (j > L)) --j;
+        while ((compare(sortList[i], x, extParam) > 0) && (i < R)) ++i;
+        while ((compare(sortList[j], x, extParam) < 0) && (j > L)) --j;
     }
     if (i <= j)
     {
@@ -1743,22 +1714,20 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::QSort(T** sortList,
     }
   } while (i <= j);
 
-  if (L < j) QSort(sortList, L, j, u_compare, sortMode, extParam);
-  if (i < R) QSort(sortList, i, R, u_compare, sortMode, extParam);
+  if (L < j) QSort(sortList, L, j, compare, sortMode, extParam);
+  if (i < R) QSort(sortList, i, R, compare, sortMode, extParam);
 }
 
-DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort(UCompare& u_compare,
+DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
                                               SortMode sortMode,
                                               const SortExtParams& extParams)
 {
-  DataType* d = d_func();
-
   // Выставляем флаг сортировки даже если в списке один элемент
   // или нет элементов вовсе. Это необходимо для корректной работы
   // функции addInSort().
   setSortState((sortMode == SortUp) ? UpSorted : DownSorted);
-  //
 
+  DataType* d = d_func();
   if (d->list && (d->count > 1))
   {
     try
@@ -1776,8 +1745,8 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort(UCompare& u_compare,
       if ((loSortBorder != 0) || (hiSortBorder != d->count))
         setSortState((sortMode == SortUp) ? CustomUpSorted : CustomDownSorted);
 
-      QSort<UCompare>(d->list, loSortBorder, hiSortBorder - 1,
-                      u_compare, sortMode, extParams.extParam);
+      QSort<CompareU>(d->list, loSortBorder, hiSortBorder - 1,
+                      compare, sortMode, extParams.extParam);
     }
     catch (BreakCompare &)
     {
@@ -1790,11 +1759,11 @@ DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort(UCompare& u_compare,
   }
 }
 
-DECL_IMPL_LIST_SUBTMPL1(void, UCompare)::sort2(SortMode sortMode,
+DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort2(SortMode sortMode,
                                                const SortExtParams& extParams)
 {
-  UCompare u_compare;
-  sort<UCompare>(u_compare, sortMode, extParams);
+  CompareU compare;
+  sort<CompareU>(compare, sortMode, extParams);
 }
 
 DECL_IMPL_LIST(void)::sort(SortMode sortMode,
@@ -1867,8 +1836,8 @@ DECL_IMPL_LIST(void)::swap(SelfListType& list)
 
 //------------------------ Implementation Functions -------------------------
 
-template<typename ListT, typename CompareT>
-FindResult find(const ListT& list, const CompareT& compare)
+template<typename ListT, typename CompareL>
+FindResult find(const ListT& list, const CompareL& compare)
 {
   for (decltype(list.size()) i = 0; i < list.size(); ++i)
     if (compare(&list.at(i)) == 0)
@@ -1877,10 +1846,10 @@ FindResult find(const ListT& list, const CompareT& compare)
   return FindResult(false, BruteForce::Yes, list.size());
 }
 
-template<typename ListT, typename CompareT>
-auto findItem(const ListT& list, const CompareT& compare) -> typename ListT::pointer
+template<typename ListT, typename CompareL>
+auto findItem(const ListT& list, const CompareL& compare) -> typename ListT::pointer
 {
-  FindResult fr = find<ListT, CompareT>(list, compare);
+  FindResult fr = find<ListT, CompareL>(list, compare);
   return fr.success() ? const_cast<typename ListT::pointer>(&list.at(fr.index())) : 0;
 }
 
@@ -1912,8 +1881,8 @@ T* findItem(const T* item, const ListT& list, const CompareT& compare,
 }
 
 //---
-template<typename ListT, typename LCompare>
-FindResult firstFindResultL(const ListT& list, const LCompare& compare,
+template<typename ListT, typename CompareL>
+FindResult firstFindResultL(const ListT& list, const CompareL& compare,
                             const FindResult& fr)
 {
   if (fr.success())
@@ -1929,8 +1898,8 @@ FindResult firstFindResultL(const ListT& list, const LCompare& compare,
   return fr;
 }
 
-template<typename ListT, typename LCompare>
-FindResult lastFindResultL(const ListT& list, const LCompare& compare,
+template<typename ListT, typename CompareL>
+FindResult lastFindResultL(const ListT& list, const CompareL& compare,
                            const FindResult& fr)
 {
   if (fr.success())
@@ -1977,8 +1946,8 @@ FindResult lastFindResult(const ListT& list, const CompareT& compare,
 }
 
 //---
-template<typename ListT, typename LCompare>
-FindResultRange rangeFindResultL(const ListT& list, const LCompare& compare,
+template<typename ListT, typename CompareL>
+FindResultRange rangeFindResultL(const ListT& list, const CompareL& compare,
                                  const FindResult& fr)
 {
   FindResultRange frr;
