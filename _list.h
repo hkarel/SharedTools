@@ -1585,25 +1585,53 @@ DECL_IMPL_LIST(void)::compressList()
   // TODO: Рассмотреть задачу с удалением пустых элементов используя только
   // один вектор. См: http://forum.pascal.net.ru/index.php?showtopic=26642
 
-  T** temp_list = new T* [d->capacity];
-  T** temp_item = temp_list;
-  T** item_ = CustomListType::listBegin();
-  T** end_  = CustomListType::listEnd();
-  int count_ = d->count;
-  while (item_ != end_)
+//  T** temp_list = new T* [d->capacity];
+//  T** temp_item = temp_list;
+//  T** item_ = CustomListType::listBegin();
+//  T** end_  = CustomListType::listEnd();
+//  int count_ = d->count;
+//  while (item_ != end_)
+//  {
+//    if (*item_ != 0)
+//    {
+//      *temp_item++ = *item_++;
+//    }
+//    else
+//    {
+//      ++item_, --count_;
+//    }
+//  }
+//  delete [] d->list;
+//  d->list = temp_list;
+//  d->count = count_;
+
+  // TODO выполнен
+  //--- Удаление пустых элементов без перераспределения памяти ---
+  T** it = this->listBegin();
+  T** end = this->listEnd();
+  while (true)
   {
-    if (*item_ != 0)
-    {
-      *temp_item++ = *item_++;
-    }
-    else
-    {
-      ++item_, --count_;
-    }
+    if (it == end)
+      return;
+    if (*it == 0)
+      break;
+    ++it;
   }
-  delete [] d->list;
-  d->list = temp_list;
-  d->count = count_;
+
+  // Если попали в эту точку как минимум один элемент является нулевым
+  --d->count;
+
+  T** it2 = it + 1;
+  while (it2 != end)
+  {
+    if (*it2 == 0)
+    {
+      ++it2;
+      --d->count;
+      continue;
+    }
+    *it++ = *it2++;
+  }
 }
 
 DECL_IMPL_LIST(void)::assign(const CustomListType& list)

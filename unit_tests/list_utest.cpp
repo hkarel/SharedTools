@@ -38,7 +38,7 @@ const char* fsucc(const lst::FindResult& fr) {return fsucc(fr.success());}
 const char* ffail(const lst::FindResult& fr) {return ffail(fr.failed());}
 
 void fsucc_check(bool b) {if (!b) exit(1);}
-void ffail_check(bool b) {if (!b)  exit(1);}
+void ffail_check(bool b) {if (!b) exit(1);}
 
 void fsucc_check(const lst::FindResult& fr) {fsucc_check(fr.success());}
 void ffail_check(const lst::FindResult& fr) {ffail_check(fr.failed());}
@@ -912,8 +912,81 @@ void checkRangeFunc_Test()
     printf("TEST PASSED\n");
 }
 
+void compressList_Test()
+{
+    printf("\n\n=== Check compressList() function ===\n");
+
+    lst::List<int> list;
+
+    printf("\n--- Test for 15 elements (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+    list.addCopy(4);
+    list.addCopy(5);
+    list.addCopy(6);
+    list.addCopy(7);
+    list.addCopy(8);
+    list.addCopy(9);
+    list.addCopy(10);
+    list.addCopy(11);
+    list.addCopy(12);
+    list.addCopy(13);
+    list.addCopy(14);
+    list.addCopy(15);
+
+    printf("Remove elements 1,3,5,6,9,10,11,13,14,15 without compression list\n");
+    list.remove(0, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(4, lst::NO_COMPRESS_LIST);
+    list.remove(5, lst::NO_COMPRESS_LIST);
+    list.remove(8, lst::NO_COMPRESS_LIST);
+    list.remove(9, lst::NO_COMPRESS_LIST);
+    list.remove(10, lst::NO_COMPRESS_LIST);
+    list.remove(12, lst::NO_COMPRESS_LIST);
+    list.remove(13, lst::NO_COMPRESS_LIST);
+    list.remove(14, lst::NO_COMPRESS_LIST);
+
+    printf("Print elements: ");
+    for (int i = 0; i < list.count(); ++i)
+    {
+        if (list.item(i))
+            printf("%i,", list[i]);
+        else
+            printf("null,");
+    }
+    printf(" count: %i : %s", list.count(), fsucc(list.count() == 15)); fsucc_check(list.count() == 15);
+    printf("\n");
+
+    list.compressList();
+
+    printf("Print elements after compression list: ");
+    for (int i = 0; i < list.count(); ++i)
+    {
+        if (list.item(i))
+            printf("%i,", list[i]);
+        else
+            printf("null,");
+    }
+    printf(" count: %i : %s", list.count(), fsucc(list.count() == 5)); fsucc_check(list.count() == 5);
+    printf("\n");
+
+    printf("Index 0 : %i == 2 : %s \n",  list[0], fsucc(list[0] == 2));  fsucc_check(list[0] == 2);
+    printf("Index 1 : %i == 4 : %s \n",  list[1], fsucc(list[1] == 4));  fsucc_check(list[1] == 4);
+    printf("Index 2 : %i == 7 : %s \n",  list[2], fsucc(list[2] == 7));  fsucc_check(list[2] == 7);
+    printf("Index 3 : %i == 8 : %s \n",  list[3], fsucc(list[3] == 8));  fsucc_check(list[3] == 8);
+    printf("Index 4 : %i == 12 : %s \n", list[4], fsucc(list[4] == 12)); fsucc_check(list[4] == 12);
+
+    printf("TEST PASSED\n");
+}
+
 int main()
 {
+    // Проверка работы функции compressList()
+    compressList_Test();
+    //return 0;
+
     // Проверяет корректность разрешения перегрузки имен функций поиска
     findTestCheckOverloads();
 
@@ -938,6 +1011,7 @@ int main()
 
     // Проверка работы функции range()
     checkRangeFunc_Test();
+
 
     return 0;
 }
