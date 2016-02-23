@@ -396,25 +396,6 @@ private:
         static_assert(std::is_base_of<T, otherT>::value, "Type otherT must be derived from T");
     }
 
-//     template<typename otherT, template<typename> class otherA>
-//     void assign(const container_ptr<otherT, otherA> & p, bool rvalue = false) {
-//         // Потенциальная уязвимость: если эту функцию одновременно вызывать из
-//         // нескольких потоков для одной и той же переменной, а это можно сделать
-//         // только через оператор присваивания, то результат в _counter может
-//         // быть неопределенным. Поэтому при присвоении необходимо использовать
-//         // атомарные блокировки.
-//         __release(_counter);
-//         _counter = p._counter;
-//         if (!rvalue) {
-//             if (_counter)
-//                 _counter->add_ref();
-//         }
-//         else {
-//             const_cast<container_ptr<otherT, otherA> & >(p)._counter = 0;
-//         }
-//         GET_DEBUG
-//     }
-
     // Потенциальная уязвимость функций assign: если эти функции одновременно
     // вызывать из нескольких потоков для одной и той же переменной, а это можно
     // сделать только через оператор присваивания, то результат в _counter может
