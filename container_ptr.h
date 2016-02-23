@@ -32,12 +32,6 @@
 //#include "_memalloc.h"
 //#endif
 
-
-#if defined(_MSC_VER)
-extern "C" __declspec(selectany)
-#endif
-const bool fake_ptr = true;
-
 #ifndef NDEBUG
 #define GET_DEBUG _dbg = get();
 #else
@@ -184,6 +178,9 @@ public:
     typedef T element_t;
     typedef Allocator<T>  allocator_t;
     typedef container_ptr<T, Allocator> self_t;
+
+    // См. описание counter_ptr_t::fake
+    enum {Fake = 1};
 
     //TODO: решить через container_ptr_traits
     //enum {IsContainerPtr = 1};
