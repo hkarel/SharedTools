@@ -28,12 +28,18 @@
   Call b()
   Call с()
 
-  Предполагается, что если слот связан с функцией-членом класса, то при разрушении
-  объекта данного класса необходимо выполнить процедуру отсоединение слота.
+  Предполагается, что если слот связан с функцией-членом класса, то при разруше-
+  нии объекта данного класса необходимо выполнить процедуру отсоединение слота.
   Для примера выше это будет вызов:
     signal.disconnect(fb);
     signal.disconnect(fc);
 
+  Примечание: качестве слотов не могут использоваться функции с сигнатурами
+  содержащими rvalue-параметры. При передаче rvalue-параметров в список слотов-
+  обработчиков - корректным будет вызов только первого слота, а все последующие
+  слоты будут получать некорректные значения rvalue-параметров.
+  По этой причине в функциях emit_() и call() при передаче параметров args...
+  не используется вызов функции std::forward().
 ****************************************************************************/
 
 #pragma once
@@ -46,7 +52,7 @@
 #  endif
 #endif
 
-#include "Closure/closure3.h"
+#include "closure/closure3.h"
 #include "spin_locker.h"
 
 #include <atomic>
@@ -243,6 +249,8 @@ template <typename R, typename... Args>
 R SimpleSignalBase<R, Args...>::emit_(Args... args) const
 {
     std::lock_guard<std::mutex> locker(_emitLock); (void) locker;
+    // При передаче args... не используем вызов std::forward(),
+    // см. пояснения в примечании к описанию модуля.
     return call<R>(args...);
 }
 
@@ -276,6 +284,8 @@ Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Re
             }
             while (slot.empty());
         }
+        // При передаче args... не используем вызов std::forward(),
+        // см. пояснения в примечании к описанию модуля.
         res = slot(args...);
     }
     return res;
@@ -303,6 +313,8 @@ void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Re
             }
             while (slot.empty());
         }
+        // При передаче args... не используем вызов std::forward(),
+        // см. пояснения в примечании к описанию модуля.
         slot(args...);
     }
 }
