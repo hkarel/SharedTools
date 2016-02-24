@@ -70,9 +70,9 @@ float F5(float x, float y)
     return 0;
 }
 
-float F6(float x, float y)
+float F6(const float& x, float* y)
 {
-    std::cout << "F5: " << x + y + 6 << '\n';
+    std::cout << "F6: " << x + *y + 6 << '\n';
     return 0;
 }
 
@@ -110,71 +110,81 @@ void thread_func(int)
 
 int main()
 {
-//    Test test;
+    Test test;
 
-//    typedef Closure<float (float, float)> Func;
-//    Func f  = CLOSURE(&Test::on_slot,  &test);
-//    Func f2 = CLOSURE(&Test::on_slot2, &test);
-//    Func f5 = CLOSURE(&F5);
-//    Func f6 = CLOSURE(&F6);
+    typedef Closure<float (float, float)> Func;
+    Func f  = CLOSURE(&Test::on_slot,  &test);
+    Func f2 = CLOSURE(&Test::on_slot2, &test);
+    Func f5 = CLOSURE(&F5);
 
-//    Func f5_disconnect = CLOSURE(&F5);
+    typedef Closure<float (const float&, float*)> Func6;
+    Func6 f6 = CLOSURE(&F6);
 
-//    // Can not determine the placement of the function empty()
-//    f.empty();
+    Func f5_disconnect = CLOSURE(&F5);
 
-//    std::cout << "signal:\n";
-//    SimpleSignal<Func> signal;
+    // Can not determine the placement of the function empty()
+    f.empty();
 
-//    // Can not determine the placement of the function test()
-//    signal.test();
+    std::cout << "signal:\n";
+    SimpleSignal<Func> signal;
+    SimpleSignal<Func6> signal6;
 
-//    // Can not determine the placement of the function connect()
-//    signal.connect(f);
-//    signal.connect(f2);
-//    signal.connect(f5);
+    // Can not determine the placement of the function test()
+    signal.test();
 
-//    assert(signal.exists(f5));
-//    assert(!signal.exists(f6));
+    // Can not determine the placement of the function connect()
+    signal.connect(f);
+    signal.connect(f2);
+    signal.connect(f5);
 
-//    signal.emit_(3, 5);
+    assert(signal.exists(f5));
+    assert(!signal6.exists(f6));
 
-//    std::cout << "signal2 (unique connect f5):\n";
-//    SimpleSignal<float (float, float) > signal2;
-//    signal2.connect(f);
-//    signal2.connect(f2);
-//    signal2.connect(f5);
-//    signal2.connect(f5);
-//    signal2.connect(f5);
+    signal.emit_(3, 5);
 
-//    signal2.emit_(3, 5);
+    std::cout << "signal2 (unique connect f5):\n";
+    SimpleSignal<float (float, float) > signal2;
+    signal2.connect(f);
+    signal2.connect(f2);
+    signal2.connect(f5);
+    signal2.connect(f5);
+    signal2.connect(f5);
 
-//    std::cout << "signal2 (multi connect f5):\n";
-//    signal2.connect(f5, false);
-//    signal2.connect(f5, false);
+    signal2.emit_(3, 5);
 
-//    signal2.emit_(3, 5);
+    std::cout << "signal2 (multi connect f5):\n";
+    signal2.connect(f5, false);
+    signal2.connect(f5, false);
 
-//    // test equivalent operators
-//    assert(f2 != f5);
-//    assert(f5 == f5);
+    signal2.emit_(3, 5);
 
-//    std::cout << "signal2 (disconnect one f5):\n";
-//    signal2.disconnect(f5_disconnect, false);
-//    signal2.emit_(3, 5);
+    // test equivalent operators
+    assert(f2 != f5);
+    assert(f5 == f5);
 
-//    std::cout << "signal2 (disconnect all f5):\n";
-//    signal2.disconnect(f5_disconnect);
-//    signal2.emit_(3, 5);
+    std::cout << "signal2 (disconnect one f5):\n";
+    signal2.disconnect(f5_disconnect, false);
+    signal2.emit_(3, 5);
+
+    std::cout << "signal2 (disconnect all f5):\n";
+    signal2.disconnect(f5_disconnect);
+    signal2.emit_(3, 5);
+
+    std::cout << "signal6 (emit):\n";
+    signal6.connect(f6);
+    float y6 = 20;
+    signal6.emit_(3, &y6);
 
 
-//    //SimpleSignal<Closure<float (float,float)> > signal(f);
-//    //SimpleSignal<Func> signal;
+    //SimpleSignal<Closure<float (float,float)> > signal(f);
+    //SimpleSignal<Func> signal;
 
-//    std::cout << "connect signal2.emit() to signal:\n";
-//    Func s = CLOSURE(&SimpleSignal<Func>::emit_, &signal2);
-//    signal.connect(s);
-//    signal.emit_(3, 5);
+    std::cout << "connect signal2.emit() to signal:\n";
+    Func s = CLOSURE(&SimpleSignal<Func>::emit_, &signal2);
+    signal.connect(s);
+    signal.emit_(3, 5);
+
+    return 0;
 
     SimpleSignal<ThreadFunc>& th_signal = thread_signal; (void) th_signal;
 

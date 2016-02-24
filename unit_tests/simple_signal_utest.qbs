@@ -12,7 +12,7 @@ CppApplication {
 
     cpp.includePaths: [
         "../",
-        "../Closure",
+        "../closure",
     ]
 
     cpp.dynamicLibraries: [
@@ -21,7 +21,7 @@ CppApplication {
 
     files: [
         "../simple_signal.h",
-        "../Closure/closure3.h",
+        "../closure/closure3.h",
         "simple_signal_utest.cpp",
     ]
 
