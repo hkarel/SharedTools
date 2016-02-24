@@ -139,7 +139,12 @@ int main()
     std::cout << "Test::XXX(F5): " << xxx(f5, 1, 20)  << '\n';
 
     Closure<float (float&&, float)> f6 = CLOSURE(&F6);
-    std::cout << "Test::XXX(F6): " << f6(1, 20)  << '\n';
+    std::cout << "Test::F6: " << f6(1, 20)  << '\n';
+
+    Closure<float (float&&, const float*)> f7 = CLOSURE(&F7);
+    float y7 = 20;
+    std::cout << "Test::F7: " << f7(1, &y7)  << '\n';
+
 
     // Failed compilation test
     //CLOSURE(&Test::F2, &test, &test);
