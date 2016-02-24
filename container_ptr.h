@@ -20,6 +20,7 @@
 
 #include <new>
 #include <atomic>
+#include <utility>
 #include <stdlib.h>
 #include <type_traits>
 
@@ -95,10 +96,6 @@ struct counter_ptr_t
     void* __ptr() {return (join) ? &ptr : ptr;}
     //inline void* __ptr() const {if (join) {return (void*)&ptr;} return ptr;}
 
-    // Конструктор
-    //counter_ptr_t() : ptr(0), count(0), fake(0) {}
-    //counter_ptr_t() {init();}
-    //void init() {count = 1, fake = 0, join = 0, ptr = 0;}
     counter_ptr_t() NOEXCEPT
         : count(1), fake(0), join(0), reserved(0), ptr(0)
     {}
@@ -203,7 +200,6 @@ public:
         PRINT_DEBUG("explicit container_ptr(T* p, bool fake = false)", "")
         // Описание параметра fake см. в struct counter_ptr_t
         _counter = create_counter();
-        //_counter->init();
         _counter->ptr = p;
         _counter->fake = fake;
         GET_DEBUG
@@ -321,12 +317,10 @@ public:
     static self_t create_ptr() {return self_t(allocator_t::create());}
     static self_t create_ptr(const T& x) {return self_t(allocator_t::create(&x));}
 
-    // Создает объект container_ptr с единым сегментом памяти для целевого объекта
-    // и экземпляра counter_ptr_t. После создания такого container_ptr необходимо вызвать
-    // распределяющий оператор new() для целевого объекта следующим образом:
-    //    container_ptr ptr = container_ptr<T>::create_join_ptr();
-    //    new (ptr.get()) T();
-    static self_t create_join_ptr() {
+    // Создает объект container_ptr с единым сегментом памяти для целевого
+    // объекта и экземпляра counter_ptr_t.
+    template <typename... Args>
+    static self_t create_join_ptr(Args&&... args) {
         enum {join_yes = container_ptr_check_join<T, Allocator>::Yes};
         static_assert(join_yes, "Allocators must have function with signature: destroy(T* x, bool join)");
         self_t self;
@@ -335,9 +329,9 @@ public:
         if (ptr == 0)
             throw std::bad_alloc();
         self._counter = allocate_counter(ptr);
-        self._counter->init();
         self._counter->join = true;
-        return self;
+        new (get(self._counter)) T(std::forward<Args>(args)...);
+        return std::move(self);
     }
 
 private:
@@ -347,7 +341,6 @@ private:
         _counter = counter;
         if (_counter)
             _counter->add_ref();
-
         GET_DEBUG
     }
 

@@ -17,9 +17,42 @@
 
 struct A {
     A() {}
+    A(int a) {
+        this->a = a;
+    }
+    //A(const A& A_) = delete;
+    //A& operator= (const A&) = delete;
+    A(const A& A_) {
+        a = A_.a;
+    }
+    A(A&& A_) {
+        a = A_.a;
+        A_.a = -1;
+    }
+    ~A() {
+    }
+    int a = {5};
 };
 struct B : A {};
 struct C {};
+
+struct D
+{
+    D() {}
+    //D(const A& a) = delete;
+    D(const A& a) : a(a) {
+    }
+    //D(const D& d) = delete;
+    D(const D& d) : a(d.a) {
+    }
+    D(A&& a) : a(std::forward<A>(a)) {
+    }
+    D(D&& d) : a(std::forward<A>(d.a)) {
+    }
+    ~D() {
+    }
+    A a;
+};
 
 
 template<typename T> struct allocator_ptr_m
@@ -93,6 +126,17 @@ int main()
     std::cout << (b.empty() ? "empty" : "not empty") << "\n";
 
     a.reset();
+    //---
+
+    container_ptr<D> d1 = container_ptr<D>::create_join_ptr(A(1));
+
+    A aa(2);
+    container_ptr<D> d2 = container_ptr<D>::create_join_ptr(aa);
+
+    const A aa_const(3);
+    container_ptr<D> d3 = container_ptr<D>::create_join_ptr(aa_const);
+
+
 
     //create_ptr();
 
