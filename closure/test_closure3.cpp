@@ -36,6 +36,13 @@ void f(Closure<float (float, float)> c)
     std::cout << c(3, 4) << '\n';
 }
 
+void f(Closure<float (const float&, const float*)> c)
+{
+    float y = 4;
+    std::cout << c(3, &y) << '\n';
+}
+
+
 
 struct Test
 {
@@ -54,6 +61,8 @@ struct Test
     float F4(const float&& x, const float* y) {return x + *y + 4;}
     float FC4(const float&& x, const float* y) const {return x + *y + 4;}
 
+    virtual float F5(const float& x, const float* y) {return -1;}
+    virtual float FC5(const float& x, const float* y) const {return -1;}
 
     //float XXX(Closure<float (float,float)> c, double x, int y) const {return c(x,y)+300;}
     float XXX(Closure<float (float,float)> c, double x, int y) {return c(x, y) + 300;}
@@ -64,10 +73,17 @@ float F6(float&& x, float y) {return x + y + 6;}
 float F7(float&& x, const float* y) {return x + *y + 6;}
 //constexpr float (Test::*f)() = &Test::F0;
 
+struct TestDeriv : Test
+{
+    float F5(const float& x, const float* y) override {return x + *y + 5;}
+    float FC5(const float& x, const float* y) const override {return x + *y + 5;}
+};
+
 
 int main()
 {
     Test test;
+    TestDeriv test_deriv;
 
     {
         //test conversion to bool
@@ -106,14 +122,21 @@ int main()
 
     }
 
+    
+    f(CLOSURE(&Test::F0,  &test));               // Вывод 3
+    f(CLOSURE(&Test::FC0, &test));               // Вывод 33
+    f(CLOSURE(&Test::F,   &test));               // Вывод 4
+    f(CLOSURE(&Test::FC,  &test));               // Вывод 6
+    f(CLOSURE(&Test::F2,  &test));               // Вывод 7
+    f(CLOSURE(&Test::FC2, &test));               // Вывод 12
 
-    f(CLOSURE(&Test::F0,  &test));
-    f(CLOSURE(&Test::FC0, &test));
-    f(CLOSURE(&Test::F,   &test));
-    f(CLOSURE(&Test::FC,  &test));
-    f(CLOSURE(&Test::F2,  &test));
-    f(CLOSURE(&Test::FC2, &test));
-    f(CLOSURE(&Test::FC2, &test));
+    // Вызов виртуальных функций
+    f(CLOSURE(&Test::F5,  &test));               // Вывод -1
+    f(CLOSURE(&Test::FC5, &test));               // Вывод -1
+    f(CLOSURE(&Test::F5,  (Test*)&test_deriv));  // Вывод 12
+    f(CLOSURE(&Test::FC5, (Test*)&test_deriv));  // Вывод 12
+    f(CLOSURE(&TestDeriv::F5,  &test_deriv));    // Вывод 12
+    f(CLOSURE(&TestDeriv::FC5, &test_deriv));    // Вывод 12
 
     float f = 20;
     const float fc = 20;
