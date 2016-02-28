@@ -1,31 +1,9 @@
-﻿
-#pragma once
+/*****************************************************************************
+  Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
-#include <QUuid>
-//#include <QList>
-//#include "regmtypes.h"
-
-
-/**
-  Агалог структуры win GUID
-*/
-struct QGUID
-{
-    ulong  Data1;
-    ushort Data2;
-    ushort Data3;
-    uchar  Data4[8];
-//     QGUID(ulong  data1, ushort data2, ushort data3, uchar data4[8])
-//         : data1(data1), Data2(data2), Data3(data3), Data4(data4)
-//     {}
-};
-
-
-
-/**
-  Класс QUuidT полностью повторяет функционал QUuid, за исключением
-  переопределенных операторов равенства и неравенства, и добавленного
-  оператора сравнения.
+  В модуле реализован класс QUuidT. Он полностью повторяет функционал QUuid,
+  за исключением переопределенных операторов равенства и неравенства, и добав-
+  ленного оператора сравнения.
   Класс сделан шаблонным для того чтобы можно было "обмануть" макрос
   регистрации Q_DECLARE_METATYPE для типа QVariant.
   Если клас будет нешаблонным, то невозможно будет сделать следующую
@@ -40,141 +18,158 @@ struct QGUID
   typedef QUuidT<2> NodeId;
   Q_DECLARE_METATYPE(IndexId)
   Q_DECLARE_METATYPE(NodeId) // ок!
-*/
+*****************************************************************************/
+
+#pragma once
+
+#include "break_point.h"
+#include <QUuid>
+
+
+///**
+//  Агалог структуры win GUID
+//*/
+//struct QGUID
+//{
+//    ulong  Data1;
+//    ushort Data2;
+//    ushort Data3;
+//    uchar  Data4[8];
+////     QGUID(ulong  data1, ushort data2, ushort data3, uchar data4[8])
+////         : data1(data1), Data2(data2), Data3(data3), Data4(data4)
+////     {}
+//};
+
+
+
 template<int N> struct QUuidT : public QUuid
 {
-    QUuidT() : QUuid() {init_debug_guid();}
-    QUuidT(const QUuid& u) : QUuid(u) {init_debug_guid();}
-    QUuidT(const QUuidT& u) : QUuid(u) {init_debug_guid();}
-    QUuidT(const QGUID& guid) {
-        data1 = guid.Data1;
-        data2 = guid.Data2;
-        data3 = guid.Data3;
-        for(int i = 0; i < 8; ++i)
-            data4[i] = guid.Data4[i];
-        init_debug_guid();
-    }
-    QUuidT(uint l, ushort w1, ushort w2, uchar b1, uchar b2, uchar b3, uchar b4, uchar b5, uchar b6, uchar b7, uchar b8)
+public:
+    constexpr QUuidT() noexcept : QUuid() {}
+    constexpr QUuidT(const QUuid&  u) noexcept : QUuid(u) {}
+    constexpr QUuidT(const QUuidT& u) noexcept : QUuid(u) {}
+    constexpr QUuidT(uint l, ushort w1, ushort w2,
+                     uchar b1, uchar b2, uchar b3, uchar b4,
+                     uchar b5, uchar b6, uchar b7, uchar b8) noexcept
         : QUuid(l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)
-    {init_debug_guid();}
-    QUuidT& operator= (const QUuid &u) {
+    {}
+    QUuidT(const char* uuidStr) noexcept : QUuid(QByteArray(uuidStr))
+    {}
+    QUuidT& operator= (const QUuid &u) noexcept
+    {
         QUuid::operator= (u);
-        init_debug_guid();
         return *this;
     }
 
-    static inline bool equalL(const void* uuid1, const void* uuid2) {
-        // Не протестировано
-        _CrtDbgBreak();
+#define COMPARE(f1, f2) if (f1 != f2) return (f1 < f2) ? -1 : 1;
 
-        const ulong* uuid1_ = static_cast<const ulong*>(uuid1);
-        const ulong* uuid2_ = static_cast<const ulong*>(uuid2);
-        return (uuid1_[0] == uuid2_[0] && uuid1_[1] == uuid2_[1] && uuid1_[2] == uuid2_[2] && uuid1_[3] == uuid2_[3]);
-    }
-
+#ifdef __x86_64__
+    // equal
     template<typename UuidT1, typename UuidT2>
-    static inline bool equal(const UuidT1& uuid1, const UuidT2& uuid2) {
-        return equalL(&uuid1, &uuid2);
-//         return (
-//             ((ulong *) &guid1)[0] == ((ulong *) &guid2)[0] &&
-//             ((ulong *) &guid1)[1] == ((ulong *) &guid2)[1] &&
-//             ((ulong *) &guid1)[2] == ((ulong *) &guid2)[2] &&
-//             ((ulong *) &guid1)[3] == ((ulong *) &guid2)[3]);
-    }
-
-    static inline int compareL(const void* uuid1, const void* uuid2)
+    static inline bool equal(const UuidT1& u1, const UuidT2& u2) noexcept
     {
-        const ulong* uuid1_ = static_cast<const ulong*>(uuid1);
-        const ulong* uuid2_ = static_cast<const ulong*>(uuid2);
-        if (uuid1_[0] == uuid2_[0]) {
-            if (uuid1_[1] == uuid2_[1]) {
-                if (uuid1_[2] == uuid2_[2]) {
-                    if (uuid1_[3] == uuid2_[3])
-                        return 0;
-                    else
-                        return (uuid1_[3] > uuid2_[3]) ? 1 : -1;
-                }
-                return (uuid1_[2] > uuid2_[2]) ? 1 : -1;
-            }
-            return (uuid1_[1] > uuid2_[1]) ? 1 : -1;
-        }
-        return (uuid1_[0] > uuid2_[0]) ? 1 : -1;
+        static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
+        static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
+        return ( ((quint64 *) &u1)[0] == ((quint64 *) &u2)[0]
+              && ((quint64 *) &u1)[1] == ((quint64 *) &u2)[1] );
     }
 
+    // compare
     template<typename UuidT1, typename UuidT2>
-    static inline int compare(const UuidT1& uuid1, const UuidT2& uuid2)
+    static inline int compare(const UuidT1& u1, const UuidT2& u2) noexcept
     {
-        // Не протестировано
-        _CrtDbgBreak();
-
-        return compareL(&uuid1, &uuid2);
-
-//         if (((ulong *) &guid1)[0] == ((ulong *) &guid2)[0]) {
-//             if (((ulong *) &guid1)[1] == ((ulong *) &guid2)[1]) {
-//                 if (((ulong *) &guid1)[2] == ((ulong *) &guid2)[2]) {
-//                     if (((ulong *) &guid1)[3] == ((ulong *) &guid2)[3])
-//                         return 0;
-//                     else
-//                         return (((ulong *) &guid1)[3] > ((ulong *) &guid2)[3]) ? 1 : -1;
-//                 }
-//                 return (((ulong *) &guid1)[2] > ((ulong *) &guid2)[2]) ? 1 : -1;
-//             }
-//             return (((ulong *) &guid1)[1] > ((ulong *) &guid2)[1]) ? 1 : -1;
-//         }
-//         return (((ulong *) &guid1)[0] > ((ulong *) &guid2)[0]) ? 1 : -1;
+        static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
+        static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
+        COMPARE(((quint64 *) &u1)[0], ((quint64 *) &u2)[0])
+        COMPARE(((quint64 *) &u1)[1], ((quint64 *) &u2)[1])
+        return 0;
     }
-
-
-    //friend bool operator == (const QUuidT<N> &u1, const QUuidT<N> &u2) {
-    //    return QUuidT::equal(u1, u2);
-    //}
-    //template<typename UuidType1, typename UuidType2>
-    //friend inline bool operator == (const UuidType1 &u1, const UuidType2 &u2) {
-    //    return QUuidT::equal(u1, u2);
-    //}
-    template<typename UuidT>
-    friend inline bool operator == (const UuidT &u1, const QUuidT<N> &u2) {
-        return QUuidT::equal(u1, u2);
-    }
-
-    //friend bool operator != (const QUuidT<N> &u1, const QUuidT<N> &u2) {
-    //    return !QUuidT::equal(u1, u2);
-    //}
-    //template<typename UuidType1, typename UuidType2>
-    //friend inline bool operator != (const UuidType1 &u1, const UuidType2 &u2) {
-    //    return !QUuidT::equal(u1, u2);
-    //}
-    template<typename UuidT>
-    friend inline bool operator != (const UuidT &u1, const QUuidT<N> &u2) {
-        return !QUuidT::equal(u1, u2);
-    }
-
-    friend inline QDataStream& operator << (QDataStream &s, const QUuidT<N> &u) {
-        return operator << (s, static_cast<const QUuid&>(u));
-    }
-    friend inline QDataStream& operator >> (QDataStream &s, QUuidT<N> &u) {
-#ifndef NDEBUG
-        operator >> (s, static_cast<QUuid&>(u));
-        u.init_debug_guid();
-        return s;
 #else
-        return operator >> (s, static_cast<QUuid&>(u));
-#endif
+    // equal
+    template<typename UuidT1, typename UuidT2>
+    static inline bool equal(const UuidT1& u1, const UuidT2& u2) Q_DECL_NOTHROW
+    {
+        static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
+        static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
+        return ( ((quint32 *) &u1)[0] == ((quint32 *) &u2)[0]
+              && ((quint32 *) &u1)[1] == ((quint32 *) &u2)[1]
+              && ((quint32 *) &u1)[2] == ((quint32 *) &u2)[2]
+              && ((quint32 *) &u1)[3] == ((quint32 *) &u2)[3] );
     }
 
-#ifdef Q_OS_WIN
-    // Отладочный параметр, используется для удобства работы в отладчике MS VisualStudio.
-    GUID guid_;
+    // compare
+    template<typename UuidT1, typename UuidT2>
+    static inline int compare(const UuidT1& u1, const UuidT2& u2) Q_DECL_NOTHROW
+    {
+//        if (((quint32 *) &u1)[0] == ((quint32 *) &u2)[0])
+//        {
+//            if (((quint32 *) &u1)[1] == ((quint32 *) &u2)[1])
+//            {
+//                if (((quint32 *) &u1)[2] == ((quint32 *) &u2)[2])
+//                {
+//                    if (((quint32 *) &u1)[3] == ((quint32 *) &u2)[3])
+//                        return 0;
+//                    else
+//                        return (((quint32 *) &u1)[3] > ((quint32 *) &u2)[3]) ? 1 : -1;
+//                }
+//                return (((quint32 *) &u1)[2] > ((quint32 *) &u2)[2]) ? 1 : -1;
+//            }
+//            return (((quint32 *) &u1)[1] > ((quint32 *) &u2)[1]) ? 1 : -1;
+//        }
+//        return (((quint32 *) &u1)[0] > ((quint32 *) &u2)[0]) ? 1 : -1;
+
+        static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
+        static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
+        COMPARE(((quint32 *) &u1)[0], ((quint32 *) &u2)[0])
+        COMPARE(((quint32 *) &u1)[1], ((quint32 *) &u2)[1])
+        COMPARE(((quint32 *) &u1)[2], ((quint32 *) &u2)[2])
+        COMPARE(((quint32 *) &u1)[3], ((quint32 *) &u2)[3])
+        return 0;
+    }
 #endif
 
-    inline void init_debug_guid() {
-#ifdef Q_OS_WIN
-        guid_ = (GUID) *this;
-#endif
-    }
+#undef COMPARE
+
+    template<int NN>
+    bool operator== (const QUuidT<NN>& u) noexcept {return equal(*this, u);}
+    template<int NN>
+    bool operator!= (const QUuidT<NN>& u) noexcept {return !equal(*this, u);}
+
+    bool operator== (const QUuid& u) noexcept {return  equal(*this, u);}
+    bool operator!= (const QUuid& u) noexcept {return !equal(*this, u);}
 };
+
+template<int N>
+inline bool operator== (const QUuid& u1, const QUuidT<N>& u2) noexcept
+{
+    return QUuidT<N>::equal(u1, u2);
+}
+
+template<int N>
+inline bool operator!= (const QUuid& u1, const QUuidT<N>& u2) noexcept
+{
+    return !QUuidT<N>::equal(u1, u2);
+}
+
+template<int N>
+inline QDataStream& operator<< (QDataStream &s, const QUuidT<N> &u)
+{
+    return operator<< (s, static_cast<const QUuid&>(u));
+}
+
+template<int N>
+inline QDataStream& operator>> (QDataStream &s, QUuidT<N> &u)
+{
+    return operator>> (s, static_cast<QUuid&>(u));
+}
 
 typedef QUuidT<0> QUuidEx;
 
+
+
+/*
 #define DEF_IDENTIFIER(TYPE, NAME, L, W1, W2, B1, B2, B3, B4, B5, B6, B7, B8) \
     extern "C" const __declspec(selectany) TYPE NAME(L, W1, W2, B1, B2, B3, B4, B5, B6, B7, B8);
+*/
+
+
