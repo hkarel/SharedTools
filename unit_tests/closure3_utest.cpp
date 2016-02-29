@@ -43,11 +43,17 @@ void f(Closure<float (const float&, const float*)> c)
 }
 
 
-
-struct Test
+struct TestAbstract
 {
-    float F0() {return 3;}
-    float FC0() const {return 33;}
+    virtual float F0() = 0;
+    virtual float FC0() const = 0;
+};
+
+
+struct Test : TestAbstract
+{
+    float F0() override {return 3;}
+    float FC0() const override {return 33;}
 
     float F(float x) {return x + 1;}
     float FC(float x) const {return x * 2;}
@@ -127,6 +133,10 @@ int main()
 
     }
 
+    TestAbstract* test_abstract = &test;
+
+    f(CLOSURE(&TestAbstract::F0,  test_abstract));  // Вывод 3
+    f(CLOSURE(&TestAbstract::FC0, test_abstract));  // Вывод 33
     
     f(CLOSURE(&Test::F0,  &test));               // Вывод 3
     f(CLOSURE(&Test::FC0, &test));               // Вывод 33
