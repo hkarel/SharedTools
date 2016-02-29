@@ -6,8 +6,8 @@ CppApplication {
     consoleApplication: true
     destinationDirectory: "./"
 
-        cpp.cxxFlags: [
-        "-std=c++11",
+    cpp.cxxFlags: [
+        "-std=c++14",
         "-Wno-unused-parameter",
     ]
 

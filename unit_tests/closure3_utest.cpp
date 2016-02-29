@@ -52,6 +52,8 @@ struct TestAbstract
 
 struct Test : TestAbstract
 {
+    float operator() (float x, float y) {return x + y;}
+
     float F0() override {return 3;}
     float FC0() const override {return 33;}
 
@@ -85,14 +87,117 @@ struct TestDeriv : Test
     float FC5(const float& x, const float* y) const override {return x + *y + 5;}
 };
 
+//--- Эксперименты (неудачные) по вызову lambda функции ---
+#include <type_traits>
+
+
 auto l = [](float x, float y) -> float
 {
     return x + y;
 };
 
+typedef float (*l_ptr)(float, float);
+l_ptr l_func = l;
+
+float (*l_func2)(float, float) = l;
+
+
+
+// Обобщенная декларация
+template <typename> struct CreateHelperL {};
+
+template <typename R, typename... Args>
+struct CreateHelperL<R (Args...)>
+{
+    static int test() {return 0;}
+
+};
+
+
+template <typename R, typename... Args>
+struct CreateHelperL<R (*)(Args...)>
+{
+    static int test() {return 1;}
+
+};
+
+template <typename B, typename R, typename... Args>
+struct CreateHelperL<R (B::*)(Args...)>
+{
+    static int test() {return 2;}
+};
+
+
+
+template<typename Func, Func func>
+void CreateL()
+{
+    //return 0;
+    //CreateHelperL<Func> aa;
+    //CreateHelperL<Func>::template Init<func>();
+    std::cout << CreateHelperL<Func>::test() << '\n';
+
+    //return (*func)(3, 5);
+    //return CreateHelper<Func>::template Init<func>();
+    //return 0;
+}
+
+template<typename Func, typename... Args>
+void CreateL2(Func(Args...))
+{
+    //return 0;
+    //CreateHelperL<Func> aa;
+    //CreateHelperL<Func>::template Init<func>();
+    std::cout << CreateHelperL<Func>::test() << '\n';
+
+    //return (*func)(3, 5);
+    //return CreateHelper<Func>::template Init<func>();
+    //return 0;
+}
+//--- Эксперименты (неудачные) по вызову lambda функции ---
+
 
 int main()
 {
+//    //--- Эксперименты (неудачные) по вызову lambda функции ---
+
+//    Test t;
+
+//    auto l2 = [=](float x, float y) -> float
+//    {
+//        return x + y;
+//    };
+//    (void) l2;
+
+//    //typedef std::decay<decltype(&l)>::type tt;
+
+//    CreateL<decltype(&l::operator()), &l::operator()>();
+//    //CreateL<decltype(&l), &l>();
+//    //CreateL<std::decay<decltype(l)>::type, &l>();
+//    //CreateL2( l);
+//    //CreateL<decltype(&l_func2), &l_func2>();
+//    //CreateL<decltype(&t), &t>();
+//    CreateL<decltype(&Test::operator()), &Test::operator()>();
+//    CreateL<decltype(&Test::F2), &Test::F2>();
+//    CreateL<decltype(&F5), &F5>();
+//    std::cout << "---\n";
+
+//    //CreateL<decltype(&F5), &F5>();
+//    std::cout << std::is_function<decltype(F5)>::value << '\n';
+//    std::cout << std::is_function<decltype(&F5)>::value << '\n';
+//    std::cout << std::is_function<std::remove_pointer<decltype(&F5)>::type>::value << '\n';
+//    std::cout << "---\n";
+
+//    std::cout << std::is_function<decltype(&Test::FC2)>::value << '\n';
+//    std::cout << std::is_function<decltype(&Test::operator ())>::value << '\n';
+//    std::cout << std::is_function<std::remove_pointer<decltype(&Test::FC2)>::type>::value << '\n';
+//    std::cout << "---\n";
+
+//    std::cout << std::is_function<decltype(l)>::value << '\n';
+
+//    return 0;
+//    //------------------------------------------------------------------------
+
     Test test;
     TestDeriv test_deriv;
 
