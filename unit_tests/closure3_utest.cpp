@@ -79,6 +79,11 @@ struct TestDeriv : Test
     float FC5(const float& x, const float* y) const override {return x + *y + 5;}
 };
 
+auto l = [](float x, float y) -> float
+{
+    return x + y;
+};
+
 
 int main()
 {
@@ -87,7 +92,7 @@ int main()
 
     {
         //test conversion to bool
-        bool a = true;
+        //bool a = true;
         Closure<float (float,float)> x2;
 
         // fail compilation, restriction C++11: explicit operator bool()
