@@ -49,12 +49,13 @@ function getVersions(filePath)
 }
 
 // Функция возвращает ревизию проекта, которая представляет из себя идентификатор
-// текущего хэшь-коммита из GIT.
-function gitRevision(project)
+// текущего хеш-коммита из GIT.
+// gitDirectory - корневая директория git-репозитория
+function gitRevision(gitDirectory)
 {
     var revision = "";
     var process = new Process();
-    process.setWorkingDirectory(project.sourceDirectory);
+    process.setWorkingDirectory(gitDirectory);
     if (process.exec("git", ["log", "-1", "--pretty=%h"], false) === 0)
         revision = process.readLine().trim();
     return revision;
