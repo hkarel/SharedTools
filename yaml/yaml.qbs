@@ -26,8 +26,8 @@ Product {
         "include/yaml-cpp/contrib/*.h",
         "include/yaml-cpp/node/*.h",
         "include/yaml-cpp/node/detail/*.h",
-        "src/*.h",
         "src/*.cpp",
+        "src/*.h",
     ]
     Export {
         Depends { name: "cpp" }

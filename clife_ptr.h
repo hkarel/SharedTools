@@ -1,4 +1,4 @@
-/* clang-format off */
+﻿/* clang-format off */
 /*****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
@@ -156,12 +156,12 @@ public:
     bool empty()    const NOEXCEPT {return (_ptr == 0);}
     bool is_empty() const NOEXCEPT {return (_ptr == 0);}
 
+    explicit operator bool () const NOEXCEPT {return (_ptr != 0);}
     bool operator! () const NOEXCEPT {return (_ptr == 0);}
-    operator bool  () const NOEXCEPT {return (_ptr != 0);}
 
     // Фиктивная функция, введена для обеспечения возможности компиляции
     // шаблонных функций использующих как clife_ptr, так и container_ptr.
-    static self_t create_join_ptr() {return self_t();}
+    //static self_t create_join_ptr() {return self_t();}
 
 private:
     // Используется в обычных операторах присваивания и копирования.

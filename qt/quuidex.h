@@ -87,7 +87,7 @@ public:
 #else
     // equal
     template<typename UuidT1, typename UuidT2>
-    static inline bool equal(const UuidT1& u1, const UuidT2& u2) Q_DECL_NOTHROW
+    static inline bool equal(const UuidT1& u1, const UuidT2& u2) noexcept
     {
         static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
         static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
@@ -99,7 +99,7 @@ public:
 
     // compare
     template<typename UuidT1, typename UuidT2>
-    static inline int compare(const UuidT1& u1, const UuidT2& u2) Q_DECL_NOTHROW
+    static inline int compare(const UuidT1& u1, const UuidT2& u2) noexcept
     {
 //        if (((quint32 *) &u1)[0] == ((quint32 *) &u2)[0])
 //        {
@@ -137,6 +137,14 @@ public:
 
     bool operator== (const QUuid& u) noexcept {return  equal(*this, u);}
     bool operator!= (const QUuid& u) noexcept {return !equal(*this, u);}
+
+    template<int NN>
+    bool operator< (const QUuidT<NN>& u) const noexcept {return (compare(*this, u) < 0);}
+    template<int NN>
+    bool operator> (const QUuidT<NN>& u) const noexcept {return (compare(*this, u) > 0);}
+
+    bool operator< (const QUuid& u) const noexcept {return (compare(*this, u) < 0);}
+    bool operator> (const QUuid& u) const noexcept {return (compare(*this, u) > 0);}
 };
 
 template<int N>
@@ -164,12 +172,3 @@ inline QDataStream& operator>> (QDataStream &s, QUuidT<N> &u)
 }
 
 typedef QUuidT<0> QUuidEx;
-
-
-
-/*
-#define DEF_IDENTIFIER(TYPE, NAME, L, W1, W2, B1, B2, B3, B4, B5, B6, B7, B8) \
-    extern "C" const __declspec(selectany) TYPE NAME(L, W1, W2, B1, B2, B3, B4, B5, B6, B7, B8);
-*/
-
-

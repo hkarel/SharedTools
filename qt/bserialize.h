@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
   В модуле представлены функции и макросы механизма бинарной сериализации дан-
@@ -9,15 +9,46 @@
 *****************************************************************************/
 
 #pragma once
-#include <QtCore>
 
+#include "_list.h"
+#include "clife_base.h"
+#include "clife_ptr.h"
+#include "break_point.h"
+
+#include <QByteArray>
+#include <QDataStream>
+#include <QVector>
 
 namespace bserial /*binary serialization*/ {
 
-typedef QVector<QByteArray> RawVector;
+/**
+  Структура ByteArray нужна для переопределения потокового оператора '>>'
+  для QByteArray. Переопределенный оператор '>>' менее универсальный, но
+  дает преимущество по производительности.
+*/
+struct ByteArray : QByteArray
+{
+    ByteArray& operator= (const ByteArray& ba) noexcept
+        {return (ByteArray&)QByteArray::operator= (ba);}
+
+    ByteArray& operator= (const QByteArray& ba) noexcept
+        {return (ByteArray&)QByteArray::operator= (ba);}
+
+    ByteArray& operator= (const char *str) noexcept
+        {return (ByteArray&)QByteArray::operator= (str);}
+
+    // Функции используются в макросах B_SERIALIZE_Vx
+    void reserve() {}
+    void reserve(size_t size) {QByteArray::reserve(int(size));}
+};
+QDataStream& operator>> (QDataStream&, ByteArray&);
+inline QDataStream& operator<< (QDataStream& s, const ByteArray& ba)
+    {return operator<< (s, static_cast<const QByteArray&>(ba));}
+
+typedef QVector<ByteArray> RawVector;
 
 /**
-    Вспомогательные функции для обычных потоковых операторов
+  Вспомогательные функции для обычных потоковых операторов
 */
 template<typename T>
 QDataStream& getFromStream(QDataStream& s, T& t)
@@ -37,310 +68,205 @@ QDataStream& putToStream(QDataStream& s, const T& t)
     return s;
 }
 
-///**
-//  Вспомогательные функции для потоковых операторов, используются
-//  для записи/чтения структур container_ptr<> и clife_ptr<> из потока данных.
-//*/
-//template<typename PtrType>
-//QDataStream& getPtrFromStream(QDataStream& s, PtrType& ptr)
-//{
-//    typedef typename PtrType::element_t element_t;
-
-//    if (s.atEnd()) return s;
-//    quint8 is_empty;
-//    s >> is_empty;
-//    if (is_empty) {
-//        ptr = PtrType();
-//        return s;
-//    }
-//    if (ptr.is_empty()) {
-//        //ptr = PtrType(new element_t());
-//        if (PtrType::IsContainer) {
-//            // Для container_ptr<> дает более эффективное использование памяти.
-//            ptr = PtrType::create_join_ptr();
-//            new (ptr.get()) element_t();
-//        }
-//        else
-//            ptr = PtrType(new element_t());
-//    }
-
-//    getFromStream(s, (*ptr));
-//    return s;
-//}
-
-//template<typename PtrType>
-//QDataStream& putPtrToStream(QDataStream& s, const PtrType& ptr)
-//{
-//    s << quint8(ptr.is_empty()); // is_empty
-//    if (ptr.is_empty())
-//        return s;
-
-//    putToStream(s, (*ptr));
-//    return s;
-//}
-
-
-/////**
-////  Вспомогательная структура для функции getListFromStream()
-////*/
-////template<typename T> struct AddToList
-////{
-////    static inline void add(QList<T>& l, const T* p) {
-////        l << *p;
-////        delete p;
-////    }
-////    template<typename ListT>
-////    static inline void add(ListT& l, const T* p) {
-////        l.add(p);
-////    }
-////};
-
-///**
-//  Вспомогательные функции для потоковых операторов, используются
-//  для записи/чтения структур lst::List<T> из потока данных.
-//*/
-//template<typename ListT>
-//QDataStream& getListFromStream(QDataStream& s, ListT& list)
-//{
-//    //typedef typename ListCPtrT::element_t element_t;
-//    typedef typename ListT::value_type value_type;
-
-//    if (s.atEnd()) return s;
-//    quint32 list_count; s >> list_count;
-//    for (quint32 i = 0; i < list_count; ++i)
-//    {
-//        value_type* value = new value_type();
-//        getFromStream(s, *value);
-//        //AddToList<value_type>::add(list, value);
-//        list.add(value);
-//    }
-//    return s;
-//}
-
-//template<typename ListT>
-//QDataStream& putListToStream(QDataStream& s, const ListT& list)
-//{
-//    s << quint32(list.count());
-//    for (int i = 0; i < list.count(); ++i)
-//        putToStream(s, list.at(i));
-//    return s;
-//}
-
-///**
-//  Вспомогательные функции для потоковых операторов, используются
-//  для записи/чтения структур lst::List<T> из потока данных,
-//  где T унаследовано от counter_life<>.
-//*/
-//template<typename ListT>
-//QDataStream& getLPtrListFromStream(QDataStream& s, ListT& list)
-//{
-//    //typedef typename ListCPtrT::element_t element_t;
-//    typedef typename ListT::value_type value_type;
-
-//    if (s.atEnd()) return s;
-//    quint32 list_count; s >> list_count;
-//    for (quint32 i = 0; i < list_count; ++i)
-//    {
-//        value_type* value = new value_type();
-//        getFromStream(s, *value);
-//        value->add_ref();
-//        list.add(value);
-//    }
-//    return s;
-//}
-
-
-///**
-//  Вспомогательные функции для потоковых операторов, используются
-//  для записи/чтения структур container_ptr<lst::List<T>> из потока данных.
-//*/
-//template<typename ListCPtrT>
-//QDataStream& getListCPtrFromStream(QDataStream& s, ListCPtrT& listCPtr)
-//{
-//    typedef typename ListCPtrT::element_t element_t;
-//    typedef typename element_t::value_type value_type;
-
-//    if (s.atEnd()) return s;
-//    quint8 is_empty;
-//    s >> is_empty;
-//    if (is_empty) {
-//        listCPtr = ListCPtrT();
-//        return s;
-//    }
-//    if (listCPtr.is_empty())
-//        listCPtr = ListCPtrT(new element_t());
-
-//    quint32 list_count; s >> list_count;
-//    for (quint32 i = 0; i < list_count; ++i)
-//    {
-//        value_type* value = new value_type();
-//        getFromStream(s, *value);
-//        listCPtr->add(value);
-//        //AddToCPtrList<CPtrType>::add(cptrList, cptr);
-//    }
-//    return s;
-//}
-
-//template<typename ListCPtrT>
-//QDataStream& putListCPtrToStream(QDataStream& s, const ListCPtrT& listCPtr)
-//{
-//    s << quint8(listCPtr.is_empty()); // is_empty
-//    if (listCPtr.is_empty())
-//        return s;
-
-//    s << quint32(listCPtr->count());
-//    for (int i = 0; i < listCPtr->count(); ++i)
-//    {
-//        putToStream(s, listCPtr->at(i));
-//    }
-//    return s;
-//}
-
-///**
-//  Вспомогательная структура для функции getCPtrListFromStream()
-//*/
-//template<typename CPtrType> struct AddToCPtrList
-//{
-//    static inline void add(QList<CPtrType>& l, const CPtrType& p) {
-//        l << p;
-//    }
-//    template<typename ListT>
-//    static inline void add(ListT& l, const CPtrType& p) {
-//        l.add(new CPtrType(p));
-//    }
-//};
-
-///**
-//  Вспомогательные функции для потоковых операторов, используются
-//  для записи/чтения структур lst::List<container_ptr<T>> из потока данных.
-//*/
-//template<typename CPtrListT>
-//QDataStream& getCPtrListFromStream(QDataStream& s, CPtrListT& cptrList)
-//{
-//    typedef typename CPtrListT::value_type CPtrType;
-//
-//    if (s.atEnd()) return s;
-//    quint32 list_count; s >> list_count;
-//    for (quint32 i = 0; i < list_count; ++i) {
-//        CPtrType cptr;
-//        getCPtrFromStream(s, cptr);
-//        AddToCPtrList<CPtrType>::add(cptrList, cptr);
-//    }
-//    // Не сортируем список. Решение о сортировке должно приниматься
-//    // в конкретной реализации, а не в обобщенной.
-//    //cptr_list.sort();
-//    return s;
-//}
-//
-//template<typename CPtrListT>
-//QDataStream& putCPtrListToStream(QDataStream& s, const CPtrListT& cptrList)
-//{
-//    s << quint32(cptrList.count());
-//    for (int i = 0; i < cptrList.count(); ++i) {
-//        putCPtrToStream(s, cptrList.at(i));
-//    }
-//    return s;
-//}
-
-
-#define DECLARE_B_SERIALIZE_FUNC \
-    template<typename T> friend QDataStream& bserial::getFromStream(QDataStream&, T&); \
-    template<typename T> friend QDataStream& bserial::putToStream(QDataStream&, const T&);
-/*
-    template<typename CPtrType> friend QDataStream& bserial::getPtrFromStream(QDataStream&, CPtrType&); \
-    template<typename ListT> friend QDataStream& bserial::getListFromStream(QDataStream&, ListT&); \
-    template<typename ListT> friend QDataStream& bserial::getLPtrListFromStream(QDataStream&, ListT&); \
-    template<typename ListCPtrT> friend QDataStream& bserial::getListCPtrFromStream(QDataStream&, ListCPtrT&);
-    //template<typename CPtrListT> friend QDataStream& bserial::getCPtrListFromStream(QDataStream&, CPtrListT&);
+/**
+  Вспомогательные функции для потоковых операторов, используются
+  для записи/чтения структур clife_ptr<T> из потока данных.
 */
+template<typename T>
+QDataStream& getFromStream(QDataStream& s, clife_ptr<T>& ptr)
+{
+    static_assert(std::is_base_of<clife_base, T>::value, "Class T must be derived from clife_base");
+
+    // Отладить
+    break_point
+
+    if (s.atEnd()) return s;
+    quint8 isEmpty;
+    s >> isEmpty;
+    if (isEmpty)
+    {
+        ptr = clife_ptr<T>();
+        return s;
+    }
+    if (ptr.empty())
+        ptr = clife_ptr<T>(new T());
+
+    getFromStream(s, (*ptr));
+    return s;
+}
+
+template<typename T>
+QDataStream& putToStream(QDataStream& s, const clife_ptr<T>& ptr)
+{
+    // Отладить
+    break_point
+
+    s << quint8(ptr.is_empty()); // isEmpty
+    if (ptr.is_empty())
+        return s;
+
+    putToStream(s, (*ptr));
+    return s;
+}
+
+template<typename T>
+struct derived_from_clife_base : std::enable_if<std::is_base_of<clife_base, T>::value, int> {};
+template<typename T>
+struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base, T>::value, int> {};
 
 /**
-  Определение потоковых операторов учитывающих механизм совместимости по версиям.
+  Вспомогательные функции для потоковых операторов, используются
+  для записи/чтения структур lst::List<T> из потока данных,
+  где T унаследовано от clife_base.
 */
+template <
+  typename T,
+  typename Compare,
+  typename Allocator
+>
+QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& list,
+                           typename derived_from_clife_base<T>::type = 0)
+{
+    // Эта функция используется когда T унаследовано от clife_base
+    if (s.atEnd()) return s;
+    quint32 listCount; s >> listCount;
+    for (quint32 i = 0; i < listCount; ++i)
+    {
+        // Отладить
+        break_point
+
+        typedef lst::List<T, Compare, Allocator> ListType;
+        typename ListType::ValueType* value = list.allocator().create();
+        if (value->clife_count == 0)
+            value->add_ref();
+        getFromStream(s, *value);
+        list.add(value);
+    }
+    return s;
+}
+
+template <
+  typename T,
+  typename Compare,
+  typename Allocator
+>
+QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& list,
+                           typename not_derived_from_clife_base<T>::type = 0)
+
+{
+    // Эта функция используется когда T НЕ унаследовано от clife_base
+    if (s.atEnd()) return s;
+    quint32 listCount; s >> listCount;
+    for (quint32 i = 0; i < listCount; ++i)
+    {
+        typedef lst::List<T, Compare, Allocator> ListType;
+        typename ListType::ValueType* value = list.allocator().create();
+        getFromStream(s, *value);
+        list.add(value);
+    }
+    return s;
+}
+
+template <
+  typename T,
+  typename Compare,
+  typename Allocator
+>
+QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>& list)
+{
+    s << quint32(list.count());
+    for (int i = 0; i < list.count(); ++i)
+        putToStream(s, list.at(i));
+    return s;
+}
+
+} // namespace bserial
+
+#define DECLARE_B_SERIALIZE_FRIENDS \
+    template<typename T> friend QDataStream& bserial::getFromStream(QDataStream&, T&); \
+    template<typename T> friend QDataStream& bserial::putToStream(QDataStream&, const T&); \
+    template<typename T> friend QDataStream& bserial::getFromStream(QDataStream& s, clife_ptr<T>&); \
+    template<typename T> friend QDataStream& bserial::putToStream(QDataStream& s, const clife_ptr<T>&); \
+    template<typename T, typename Compare, typename Allocator> friend \
+        QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&); \
+    template<typename T, typename Compare, typename Allocator> friend \
+        QDataStream& bserial::putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&);
+
+#define DECLARE_B_SERIALIZE_FUNC \
+    bserial::RawVector toRaw() const; \
+    void fromRaw(const bserial::RawVector&); \
+    DECLARE_B_SERIALIZE_FRIENDS
+
+/**
+  --- Устаревшая реализация ---
+  Определение потоковых операторов учитывающих механизм совместимости по версиям.
+
 #define DEFINE_STREAM_OPERATORS(TYPE_NAME) \
     inline QDataStream& operator>> (QDataStream& s, TYPE_NAME& p) \
         {return bserial::getFromStream(s, p);} \
     inline QDataStream& operator<< (QDataStream& s, const TYPE_NAME& p) \
         {return bserial::putToStream(s, p);}
-
-
-/**
-  Определение потоковых операторов для контейнеров container_ptr<T> и clife_ptr<T>
-*/
-/*
-#define DEFINE_PTR_STREAM_OPERATORS(PTR_TYPE_NAME) \
-    inline QDataStream& operator>> (QDataStream& s, PTR_TYPE_NAME& p) \
-        {return bserial::getPtrFromStream(s, p);} \
-    inline QDataStream& operator<< (QDataStream& s, const PTR_TYPE_NAME& p) \
-        {return bserial::putPtrToStream(s, p);}
 */
 
 /**
-  Определение потоковых операторов для конструкций вида: lst::List<T>
+  Определение обобщенных потоковых операторов учитывающих механизм совместимости
+  по версиям.
+  Примечание: для того чтобы компилятор мог корректно выполнить инстанциирование
+  шаблонных параметров требуется соблюдение правил ADL-поиска (или поиска Кёнига),
+  поэтому макрос DEFINE_B_SERIALIZE_STREAM_OPERATORS обязательно должен нахо-
+  диться внутри пространства имен структур для которых выполняется сериализация.
 */
-/*
-#define DEFINE_LIST_STREAM_OPERATORS(LIST_TYPE_NAME) \
-    inline QDataStream& operator>> (QDataStream& s, LIST_TYPE_NAME& l) \
-        {return bserial::getListFromStream(s, l);} \
-    inline QDataStream& operator<< (QDataStream& s, const LIST_TYPE_NAME& l) \
-        {return bserial::putListToStream(s, l);}
-*/
-
-///**
-//  Определение потоковых операторов для конструкций вида: lst::List<container_ptr<T>>
-//*/
-/*
-#define DEFINE_CPRTLIST_STREAM_OPERATORS(CPTRLIST_TYPE_NAME) \
-    inline QDataStream& operator >> (QDataStream& s, CPTRLIST_TYPE_NAME& l) \
-        {return bserial::getCPtrListFromStream(s, l);} \
-    inline QDataStream& operator << (QDataStream& s, const CPTRLIST_TYPE_NAME& l) \
-        {return bserial::putCPtrListToStream(s, l);}
-*/
-
-/**
-  Определение потоковых операторов для конструкций вида: lst::List<T>,
-  где T унаследовано от counter_life<>.
-*/
-/*
-#define DEFINE_LPRTLIST_STREAM_OPERATORS(LPTRLIST_TYPE_NAME) \
-    inline QDataStream& operator>> (QDataStream& s, LPTRLIST_TYPE_NAME& l) \
-        {return bserial::getLPtrListFromStream(s, l);} \
-    inline QDataStream& operator<< (QDataStream& s, const LPTRLIST_TYPE_NAME& l) \
-        {return bserial::putListToStream(s, l);}
-*/
-
-/**
-  Определение потоковых операторов для конструкций вида: container_ptr<lst::List<T>>
-*/
-/*
-#define DEFINE_LISTCPTR_STREAM_OPERATORS(LISTCPTR_TYPE_NAME) \
-    inline QDataStream& operator>> (QDataStream& s, LISTCPTR_TYPE_NAME& l) \
-        {return bserial::getListCPtrFromStream(s, l);} \
-    inline QDataStream& operator<< (QDataStream& s, const LISTCPTR_TYPE_NAME& l) \
-        {return bserial::putListCPtrToStream(s, l);}
-*/
+#define DEFINE_B_SERIALIZE_STREAM_OPERATORS \
+    template<typename T> \
+    inline QDataStream& operator>> (QDataStream& s, T& p) \
+        {return bserial::getFromStream<T>(s, p);} \
+    template<typename T> \
+    inline QDataStream& operator<< (QDataStream& s, const T& p) \
+        {return bserial::putToStream<T>(s, p);} \
+    template<typename T> \
+    inline QDataStream& operator>> (QDataStream& s, clife_ptr<T>& p) \
+        {return bserial::getFromStream<T>(s, p);} \
+    template<typename T> \
+    inline QDataStream& operator<< (QDataStream& s, const clife_ptr<T>& p) \
+        {return bserial::putToStream<T>(s, p);} \
+    template<typename T, typename Compare, typename Allocator> \
+    inline QDataStream& operator>> (QDataStream& s, lst::List<T, Compare, Allocator>& p) \
+        {return bserial::getFromStream<T, Compare, Allocator>(s, p);} \
+    template<typename T, typename Compare, typename Allocator> \
+    inline QDataStream& operator<< (QDataStream& s, const lst::List<T, Compare, Allocator>& p) \
+        {return bserial::putToStream<T, Compare, Allocator>(s, p);}
 
 
-} // namespace bserial
-
+typedef bserial::ByteArray BByteArray;
 
 #ifndef Q_DATA_STREAM_VERSION
-#define Q_DATA_STREAM_VERSION QDataStream::Qt_5_5
+#  if QT_VERSION >= 0x050000
+#    define Q_DATA_STREAM_VERSION QDataStream::Qt_5_5
+#  else
+#    define Q_DATA_STREAM_VERSION QDataStream::Qt_4_8
+#  endif
 #endif
+
 
 /**
   Макросы для работы с функциями сериализации toRaw(), fromRaw()
 
-  Примеры заполнения тел функций:
+  Ниже приведены примеры реализации этих функций. Обратите внимание, что в мак-
+  росах B_SERIALIZE_Vx используются два параметра, причем второй параметр опцио-
+  нальный. Он определяет размер резервирования памяти для процесса сериализации.
+  Если есть возможность получить размер сериализуемой структуры (хотя бы прибли-
+  зительный размер), то настоятельно рекомендуется указывать его в качестве вто-
+  рого параметра - это сократит накладные расходы на повторное выделения памяти.
+
   bserial::RawVector Class::toRaw()
   {
     //--- Version 1 ---
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1(stream, sizeof(Class))
     stream << Class::field1;
     stream << Class::field2;
     stream << Class::field3;
     //--- Version 2 ---
-    B_SERIALIZE_V2(stream) // Version 1
+    B_SERIALIZE_V2(stream)
     stream << Class::newField4;
     stream << Class::newField5;
     //--- Version 3 ---
@@ -366,42 +292,46 @@ QDataStream& putToStream(QDataStream& s, const T& t)
     B_DESERIALIZE_END
   }
 */
-#define B_SERIALIZE_V1(STREAM) \
-    bserial::RawVector _to_raw_vect__; \
-    _to_raw_vect__.reserve(2); \
-    { QByteArray _to_raw_ba__; \
-      { QDataStream STREAM(&_to_raw_ba__, QIODevice::WriteOnly);  \
+#define B_SERIALIZE_V1(STREAM, RESERVE...) \
+    bserial::RawVector to__raw__vect__; \
+    to__raw__vect__.reserve(2); \
+    { bserial::ByteArray to__raw__ba__; \
+      to__raw__ba__.reserve(RESERVE); \
+      { QDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly);  \
         STREAM.setVersion(Q_DATA_STREAM_VERSION);
 
-#define B_SERIALIZE_N(STREAM) \
+#define B_SERIALIZE_N(STREAM, RESERVE...) \
       } \
-      _to_raw_vect__.append(_to_raw_ba__); \
+      to__raw__vect__.append(to__raw__ba__); \
     } \
-    { QByteArray _to_raw_ba__; \
-      { QDataStream STREAM(&_to_raw_ba__, QIODevice::WriteOnly); \
+    { bserial::ByteArray to__raw__ba__; \
+      to__raw__ba__.reserve(RESERVE); \
+      { QDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly); \
         STREAM.setVersion(Q_DATA_STREAM_VERSION);
 
-#define B_SERIALIZE_V2(STREAM) SERIALIZE_N(STREAM)
-#define B_SERIALIZE_V3(STREAM) SERIALIZE_N(STREAM)
-#define B_SERIALIZE_V4(STREAM) SERIALIZE_N(STREAM)
-#define B_SERIALIZE_V5(STREAM) SERIALIZE_N(STREAM)
+#define B_SERIALIZE_V2(STREAM, RESERVE...) SERIALIZE_N(STREAM, RESERVE)
+#define B_SERIALIZE_V3(STREAM, RESERVE...) SERIALIZE_N(STREAM, RESERVE)
+#define B_SERIALIZE_V4(STREAM, RESERVE...) SERIALIZE_N(STREAM, RESERVE)
+#define B_SERIALIZE_V5(STREAM, RESERVE...) SERIALIZE_N(STREAM, RESERVE)
 
 #define B_SERIALIZE_RETURN \
       } \
-      _to_raw_vect__.append(_to_raw_ba__); \
+      to__raw__vect__.append(to__raw__ba__); \
     } \
-    return std::move(_to_raw_vect__);
+    return std::move(to__raw__vect__);
 
 #define B_DESERIALIZE_V1(VECT, STREAM) \
     if (VECT.count() >= 1) { \
-        const QByteArray& _ba_from_raw__ = VECT.at(0); \
-        QDataStream STREAM(_ba_from_raw__); \
+        const bserial::ByteArray& ba__from__raw__ = VECT.at(0); \
+        QDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
+                            QIODevice::ReadOnly | QIODevice::Unbuffered}; \
         STREAM.setVersion(Q_DATA_STREAM_VERSION);
 
-#define B_DESERIALIZE_N(N_, VECT, STREAM) \
-    } if (VECT.count() >= N_) { \
-        const QByteArray& _ba_from_raw__ = VECT.at(N_ - 1); \
-        QDataStream STREAM(_ba_from_raw__); \
+#define B_DESERIALIZE_N(N, VECT, STREAM) \
+    } if (VECT.count() >= N) { \
+        const bserial::ByteArray& ba__from__raw__ = VECT.at(N - 1); \
+        QDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
+                            QIODevice::ReadOnly | QIODevice::Unbuffered}; \
         STREAM.setVersion(Q_DATA_STREAM_VERSION);
 
 #define B_DESERIALIZE_V2(VECT, STREAM) DESERIALIZE_N(2, VECT, STREAM)
@@ -410,14 +340,3 @@ QDataStream& putToStream(QDataStream& s, const T& t)
 #define B_DESERIALIZE_V5(VECT, STREAM) DESERIALIZE_N(5, VECT, STREAM)
 
 #define B_DESERIALIZE_END }
-
-/*
-#define  BEGIN_SUB_FROMRAW(VECT, STREAM, N_)  \
-    { const QByteArray& _ba_from_raw__ = VECT.at(N_ - 1); \
-        QDataStream STREAM(_ba_from_raw__); \
-        STREAM.setVersion(Q_DATA_STREAM_VERSION);
-*/
-
-#define  END_SUB_FROMRAW }
-
-
