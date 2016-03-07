@@ -918,6 +918,91 @@ void compressList_Test()
 
     lst::List<int> list;
 
+    auto print_elements = [](lst::List<int>& list, int count)
+    {
+        printf("Print elements: ");
+        for (int i = 0; i < list.count(); ++i)
+        {
+            if (list.item(i))
+                printf("%i,", list[i]);
+            else
+                printf("null,");
+        }
+        printf(" count: %i : %s", list.count(), fsucc(list.count() == count)); fsucc_check(list.count() == count);
+        printf("\n");
+    };
+
+    auto print_elements_after_compression = [](lst::List<int>& list, int count)
+    {
+        printf("Print elements after compression list: ");
+        for (int i = 0; i < list.count(); ++i)
+        {
+            if (list.item(i))
+                printf("%i,", list[i]);
+            else
+                printf("null,");
+        }
+        printf(" count: %i : %s", list.count(), fsucc(list.count() == count)); fsucc_check(list.count() == count);
+        printf("\n");
+    };
+
+    printf("\n--- Test for 3 elements (1,2,3) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+
+    printf("Remove elements 1 without compression list\n");
+    list.remove(0, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 3);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 2);
+
+    printf("Index 0 : %i == 2 : %s \n",  list[0], fsucc(list[0] == 2));  fsucc_check(list[0] == 2);
+    printf("Index 1 : %i == 3 : %s \n",  list[1], fsucc(list[1] == 3));  fsucc_check(list[1] == 3);
+
+
+    printf("\n--- Test for 3 elements (1,2,3) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+
+    printf("Remove elements 2 without compression list\n");
+    list.remove(1, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 3);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 2);
+
+    printf("Index 0 : %i == 1 : %s \n",  list[0], fsucc(list[0] == 1));  fsucc_check(list[0] == 1);
+    printf("Index 1 : %i == 3 : %s \n",  list[1], fsucc(list[1] == 3));  fsucc_check(list[1] == 3);
+
+
+    printf("\n--- Test for 3 elements (1,2,3) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+
+    printf("Remove elements 3 without compression list\n");
+    list.remove(2, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 3);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 2);
+
+    printf("Index 0 : %i == 1 : %s \n",  list[0], fsucc(list[0] == 1));  fsucc_check(list[0] == 1);
+    printf("Index 1 : %i == 2 : %s \n",  list[1], fsucc(list[1] == 2));  fsucc_check(list[1] == 2);
+
+
     printf("\n--- Test for 15 elements (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15) ---\n");
     list.clear();
     list.addCopy(1);
@@ -948,29 +1033,11 @@ void compressList_Test()
     list.remove(13, lst::NO_COMPRESS_LIST);
     list.remove(14, lst::NO_COMPRESS_LIST);
 
-    printf("Print elements: ");
-    for (int i = 0; i < list.count(); ++i)
-    {
-        if (list.item(i))
-            printf("%i,", list[i]);
-        else
-            printf("null,");
-    }
-    printf(" count: %i : %s", list.count(), fsucc(list.count() == 15)); fsucc_check(list.count() == 15);
-    printf("\n");
+    print_elements(list, 15);
 
     list.compressList();
 
-    printf("Print elements after compression list: ");
-    for (int i = 0; i < list.count(); ++i)
-    {
-        if (list.item(i))
-            printf("%i,", list[i]);
-        else
-            printf("null,");
-    }
-    printf(" count: %i : %s", list.count(), fsucc(list.count() == 5)); fsucc_check(list.count() == 5);
-    printf("\n");
+    print_elements_after_compression(list, 5);
 
     printf("Index 0 : %i == 2 : %s \n",  list[0], fsucc(list[0] == 2));  fsucc_check(list[0] == 2);
     printf("Index 1 : %i == 4 : %s \n",  list[1], fsucc(list[1] == 4));  fsucc_check(list[1] == 4);
