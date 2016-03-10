@@ -100,10 +100,14 @@ inline bool inRange(T index, T minVal, T maxVal)
   return ((index >= minVal) && (index < maxVal));
 }
 
+/// @brief Функция проверяет находится ли значение index в границах списка.
+///
+/// Если index удовлетворяет условию 0 <= index < count(), то функция
+/// возвращает TRUE, в противном случае функция возвращает FALSE.
 template<typename ListType>
-inline bool checkBorders(ListType &list, int index)
+inline bool checkBounds(int index, ListType &list)
 {
-  return ((index >= 0) && (index < list.size()));
+  return inRange(index, 0, list.size());
 }
 
 
@@ -496,11 +500,11 @@ public:
   /// @return В случае удачного поиска возвращает TRUE.
   bool indexOf2(const T* item, int& index) const;
 
-  /// @brief Функция проверяет границы списка.
+  /// @brief Функция проверяет находится ли значение index в границах списка.
   ///
   /// Если index удовлетворяет условию 0 <= index < count(), то функция
   /// возвращает TRUE, в противном случае функция возвращает FALSE.
-  bool checkBorders(int index) const {return inRange(index, 0, d->count);}
+  bool checkBounds(int index) const {return inRange(index, 0, d->count);}
 
   /// @brief Функции поиска.
   ///
