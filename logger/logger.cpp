@@ -40,21 +40,21 @@ void loggerPanic(const char* saverName, const char* error)
 Level levelFromString(const string& level)
 {
     if (level == "none")
-        return Level::NONE;
+        return Level::None;
     else if (level == "error")
-        return Level::ERROR;
+        return Level::Error;
     else if (level == "warning")
-        return Level::WARNING;
+        return Level::Warning;
     else if (level == "info")
-        return Level::INFO;
+        return Level::Info;
     else if (level == "verbose")
-        return Level::VERBOSE;
+        return Level::Verbose;
     else if (level == "debug")
-        return Level::DEBUG;
+        return Level::Debug;
     else if (level == "debug2")
-        return Level::DEBUG2;
+        return Level::Debug2;
 
-    return Level::INFO;
+    return Level::Info;
 }
 
 static const char* levelToStringImpl(Level level)
@@ -63,13 +63,13 @@ static const char* levelToStringImpl(Level level)
     {
         // Примечание: пробелы в конце строк удалять нельзя, так как
         // это скажется на производительности функции prefixFormatter2().
-        case Level::NONE:    return "NONE    ";
-        case Level::ERROR:   return "ERROR   ";
-        case Level::WARNING: return "WARNING ";
-        case Level::INFO:    return "INFO    ";
-        case Level::VERBOSE: return "VERBOSE ";
-        case Level::DEBUG:   return "DEBUG   ";
-        case Level::DEBUG2:  return "DEBUG2  ";
+        case Level::None:    return "NONE    ";
+        case Level::Error:   return "ERROR   ";
+        case Level::Warning: return "WARNING ";
+        case Level::Info:    return "INFO    ";
+        case Level::Verbose: return "VERBOSE ";
+        case Level::Debug:   return "DEBUG   ";
+        case Level::Debug2:  return "DEBUG2  ";
         default:             return "UNKNOWN ";
     }
 }
@@ -176,7 +176,7 @@ Filter::Check Filter::check(const Message& m) const
     if (!_locked)
         return Check::NoLock;
 
-    if ((m.level == ERROR) && !_filteringErrors)
+    if ((m.level == Error) && !_filteringErrors)
         return Check::MessError;
 
     if (checkImpl(m))
@@ -268,7 +268,7 @@ bool FilterLevel::checkImpl(const Message& m) const
     if (m.module.empty() && !filteringNoNameModules())
         return true;
 
-    if (_level == NONE)
+    if (_level == None)
         return true;
 
     if (mode() == Mode::Include)
@@ -352,7 +352,7 @@ void Saver::flush(const MessageList& messages)
     if (!_active)
         return;
 
-    if (_level == Level::NONE)
+    if (_level == Level::None)
         return;
 
     flushImpl(messages);
@@ -466,7 +466,7 @@ void SaverStdOut::flushImpl(const MessageList& messages)
         if (!_shortMessages)
         {
             (*_out) << m->prefix;
-            if (level() == Level::DEBUG2)
+            if (level() == Level::Debug2)
                 (*_out) << m->prefix2;
             (*_out) << m->prefix3;
         }
@@ -530,7 +530,7 @@ void SaverFile::flushImpl(const MessageList& messages)
                 continue;
 
             fputs(m->prefix, f);
-            if (level() == Level::DEBUG2)
+            if (level() == Level::Debug2)
                 fputs(m->prefix2, f);
             fputs(m->prefix3, f);
 
@@ -607,7 +607,7 @@ Line::~Line()
 
         impl->logger->addMessage(std::move(message));
 
-        if (impl->level == ERROR)
+        if (impl->level == Error)
             impl->logger->flush();
     }
     catch (...)
@@ -712,7 +712,7 @@ void Logger::run()
                 for (int i = min; i < max; ++i)
                 {
                     prefixFormatter(messages[i]);
-                    if (level == Level::DEBUG2)
+                    if (level == Level::Debug2)
                         prefixFormatter2(messages[i]);
                     prefixFormatter3(messages[i]);
                 }
@@ -797,37 +797,37 @@ void Logger::waitingFlush()
 
 LevelProxy Logger::error_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, ERROR, file, func, line, module);
+    LevelProxy lp(this, Error, file, func, line, module);
     return std::move(lp);
 }
 
 LevelProxy Logger::warn_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, WARNING, file, func, line, module);
+    LevelProxy lp(this, Warning, file, func, line, module);
     return std::move(lp);
 }
 
 LevelProxy Logger::info_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, INFO, file, func, line, module);
+    LevelProxy lp(this, Info, file, func, line, module);
     return std::move(lp);
 }
 
 LevelProxy Logger::verbose_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, VERBOSE, file, func, line, module);
+    LevelProxy lp(this, Verbose, file, func, line, module);
     return std::move(lp);
 }
 
 LevelProxy Logger::debug_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, DEBUG, file, func, line, module);
+    LevelProxy lp(this, Debug, file, func, line, module);
     return std::move(lp);
 }
 
 LevelProxy Logger::debug2_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, DEBUG2, file, func, line, module);
+    LevelProxy lp(this, Debug2, file, func, line, module);
     return std::move(lp);
 }
 
@@ -943,7 +943,7 @@ SaverList Logger::savers() const
 
 void Logger::redefineLevel()
 {
-    Level level = NONE;
+    Level level = None;
     SaverPtr saverOut;
     SaverPtr saverErr;
 

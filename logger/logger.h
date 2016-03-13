@@ -47,7 +47,7 @@ class Saver;
 class Logger;
 
 // Уровни log-сообщений
-enum Level {NONE, ERROR, WARNING, INFO, VERBOSE, DEBUG, DEBUG2};
+enum Level {None, Error, Warning, Info, Verbose, Debug, Debug2};
 
 // Вспомогательная функция, используется для преобразования строкового
 // обозначения уровня логирования в enum Level{}
@@ -253,7 +253,7 @@ public:
 
 private:
     bool checkImpl(const Message&) const override;
-    Level _level = {NONE};
+    Level _level = {None};
 };
 typedef clife_ptr<FilterLevel> FilterLevelPtr;
 
@@ -319,7 +319,7 @@ typedef clife_ptr<FilterThread> FilterThreadPtr;
 class Saver : public clife_base
 {
 public:
-    Saver(const string& name, Level level = ERROR);
+    Saver(const string& name, Level level = Error);
     virtual ~Saver() {}
 
     Saver() = delete;
@@ -383,7 +383,7 @@ protected:
 private:
     string _name;
     bool   _active = {true};
-    Level  _level = {ERROR};
+    Level  _level = {Error};
     int    _maxLineSize = {5000};
 
     FilterList _filters;
@@ -433,7 +433,7 @@ public:
 class SaverFile : public Saver
 {
 public:
-    SaverFile(const string& name, const string& filePath, Level level = ERROR);
+    SaverFile(const string& name, const string& filePath, Level level = Error);
     void flushImpl(const MessageList&) override;
 
     // Возвращает полный путь до лог-файла
@@ -527,12 +527,12 @@ class Logger : public trd::ThreadBase
 public:
     ~Logger();
 
-    LevelProxy error   = LevelProxy(this, ERROR);
-    LevelProxy warn    = LevelProxy(this, WARNING);
-    LevelProxy info    = LevelProxy(this, INFO);
-    LevelProxy verbose = LevelProxy(this, VERBOSE);
-    LevelProxy debug   = LevelProxy(this, DEBUG);
-    LevelProxy debug2  = LevelProxy(this, DEBUG2);
+    LevelProxy error   = LevelProxy(this, Error);
+    LevelProxy warn    = LevelProxy(this, Warning);
+    LevelProxy info    = LevelProxy(this, Info);
+    LevelProxy verbose = LevelProxy(this, Verbose);
+    LevelProxy debug   = LevelProxy(this, Debug);
+    LevelProxy debug2  = LevelProxy(this, Debug2);
 
     LevelProxy error_f  (const char* file, const char* func, int line, const char* module = 0);
     LevelProxy warn_f   (const char* file, const char* func, int line, const char* module = 0);
@@ -557,11 +557,11 @@ public:
     // Если параметр shortMessages == TRUE, то в консоль будут выводятся только
     // сами сообщения, а расширенные параметры сообщения такие как дата, уровень
     // логирования, идентификатор потока и пр. выводиться не будут.
-    void addSaverStdOut(Level level = ERROR, bool shortMessages = false);
+    void addSaverStdOut(Level level = Error, bool shortMessages = false);
 
     // Добавляет сэйвер для вывода лог-сообщений в stderr. Если сэйвер уже был
     // добавлен ранее, то сэйвер будет пересоздан с новым уровнем логирования.
-    void addSaverStdErr(Level level = ERROR, bool shortMessages = false);
+    void addSaverStdErr(Level level = Error, bool shortMessages = false);
 
     // Удаляет сэйвер выводящий лог-сообщения в stdout
     void removeSaverStdOut();
@@ -626,7 +626,7 @@ private:
     SaverList _savers;    // Список CUSTOM-сэйверов
     mutable atomic_flag  _saversLock = ATOMIC_FLAG_INIT;
 
-    volatile Level _level = {NONE};
+    volatile Level _level = {None};
 
     int _flushTime = {300};
     int _flushSize = {1000};
