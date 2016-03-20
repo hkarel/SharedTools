@@ -21,14 +21,14 @@ const char* yamlTypeName(YAML::NodeType::value type)
 {
     switch (int(type))
     {
-        case YAML::NodeType ::Scalar:   return "Scalar";
-        case YAML::NodeType ::Sequence: return "Sequence";
-        case YAML::NodeType ::Map:      return "Map";
-        default:                        return "Undefined";
+        case YAML::NodeType::Scalar:   return "Scalar";
+        case YAML::NodeType::Sequence: return "Sequence";
+        case YAML::NodeType::Map:      return "Map";
+        default:                       return "Undefined";
     }
 }
 
-FilterLPtr createFilter(const YAML::Node& yfilter)
+FilterPtr createFilter(const YAML::Node& yfilter)
 {
     auto check_fied_type = [&yfilter](const string& field, YAML::NodeType::value type)
     {
@@ -135,10 +135,10 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
             threads.insert(ythread.as<long>());
     }
 
-    FilterLPtr filter;
+    FilterPtr filter;
     if (type == "module_name")
     {
-        FilterModuleLPtr filter_mod {new FilterModule()};
+        FilterModulePtr filter_mod {new FilterModule()};
         filter_mod->setFilteringNoNameModules(filtering_noname_modules);
 
         for (const string& module : modules)
@@ -148,7 +148,7 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "log_level")
     {
-        FilterLevelLPtr filter_level {new alog::FilterLevel()};
+        FilterLevelPtr filter_level {new alog::FilterLevel()};
         filter_level->setFilteringNoNameModules(filtering_noname_modules);
         filter_level->setLevel(levelFromString(log_level));
 
@@ -159,7 +159,7 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "func_name")
     {
-        FilterFuncLPtr filter_func {new FilterFunc()};
+        FilterFuncPtr filter_func {new FilterFunc()};
         for (const string& function : functions)
             filter_func->addFunc(function);
 
@@ -167,7 +167,7 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "file_name")
     {
-        FilterFileLPtr filter_file {new FilterFile()};
+        FilterFilePtr filter_file {new FilterFile()};
         for (const string& file : files)
             filter_file->addFile(file);
 
@@ -175,14 +175,14 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "thread_id")
     {
-        FilterThreadLPtr filter_thread {new FilterThread()};
+        FilterThreadPtr filter_thread {new FilterThread()};
         for (long tid : threads)
             filter_thread->addThread(tid);
 
         filter = filter_thread;
     }
     if (filter.empty())
-        return FilterLPtr();
+        return FilterPtr();
 
     filter->setName(name);
     filter->setMode((mode == "include") ? Filter::Mode::Include : Filter::Mode::Exclude);
@@ -192,7 +192,7 @@ FilterLPtr createFilter(const YAML::Node& yfilter)
     return filter;
 }
 
-SaverLPtr createSaver(const YAML::Node& ysaver, const list<FilterLPtr>& filters)
+SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
 {
     auto check_fied_type = [&ysaver](const string& field, YAML::NodeType::value type)
     {
@@ -254,7 +254,7 @@ SaverLPtr createSaver(const YAML::Node& ysaver, const list<FilterLPtr>& filters)
             filters_.push_back(yfilter.as<string>());
     }
 
-    SaverLPtr saver {new SaverFile(name, file)};
+    SaverPtr saver {new SaverFile(name, file)};
     saver->setLevel(levelFromString(log_level));
     if (active >= 0)
         saver->setActive(active);
@@ -264,7 +264,7 @@ SaverLPtr createSaver(const YAML::Node& ysaver, const list<FilterLPtr>& filters)
     for (const string& filter_ : filters_)
     {
         bool found = false;
-        for (FilterLPtr filter : filters)
+        for (FilterPtr filter : filters)
             if (filter->name() == filter_)
             {
                 saver->addFilter(filter);
@@ -281,14 +281,14 @@ SaverLPtr createSaver(const YAML::Node& ysaver, const list<FilterLPtr>& filters)
     return saver;
 }
 
-bool loadSavers(const string& confFile, std::list<SaverLPtr>& savers)
+bool loadSavers(const string& confFile, std::list<SaverPtr>& savers)
 {
     bool result = false;
     try
     {
         YAML::Node conf = YAML::LoadFile(confFile);
 
-        list<FilterLPtr> filters;
+        list<FilterPtr> filters;
         const YAML::Node& yfilters = conf["filters"];
         if (yfilters.IsDefined())
         {
@@ -296,7 +296,7 @@ bool loadSavers(const string& confFile, std::list<SaverLPtr>& savers)
                 throw std::logic_error("Filters-node must have sequence type");
 
             for (const YAML::Node& yfilter : yfilters)
-                if (FilterLPtr f = createFilter(yfilter))
+                if (FilterPtr f = createFilter(yfilter))
                     filters.push_back(f);
         }
 
@@ -307,7 +307,7 @@ bool loadSavers(const string& confFile, std::list<SaverLPtr>& savers)
                 throw std::logic_error("Savers-node must have sequence type");
 
             for (const YAML::Node& ysaver : ysavers)
-                if (SaverLPtr s = createSaver(ysaver, filters))
+                if (SaverPtr s = createSaver(ysaver, filters))
                     savers.push_back(s);
         }
         result = true;

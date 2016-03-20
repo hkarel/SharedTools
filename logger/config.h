@@ -112,7 +112,7 @@ using namespace std;
         file: ./lbucd2.log3
         ...
 */
-bool loadSavers(const string& confFile, std::list<SaverLPtr>& savers);
+bool loadSavers(const string& confFile, std::list<SaverPtr>& savers);
 
 //
 void printSaversInfo();
