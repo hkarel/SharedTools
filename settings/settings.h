@@ -12,7 +12,7 @@
 
 #include "safe_singleton.h"
 #include "simple_signal.h"
-#include "Logger/logger.h"
+#include "logger/logger.h"
 
 #include <iostream>
 #include <sstream>
