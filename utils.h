@@ -1,4 +1,4 @@
-/* clang-format off */
+﻿/* clang-format off */
 /*****************************************************************************
   В модуле собраны сервисные функции общего назначения.
 
@@ -12,6 +12,7 @@
 #include <string>
 #include <cstdarg>
 #include <streambuf>
+#include <vector>
 
 namespace utl {
 
@@ -92,6 +93,12 @@ string uuidToHexString(const uint8_t uuid[16], bool addHexPrefix = true);
 // Аналогична функции uuidToHexString(const uint8_t uuid[16], bool addHexPrefix),
 // но результат пишется в параметр result.
 void uuidToHexString(const uint8_t uuid[16], uint8_t result[40], bool addHexPrefix);
+
+// Разделяет строку на список строк согласно указанному разделителю.
+//   str - исходная строка;
+//   delim - разделитель;
+//   keepEmptyParts - сохранять в результирующем списке пустые строки.
+vector<string> split(const string& str, char delim, bool keepEmptyParts = false);
 
 
 //----------------------------- Implementation -------------------------------

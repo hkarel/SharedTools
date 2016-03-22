@@ -1,4 +1,4 @@
-import qbs
+﻿import qbs
 import qbs.File
 import GccUtl
 
@@ -22,6 +22,10 @@ Product {
         "include",
     ]
     files: [
+        "include/yaml-cpp/*.h",
+        "include/yaml-cpp/contrib/*.h",
+        "include/yaml-cpp/node/*.h",
+        "include/yaml-cpp/node/detail/*.h",
         "src/*.h",
         "src/*.cpp",
     ]

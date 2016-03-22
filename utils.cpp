@@ -1,4 +1,4 @@
-/* clang-format off */
+﻿/* clang-format off */
 #include "utils.h"
 #include "logger/logger.h"
 
@@ -196,6 +196,21 @@ void uuidToHexString(const uint8_t uuid[], uint8_t result[], bool addHexPrefix)
         (*r++) = toHexChar(uuid[i] & 0x0f);
     }
     *r = '\0';
+}
+
+vector<string> split(const string& str, char delim, bool keepEmptyParts)
+{
+    stringstream stream(str);
+    string item;
+    vector<string> elems;
+    while (std::getline(stream, item, delim))
+    {
+        if (item.empty() && !keepEmptyParts)
+            continue;
+        elems.push_back(item);
+        item.clear();
+    }
+    return std::move(elems);
 }
 
 } // namespace utl
