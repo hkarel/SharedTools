@@ -11,8 +11,11 @@ Module {
     property string prefix
     property string version
 
-    property path includePath: prefix + "/" + version + "/include"
-    property path libraryPath: prefix + "/" + version + "/lib"
+    property string includeSuffix: "/include"
+    property string libSuffix: "/lib"
+
+    property path includePath: prefix + "/" + version + includeSuffix
+    property path libraryPath: prefix + "/" + version + libSuffix
 
     property var probe: {
         return function() {
