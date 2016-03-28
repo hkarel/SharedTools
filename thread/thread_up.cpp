@@ -1,12 +1,11 @@
-/* clang-format off */
+﻿/* clang-format off */
 #include "thread_up.h"
 
 #include <cstdio>
 #include <unistd.h>
 #include <pthread.h>
 
-namespace trd
-{
+namespace trd {
 
 int ThreadUp::priorityUp(int schedulAlgorithm, int priority)
 {

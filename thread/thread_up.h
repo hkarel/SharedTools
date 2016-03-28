@@ -1,11 +1,11 @@
-/* clang-format off */
+﻿/* clang-format off */
 #pragma once
 
 #include "thread_base.h"
 #include <string>
 
-namespace trd
-{
+namespace trd {
+
 using namespace std;
 
 /**

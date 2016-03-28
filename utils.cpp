@@ -94,14 +94,24 @@ string toString(unsigned long val)
 string toString(long long val)
 {
     char buff[68] = {0};
-    snprintf(buff, sizeof(buff)-1, "%lld", val);
+#if defined(_MSC_VER) || defined(__MINGW32__)
+    const char* format = "%I64d";
+#else
+    const char* format = "%lld";
+#endif
+    snprintf(buff, sizeof(buff)-1, format, val);
     return buff;
 }
 
 string toString(unsigned long long val)
 {
     char buff[68] = {0};
-    snprintf(buff, sizeof(buff)-1, "%llu", val);
+#if defined(_MSC_VER) || defined(__MINGW32__)
+    const char* format = "%I64u";
+#else
+    const char* format = "%llu";
+#endif
+    snprintf(buff, sizeof(buff)-1, format, val);
     return buff;
 }
 

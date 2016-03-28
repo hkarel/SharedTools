@@ -1,4 +1,4 @@
-/* clang-format off */
+﻿/* clang-format off */
 #include "logger.h"
 #include "break_point.h"
 #include "spin_locker.h"
@@ -9,8 +9,10 @@
 #include <stdexcept>
 #include <algorithm>
 #include <string.h>
-//#include <signal.h>
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <windows.h>
+#endif
 
 namespace alog {
 
@@ -22,10 +24,18 @@ Logger& logger()
 }
 
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.
-// Информация сохраняется в файле /tmp/alogger.log
+// Информация сохраняется в файл /tmp/alogger.log для Linux/Unix,
+// и в файл %TEMP%\\alogger.log для Windows.
 void loggerPanic(const char* saverName, const char* error)
 {
+#if defined(_MSC_VER) || defined(__MINGW32__)
+    char filePath[MAX_PATH + 12 /*alogger.log*/] = {0};
+    GetTempPathA(MAX_PATH - 1, filePath);
+    strcat(filePath, "alogger.log");
+    if (FILE* f = fopen(filePath, "a"))
+#else
     if (FILE* f = fopen("/tmp/alogger.log", "a"))
+#endif
     {
         fputs("Saver name: ", f);
         fputs(saverName, f);

@@ -1,4 +1,4 @@
-/* clang-format off */
+﻿/* clang-format off */
 /****************************************************************************
   Author of idea: Fedorin Denis
   В модуле реализована функция имитирующая breakpoint для gdb отладчика.
@@ -35,11 +35,9 @@ int main ()
 */
 
 #ifndef NDEBUG
-  #if defined(_MSC_VER)
-    #define break_point  _CrtDbgBreak();
-  /*#elif defined(_MINGW)
-    #define break_point
-  */
+  #if defined(_MSC_VER) || defined(__MINGW32__)
+    #include <intrin.h>
+    #define break_point  __debugbreak();
   #else
     #include <stdio.h>
     #include <signal.h>

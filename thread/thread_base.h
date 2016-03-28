@@ -1,4 +1,4 @@
-/* clang-format off */
+﻿/* clang-format off */
 #pragma once
 
 #ifndef NOEXCEPT
@@ -13,8 +13,7 @@
 #include <thread>
 #include <mutex>
 
-namespace trd
-{
+namespace trd {
 
 /**
   Примитивный базовый класс для работы с потоками
@@ -87,4 +86,3 @@ private:
 };
 
 } //namespace trd
-
