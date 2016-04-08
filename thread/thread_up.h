@@ -6,8 +6,6 @@
 
 namespace trd {
 
-using namespace std;
-
 /**
   В классе реализован механизм повышения приоритета потока
 */
@@ -23,10 +21,10 @@ public:
     int priorityUp(int schedulAlgorithm, int priority);
 
     // Строковое описание ошибки
-    string priorityUpError() const {return _priorityUpError;}
+    std::string priorityUpError() const {return _priorityUpError;}
 
 private:
-    string _priorityUpError;
+    std::string _priorityUpError;
 };
 
 } //namespace trd

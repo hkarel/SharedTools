@@ -30,7 +30,7 @@ int ThreadUp::priorityUp(int schedulAlgorithm, int priority)
 
     if (err != 0)
     {
-        string s;
+        std::string s;
         if (err == EPERM)
             s = "Perhaps insufficiently right for a performance of this operation.";
 
