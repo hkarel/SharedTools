@@ -946,6 +946,7 @@ void compressList_Test()
         printf("\n");
     };
 
+    //---
     printf("\n--- Test for 3 elements (1,2,3) ---\n");
     list.clear();
     list.addCopy(1);
@@ -965,6 +966,7 @@ void compressList_Test()
     printf("Index 1 : %i == 3 : %s \n",  list[1], fsucc(list[1] == 3));  fsucc_check(list[1] == 3);
 
 
+    //---
     printf("\n--- Test for 3 elements (1,2,3) ---\n");
     list.clear();
     list.addCopy(1);
@@ -984,6 +986,7 @@ void compressList_Test()
     printf("Index 1 : %i == 3 : %s \n",  list[1], fsucc(list[1] == 3));  fsucc_check(list[1] == 3);
 
 
+    //---
     printf("\n--- Test for 3 elements (1,2,3) ---\n");
     list.clear();
     list.addCopy(1);
@@ -1002,7 +1005,111 @@ void compressList_Test()
     printf("Index 0 : %i == 1 : %s \n",  list[0], fsucc(list[0] == 1));  fsucc_check(list[0] == 1);
     printf("Index 1 : %i == 2 : %s \n",  list[1], fsucc(list[1] == 2));  fsucc_check(list[1] == 2);
 
+    //---
+    printf("\n--- Test for 4 elements (1,2,3,4) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+    list.addCopy(4);
 
+    printf("Remove elements 1,2 without compression list\n");
+    list.remove(0, lst::NO_COMPRESS_LIST);
+    list.remove(1, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 4);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 2);
+
+    printf("Index 0 : %i == 3 : %s \n",  list[0], fsucc(list[0] == 3));  fsucc_check(list[0] == 3);
+    printf("Index 1 : %i == 4 : %s \n",  list[1], fsucc(list[1] == 4));  fsucc_check(list[1] == 4);
+
+    //---
+    printf("\n--- Test for 4 elements (1,2,3,4) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+    list.addCopy(4);
+
+    printf("Remove elements 3,4 without compression list\n");
+    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(3, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 4);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 2);
+
+    printf("Index 0 : %i == 1 : %s \n",  list[0], fsucc(list[0] == 1));  fsucc_check(list[0] == 1);
+    printf("Index 1 : %i == 2 : %s \n",  list[1], fsucc(list[1] == 2));  fsucc_check(list[1] == 2);
+
+    //---
+    printf("\n--- Test for 4 elements (1,2,3,4) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+    list.addCopy(4);
+
+    printf("Remove elements 1,2,3 without compression list\n");
+    list.remove(0, lst::NO_COMPRESS_LIST);
+    list.remove(1, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 4);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 1);
+
+    printf("Index 0 : %i == 4 : %s \n",  list[0], fsucc(list[0] == 4));  fsucc_check(list[0] == 4);
+
+    //---
+    printf("\n--- Test for 4 elements (1,2,3,4) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+    list.addCopy(4);
+
+    printf("Remove elements 2,3,4 without compression list\n");
+    list.remove(1, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(3, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 4);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 1);
+
+    printf("Index 0 : %i == 1 : %s \n",  list[0], fsucc(list[0] == 1));  fsucc_check(list[0] == 1);
+
+    //---
+    printf("\n--- Test for 4 elements (1,2,3,4) ---\n");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+    list.addCopy(4);
+
+    printf("Remove elements 1,2,3,4 without compression list\n");
+    list.remove(0, lst::NO_COMPRESS_LIST);
+    list.remove(1, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(3, lst::NO_COMPRESS_LIST);
+
+    print_elements(list, 4);
+
+    list.compressList();
+
+    print_elements_after_compression(list, 0);
+
+    //---
     printf("\n--- Test for 15 elements (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15) ---\n");
     list.clear();
     list.addCopy(1);
@@ -1022,12 +1129,12 @@ void compressList_Test()
     list.addCopy(15);
 
     printf("Remove elements 1,3,5,6,9,10,11,13,14,15 without compression list\n");
-    list.remove(0, lst::NO_COMPRESS_LIST);
-    list.remove(2, lst::NO_COMPRESS_LIST);
-    list.remove(4, lst::NO_COMPRESS_LIST);
-    list.remove(5, lst::NO_COMPRESS_LIST);
-    list.remove(8, lst::NO_COMPRESS_LIST);
-    list.remove(9, lst::NO_COMPRESS_LIST);
+    list.remove(0,  lst::NO_COMPRESS_LIST);
+    list.remove(2,  lst::NO_COMPRESS_LIST);
+    list.remove(4,  lst::NO_COMPRESS_LIST);
+    list.remove(5,  lst::NO_COMPRESS_LIST);
+    list.remove(8,  lst::NO_COMPRESS_LIST);
+    list.remove(9,  lst::NO_COMPRESS_LIST);
     list.remove(10, lst::NO_COMPRESS_LIST);
     list.remove(12, lst::NO_COMPRESS_LIST);
     list.remove(13, lst::NO_COMPRESS_LIST);
