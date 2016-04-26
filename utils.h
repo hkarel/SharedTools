@@ -78,14 +78,20 @@ string toString(unsigned long long val);
 
 
 // Выполняет преобразование UUID в строковое представление.
-// Входящий параметр должен иметь следующие тип и размерность: uint8_t uuid[16].
-string uuidToString(const uint8_t* uuid);
+string uuidToString(const uint8_t uuid[16]);
+
+// Аналогична функции uuidToString(const uint8_t uuid[16]), но результат пишется
+// в параметр result.
+void uuidToString(const uint8_t uuid[16], uint8_t result[40]);
 
 // Выполняет преобразование UUID в шестнадцатеричное строковое представление.
-// Параметр uuid должен иметь следующие тип и размерность: uint8_t uuid[16].
 // Параметр addHexPrefix определяет будет ли в начало результирующей строки
 // добавлен признак шестнадцатеричного представления '0x'.
-string uuidToHexString(const uint8_t* uuid, bool addHexPrefix = true);
+string uuidToHexString(const uint8_t uuid[16], bool addHexPrefix = true);
+
+// Аналогична функции uuidToHexString(const uint8_t uuid[16], bool addHexPrefix),
+// но результат пишется в параметр result.
+void uuidToHexString(const uint8_t uuid[16], uint8_t result[40], bool addHexPrefix);
 
 
 //----------------------------- Implementation -------------------------------
