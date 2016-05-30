@@ -1,4 +1,4 @@
-// Создает полный путь до статических библиотек.
+﻿// Создает полный путь до статических библиотек.
 function buildFullNamesLibraries(product, path, libraries)
 {
     var libs = [];
@@ -8,6 +8,16 @@ function buildFullNamesLibraries(product, path, libraries)
     for (var i in libraries)
         libs.push(path + "/" + staticLibraryPrefix + libraries[i] + staticLibrarySuffix)
     return libs;
+}
+
+function concatPaths()
+{
+    var paths = [];
+    for(var i = 0; i < arguments.length; ++i) {
+        if (arguments[i] !== undefined)
+            paths = paths.concat(arguments[i]);
+    }
+    return paths;
 }
 
 // Расширяет тип String функцией форматирования.

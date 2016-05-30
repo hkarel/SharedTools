@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
   В модуле определены пути до boost библиотеки.
 
 *****************************************************************************/
@@ -8,6 +8,13 @@ import '../LibModule.qbs' as LibModule
 
 LibModule {
     id: boost
-    prefix: "/opt/boost"
     version: "1.55.x"
+    prefix: "/opt/boost"
+    Properties {
+        condition: qbs.targetOS.contains("windows")
+                   && qbs.toolchain && qbs.toolchain.contains("mingw")
+        prefix: "c:/opt/boost"
+        includeSuffix: ""
+        libSuffix: ""
+    }
 }

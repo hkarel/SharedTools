@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
   В модуле определены пути до библиотеки opencv.
 
 *****************************************************************************/
@@ -8,15 +8,12 @@ import '../LibModule.qbs' as LibModule
 
 LibModule {
     id: opencv
-    prefix: "/opt/opencv"
     version: "3.0.x"
-    libSuffix: {
-        if (qbs.targetOS.contains("windows")
-            && qbs.toolchain && qbs.toolchain.contains("mingw"))
-        {
-            return "/x86/mingw/lib";
-        }
-        return "/lib";
+    prefix: "/opt/opencv"
+    Properties {
+        condition: qbs.targetOS.contains("windows")
+                   && qbs.toolchain && qbs.toolchain.contains("mingw")
+        prefix: "c:/opt/opencv"
+        libSuffix: "/x86/mingw/lib"
     }
-
 }
