@@ -1,4 +1,4 @@
-﻿/* clang-format off */
+/* clang-format off */
 #pragma once
 
 #include "thread_base.h"

@@ -1,3 +1,3 @@
-﻿
+
 #include "SimpleCrypt.h"
 

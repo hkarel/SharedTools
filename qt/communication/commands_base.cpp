@@ -1,4 +1,4 @@
-﻿#include "commands_base.h"
+#include "commands_base.h"
 #include "commands_pool.h"
 
 namespace communication {

@@ -1,4 +1,4 @@
-﻿/* clang-format off */
+/* clang-format off */
 #include "utils.h"
 #include "logger/logger.h"
 

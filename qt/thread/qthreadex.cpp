@@ -1,4 +1,4 @@
-﻿#include "qthreadex.h"
+#include "qthreadex.h"
 #include "defmac.h"
 #include "break_point.h"
 #include <QElapsedTimer>

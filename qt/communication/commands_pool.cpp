@@ -1,4 +1,4 @@
-﻿#include "commands_pool.h"
+#include "commands_pool.h"
 #include "commands_base.h"
 
 #include "logger/logger.h"

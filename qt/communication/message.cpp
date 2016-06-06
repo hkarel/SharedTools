@@ -1,4 +1,4 @@
-﻿#include "message.h"
+#include "message.h"
 #include "break_point.h"
 
 namespace communication {

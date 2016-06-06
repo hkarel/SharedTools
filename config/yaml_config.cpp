@@ -1,4 +1,4 @@
-﻿#include "yaml_config.h"
+#include "yaml_config.h"
 #include "break_point.h"
 #include "spin_locker.h"
 #include <fstream>

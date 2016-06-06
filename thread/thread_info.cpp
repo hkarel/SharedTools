@@ -1,4 +1,4 @@
-﻿/* clang-format off */
+/* clang-format off */
 #include "thread_info.h"
 #include "break_point.h"
 

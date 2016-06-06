@@ -1,4 +1,4 @@
-﻿#include "bserialize.h"
+#include "bserialize.h"
 
 namespace bserial {
 

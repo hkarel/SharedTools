@@ -1,4 +1,4 @@
-﻿// Создает полный путь до статических библиотек.
+// Создает полный путь до статических библиотек.
 function buildFullNamesLibraries(product, path, libraries)
 {
     var libs = [];

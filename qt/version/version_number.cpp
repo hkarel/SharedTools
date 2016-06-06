@@ -1,4 +1,4 @@
-﻿#include "version_number.h"
+#include "version_number.h"
 
 
 const VersionNumber& productVersion()

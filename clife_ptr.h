@@ -1,4 +1,4 @@
-﻿/* clang-format off */
+/* clang-format off */
 /*****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
