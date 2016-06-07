@@ -132,8 +132,8 @@ YAML::Node YamlConfig::nodeGetValue(const std::string& name, bool logWarnings) c
     if (parts.empty())
         return YAML::Node();
 
-    std::function<YAML::Node (const YAML::Node&, size_t)> getNode =
-    [&](const YAML::Node& node, size_t i)
+    typedef std::function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
+    NodeFunc getNode = [&](const YAML::Node& node, size_t i)
     {
         if (i == parts.size())
             return node;
@@ -165,7 +165,7 @@ bool YamlConfig::getValue(const std::string& name,
     if (node.IsNull())
     {
         if (logWarnings)
-            log_warn_m << "A value is undefined for parameter '" << name << "'";
+            log_warn_m << "Parameter '" << name << "' is undefined";
         return false;
     }
     return true;
