@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
   В модуле реализован класс QThredEx, он расширяет функционал QThred.
@@ -14,6 +14,7 @@
 #include <QThread>
 
 
+
 class QThreadEx : public QThread
 {
     Q_OBJECT
@@ -26,7 +27,6 @@ public:
     // для проверки необходимости завершения работы потока.
     bool threadStop() const noexcept;
 
-
 public slots:
     // Запуск потока
     void start(Priority priority = InheritPriority);
@@ -35,8 +35,8 @@ public slots:
     void stop(unsigned long time = ULONG_MAX);
 
 private slots:
-    void onFinished(); // Обработчик сигнала QThread::finished()
     void onStarted();  // Обработчик сигнала QThread::started()
+    void onFinished(); // Обработчик сигнала QThread::finished()
 
 protected:
     virtual void startImpl(Priority priority);
@@ -49,7 +49,8 @@ protected:
     void sleep(unsigned long timeout);
 
 private:
-    volatile bool _threadStop = {true};
+    volatile bool _threadStop;
+    QAtomicInt _waitThreadStart;
 
     // Используется для исключения одновременного вызова функций start()/stop()
     QMutex _startStopLock;

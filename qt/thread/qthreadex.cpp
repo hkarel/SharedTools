@@ -1,12 +1,15 @@
-#include "qthreadex.h"
+﻿#include "qthreadex.h"
 #include "defmac.h"
 #include "break_point.h"
 #include <QElapsedTimer>
 
 QThreadEx::QThreadEx(QObject * parent) : QThread(parent)
 {
-    chk_connect_d(this, SIGNAL(finished()), this, SLOT(onFinished()))
+    _threadStop = true;
+    _waitThreadStart = false;
+
     chk_connect_d(this, SIGNAL(started()),  this, SLOT(onStarted()))
+    chk_connect_d(this, SIGNAL(finished()), this, SLOT(onFinished()))
 }
 
 bool QThreadEx::threadStop() const noexcept
@@ -28,10 +31,14 @@ void QThreadEx::startImpl(Priority priority)
 {
     QMutexLocker locker(&_startStopLock); (void) locker;
 
+    while (_waitThreadStart) {}
+
     if (isRunning())
         return;
 
+    _waitThreadStart = true;
     _threadStop = false;
+
     QThread::start(priority);
 
     // Ждем пока поток запустится
@@ -42,7 +49,10 @@ void QThreadEx::stopImpl(unsigned long time)
 {
     QMutexLocker locker(&_startStopLock); (void) locker;
 
+    while (_waitThreadStart) {}
+
     _threadStop = true;
+
     if (isRunning())
         wait(time);
 }
@@ -58,7 +68,7 @@ void QThreadEx::sleep(unsigned long timeout)
 
 void QThreadEx::onStarted()
 {
-    _threadStop = false;
+    _waitThreadStart = false;
 }
 
 void QThreadEx::onFinished()
