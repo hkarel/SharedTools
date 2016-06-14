@@ -139,13 +139,26 @@ void prefixFormatter3(Message& message)
 
     char module[50] = {0};
     if (!message.module.empty())
-        snprintf(module, sizeof(module) - 1, "%s : ", message.module.c_str());
+        snprintf(module, sizeof(module) - 1, "%s", message.module.c_str());
 
+    //if (!message.file.empty())
+    //    snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d:%s%s] ",
+    //             level, tid, message.file.c_str(), message.line, message.func.c_str(), module);
+    //else
+    //    snprintf(buff, sizeof(buff) - 1, " %sLWP%ld %s  ", level, tid, module);
     if (!message.file.empty())
-        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d:%s]\t%s",
-                 level, tid, message.file.c_str(), message.line, message.func.c_str(), module);
+    {
+        if (!message.module.empty())
+            snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d %s] ",
+                     level, tid, message.file.c_str(), message.line, module);
+        else
+            snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d] ",
+                     level, tid, message.file.c_str(), message.line);
+    }
+    else if (!message.module.empty())
+        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s] ", level, tid, module);
     else
-        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld\t%s", level, tid, module);
+        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld ", level, tid);
 
     memcpy(message.prefix3, buff, sizeof(buff));
 }
