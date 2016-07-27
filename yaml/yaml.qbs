@@ -1,5 +1,4 @@
 import qbs
-import qbs.File
 import GccUtl
 
 Product {
