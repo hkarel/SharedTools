@@ -67,5 +67,20 @@ void Message::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+
+void Message::setType(Type val)
+{
+    _type = val;
+}
+
+void Message::setExecStatus(ExecStatus val)
+{
+    _execStatus = val;
+}
+
+#pragma GCC diagnostic pop
+
 
 } // namespace communication

@@ -30,7 +30,7 @@ bool thread_exists(pid_t tid)
 {
 #if defined(__FreeBSD__)
     long tid_ = long(tid);
-    int res = syscall(SYS_thr_kill, tid_, 0);
+    long res = syscall(SYS_thr_kill, tid_, 0);
     return (res != ESRCH);
 #elif defined(_MSC_VER) || defined(__MINGW32__)
     // Отладить проверку существования потока через функцию OpenThread()
@@ -40,7 +40,7 @@ bool thread_exists(pid_t tid)
     // ???  GetLastError()
     return (h != 0);
 #else
-    int res = syscall(SYS_tkill, tid, 0);
+    long res = syscall(SYS_tkill, tid, 0);
     return ((res == -1) && (errno == ESRCH)) ? false : true;
 #endif
 }

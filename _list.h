@@ -197,7 +197,7 @@ private:
   unsigned _reserved   : 30;
 
   FindResult(bool success, BruteForce bruteForce, int index)
-    : _index(index), _success(success), _bruteForce(unsigned(bruteForce))
+    : _index(index), _success(success), _bruteForce(bool(bruteForce))
   {}
   template <typename, typename, typename> friend class CustomList;
 

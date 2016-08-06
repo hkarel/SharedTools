@@ -80,11 +80,11 @@ public:
 
     // Тип пересылаемого сообщения. См. описание enum Type
     Type type() const {return Type(_type);}
-    void setType(Type val){_type = val;}
+    void setType(Type val);
 
     // Статус выполнения/обработки команды. См. описание enum ExecStatus
     ExecStatus execStatus() const {return ExecStatus(_execStatus);}
-    void setExecStatus(ExecStatus val){_execStatus = val;}
+    void setExecStatus(ExecStatus val);
 
     // Максимальное время жизни сообщения. Задается в секундах в формате UTC
     // от начала эпохи. Параметр представляет абсолютное значение времени по

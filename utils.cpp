@@ -117,7 +117,7 @@ string toString(unsigned long long val)
 
 static inline uint8_t toHexChar(uint8_t c) noexcept
 {
-    return (c < 10) ? ('0' + c) : ('a' + (c - 10));
+    return (c < 10) ? uint8_t('0' + c) : uint8_t('a' + (c - 10));
 }
 
 string uuidToString(const uint8_t uuid[])

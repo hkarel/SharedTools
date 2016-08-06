@@ -788,7 +788,7 @@ bool Listener::init(const QHostAddress& address, int port)
     }
 
     int attempt = 0;
-    while (!QTcpServer::listen(address, port))
+    while (!QTcpServer::listen(address, quint16(port)))
     {
         if (++attempt > 10)
             break;
