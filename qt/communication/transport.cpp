@@ -216,7 +216,7 @@ void Socket::run()
 
     auto processingCompatibleInfoCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->type() == Message::Type::Request)
+        if (message->commandType() == command::Type::Request)
         {
             VersionNumber productVersion = ::productVersion();
             VersionNumber minCompatibleVersion = ::minCompatibleVersion();
@@ -288,7 +288,7 @@ void Socket::run()
 
     auto processingCloseConnectionCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->type() == Message::Type::Request)
+        if (message->commandType() == command::Type::Request)
         {
             data::CloseConnection closeConnection;
             readFromMessage(message, closeConnection);
@@ -303,12 +303,12 @@ void Socket::run()
 
             // Отправляем ответ
             message->clearContent();
-            message->setType(Message::Type::Responce);
+            message->setCommandType(command::Type::Response);
             message->setExecStatus(Message::ExecStatus::Success);
             message->add_ref();
             sendMessages.add(message.get());
         }
-        else if (message->type() == Message::Type::Responce
+        else if (message->commandType() == command::Type::Response
                  && message->id() == commandCloseConnectionId)
         {
             loopBreak = true;
@@ -832,7 +832,7 @@ void Listener::send(const Message::Ptr& message,
                     const SocketDescriptorSet& excludeSockets) const
 {
     QVector<Socket::Ptr> sockets = this->sockets();
-    if (message->type() == Message::Type::Event)
+    if (message->commandType() == command::Type::Event)
     {
         for (const Socket::Ptr& s : sockets)
             if (!excludeSockets.contains(s->socketDescriptor()))

@@ -15,7 +15,6 @@
 namespace communication {
 
 QString toString(command::Type);
-QString toString(Message::Type);
 QString toString(Message::ExecStatus);
 
 /**
@@ -31,9 +30,9 @@ Message::Ptr createMessage(const CommandDataT& data)
 
     Message::Ptr m = Message::create(data.command());
     if (CommandDataT::forRequest())
-        m->setType(Message::Type::Request);
+        m->setCommandType(command::Type::Request);
     else if (CommandDataT::forEvent())
-        m->setType(Message::Type::Event);
+        m->setCommandType(command::Type::Event);
 
     m->setExecStatus(Message::ExecStatus::Unknown);
     m->writeContent(data);
@@ -59,7 +58,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
                       "a command identifier of data (%2).")
                       .arg(message->command().toString(), data.command().toString());
     }
-    else if (message->type() == Message::Type::Request)
+    else if (message->commandType() == command::Type::Request)
     {
         if (data.forRequest())
         {
@@ -71,7 +70,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
                        " Mismatched types.")
                        .arg((message->command().toString()), typeid(CommandDataT).name());
     }
-    else if (message->type() == Message::Type::Event)
+    else if (message->commandType() == command::Type::Event)
     {
         if (data.forEvent())
         {
@@ -83,7 +82,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
                        " Mismatched types.")
                        .arg((message->command().toString()), typeid(CommandDataT).name());
     }
-    else if (message->type() == Message::Type::Responce)
+    else if (message->commandType() == command::Type::Response)
     {
         if (message->execStatus() == Message::ExecStatus::Success)
         {
@@ -136,22 +135,22 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
                       "a command identifier of message (%2).")
                       .arg(data.command().toString(), message->command().toString());
     }
-    else if (message->type() == Message::Request
-             || message->type() == Message::Event)
+    else if (message->commandType() == command::Type::Request
+             || message->commandType() == command::Type::Event)
     {
         if (data.forRequest())
         {
-            message->setType(Message::Request);
+            message->setCommandType(command::Type::Request);
             message->setExecStatus(Message::ExecStatus::Unknown);
             return message->writeContent(data);
         }
         err = "Structure of data cannot be used for 'Request'-message.";
     }
-    else if (message->type() == Message::Responce)
+    else if (message->commandType() == command::Type::Response)
     {
         if (data.forResponse())
         {
-            message->setType(Message::Responce);
+            message->setCommandType(command::Type::Response);
             message->setExecStatus(Message::ExecStatus::Success);
             return message->writeContent(data);
         }

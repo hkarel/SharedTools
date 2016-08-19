@@ -22,7 +22,7 @@ Message::Message(const QUuidEx& command) : Message()
 {
     _id = QUuid::createUuid();
     _command = command;
-    _type = Message::Type::Request;
+    _commandType = static_cast<quint32>(command::Type::Request);
     _execStatus = Message::ExecStatus::Unknown;
 }
 
@@ -67,13 +67,20 @@ void Message::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
+
+
+command::Type Message::commandType() const
+{
+    return static_cast<command::Type>(_commandType);
+}
+
+void Message::setCommandType(command::Type val)
+{
+    _commandType = static_cast<quint32>(val);
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
-
-void Message::setType(Type val)
-{
-    _type = val;
-}
 
 void Message::setExecStatus(ExecStatus val)
 {

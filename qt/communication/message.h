@@ -11,6 +11,7 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "qt/quuidex.h"
+#include "command_type.h"
 #include "communication_bserialize.h"
 
 #include <QtCore>
@@ -37,19 +38,7 @@ public:
     typedef clife_ptr<Message> Ptr;
     typedef lst::List<Message, lst::CompareItemDummy, Allocator> List;
 
-    // Тип пересылаемого сообщения
-    enum Type
-    {
-        Request  = 0, // Сообщение содержит данные запроса соответствующие
-                      // передаваемой команде.
-        Responce = 1, // Сообщение содержит данные ответа соответствующие
-                      // передаваемой команде.
-        Event    = 2  // Данный тип сообщения похож на Request, но не пред-
-                      // полагает получения ответа. Он используется для
-                      // рассылки широковещательных сообщений о событиях.
-    };
-
-    // Статус выполнения/обработки команды. Используется для сообщений
+    // Статус выполнения/обработки команды. Используется для команд
     // с типом Responce.
     enum ExecStatus
     {
@@ -79,9 +68,9 @@ public:
     // Возвращает TRUE если сообщение не содержит дополнительных данных
     bool contentIsEmpty() const {return _content.isEmpty();}
 
-    // Тип пересылаемого сообщения. См. описание enum Type
-    Type type() const {return Type(_type);}
-    void setType(Type val);
+    // Тип пересылаемой команды.
+    command::Type commandType() const;
+    void setCommandType(command::Type val);
 
     // Статус выполнения/обработки команды. См. описание enum ExecStatus
     ExecStatus execStatus() const {return ExecStatus(_execStatus);}
@@ -142,15 +131,15 @@ private:
 private:
     // Битовые флаги
     union {
-        quint32 _flags;            // Содержит значения всех флагов, используется
-                                   // при сериализации.
+        quint32 _flags;             // Содержит значения всех флагов, используется
+                                    // при сериализации.
         struct {
-            quint32 _type: 4;       // Тип пересылаемого сообщения, значения
-                                    // в этом поле соответствуют enum Type.
-                                    // Резервируем 4 бита для возможного будущего
-                                    // расширения enum Type.
-            quint32 _execStatus: 4; // Статус выполнения/обработки команды, значения
-                                    // в этом поле соответствуют enum ExecStatus.
+            quint32 _commandType: 4; // Тип пересылаемого сообщения, значения
+                                     // в этом поле соответствуют command::Type.
+                                     // Резервируем 4 бита для возможного будущего
+                                     // расширения command::Type.
+            quint32 _execStatus: 4;  // Статус выполнения/обработки команды, значения
+                                     // в этом поле соответствуют enum ExecStatus.
             quint32 _reserved: 24;
         };
     };

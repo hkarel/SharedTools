@@ -16,6 +16,7 @@
 
 #include "qt/quuidex.h"
 #include "qt/version/version_number.h"
+#include "command_type.h"
 #include "communication_bserialize.h"
 
 #include <QtCore>
@@ -25,16 +26,6 @@ namespace communication {
 
 //------------------------- Список базовых команд ----------------------------
 namespace command {
-
-// Перечисление используется для связи структуры данных с определенным типом
-// Message-сообщения.
-enum class Type
-{
-    Unknown,
-    Request,  // Для Message::Type::Request.
-    Response, // Для Message::Type::Responce.
-    Event     // Для Message::Type::Event.
-};
 
 // Идентификатор неизвестной команды
 extern const QUuidEx Unknown;
