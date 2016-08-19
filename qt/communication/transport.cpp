@@ -828,13 +828,15 @@ QVector<Socket::Ptr> Listener::sockets() const
     return sockets;
 }
 
-void Listener::send(const Message::Ptr& message) const
+void Listener::send(const Message::Ptr& message,
+                    const SocketDescriptorSet& excludeSockets) const
 {
     QVector<Socket::Ptr> sockets = this->sockets();
     if (message->type() == Message::Type::Event)
     {
         for (const Socket::Ptr& s : sockets)
-            s->send(message);
+            if (!excludeSockets.contains(s->socketDescriptor()))
+                s->send(message);
     }
     else
     {
@@ -848,6 +850,13 @@ void Listener::send(const Message::Ptr& message) const
                     << ". Message with command id: " << CommandNameLog(message->command())
                     << " will be discarded";
     }
+}
+
+void Listener::send(const Message::Ptr& message, SocketDescriptor excludeSocket) const
+{
+    SocketDescriptorSet excludeSockets;
+    excludeSockets << excludeSocket;
+    send(message, excludeSockets);
 }
 
 Socket::Ptr Listener::socketByDescriptor(SocketDescriptor descr) const

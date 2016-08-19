@@ -211,8 +211,14 @@ public:
     // Возвращает список подключенных сокетов
     QVector<Socket::Ptr> sockets() const;
 
-    // Функция отправки сообщений
-    void send(const Message::Ptr&) const;
+    // Функция отправки сообщений.
+    // Параметр excludeSockets используется когда отправляемое сообщение имеет
+    // тип Event. На сокеты содержащиеся в excludeSockets сообщение отправлено
+    // не будет.
+    void send(const Message::Ptr& message,
+              const SocketDescriptorSet& excludeSockets = SocketDescriptorSet()) const;
+
+    void send(const Message::Ptr& message, SocketDescriptor excludeSocket) const;
 
     // Возвращает сокет по его идентификатору.
     // Потенциальная уязвимость: если эта функция будет вызваться из обработ-

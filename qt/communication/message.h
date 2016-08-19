@@ -23,6 +23,7 @@ typedef qintptr SocketDescriptor;
 #else
 typedef int SocketDescriptor;
 #endif
+typedef QSet<SocketDescriptor> SocketDescriptorSet;
 
 
 class Message : public clife_base
