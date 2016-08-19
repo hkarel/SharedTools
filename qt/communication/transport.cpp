@@ -304,7 +304,7 @@ void Socket::run()
             // Отправляем ответ
             message->clearContent();
             message->setCommandType(command::Type::Response);
-            message->setExecStatus(Message::ExecStatus::Success);
+            message->setCommandExecStatus(command::ExecStatus::Success);
             message->add_ref();
             sendMessages.add(message.get());
         }

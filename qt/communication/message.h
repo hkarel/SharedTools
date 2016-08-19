@@ -38,23 +38,6 @@ public:
     typedef clife_ptr<Message> Ptr;
     typedef lst::List<Message, lst::CompareItemDummy, Allocator> List;
 
-    // Статус выполнения/обработки команды. Используется для команд
-    // с типом Responce.
-    enum ExecStatus
-    {
-        Unknown = 0,
-        Success = 1, // Сообщение было обработано успешно и содержит корректные
-                     // ответные данные.
-        Failed  = 2, // Сообщение не было обработано успешно, но результат
-                     // не является ошибкой.
-                     // В данном случае поле _content содержит данные в формате
-                     // communication::data::MessageFailed.
-        Error   = 3  // При обработке запроса произошла ошибка, и в качестве
-                     // ответа отправляется сообщения с описанием причины ошибки.
-                     // В данном случае поле _content содержит данные в формате
-                     // communication::data::MessageError.
-    };
-
 public:
     // Персональный идентификатор сообщения.
     QUuidEx id() const {return _id;}
@@ -70,11 +53,11 @@ public:
 
     // Тип пересылаемой команды.
     command::Type commandType() const;
-    void setCommandType(command::Type val);
+    void setCommandType(command::Type);
 
-    // Статус выполнения/обработки команды. См. описание enum ExecStatus
-    ExecStatus execStatus() const {return ExecStatus(_execStatus);}
-    void setExecStatus(ExecStatus val);
+    // Статус выполнения/обработки команды. См. описание command::ExecStatus
+    command::ExecStatus commandExecStatus() const;
+    void setCommandExecStatus(command::ExecStatus);
 
     // Максимальное время жизни сообщения. Задается в секундах в формате UTC
     // от начала эпохи. Параметр представляет абсолютное значение времени по
@@ -131,15 +114,18 @@ private:
 private:
     // Битовые флаги
     union {
-        quint32 _flags;             // Содержит значения всех флагов, используется
-                                    // при сериализации.
+        quint32 _flags; // Содержит значения всех флагов, используется
+                        // при сериализации.
         struct {
-            quint32 _commandType: 4; // Тип пересылаемого сообщения, значения
-                                     // в этом поле соответствуют command::Type.
-                                     // Резервируем 4 бита для возможного будущего
-                                     // расширения command::Type.
-            quint32 _execStatus: 4;  // Статус выполнения/обработки команды, значения
-                                     // в этом поле соответствуют enum ExecStatus.
+            // Тип пересылаемого сообщения, значения в этом поле
+            // соответствуют command::Type.
+            // Резервируем 4 бита для возможного будущего расширения command::Type.
+            quint32 _commandType: 4;
+
+            // Статус выполнения/обработки команды, значения в этом поле
+            // соответствуют command::ExecStatus.
+            quint32 _commandExecStatus: 4;
+
             quint32 _reserved: 24;
         };
     };

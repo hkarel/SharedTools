@@ -13,13 +13,13 @@ QString toString(command::Type t)
     }
 }
 
-QString toString(Message::ExecStatus e)
+QString toString(command::ExecStatus e)
 {
     switch (e)
     {
-        case Message::ExecStatus::Success: return "Success";
-        case Message::ExecStatus::Failed:  return "Failed";
-        case Message::ExecStatus::Error:   return "Error";
+        case command::ExecStatus::Success: return "Success";
+        case command::ExecStatus::Failed:  return "Failed";
+        case command::ExecStatus::Error:   return "Error";
         default:                           return "Unknown";
     }
 }
@@ -29,7 +29,7 @@ void readFromMessage(const Message::Ptr& message, data::MessageError& data)
     QString err;
     if (message->commandType() == command::Type::Response)
     {
-        if (message->execStatus() == Message::ExecStatus::Error)
+        if (message->commandExecStatus() == command::ExecStatus::Error)
         {
             message->readContent(data);
             return;
@@ -48,7 +48,7 @@ void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
     QString err;
     if (message->commandType() == command::Type::Response)
     {
-        if (message->execStatus() == Message::ExecStatus::Failed)
+        if (message->commandExecStatus() == command::ExecStatus::Failed)
         {
             message->readContent(data);
             return;
@@ -65,14 +65,14 @@ void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
 bool writeToMessage(const data::MessageError& data, Message::Ptr& message)
 {
     message->setCommandType(command::Type::Response);
-    message->setExecStatus(Message::ExecStatus::Error);
+    message->setCommandExecStatus(command::ExecStatus::Error);
     return message->writeContent(data);
 }
 
 bool writeToMessage(const data::MessageFailed& data, Message::Ptr& message)
 {
     message->setCommandType(command::Type::Response);
-    message->setExecStatus(Message::ExecStatus::Failed);
+    message->setCommandExecStatus(command::ExecStatus::Failed);
     return message->writeContent(data);
 }
 
@@ -81,13 +81,13 @@ QString errorDescription(const Message::Ptr& message)
     QString descr;
     if (message->commandType() == command::Type::Response)
     {
-        if (message->execStatus() == Message::ExecStatus::Failed)
+        if (message->commandExecStatus() == command::ExecStatus::Failed)
         {
             data::MessageFailed data;
             readFromMessage(message, data);
             descr = data.description;
         }
-        else if (message->execStatus() == Message::ExecStatus::Error)
+        else if (message->commandExecStatus() == command::ExecStatus::Error)
         {
             data::MessageError data;
             readFromMessage(message, data);

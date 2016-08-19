@@ -23,7 +23,7 @@ Message::Message(const QUuidEx& command) : Message()
     _id = QUuid::createUuid();
     _command = command;
     _commandType = static_cast<quint32>(command::Type::Request);
-    _execStatus = Message::ExecStatus::Unknown;
+    _commandExecStatus = static_cast<quint32>(command::ExecStatus::Unknown);
 }
 
 BByteArray Message::toByteArray() const
@@ -79,15 +79,20 @@ void Message::setCommandType(command::Type val)
     _commandType = static_cast<quint32>(val);
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wconversion"
 
-void Message::setExecStatus(ExecStatus val)
+command::ExecStatus Message::commandExecStatus() const
 {
-    _execStatus = val;
+    return static_cast<command::ExecStatus>(_commandExecStatus);
 }
 
-#pragma GCC diagnostic pop
+void Message::setCommandExecStatus(command::ExecStatus val)
+{
+    _commandExecStatus = static_cast<quint32>(val);
+}
+
+//#pragma GCC diagnostic pop
 
 
 } // namespace communication

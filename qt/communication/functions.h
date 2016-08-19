@@ -15,7 +15,7 @@
 namespace communication {
 
 QString toString(command::Type);
-QString toString(Message::ExecStatus);
+QString toString(command::ExecStatus);
 
 /**
   Создает сообщение на основе структуры данных соответствующей определнной
@@ -34,7 +34,7 @@ Message::Ptr createMessage(const CommandDataT& data)
     else if (CommandDataT::forEvent())
         m->setCommandType(command::Type::Event);
 
-    m->setExecStatus(Message::ExecStatus::Unknown);
+    m->setCommandExecStatus(command::ExecStatus::Unknown);
     m->writeContent(data);
     return std::move(m);
 }
@@ -84,7 +84,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
     }
     else if (message->commandType() == command::Type::Response)
     {
-        if (message->execStatus() == Message::ExecStatus::Success)
+        if (message->commandExecStatus() == command::ExecStatus::Success)
         {
             if (data.forResponse())
             {
@@ -96,13 +96,13 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
                            " Mismatched types.")
                            .arg((message->command().toString()), typeid(CommandDataT).name());
         }
-        else if (message->execStatus() == Message::ExecStatus::Failed
+        else if (message->commandExecStatus() == command::ExecStatus::Failed
                  && typeid(CommandDataT) != typeid(data::MessageFailed))
         {
             err = "Message is failed. Type of data must be "
                   "communication::data::MessageFailed.";
         }
-        else if (message->execStatus() == Message::ExecStatus::Error
+        else if (message->commandExecStatus() == command::ExecStatus::Error
                  && typeid(CommandDataT) == typeid(data::MessageError))
         {
             err = "Message is error. Type of data must be "
@@ -141,7 +141,7 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
         if (data.forRequest())
         {
             message->setCommandType(command::Type::Request);
-            message->setExecStatus(Message::ExecStatus::Unknown);
+            message->setCommandExecStatus(command::ExecStatus::Unknown);
             return message->writeContent(data);
         }
         err = "Structure of data cannot be used for 'Request'-message.";
@@ -151,7 +151,7 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
         if (data.forResponse())
         {
             message->setCommandType(command::Type::Response);
-            message->setExecStatus(Message::ExecStatus::Success);
+            message->setCommandExecStatus(command::ExecStatus::Success);
             return message->writeContent(data);
         }
         err = "Structure of data cannot be used for 'Responce'-message.";
