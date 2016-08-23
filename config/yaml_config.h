@@ -36,16 +36,19 @@ public:
 
     YamlConfig() = default;
 
-    // Читает файл конфигурации. filePath - полное имя файла.
+    // Читает файл конфигурации. filePath - полное имя файла
     bool read(const std::string& filePath);
 
     // Перечитывает файл конфигурации
     bool reRead();
 
-    // Признак, что конфигурация используется только для чтения,
-    // запись запрещена.
+    // Определяет, что параметры конфигурации не могут изменяться
     bool readOnly() const;
     void setReadOnly(bool);
+
+    // Запрещает запись данных в файл конфигурации
+    bool saveDisabled() const;
+    void setSaveDisabled(bool);
 
     // Сохраняет данные в файл
     bool save(const std::string& filePath = std::string());
@@ -151,6 +154,7 @@ private:
 
 private:
     std::atomic_bool _readOnly = {false};
+    std::atomic_bool _saveDisabled = {false};
     std::string _filePath;
     YAML::Node _root;
     mutable std::mutex _configLock;
@@ -195,6 +199,14 @@ char* YamlConfig::typeName()
         YAMLCONFIG_LOG_ERROR("Unknown error", GETSET) \
         return RETURN; \
     }
+
+#define YAMLCONFIG_CHECK_READONLY \
+        if (_readOnly) {\
+            alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig") \
+                << "Failed to set parameter: " << name \
+                << ". Config data is read only."; \
+            return false;  \
+        }
 
 #if defined(QT_CORE_LIB)
 template<>
@@ -289,6 +301,8 @@ bool YamlConfig::getValue(const std::string& name,
 template<typename T>
 bool YamlConfig::setValue(const std::string& name, const T& value)
 {
+    YAMLCONFIG_CHECK_READONLY
+
     std::lock_guard<std::mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSetValue(name);
@@ -301,6 +315,10 @@ bool YamlConfig::setValue(const std::string& name, const T& value)
 template<typename VectorT>
 bool YamlConfig::setValueVect(const std::string& name, const VectorT& value)
 {
+    YAMLCONFIG_CHECK_READONLY
+
+    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+
     YAML::Node node = nodeSetValue(name);
     YAMLCONFIG_TRY
     node = YAML::Node();
@@ -314,7 +332,6 @@ bool YamlConfig::setValueVect(const std::string& name, const VectorT& value)
 template<typename T>
 bool YamlConfig::setValue(const std::string& name, const std::vector<T>& value)
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
     return setValueVect(name, value);
 }
 
@@ -322,7 +339,6 @@ bool YamlConfig::setValue(const std::string& name, const std::vector<T>& value)
 template<typename T>
 bool YamlConfig::setValue(const std::string& name, const QVector<T>& value)
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
     return setValueVect(name, value);
 }
 #endif

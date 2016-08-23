@@ -67,11 +67,21 @@ void YamlConfig::setReadOnly(bool val)
     _readOnly = val;
 }
 
+bool YamlConfig::saveDisabled() const
+{
+    return _saveDisabled;
+}
+
+void YamlConfig::setSaveDisabled(bool val)
+{
+    _saveDisabled = val;
+}
+
 bool YamlConfig::save(const std::string& filePath)
 {
-    if (_readOnly)
+    if (_saveDisabled)
     {
-        log_warn_m << "Cannot save data. Config read only. File: " << _filePath;
+        log_warn_m << "Save the data is disabled. File: " << _filePath;
         return false;
     }
 
@@ -204,6 +214,8 @@ bool YamlConfig::getValue(const std::string& name,
 
 bool YamlConfig::setValue(const std::string& name, Func func)
 {
+    YAMLCONFIG_CHECK_READONLY
+
     std::lock_guard<std::mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSetValue(name);
