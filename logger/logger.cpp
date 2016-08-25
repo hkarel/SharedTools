@@ -798,9 +798,10 @@ void Logger::run()
             messagesBuff.clear();
         }
 
-        if (loopBreak) break;
-        if (threadStop()) loopBreak = true;
-
+        if (loopBreak)
+            break;
+        if (threadStop())
+            loopBreak = true;
     } //while (true)
 }
 
