@@ -213,4 +213,21 @@ vector<string> split(const string& str, char delim, bool keepEmptyParts)
     return std::move(elems);
 }
 
+double round(double number, int signCount)
+{
+    int n = 1;
+    switch (signCount)
+    {
+        case 1: n = 10;     break;
+        case 2: n = 100;    break;
+        case 3: n = 1000;   break;
+        case 4: n = 10000;  break;
+        case 5: n = 100000; break;
+        default:
+            for (int i = 0; i < signCount; ++i)
+                n *= 10;
+    }
+    return std::round(number * n) / n;
+}
+
 } // namespace utl

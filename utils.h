@@ -100,6 +100,9 @@ void uuidToHexString(const uint8_t uuid[16], uint8_t result[40], bool addHexPref
 //   keepEmptyParts - сохранять в результирующем списке пустые строки.
 vector<string> split(const string& str, char delim, bool keepEmptyParts = false);
 
+// Выполняет округление действительного числа number до signCount знаков
+// после запятой
+double round(double number, int signCount);
 
 //----------------------------- Implementation -------------------------------
 
