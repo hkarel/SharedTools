@@ -407,7 +407,7 @@ void Socket::run()
             {
                 _socket->waitForBytesWritten(delay);
                 CHECK_SOCKET_ERROR
-                if (timer.elapsed() > 3*delay)
+                if (timer.hasExpired(3 * delay))
                     break;
             }
             if (loopBreak)
@@ -460,19 +460,18 @@ void Socket::run()
                     {
                         _socket->waitForBytesWritten(delay);
                         CHECK_SOCKET_ERROR
-                        if (timer.elapsed() > 3*delay)
+                        if (timer.hasExpired(3 * delay))
                             break;
                     }
                     if (alog::logger().level() == alog::Level::Debug2
                         &&_socket->bytesToWrite() == 0
-                        && timer.elapsed() < 3*delay)
+                        && timer.hasExpired(3 * delay))
                     {
                         log_debug2_m << "Message was send to the socket."
                                      << " Command " << CommandNameLog(message->command());
                     }
-                    if (loopBreak)
-                        break;
-                    if (timer.elapsed() > 3*delay)
+                    if (loopBreak
+                        || timer.hasExpired(3 * delay))
                         break;
                 }
                 if (loopBreak)
@@ -480,7 +479,7 @@ void Socket::run()
             } //--- Отправка сообщений ---
 
             if (_socket->bytesAvailable() == 0)
-                _socket->waitForReadyRead(3*delay);
+                _socket->waitForReadyRead(3 * delay);
 
             //--- Прием сообщений ---
             if (_socket->bytesAvailable() != 0)
@@ -494,14 +493,12 @@ void Socket::run()
                         {
                             _socket->waitForReadyRead(delay);
                             CHECK_SOCKET_ERROR
-                            if (timer.elapsed() > 3*delay)
+                            if (timer.hasExpired(3 * delay))
                                 break;
                         }
-                        if (loopBreak)
-                            break;
-                        if (timer.elapsed() > 3*delay)
-                            break;
-                        if (_socket->bytesAvailable() < (int)sizeof(qint32))
+                        if (loopBreak
+                            || timer.hasExpired(3 * delay)
+                            || _socket->bytesAvailable() < (int)sizeof(qint32))
                             break;
 
                         _socket->read((char*)&readBuffSize, sizeof(qint32));
@@ -515,14 +512,12 @@ void Socket::run()
                     {
                         _socket->waitForReadyRead(delay);
                         CHECK_SOCKET_ERROR
-                        if (timer.elapsed() > 3*delay)
+                        if (timer.hasExpired(3 * delay))
                             break;
                     }
-                    if (loopBreak)
-                        break;
-                    if (timer.elapsed() > 3*delay)
-                        break;
-                    if (_socket->bytesAvailable() < qAbs(readBuffSize))
+                    if (loopBreak
+                        || timer.hasExpired(3 * delay)
+                        || _socket->bytesAvailable() < qAbs(readBuffSize))
                         break;
 
                     BByteArray buff;
@@ -599,9 +594,8 @@ void Socket::run()
                             }
                         }
                     }
-                    if (loopBreak)
-                        break;
-                    if (timer.elapsed() > 3*delay)
+                    if (loopBreak
+                        || timer.hasExpired(3 * delay))
                         break;
                 } // while (true)
                 if (loopBreak)
@@ -645,7 +639,7 @@ void Socket::run()
                     {
                         log_error_m << "Failed processing a message. Unknown error";
                     }
-                    if (timer.elapsed() > 3*delay)
+                    if (timer.hasExpired(3 * delay))
                         break;
                 }
             }
