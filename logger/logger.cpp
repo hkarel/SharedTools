@@ -2,7 +2,7 @@
 #include "logger.h"
 #include "break_point.h"
 #include "spin_locker.h"
-#include "simple_timer.h"
+#include "steady_timer.h"
 #include "utils.h"
 
 #include <ctime>
@@ -674,7 +674,7 @@ void Logger::addMessage(MessagePtr&& m)
 
 void Logger::run()
 {
-    simple_timer flushTimer;
+    steady_timer flushTimer;
     MessageList messagesBuff;
 
     // Вспомогательный флаг, нужен чтобы дать возможность перед прерываением
