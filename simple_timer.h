@@ -1,6 +1,6 @@
 /* clang-format off */
 /*****************************************************************************
-  В модуле реализован простейший механизм для отсчета времени
+  В модуле реализован простейший механизм для отсчета интервалов времени
 
 *****************************************************************************/
 
@@ -20,10 +20,10 @@ struct simple_timer
     // Задает начальное время
     simple_timer(time_t seconds) : time(clock::from_time_t(seconds)) {}
 
-    // Возвращает количество прошедшего времени (в миллисекундах)
-    int elapsed() const {
-        return std::chrono::duration_cast<std::chrono::milliseconds>
-               (clock::now() - time).count();
+    // Возвращает количество прошедшего времени (по умолчанию в миллисекундах)
+    template<typename DurationT = std::chrono::milliseconds>
+    int64_t elapsed() const {
+        return std::chrono::duration_cast<DurationT>(clock::now() - time).count();
     }
 
     // Сбрасывает время на указанное, по умолчанию сбрасывает на текущее время
