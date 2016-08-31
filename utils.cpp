@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
-#include <algorithm>
 
 namespace utl {
 
@@ -218,6 +217,7 @@ double round(double number, int signCount)
     int n = 1;
     switch (signCount)
     {
+        case 0: n = 1;      break;
         case 1: n = 10;     break;
         case 2: n = 100;    break;
         case 3: n = 1000;   break;

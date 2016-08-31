@@ -13,6 +13,7 @@
 #include <cstdarg>
 #include <streambuf>
 #include <vector>
+#include <algorithm>
 
 namespace utl {
 
@@ -104,6 +105,10 @@ vector<string> split(const string& str, char delim, bool keepEmptyParts = false)
 // после запятой
 double round(double number, int signCount);
 
+// Возвращает среднее арифметическое для списка элементов
+template<typename T>
+double average(const T& elements);
+
 //----------------------------- Implementation -------------------------------
 
 template<typename std::size_t BuffSize>
@@ -115,6 +120,13 @@ string formatMessage(const char* format, ...)
     vsnprintf(buff, BuffSize - 1, format, argptr);
     va_end(argptr);
     return buff;
+}
+
+template<typename T>
+double average(const T& elements)
+{
+    double sum = std::accumulate(elements.begin(), elements.end(), typename T::value_type(0));
+    return (sum / elements.size());
 }
 
 } // namespace utl
