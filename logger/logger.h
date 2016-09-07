@@ -433,14 +433,23 @@ public:
 class SaverFile : public Saver
 {
 public:
-    SaverFile(const string& name, const string& filePath, Level level = Error);
+    SaverFile(const string& name,
+              const string& filePath,
+              Level level = Error,
+              bool isContinue = true);
     void flushImpl(const MessageList&) override;
 
     // Возвращает полный путь до лог-файла
     string filePath() const {return _filePath;}
 
+    // Если параметр установлен в TRUE, то запись данных будет продолжена
+    // в существующий лог-файл, в противном случае лог-файл будет очищен
+    // при создании сэйвера.
+    bool isContinue() const {return _isContinue;}
+
 private:
     string _filePath;
+    bool   _isContinue = {true};
 };
 typedef clife_ptr<SaverFile> SaverFilePtr;
 

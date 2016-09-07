@@ -245,6 +245,23 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
     if (file.empty())
         throw std::logic_error("In a saver-node a field 'file' can not be empty");
 
+    if (file[0] == '~')
+    {
+#if defined(_MSC_VER) || defined(__MINGW32__)
+        // Отладить под Windows
+        break_point
+#endif
+        const char* home = getenv("HOME");
+        file.replace(0, 1, home);
+    }
+
+    bool is_continue = true;
+    if (ysaver["continue"].IsDefined())
+    {
+        check_fied_type("continue", YAML::NodeType::Scalar);
+        is_continue = ysaver["continue"].as<bool>();
+    }
+
     list<string> filters_;
     if (ysaver["filters"].IsDefined())
     {
@@ -254,8 +271,9 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
             filters_.push_back(yfilter.as<string>());
     }
 
-    SaverPtr saver {new SaverFile(name, file)};
-    saver->setLevel(levelFromString(log_level));
+    Level level = levelFromString(log_level);
+    SaverPtr saver {new SaverFile(name, file, level, is_continue)};
+
     if (active >= 0)
         saver->setActive(active);
     if (max_line_size >= 0)

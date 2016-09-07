@@ -519,10 +519,22 @@ SaverStdErr::SaverStdErr(const char* name, Level level, bool shortMessages)
 
 //------------------------------ SaverFile -----------------------------------
 
-SaverFile::SaverFile(const string& name, const string& filePath, Level level)
+SaverFile::SaverFile(const string& name,
+                     const string& filePath,
+                     Level level,
+                     bool isContinue)
     : Saver(name, level),
-      _filePath(filePath)
+      _filePath(filePath),
+      _isContinue(isContinue)
 {
+    if (!_isContinue)
+    {
+        // Очищаем существующий файл
+        if (FILE* f = fopen(_filePath.c_str(), "w"))
+            fclose(f);
+        else
+            throw std::logic_error("Could not open file: " + _filePath);
+    }
 }
 
 void SaverFile::flushImpl(const MessageList& messages)
@@ -530,7 +542,7 @@ void SaverFile::flushImpl(const MessageList& messages)
     if (messages.size() == 0)
         return;
 
-    if (FILE* f = fopen(_filePath.c_str(),  "a"))
+    if (FILE* f = fopen(_filePath.c_str(), "a"))
     {
         removeIdsTimeoutThreads();
 
