@@ -30,7 +30,7 @@ const char* yamlTypeName(YAML::NodeType::value type)
 
 FilterPtr createFilter(const YAML::Node& yfilter)
 {
-    auto check_fied_type = [&yfilter](const string& field, YAML::NodeType::value type)
+    auto checkFiedType = [&yfilter](const string& field, YAML::NodeType::value type)
     {
         if (yfilter[field].IsNull())
             throw std::logic_error(
@@ -45,7 +45,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     string name;
     if (yfilter["name"].IsDefined())
     {
-        check_fied_type("name", YAML::NodeType::Scalar);
+        checkFiedType("name", YAML::NodeType::Scalar);
         name = yfilter["name"].as<string>();
     }
     if (name.empty())
@@ -54,7 +54,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     string type;
     if (yfilter["type"].IsDefined())
     {
-        check_fied_type("type", YAML::NodeType::Scalar);
+        checkFiedType("type", YAML::NodeType::Scalar);
         type = yfilter["type"].as<string>();
     }
     if ( !(type == "module_name" || type == "log_level"))
@@ -64,45 +64,45 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     string mode = "include";
     if (yfilter["mode"].IsDefined())
     {
-        check_fied_type("mode", YAML::NodeType::Scalar);
+        checkFiedType("mode", YAML::NodeType::Scalar);
         mode = yfilter["mode"].as<string>();
     }
     if ( !(mode == "include" || mode == "exclude"))
         throw std::logic_error("In a filter-node a field 'mode' can take "
                                "the values: 'include' or 'exclude'");
 
-    bool filtering_errors = false;
+    bool filteringErrors = false;
     if (yfilter["filtering_errors"].IsDefined())
     {
-        check_fied_type("filtering_errors", YAML::NodeType::Scalar);
-        filtering_errors = yfilter["filtering_errors"].as<bool>();
+        checkFiedType("filtering_errors", YAML::NodeType::Scalar);
+        filteringErrors = yfilter["filtering_errors"].as<bool>();
     }
 
-    bool follow_thread_context = false;
+    bool followThreadContext = false;
     if (yfilter["follow_thread_context"].IsDefined())
     {
-        check_fied_type("follow_thread_context", YAML::NodeType::Scalar);
-        follow_thread_context = yfilter["follow_thread_context"].as<bool>();
+        checkFiedType("follow_thread_context", YAML::NodeType::Scalar);
+        followThreadContext = yfilter["follow_thread_context"].as<bool>();
     }
 
-    bool filtering_noname_modules = false;
+    bool filteringNonameModules = false;
     if (yfilter["filtering_noname_modules"].IsDefined())
     {
-        check_fied_type("filtering_noname_modules", YAML::NodeType::Scalar);
-        filtering_noname_modules = yfilter["filtering_noname_modules"].as<bool>();
+        checkFiedType("filtering_noname_modules", YAML::NodeType::Scalar);
+        filteringNonameModules = yfilter["filtering_noname_modules"].as<bool>();
     }
 
-    string log_level = "info";
+    string logLevel = "info";
     if (yfilter["level"].IsDefined())
     {
-        check_fied_type("level", YAML::NodeType::Scalar);
-        log_level = yfilter["level"].as<string>();
+        checkFiedType("level", YAML::NodeType::Scalar);
+        logLevel = yfilter["level"].as<string>();
     }
 
     set<string> modules;
     if (yfilter["modules"].IsDefined())
     {
-        check_fied_type("modules", YAML::NodeType::Sequence);
+        checkFiedType("modules", YAML::NodeType::Sequence);
         const YAML::Node& ymodules = yfilter["modules"];
         for (const YAML::Node& ymodule : ymodules)
             modules.insert(ymodule.as<string>());
@@ -111,7 +111,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     set<string> functions;
     if (yfilter["functions"].IsDefined())
     {
-        check_fied_type("functions", YAML::NodeType::Sequence);
+        checkFiedType("functions", YAML::NodeType::Sequence);
         const YAML::Node& yfunctions = yfilter["functions"];
         for (const YAML::Node& yfunction : yfunctions)
             functions.insert(yfunction.as<string>());
@@ -120,7 +120,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     set<string> files;
     if (yfilter["files"].IsDefined())
     {
-        check_fied_type("files", YAML::NodeType::Sequence);
+        checkFiedType("files", YAML::NodeType::Sequence);
         const YAML::Node& yfiles = yfilter["files"];
         for (const YAML::Node& yfile : yfiles)
             files.insert(yfile.as<string>());
@@ -129,7 +129,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     set<long> threads;
     if (yfilter["threads"].IsDefined())
     {
-        check_fied_type("threads", YAML::NodeType::Sequence);
+        checkFiedType("threads", YAML::NodeType::Sequence);
         const YAML::Node& ythreads = yfilter["threads"];
         for (const YAML::Node& ythread : ythreads)
             threads.insert(ythread.as<long>());
@@ -138,63 +138,63 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     FilterPtr filter;
     if (type == "module_name")
     {
-        FilterModulePtr filter_mod {new FilterModule()};
-        filter_mod->setFilteringNoNameModules(filtering_noname_modules);
+        FilterModulePtr filterMod {new FilterModule()};
+        filterMod->setFilteringNoNameModules(filteringNonameModules);
 
         for (const string& module : modules)
-            filter_mod->addModule(module);
+            filterMod->addModule(module);
 
-        filter = filter_mod;
+        filter = filterMod;
     }
     else if (type == "log_level")
     {
-        FilterLevelPtr filter_level {new alog::FilterLevel()};
-        filter_level->setFilteringNoNameModules(filtering_noname_modules);
-        filter_level->setLevel(levelFromString(log_level));
+        FilterLevelPtr filterLevel {new alog::FilterLevel()};
+        filterLevel->setFilteringNoNameModules(filteringNonameModules);
+        filterLevel->setLevel(levelFromString(logLevel));
 
         for (const string& module : modules)
-            filter_level->addModule(module);
+            filterLevel->addModule(module);
 
-        filter = filter_level;
+        filter = filterLevel;
     }
     else if (type == "func_name")
     {
-        FilterFuncPtr filter_func {new FilterFunc()};
+        FilterFuncPtr filterFunc {new FilterFunc()};
         for (const string& function : functions)
-            filter_func->addFunc(function);
+            filterFunc->addFunc(function);
 
-        filter = filter_func;
+        filter = filterFunc;
     }
     else if (type == "file_name")
     {
-        FilterFilePtr filter_file {new FilterFile()};
+        FilterFilePtr filterFile {new FilterFile()};
         for (const string& file : files)
-            filter_file->addFile(file);
+            filterFile->addFile(file);
 
-        filter = filter_file;
+        filter = filterFile;
     }
     else if (type == "thread_id")
     {
-        FilterThreadPtr filter_thread {new FilterThread()};
+        FilterThreadPtr filterThread {new FilterThread()};
         for (long tid : threads)
-            filter_thread->addThread(tid);
+            filterThread->addThread(tid);
 
-        filter = filter_thread;
+        filter = filterThread;
     }
     if (filter.empty())
         return FilterPtr();
 
     filter->setName(name);
     filter->setMode((mode == "include") ? Filter::Mode::Include : Filter::Mode::Exclude);
-    filter->setFilteringErrors(filtering_errors);
-    filter->setFollowThreadContext(follow_thread_context);
+    filter->setFilteringErrors(filteringErrors);
+    filter->setFollowThreadContext(followThreadContext);
 
     return filter;
 }
 
 SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
 {
-    auto check_fied_type = [&ysaver](const string& field, YAML::NodeType::value type)
+    auto checkFiedType = [&ysaver](const string& field, YAML::NodeType::value type)
     {
         if (ysaver[field].IsNull())
             throw std::logic_error(
@@ -209,7 +209,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
     string name;
     if (ysaver["name"].IsDefined())
     {
-        check_fied_type("name", YAML::NodeType::Scalar);
+        checkFiedType("name", YAML::NodeType::Scalar);
         name = ysaver["name"].as<string>();
     }
     if (name.empty())
@@ -218,28 +218,28 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
     int active = -1;
     if (ysaver["active"].IsDefined())
     {
-        check_fied_type("active", YAML::NodeType::Scalar);
+        checkFiedType("active", YAML::NodeType::Scalar);
         active = ysaver["active"].as<bool>();
     }
 
-    string log_level = "info";
+    string logLevel = "info";
     if (ysaver["level"].IsDefined())
     {
-        check_fied_type("level", YAML::NodeType::Scalar);
-        log_level = ysaver["level"].as<string>();
+        checkFiedType("level", YAML::NodeType::Scalar);
+        logLevel = ysaver["level"].as<string>();
     }
 
-    int max_line_size = -1;
+    int maxLineSize = -1;
     if (ysaver["max_line_size"].IsDefined())
     {
-        check_fied_type("max_line_size", YAML::NodeType::Scalar);
-        max_line_size = ysaver["max_line_size"].as<int>();
+        checkFiedType("max_line_size", YAML::NodeType::Scalar);
+        maxLineSize = ysaver["max_line_size"].as<int>();
     }
 
     string file;
     if (ysaver["file"].IsDefined())
     {
-        check_fied_type("file", YAML::NodeType::Scalar);
+        checkFiedType("file", YAML::NodeType::Scalar);
         file = ysaver["file"].as<string>();
     }
     if (file.empty())
@@ -255,29 +255,29 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
         file.replace(0, 1, home);
     }
 
-    bool is_continue = true;
+    bool isContinue = true;
     if (ysaver["continue"].IsDefined())
     {
-        check_fied_type("continue", YAML::NodeType::Scalar);
-        is_continue = ysaver["continue"].as<bool>();
+        checkFiedType("continue", YAML::NodeType::Scalar);
+        isContinue = ysaver["continue"].as<bool>();
     }
 
     list<string> filters_;
     if (ysaver["filters"].IsDefined())
     {
-        check_fied_type("filters", YAML::NodeType::Sequence);
+        checkFiedType("filters", YAML::NodeType::Sequence);
         const YAML::Node& yfilters = ysaver["filters"];
         for (const YAML::Node& yfilter : yfilters)
             filters_.push_back(yfilter.as<string>());
     }
 
-    Level level = levelFromString(log_level);
-    SaverPtr saver {new SaverFile(name, file, level, is_continue)};
+    Level level = levelFromString(logLevel);
+    SaverPtr saver {new SaverFile(name, file, level, isContinue)};
 
     if (active >= 0)
         saver->setActive(active);
-    if (max_line_size >= 0)
-        saver->setMaxLineSize(max_line_size);
+    if (maxLineSize >= 0)
+        saver->setMaxLineSize(maxLineSize);
 
     for (const string& filter_ : filters_)
     {
@@ -355,26 +355,26 @@ void printSaversInfo()
     for (Saver* saver : savers)
         if (SaverFile* fsaver = dynamic_cast<SaverFile*>(saver))
         {
-            alog::Line log_line = log_info_m << "Saver : ";
-            log_line << "name: " << fsaver->name() << "; "
+            alog::Line logLine = log_info_m << "Saver : ";
+            logLine << "name: " << fsaver->name() << "; "
                      << "active: " << fsaver->active() << "; "
                      << "level: " << levelToString(fsaver->level()) << "; "
                      << "max_line_size: " << fsaver->maxLineSize() << "; ";
 
             FilterList filters = fsaver->filters();
-            log_line << "filters: [ ";
+            logLine << "filters: [ ";
             for (Filter* filter : filters)
-                log_line << (filter->name().empty() ? string("''") : filter->name()) << ", ";
-            log_line << "]; ";
-            log_line << "file: " << fsaver->filePath();
+                logLine << (filter->name().empty() ? string("''") : filter->name()) << ", ";
+            logLine << "]; ";
+            logLine << "file: " << fsaver->filePath();
         }
 
     // Составляем список фильтров
     FilterList filters;
     for (Saver* saver : savers)
     {
-        FilterList saver_filters = saver->filters();
-        for (Filter* filter : saver_filters)
+        FilterList saverFilters = saver->filters();
+        for (Filter* filter : saverFilters)
         {
             lst::FindResult fr = filters.findRef(filter->name(),
                                                  lst::FindExtParams(lst::BruteForce::Yes));
@@ -388,49 +388,49 @@ void printSaversInfo()
 
     for (Filter* filter : filters)
     {
-        alog::Line log_line = log_info_m << "Filter : ";
-        log_line << "name: " << filter->name() << "; "
+        alog::Line logLine = log_info_m << "Filter : ";
+        logLine << "name: " << filter->name() << "; "
                  << "mode: " << ((filter->mode() == Filter::Mode::Include) ? "include" : "exclude") << "; "
                  << "filtering_errors: " << filter->filteringErrors() << "; "
                  << "follow_thread_context: " << filter->followThreadContext() << "; ";
 
-        if (FilterModule* mod_filter = dynamic_cast<FilterModule*>(filter))
+        if (FilterModule* modFilter = dynamic_cast<FilterModule*>(filter))
         {
-            log_line << "type: module_name"
-                     << "filtering_noname_modules: " << mod_filter->filteringNoNameModules() << "; ";
-            log_line << "modules: [ ";
-            for (const string& module : mod_filter->modules())
-                log_line << module << ", ";
-            log_line << "]; ";
+            logLine << "type: module_name"
+                     << "filtering_noname_modules: " << modFilter->filteringNoNameModules() << "; ";
+            logLine << "modules: [ ";
+            for (const string& module : modFilter->modules())
+                logLine << module << ", ";
+            logLine << "]; ";
         }
-        else if (FilterLevel* log_filter = dynamic_cast<FilterLevel*>(filter))
+        else if (FilterLevel* logFilter = dynamic_cast<FilterLevel*>(filter))
         {
-            log_line << "type: log_level";
-            log_line << "level: " << levelToString(log_filter->leve()) << "; ";
+            logLine << "type: log_level";
+            logLine << "level: " << levelToString(logFilter->leve()) << "; ";
         }
-        else if (FilterFunc* func_filter = dynamic_cast<FilterFunc*>(filter))
+        else if (FilterFunc* funcFilter = dynamic_cast<FilterFunc*>(filter))
         {
-            log_line << "type: func_name";
-            log_line << "functions: [ ";
-            for (const string& function : func_filter->funcs())
-                log_line << function << ", ";
-            log_line << "]; ";
+            logLine << "type: func_name";
+            logLine << "functions: [ ";
+            for (const string& function : funcFilter->funcs())
+                logLine << function << ", ";
+            logLine << "]; ";
         }
-        else if (FilterFile* file_filter = dynamic_cast<FilterFile*>(filter))
+        else if (FilterFile* fileFilter = dynamic_cast<FilterFile*>(filter))
         {
-            log_line << "type: file_name";
-            log_line << "files: [ ";
-            for (const string& file : file_filter->files())
-                log_line << file << ", ";
-            log_line << "]; ";
+            logLine << "type: file_name";
+            logLine << "files: [ ";
+            for (const string& file : fileFilter->files())
+                logLine << file << ", ";
+            logLine << "]; ";
         }
-        else if (FilterThread* file_thread = dynamic_cast<FilterThread*>(filter))
+        else if (FilterThread* threadFilter = dynamic_cast<FilterThread*>(filter))
         {
-            log_line << "type: thread_id";
-            log_line << "threads: [ ";
-            for (pid_t tid : file_thread->threads())
-                log_line << long(tid) << ", ";
-            log_line << "]; ";
+            logLine << "type: thread_id";
+            logLine << "threads: [ ";
+            for (pid_t tid : threadFilter->threads())
+                logLine << long(tid) << ", ";
+            logLine << "]; ";
         }
     }
     log_info_m << "...";
