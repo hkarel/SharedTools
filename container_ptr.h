@@ -420,7 +420,7 @@ private:
 #ifndef NDEBUG
     // Используется для просмотра в отладчике параметров типа Т,
     // counter_ptr_t - этого делать не позволяет, т.к. возвращает void*
-    mutable T* _dbg;
+    mutable T* _dbg = {0};
 #endif
 
     template<typename, template<typename> class> friend class container_ptr;
