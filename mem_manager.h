@@ -153,28 +153,31 @@ template<typename T> struct MemLocker
 template <
     typename T,
     typename LockT = MemLockDummy
-    //int      ArraySize  = 1000,
-    //bool     FreeArrays = true
 >
 class MemManager
 {
 public:
-    /// @brief Конструктор
-    ///
-    /// @param[in] arraySize Определяет количество элементов MemBlock в массиве MemBlockArray.
-    /// @param[in] freeArrays Определяет необходимость разрушать объекты MemBlockArray.
-    //MemManager(int arraySize = ArraySize, bool freeArrays = FreeArrays) :
-    MemManager(int arraySize = 128, bool freeArrays = true) :
+    MemManager() :
         _freeBlocks(0),
         _arrays(0),
-        _arraySize(arraySize),
-        _freeArrays(freeArrays),
+        _arraySize(128),
+        _freeArrays(true),
         _callsCount(0)
     {
         // Если в этом месте получили ошибку компиляции - это означает, что размер
         // элемента меньше размера его указателя. Для данного менеджера памяти эта
         // ситуация недопустима.
         static_assert((sizeof(T) >= sizeof(T*)), "Element size should be larger than the size of its pointer");
+    }
+
+    /// @brief Конструктор
+    ///
+    /// @param[in] arraySize Определяет количество элементов MemBlock в массиве MemBlockArray.
+    /// @param[in] freeArrays Определяет необходимость разрушать объекты MemBlockArray.
+    MemManager(int arraySize, bool freeArrays = true) : MemManager()
+    {
+        _arraySize = arraySize;
+        _freeArrays = freeArrays;
     }
     //~MemManager()
     //{
@@ -272,8 +275,6 @@ public:
 //    }
 
 private:
-    // Запрет конструктора по умолчанию.
-    MemManager() = delete;
     MemManager(MemManager&&) = delete;
     MemManager(const MemManager&) = delete;
     MemManager& operator= (MemManager&&) = delete;
