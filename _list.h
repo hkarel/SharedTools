@@ -387,7 +387,7 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
            {
              LIST_COMPARE_MULTI_ITEM(item1->field1, item2->field1)
              LIST_COMPARE_MULTI_ITEM(item1->field2, item2->field2)
-             LIST_COMPARE_MULTI_ITEM(item1->field3, item2->field3);
+             LIST_COMPARE_MULTI_ITEM(item1->field3, item2->field3)
              return 0;
            }
          };
