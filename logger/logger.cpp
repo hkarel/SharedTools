@@ -765,10 +765,10 @@ void Logger::run()
             {
                 step = messages.count() / (threadsCount + 1);
                 for (; threadIndex < threadsCount; ++threadIndex)
-                {
-                    threads.push_back(thread(prefixFormatterL, std::ref(messages),
-                                             threadIndex * step, (threadIndex + 1) * step));
-                }
+                    threads.push_back(thread(prefixFormatterL,
+                                             std::ref(messages),
+                                             threadIndex * step,
+                                             (threadIndex + 1) * step));
             }
             prefixFormatterL(messages, threadIndex * step, messages.count());
 
