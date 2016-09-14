@@ -248,11 +248,13 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
     if (file[0] == '~')
     {
 #if defined(_MSC_VER) || defined(__MINGW32__)
-        // Отладить под Windows
-        break_point
-#endif
+        const char* home = getenv("USERPROFILE");
+#else
         const char* home = getenv("HOME");
+#endif
         file.replace(0, 1, home);
+        for (string::value_type& c : file)
+            if (c == '\\') c = '/';
     }
 
     bool isContinue = true;
