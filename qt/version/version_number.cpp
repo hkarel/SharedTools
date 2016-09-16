@@ -1,6 +1,18 @@
 #include "version_number.h"
 
 
+#ifndef VERSION_MIN_COMPATIBLE_MAJOR
+#define VERSION_MIN_COMPATIBLE_MAJOR 0
+#endif
+
+#ifndef VERSION_MIN_COMPATIBLE_MINOR
+#define VERSION_MIN_COMPATIBLE_MINOR 0
+#endif
+
+#ifndef VERSION_MIN_COMPATIBLE_PATCH
+#define VERSION_MIN_COMPATIBLE_PATCH 0
+#endif
+
 const VersionNumber& productVersion()
 {
     const static VersionNumber version(VERSION_PROJECT_MAJOR,
