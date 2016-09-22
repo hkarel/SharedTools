@@ -135,22 +135,28 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
                       "a command identifier of message (%2).")
                       .arg(data.command().toString(), message->command().toString());
     }
-    else if (message->commandType() == command::Type::Request
-             || message->commandType() == command::Type::Event)
+    else if (message->commandType() == command::Type::Request)
     {
         if (data.forRequest())
         {
-            message->setCommandType(command::Type::Request);
             message->setCommandExecStatus(command::ExecStatus::Unknown);
             return message->writeContent(data);
         }
         err = "Structure of data cannot be used for 'Request'-message.";
     }
+    else if (message->commandType() == command::Type::Event)
+    {
+        if (data.forEvent())
+        {
+            message->setCommandExecStatus(command::ExecStatus::Unknown);
+            return message->writeContent(data);
+        }
+        err = "Structure of data cannot be used for 'Event'-message.";
+    }
     else if (message->commandType() == command::Type::Response)
     {
         if (data.forResponse())
         {
-            message->setCommandType(command::Type::Response);
             message->setCommandExecStatus(command::ExecStatus::Success);
             return message->writeContent(data);
         }
