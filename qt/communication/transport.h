@@ -108,7 +108,7 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(communication::Message::Ptr);
+    void message(const communication::Message::Ptr&);
 
     // Сигнал эмитируется после установления TCP-соединения и после
     // проверки совместимости версий бинарного протокола.
@@ -233,7 +233,7 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(communication::Message::Ptr);
+    void message(const communication::Message::Ptr&);
 
 private slots:
     void removeClosedSockets();
