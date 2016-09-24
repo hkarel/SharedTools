@@ -127,8 +127,6 @@ bool Socket::socketIsConnected() const
 bool Socket::isLoopback() const
 {
 #if QT_VERSION >= 0x050000
-    // Отладить
-    break_point
     return (_socket && _socket->peerAddress().isLoopback());
 #else
     return (_socket && (_socket->peerAddress() == QHostAddress::LocalHost));
