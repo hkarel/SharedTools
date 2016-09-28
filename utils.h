@@ -13,6 +13,7 @@
 #include <cstdarg>
 #include <streambuf>
 #include <vector>
+#include <numeric>
 #include <algorithm>
 
 namespace utl {
