@@ -261,7 +261,6 @@ public:
         return *this;
     }
 
-
     // Динамическое преобразование типа.
     template<typename other_cptrT>
     other_cptrT dynamic_cast_to() const {
@@ -426,10 +425,8 @@ private:
     template<typename, template<typename> class> friend class container_ptr;
 };
 
-
 //template<typename CPtr> struct container_ptr_traits {enum{Yes = 0;}};
 //template<typename CPtr> struct container_ptr_traits {enum{Yes = 0;}};
-
 
 #undef GET_DEBUG
 #undef PRINT_DEBUG
