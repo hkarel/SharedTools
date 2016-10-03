@@ -106,7 +106,11 @@ vector<string> split(const string& str, char delim, bool keepEmptyParts = false)
 // после запятой
 double round(double number, int signCount);
 
-// Возвращает среднее арифметическое для списка элементов
+// Возвращает сумму элементов списка
+template<typename T>
+typename T::value_type sum(const T& elements);
+
+// Возвращает среднее арифметическое элементов списка
 template<typename T>
 double average(const T& elements);
 
@@ -124,10 +128,16 @@ string formatMessage(const char* format, ...)
 }
 
 template<typename T>
+typename T::value_type sum(const T& elements)
+{
+    return std::accumulate(elements.begin(), elements.end(), typename T::value_type(0));
+}
+
+template<typename T>
 double average(const T& elements)
 {
-    double sum = std::accumulate(elements.begin(), elements.end(), typename T::value_type(0));
-    return (sum / elements.size());
+    double s = sum(elements);
+    return (s / elements.size());
 }
 
 } // namespace utl
