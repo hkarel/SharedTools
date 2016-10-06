@@ -92,33 +92,22 @@ string levelToString(Level level)
 
 // Формирует префикс строки лога. В префикс входит время и дата записи, уровень
 // логирования,  номер потока, наименование функции из которой выполнен вызов.
-void prefixFormatter(Message& message)
+void prefixFormatter(Message& message, time_t& lastTime, char buff[sizeof(Message::prefix)])
 {
-    char buff[sizeof(Message::prefix)] = {0};
+    if (lastTime != message.timeVal.tv_sec)
+    {
+        std::tm tm;
+        memset(&tm, 0, sizeof(tm));
+        memset(buff, 0, sizeof(Message::prefix));
 
-    std::tm tm;
-    memset(&tm, 0, sizeof(tm));
+        lastTime = message.timeVal.tv_sec;
+        localtime_r(&lastTime, &tm);
 
-    time_t t = message.timeVal.tv_sec;
-    localtime_r(&t, &tm);
-
-//    //if (message.level == Level::DEBUG2)
-//    if (logger->level() == Level::DEBUG2)
-//    {
-//        long tv_usec = long(message.timeVal.tv_usec);
-//        snprintf(buff, sizeof(buff) - 1,
-//                 "%02d.%02d.%04d %02d:%02d:%02d.%06ld ",
-//                 tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec, tv_usec);
-//    }
-//    else
-//        snprintf(buff, sizeof(buff) - 1,
-//                 "%02d.%02d.%04d %02d:%02d:%02d ",
-//                 tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
-
-    snprintf(buff, sizeof(buff) - 1,
-             "%02d.%02d.%04d %02d:%02d:%02d",
-             tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
-    memcpy(message.prefix, buff, sizeof(buff));
+        snprintf(buff, sizeof(Message::prefix) - 1,
+                 "%02d.%02d.%04d %02d:%02d:%02d",
+                 tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    }
+    memcpy(message.prefix, buff, sizeof(Message::prefix));
 }
 
 void prefixFormatter2(Message& message)
@@ -743,10 +732,12 @@ void Logger::run()
         {
             auto prefixFormatterL = [this] (MessageList& messages, int min, int max)
             {
+                time_t lastTime = 0;
+                char prefixBuff[sizeof(Message::prefix)] = {0};
                 Level level = this->level(); // volatile оптимизация
                 for (int i = min; i < max; ++i)
                 {
-                    prefixFormatter(messages[i]);
+                    prefixFormatter(messages[i], lastTime, prefixBuff);
                     if (level == Level::Debug2)
                         prefixFormatter2(messages[i]);
                     prefixFormatter3(messages[i]);
