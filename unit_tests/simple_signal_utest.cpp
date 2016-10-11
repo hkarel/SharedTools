@@ -3,6 +3,7 @@
 // g++ -std=c++11 -ggdb3 -Wall -Wno-unused-but-set-variable simple_signal_utest.cpp -o simple_signal_utest
 
 //#include <unistd.h>
+#include <atomic>
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -77,8 +78,8 @@ float F6(const float& x, float* y)
 }
 
 
-volatile int threads_count = 4;
-volatile int threads_loop = 0;
+std::atomic_int threads_count {4};
+std::atomic_int threads_loop  {0};
 
 typedef Closure<float (float, float)> ThreadFunc;
 SimpleSignal<ThreadFunc> thread_signal;
@@ -184,7 +185,7 @@ int main()
     signal.connect(s);
     signal.emit_(3, 5);
 
-    return 0;
+    //return 0;
 
     SimpleSignal<ThreadFunc>& th_signal = thread_signal; (void) th_signal;
 
@@ -221,6 +222,8 @@ int main()
     t2.join();
     t3.join();
     t4.join();
+
+    std::cout << "Multithread test PASSED\n";
 
     return 0;
 }

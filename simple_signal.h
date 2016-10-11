@@ -56,7 +56,6 @@
 #include "spin_locker.h"
 
 #include <atomic>
-#include <mutex>
 #include <vector>
 #include <type_traits>
 
@@ -120,10 +119,11 @@ private:
     SimpleSignalBase(SimpleSignalBase &&) = delete;
     SimpleSignalBase& operator= (SimpleSignalBase &&) = delete;
 
+    template<typename T>
     struct ResetSlotIndex
     {
-        std::atomic_int* p;
-        ResetSlotIndex(std::atomic_int* p) NOEXCEPT : p(p) {}
+        T* p;
+        ResetSlotIndex(T* p) NOEXCEPT : p(p) {}
         ~ResetSlotIndex() NOEXCEPT {(*p) = -1;}
     };
 
@@ -138,14 +138,19 @@ private:
     // потоков. Запрет носит не технический, а концептуальный характер: эмиссия
     // сообщений не должна производиться произвольно из разных потоков, т.к.
     // это будет вносить хаос в рассылку сообщений.
-    mutable std::mutex _emitLock;
+    // [11.10.2016] Карелин: использование мьютекса снижает производительность
+    //              вызовов событий более чем в 2 раза.
+    // mutable std::mutex _emitLock;
 
     SlotList _slots;
-    mutable std::atomic_flag  _slotsLock = ATOMIC_FLAG_INIT;
+    mutable std::atomic_flag _slotsLock = ATOMIC_FLAG_INIT;
 
     // Содержит индекс слота из списка _slots вызываемого в данный момент
     // в функции call()
-    mutable std::atomic_int _slotIndex = {-1};
+    // [11.10.2016] Карелин: использование atomic_int катастрофически
+    //              снижает производительность вызовов call().
+    // mutable std::atomic_int _slotIndex = {-1};
+    mutable int _slotIndex = {-1};
 
     volatile bool _block = {false};
 };
@@ -222,8 +227,14 @@ void SimpleSignalBase<R, Args...>::disconnect(const Slot& f, bool all)
     // Что бы этого избежать - нужно приостановить процесс разрушения объекта
     // до тех пор пока обработчик слотов (метод call()) не перейдет к следующему
     // слоту, и _slotIndex не поменяется.
-    while (index == _slotIndex) {
-        //break_point
+    while (true)
+    {
+        { //Block for SpinLocker
+            SpinLocker locker(_slotsLock); (void) locker;
+            if (index == _slotIndex)
+                continue;
+        }
+        break;
     }
 }
 
@@ -248,7 +259,8 @@ bool SimpleSignalBase<R, Args...>::empty() const
 template <typename R, typename... Args>
 R SimpleSignalBase<R, Args...>::emit_(Args... args) const
 {
-    std::lock_guard<std::mutex> locker(_emitLock); (void) locker;
+    //std::lock_guard<std::mutex> locker(_emitLock); (void) locker;
+
     // При передаче args... не используем вызов std::forward(),
     // см. пояснения в примечании к описанию модуля.
     return call<R>(args...);
@@ -269,7 +281,7 @@ Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Re
     if (_block) return res;
 
     Slot slot;
-    ResetSlotIndex reset_index(&_slotIndex); (void) reset_index;
+    ResetSlotIndex<decltype(_slotIndex)> reset_index(&_slotIndex); (void) reset_index;
 
     _slotIndex = -1;
     while (true)
@@ -277,10 +289,10 @@ Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Re
         { //Block for SpinLocker
             SpinLocker locker(_slotsLock); (void) locker;
             do {
-                if ((_slotIndex + 1) >= _slots.size())
+                if (++_slotIndex >= _slots.size())
                     return res;
 
-                slot = _slots[++_slotIndex];
+                slot = _slots[_slotIndex];
             }
             while (slot.empty());
         }
@@ -298,7 +310,7 @@ void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Re
     if (_block) return;
 
     Slot slot;
-    ResetSlotIndex reset_index(&_slotIndex); (void) reset_index;
+    ResetSlotIndex<decltype(_slotIndex)> reset_index(&_slotIndex); (void) reset_index;
 
     _slotIndex = -1;
     while (true)
@@ -306,10 +318,10 @@ void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Re
         { //Block for SpinLocker
             SpinLocker locker(_slotsLock); (void) locker;
             do {
-                if ((_slotIndex + 1) >= _slots.size())
+                if (++_slotIndex >= _slots.size())
                     return;
 
-                slot = _slots[++_slotIndex];
+                slot = _slots[_slotIndex];
             }
             while (slot.empty());
         }
