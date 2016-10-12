@@ -17,7 +17,6 @@
 
 class QThreadEx : public QThread
 {
-    Q_OBJECT
 public:
     explicit QThreadEx(QObject * parent = 0);
 
@@ -51,6 +50,7 @@ protected:
     void sleep(unsigned long timeout);
 
 private:
+    Q_OBJECT
     volatile bool _threadStop;
     QAtomicInt _waitThreadStart;
 

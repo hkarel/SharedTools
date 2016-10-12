@@ -26,6 +26,7 @@
 namespace communication {
 namespace transport {
 
+class Sender;
 class Listener;
 
 /**
@@ -61,7 +62,6 @@ protected:
 */
 class Socket : public QThreadEx, public Base
 {
-    Q_OBJECT
 public:
     typedef container_ptr<Socket> Ptr;
 
@@ -121,14 +121,15 @@ private slots:
     // Обработчик сигнала QTcpSocket::disconnected()
     void socketDisconnected();
 
-protected:
-    Socket() = default;
+private:
+    Q_OBJECT
     DISABLE_DEFAULT_COPY(Socket)
 
+    Socket() = default;
     void run() override;
     void setSocketDescriptor(SocketDescriptor);
 
-protected:
+private:
     // Список команд доступных на принимающей стороне, позволяет передавать
     // только известные принимающей стороне команды.
     QSet<QUuidEx> _remoteCommands;
@@ -153,6 +154,7 @@ protected:
     QWaitCondition _loopCondition;
     mutable QMutex _loopConditionLock;
 
+    friend class Sender;
     friend class Listener;
     template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
 };
@@ -164,7 +166,6 @@ protected:
 */
 class Sender : public Socket
 {
-    Q_OBJECT
 public:
     // Режим передачи сообщения: синхронный/асинхронный
     //enum {SyncMode = true, AsyncMode = false};
@@ -185,6 +186,7 @@ public:
     void disconnect();
 
 private:
+    Q_OBJECT
     DISABLE_DEFAULT_COPY(Sender)
     void run() override;
 };
@@ -197,7 +199,6 @@ private:
 */
 class Listener : public QTcpServer, public Base
 {
-    Q_OBJECT
 public:
     Listener();
 
@@ -239,6 +240,7 @@ private slots:
     void removeClosedSockets();
 
 private:
+    Q_OBJECT
     DISABLE_DEFAULT_COPY(Listener)
     void incomingConnection (SocketDescriptor socketDescriptor) override;
 
