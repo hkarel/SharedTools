@@ -334,7 +334,7 @@ public:
     }
 
 private:
-    // Вспомогательный конструктор, используется в функции dynamic_cast_().
+    // Вспомогательный конструктор, используется в функции dynamic_cast_to().
     // Добавлены два фиктивных параметра, чтобы избежать неоднозначностей компиляции.
     explicit container_ptr(/*const*/ counter_ptr_t* counter, int, int) {
         _counter = counter;
