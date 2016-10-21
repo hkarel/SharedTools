@@ -1,12 +1,12 @@
 /* clang-format off */
 /****************************************************************************
   Author of idea: Fedorin Denis
-  В модуле реализована функция имитирующая breakpoint для gdb отладчика.
+  The module implemented the program breakpoint
 ****************************************************************************/
 
 #pragma once
 
-/*** Исходный пример ***
+/*** Original example ***
 void sigtrap_handler(int signo)
 {}
 
