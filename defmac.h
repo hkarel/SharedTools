@@ -1,55 +1,54 @@
 /* clang-format off */
 /****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
-
-  Хэдер определяет макросы общего назначения.
+  This header is defined macros of general purpose.
 ****************************************************************************/
 
 #pragma once
 
-/* Запрет конструктора по умолчанию и копирующего конструктора */
-#define DISABLE_DEFAULT_CONSTRUCT( ClassName )    \
-    ClassName () = delete;                        \
-    ClassName ( ClassName && ) = delete;          \
+#define DISABLE_DEFAULT_CONSTRUCT( ClassName ) \
+    ClassName () = delete;                     \
+    ClassName ( ClassName && ) = delete;       \
     ClassName ( const ClassName & ) = delete;
 
-/* Запрет копирующего конструктора и оператора присваивания */
-#define DISABLE_DEFAULT_COPY( ClassName )         \
-    ClassName ( ClassName && ) = delete;          \
-    ClassName ( const ClassName & ) = delete;     \
+#define DISABLE_DEFAULT_COPY( ClassName )      \
+    ClassName ( ClassName && ) = delete;       \
+    ClassName ( const ClassName & ) = delete;  \
     ClassName & operator = ( ClassName && ) = delete; \
     ClassName & operator = ( const ClassName & ) = delete;
 
-/* Запрет конструктора по умолчанию, копирующего конструктора и оператора присваивания */
-#define DISABLE_DEFAULT_FUNC( ClassName )         \
-    ClassName () = delete;                        \
-    ClassName ( ClassName && ) = delete;          \
-    ClassName ( const ClassName & ) = delete;     \
+#define DISABLE_DEFAULT_FUNC( ClassName )      \
+    ClassName () = delete;                     \
+    ClassName ( ClassName && ) = delete;       \
+    ClassName ( const ClassName & ) = delete;  \
     ClassName & operator = ( ClassName && ) = delete; \
     ClassName & operator = ( const ClassName & ) = delete;
 
 
-// Макрос chk_connect используется для проверки возвращаемого функцией результата
-// в отладочном режиме, этим он похож на функцию assert. Однако в релизном
-// режиме, в отличии от ф-ции assert - тестируемое выражение не удаляется.
-// Для использования макроса в код нужно включить <assert.h>
+/**
+  The chk_connect macro is used to check the result returned by the function
+  QObject::connect() in debug mode, it looks like on assert() function.
+  However, in the release mode, unlike the assert() function - test expression
+  is not removed.
+  To use the macro in the code need include <assert.h>
+*/
 #ifndef NDEBUG
 #define chk_connect(SOURCE_, SIGNAL_, DEST_, SLOT_, CONNECT_TYPE_) \
             Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, CONNECT_TYPE_));
 
-// Соответствует параметру соединения Qt::AutoConnection
+// It corresponds to the connection Qt::AutoConnection
 #define chk_connect_a(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::AutoConnection));
 
-// Соответствует параметру соединения Qt::DirectConnection
+// It corresponds to the connection Qt::DirectConnection
 #define chk_connect_d(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::DirectConnection));
 
-// Соответствует параметру соединения Qt::QueuedConnection
+// It corresponds to the connection Qt::QueuedConnection
 #define chk_connect_q(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::QueuedConnection));
 
-// Соответствует параметру соединения Qt::BlockingQueuedConnection
+// It corresponds to the connection Qt::BlockingQueuedConnection
 #define chk_connect_bq(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::BlockingQueuedConnection));
 
@@ -57,38 +56,20 @@
 #define chk_connect(SOURCE_, SIGNAL_, DEST_, SLOT_, CONNECT_TYPE_) \
             QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, CONNECT_TYPE_);
 
-// Соответствует параметру соединения Qt::AutoConnection
+// It corresponds to the connection Qt::AutoConnection
 #define chk_connect_a(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::AutoConnection);
 
-// Соответствует параметру соединения Qt::DirectConnection
+// It corresponds to the connection Qt::DirectConnection
 #define chk_connect_d(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::DirectConnection);
 
-// Соответствует параметру соединения Qt::QueuedConnection
+// It corresponds to the connection Qt::QueuedConnection
 #define chk_connect_q(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::QueuedConnection);
 
-// Соответствует параметру соединения Qt::BlockingQueuedConnection
+// It corresponds to the connection Qt::BlockingQueuedConnection
 #define chk_connect_bq(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::BlockingQueuedConnection);
 
 #endif //NDEBUG
-
-
-//#define DECLSP_SELECTANY  extern "C" __declspec(selectany)
-
-
-/* Фиктивные описатели для параметров функций */
-#ifndef IN
-#define IN
-#endif
-
-#ifndef OPTIONAL
-#define OPTIONAL
-#endif
-
-#ifndef OUT
-#define OUT
-#endif
-
