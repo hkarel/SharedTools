@@ -1,17 +1,18 @@
 /* clang-format off */
-/*****************************************************************************
+/****************************************************************************
   Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
 
   В модуле реализован класс-список (List) с доступом к элементам по индексу.
 
   Реализованы механизмы:
-    - быстрой сортировки
-    - частичной сортировки
-    - быстрого поиска
-    - грубого поиска
-    - возможность добавлять элементы в список без нарушения порядка сортировки
+    - быстрой сортировки;
+    - частичной сортировки;
+    - быстрого поиска;
+    - грубого поиска;
+    - возможность добавлять элементы в список без нарушения порядка
+      сортировки.
 
-*****************************************************************************/
+****************************************************************************/
 
 #pragma once
 
@@ -28,19 +29,6 @@
 #include "break_point.h"
 
 namespace lst {
-
-//#if defined(_MSC_VER)
-//#define DECLSPEC_SELECTANY_LST extern "C" __declspec(selectany)
-//#else
-//#define DECLSPEC_SELECTANY_LST constexpr
-//#endif
-
-//DECLSPEC_SELECTANY_LST const bool CONTAINER_CLASS = true;
-//DECLSPEC_SELECTANY_LST const bool NO_CONTAINER_CLASS = !CONTAINER_CLASS;
-//DECLSPEC_SELECTANY_LST const bool REFERENCE_CLASS = !CONTAINER_CLASS;
-
-//DECLSPEC_SELECTANY_LST const bool COMPRESS_LIST = true;
-//DECLSPEC_SELECTANY_LST const bool NO_COMPRESS_LIST = !COMPRESS_LIST;
 
 constexpr bool CONTAINER_CLASS = true;
 constexpr bool NO_CONTAINER_CLASS = !CONTAINER_CLASS;
