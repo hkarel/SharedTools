@@ -66,6 +66,8 @@ void Base::setCompressionLevel(int val)
 
 //-------------------------------- Socket ------------------------------------
 
+const QUuidEx Socket::_protocolSignature = {"82c40273-4037-4f1b-a823-38123435b22f"};
+
 bool Socket::isConnected() const
 {
     return (socketIsConnected()
@@ -157,6 +159,8 @@ bool Socket::remoteCommandExists(const QUuidEx& command) const
 
 void Socket::socketDisconnected()
 {
+    _protocolSignatureRead = false;
+    _protocolSignatureWrite = false;
     emit disconnected(_socketDescriptor);
 }
 
@@ -345,6 +349,58 @@ void Socket::run()
             if (loopBreak)
                 break;
 
+            // Отправка сигнатуры протокола
+            if (!_protocolSignatureWrite)
+            {
+                QByteArray ba;
+                QDataStream s {&ba, QIODevice::WriteOnly};
+                s << _protocolSignature;
+                _socket->write(ba.constData(), 16);
+                CHECK_SOCKET_ERROR
+                _protocolSignatureWrite = true;
+            }
+
+            // Проверка сигнатуры протокола
+            if (!_protocolSignatureRead)
+            {
+                timer.restart();
+                while (_socket->bytesAvailable() < 16)
+                {
+                    _socket->waitForReadyRead(delay);
+                    CHECK_SOCKET_ERROR
+                    static const int timeout {40 * delay};
+                    if (timer.hasExpired(timeout))
+                    {
+                        log_error_m << "The signature of protocol is not "
+                                    << "received within " << timeout << " ms";
+                        loopBreak = true;
+                        break;
+                    }
+                }
+                if (loopBreak)
+                    break;
+
+                QByteArray ba;
+                ba.resize(16);
+                if (_socket->read((char*)ba.data(), 16) != 16)
+                {
+                    log_error_m << "Failed read protocol signature";
+                    loopBreak = true;
+                    break;
+                }
+
+                QUuidEx protocolSignature;
+                QDataStream s {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+                s >> protocolSignature;
+                if (_protocolSignature != protocolSignature)
+                {
+                    log_error_m << "Incompatible protocol signatures";
+                    loopBreak = true;
+                    break;
+                }
+                _protocolSignatureRead = true;
+            }
+
             // Отправляем внешние сообщения только когда есть ясность
             // по совместимости бинарных протоколов.
             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
@@ -371,7 +427,7 @@ void Socket::run()
                     [&removeMessages](Message* m) -> bool
                     {
                         bool res = removeMessages.contains(m->command());
-                        if (res && alog::logger().level() == alog::Level::Debug2)
+                        if (res && (alog::logger().level() == alog::Level::Debug2))
                             log_debug2_m << "Message removed to a queue to sending."
                                          << " Command " << CommandNameLog(m->command());
                         return res;

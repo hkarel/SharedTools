@@ -154,6 +154,10 @@ private:
     QWaitCondition _loopCondition;
     mutable QMutex _loopConditionLock;
 
+    static const QUuidEx _protocolSignature;
+    bool _protocolSignatureRead = {false};
+    bool _protocolSignatureWrite = {false};
+
     friend class Sender;
     friend class Listener;
     template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
