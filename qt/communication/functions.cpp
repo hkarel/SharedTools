@@ -97,4 +97,25 @@ QString errorDescription(const Message::Ptr& message)
     return descr;
 }
 
+namespace data {
+
+QDataStream& operator>> (QDataStream& s, timeval& tv)
+{
+    qint64 sec;
+    qint32 usec;
+    s >> sec;
+    s >> usec;
+    tv.tv_sec = sec;
+    tv.tv_usec = usec;
+    return s;
+}
+
+QDataStream& operator<< (QDataStream& s, const timeval& tv)
+{
+    s << qint64(tv.tv_sec);
+    s << qint32(tv.tv_usec);
+    return s;
+}
+
+} // namespace data
 } // namespace communication

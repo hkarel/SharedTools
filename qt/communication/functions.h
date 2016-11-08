@@ -8,6 +8,7 @@
 #include "commands_base.h"
 #include "message.h"
 
+#include <sys/time.h>
 #include <typeinfo>
 #include <stdexcept>
 #include <type_traits>
@@ -182,5 +183,10 @@ bool writeToMessage(const data::MessageFailed&, const Message::Ptr&);
   об ошибке - возвращается пустая строка.
 */
 QString errorDescription(const Message::Ptr&);
+
+namespace data {
+QDataStream& operator>> (QDataStream&, timeval&);
+QDataStream& operator<< (QDataStream&, const timeval&);
+} // namespace data
 
 } // namespace communication
