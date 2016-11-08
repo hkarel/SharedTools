@@ -81,8 +81,8 @@ struct Message //: public clife_base
     string func;
     int    line;
 
-    struct timeval timeVal;
-    pid_t  threadId;
+    timeval timeVal;
+    pid_t   threadId;
 
     Message() {}
     Message(Message&&) = default;
@@ -208,7 +208,7 @@ private:
 
     // Список идентификаторов потоков, используется для фильтрации сообщений
     // по контексту потока.
-    mutable map<pid_t, struct timeval> _threadContextIds;
+    mutable map<pid_t, timeval> _threadContextIds;
 
     friend class Saver;
 };

@@ -226,12 +226,12 @@ void Filter::removeIdsTimeoutThreads()
     if (_threadContextIds.empty())
         return;
 
+    timeval curTime;
     vector<pid_t> tids;
-    struct timeval curTime;
     gettimeofday(&curTime, NULL);
     for (const auto& tci : _threadContextIds)
     {
-        const struct timeval& timeVal = tci.second;
+        const timeval& timeVal = tci.second;
         // Таймаут в 3 сек.
         if (curTime.tv_sec > (timeVal.tv_sec + 3)
             || ((curTime.tv_sec == (timeVal.tv_sec + 3))
