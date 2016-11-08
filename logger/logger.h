@@ -689,14 +689,6 @@ Line  operator<< (Line&& line, const timeval& tv);
 
 } // namespace alog
 
-//inline alog::Logger& logger() {return alog::logger();}
-
-
-//#if defined(_MSC_VER)
-//#define  LOGGER_FUNC_NAME  __FUNCTION__
-//#else
-//#define  LOGGER_FUNC_NAME  __PRETTY_FUNCTION__
-//#endif
 #define LOGGER_FUNC_NAME  __func__
 
 #define log_error   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
