@@ -32,9 +32,10 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <string>
+#include <cmath>
 #include <set>
 #include <map>
-#include <string>
 
 
 namespace alog /*async logger*/ {
@@ -682,6 +683,9 @@ inline Line operator<< (Line&& line, bool b)
         line.impl->buff << (b ? "true" : "false");
     return std::move(line);
 }
+
+Line& operator<< (Line&  line, const timeval& tv);
+Line  operator<< (Line&& line, const timeval& tv);
 
 } // namespace alog
 

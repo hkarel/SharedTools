@@ -227,8 +227,9 @@ void Filter::removeIdsTimeoutThreads()
         return;
 
     timeval curTime;
-    vector<pid_t> tids;
     gettimeofday(&curTime, NULL);
+
+    vector<pid_t> tids;
     for (const auto& tci : _threadContextIds)
     {
         const timeval& timeVal = tci.second;
@@ -990,6 +991,34 @@ void Logger::redefineLevel()
             level = saver->level();
 
     _level = level;
+}
+
+//---------------------------- Line operators --------------------------------
+
+Line& operator<< (Line& line, const timeval& tv)
+{
+    if (line.toLogger())
+    {
+        char buff[10] = {0};
+        long tv_usec = long(tv.tv_usec);
+        snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
+        buff[5] = '\0';
+        line.impl->buff << tv.tv_sec << buff;
+    }
+    return line;
+}
+
+Line operator<< (Line&& line, const timeval& tv)
+{
+    if (line.toLogger())
+    {
+        char buff[10] = {0};
+        long tv_usec = long(tv.tv_usec);
+        snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
+        buff[5] = '\0';
+        line.impl->buff << tv.tv_sec << buff;
+    }
+    return std::move(line);
 }
 
 } // namespace alog
