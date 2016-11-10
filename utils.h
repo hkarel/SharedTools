@@ -7,6 +7,7 @@
 #pragma once
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <atomic>
 #include <string>
@@ -105,6 +106,11 @@ vector<string> split(const string& str, char delim, bool keepEmptyParts = false)
 // Выполняет округление действительного числа number до signCount знаков
 // после запятой
 double round(double number, int signCount);
+
+// Функции сложения/вычитания структур timeval. По сути эти функции повторяют
+// макросы timeradd/timersub, проблема в том, в MinGW эти макросы не реализованы.
+void timeAdd(const timeval& a, const timeval& b, timeval& result);
+void timeSub(const timeval& a, const timeval& b, timeval& result);
 
 // Возвращает сумму элементов списка
 template<typename T>
