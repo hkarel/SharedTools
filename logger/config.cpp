@@ -242,6 +242,13 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
         checkFiedType("file", YAML::NodeType::Scalar);
         file = ysaver["file"].as<string>();
     }
+#if defined(_MSC_VER) || defined(__MINGW32__)
+    if (ysaver["file_win"].IsDefined())
+    {
+        checkFiedType("file_win", YAML::NodeType::Scalar);
+        file = ysaver["file_win"].as<string>();
+    }
+#endif
     if (file.empty())
         throw std::logic_error("In a saver-node a field 'file' can not be empty");
 
