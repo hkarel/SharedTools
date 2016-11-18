@@ -26,6 +26,11 @@ Message::Message(const QUuidEx& command) : Message()
     _commandExecStatus = static_cast<quint32>(command::ExecStatus::Unknown);
 }
 
+void Message::setCompressionLevel(int val)
+{
+    _compressionLevel = qBound(-1, val, 9);
+}
+
 BByteArray Message::toByteArray() const
 {
     BByteArray ba;

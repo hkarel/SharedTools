@@ -79,6 +79,18 @@ public:
     bool processed() const {return _processed;}
     void setProcessed(bool val) {_processed = val;}
 
+    // Определяет индивидуальный уровень сжатия сообщения. Если значение этого
+    // параметра не равно -1, то сообщение будет сжато согласно значению
+    // определенному в этом параметре.
+    // Если же значение равно -1, то уровень сжатия сообщения будет определяться
+    // параметром transport::Base::compressionLevel().
+    // Данный параметр имеет приоритет перед transport::Base::compressionLevel().
+    // Допускаются значения от 0 до 9, что соответствует уровням сжатия
+    // для zip-алгоритма. Так, значение 0 будет означать, что сообщение не должно
+    // быть сжато, а значение 9 будет соответствовать максимальной степени сжатия.
+    int compressionLevel() const {return _compressionLevel;}
+    void setCompressionLevel(int val);
+
     // Создает сообщение
     static Ptr create(const QUuidEx& command);
 
@@ -140,6 +152,7 @@ private:
 
     SocketDescriptor _socketDescriptor = {-1};
     bool _processed = {false};
+    int _compressionLevel = {-1};
 
     //template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
     //template<typename DataT> friend typename Message::Ptr createMessage(const DataT&);

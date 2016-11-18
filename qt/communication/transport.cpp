@@ -482,9 +482,16 @@ void Socket::run()
                     QByteArray buff = message->toByteArray();
                     qint32 buffSize = buff.size();
 
-                    if (!isLoopback()
-                        &&(_compressionLevel != 0)
-                        && (buff.size() > _compressionSize))
+                    int compressionLevel = message->compressionLevel();
+                    if (compressionLevel == -1)
+                    {
+                        compressionLevel = 0;
+                        if (_compressionLevel != 0
+                            && buff.size() > _compressionSize)
+                            compressionLevel = _compressionLevel;
+                    }
+
+                    if (!isLoopback() && (compressionLevel != 0))
                     {
                         qint32 buffSizePrev = buffSize;
                         buff = qCompress(buff, _compressionLevel);
