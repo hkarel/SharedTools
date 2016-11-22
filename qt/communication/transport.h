@@ -242,6 +242,12 @@ signals:
     // Сигнал эмитируется при получении сообщения
     void message(const communication::Message::Ptr&);
 
+    // Сигнал эмитируется после установки socket-ом соединения
+    void socketConnected(communication::SocketDescriptor);
+
+    // Сигнал эмитируется после разрыва socket-ом соединения
+    void socketDisconnected(communication::SocketDescriptor);
+
 private slots:
     void removeClosedSockets();
 

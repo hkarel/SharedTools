@@ -934,6 +934,12 @@ void Listener::incomingConnection (SocketDescriptor socketDescriptor)
     chk_connect_d(socket.get(), SIGNAL(message(communication::Message::Ptr)),
                   this, SIGNAL(message(communication::Message::Ptr)))
 
+    chk_connect_d(socket.get(), SIGNAL(connected(communication::SocketDescriptor)),
+                  this, SIGNAL(socketConnected(communication::SocketDescriptor)))
+
+    chk_connect_d(socket.get(), SIGNAL(disconnected(communication::SocketDescriptor)),
+                  this, SIGNAL(socketDisconnected(communication::SocketDescriptor)))
+
     // Примечание: выход из функции start() происходит только тогда, когда
     // поток гарантированно запустится, поэтому случайное удаление нового
     // сокета в функции removeClosedSockets() исключено.
