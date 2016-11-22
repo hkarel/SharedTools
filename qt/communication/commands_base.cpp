@@ -68,6 +68,7 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
 bserial::RawVector Error::toRaw() const
 {
     B_SERIALIZE_V1(stream)
+    stream << commandId;
     stream << description;
     B_SERIALIZE_RETURN
 }
@@ -75,6 +76,7 @@ bserial::RawVector Error::toRaw() const
 void Error::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
+    stream >> commandId;
     stream >> description;
     B_DESERIALIZE_END
 }

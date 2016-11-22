@@ -176,10 +176,10 @@ struct Unknown : Data<&command::Unknown, command::Type::Request>
 */
 struct Error : Data<&command::Error, command::Type::Request>
 {
-    QString description;  // Описание ошибки.
+    QUuidEx commandId;   // Идентификатор команды для которой произошла ошибка.
+    QString description; // Описание ошибки.
     DECLARE_B_SERIALIZE_FUNC
 };
-
 
 /**
   Сообщение содержит информацию о совместимости команд и бинарного протокола
