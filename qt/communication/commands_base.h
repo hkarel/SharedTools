@@ -131,9 +131,9 @@ struct Data<Command, command::Type::Response, command::Type::Response>;
 
 /**
   Структура содержит информацию об ошибке произошедшей в процессе обработки
-  в качестве Request-сообщения. Данная структура  отправляется  вызывающей
-  стороне как Response-сообщение, при этом статус обработки команды
-  Message::ExecStatus равен Error.
+  Request-сообщения. Данная структура  отправляется  вызывающей стороне
+  как Response-сообщение, при этом статус обработки команды Message::ExecStatus
+  равен Error.
   См. так же описание enum Message::ExecStatus
 */
 struct MessageError
