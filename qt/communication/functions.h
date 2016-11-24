@@ -23,14 +23,24 @@ QString toString(command::ExecStatus);
   команде. Структуры данных описаны в модулях commands_base и commands.
 */
 template<typename CommandDataT>
-Message::Ptr createMessage(const CommandDataT& data)
+Message::Ptr createMessage(const CommandDataT& data,
+                           command::Type type = command::Type::Request)
 {
     static_assert(CommandDataT::forRequest() || CommandDataT::forEvent(),
                   "In this function is allow 'command::Type::Request'"
                   " or 'command::Type::Event' type of struct only");
 
     Message::Ptr m = Message::create(data.command());
-    if (CommandDataT::forRequest())
+    if (CommandDataT::forRequest() && CommandDataT::forEvent())
+    {
+        if (type != command::Type::Request
+            && type != command::Type::Event)
+            throw std::logic_error(std::string(
+                "Parameter 'type' must be of type 'command::Type::Request'"
+                " or 'command::Type::Event' only"));
+        m->setCommandType(type);
+    }
+    else if (CommandDataT::forRequest())
         m->setCommandType(command::Type::Request);
     else if (CommandDataT::forEvent())
         m->setCommandType(command::Type::Event);

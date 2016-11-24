@@ -108,6 +108,22 @@ struct Data<Command, command::Type::Event> : DataBase<Command>
 };
 
 template<const QUuidEx* Command>
+struct Data<Command, command::Type::Request, command::Type::Event> : DataBase<Command>
+{
+    static constexpr bool forRequest()  {return true;}
+    static constexpr bool forResponse() {return false;}
+    static constexpr bool forEvent()    {return true;}
+};
+
+template<const QUuidEx* Command>
+struct Data<Command, command::Type::Event, command::Type::Request> : DataBase<Command>
+{
+    static constexpr bool forRequest()  {return true;}
+    static constexpr bool forResponse() {return false;}
+    static constexpr bool forEvent()    {return true;}
+};
+
+template<const QUuidEx* Command>
 struct Data<Command, command::Type::Request, command::Type::Response> : DataBase<Command>
 {
     static constexpr bool forRequest()  {return true;}
