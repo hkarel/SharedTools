@@ -525,8 +525,8 @@ void Socket::run()
                             break;
                     }
                     if (alog::logger().level() == alog::Level::Debug2
-                        &&_socket->bytesToWrite() == 0
-                        && timer.hasExpired(3 * delay))
+                        &&_socket->bytesToWrite() == 0)
+                        //&& timer.hasExpired(3 * delay))
                     {
                         log_debug2_m << "Message was send to the socket."
                                      << " Command " << CommandNameLog(message->command());
