@@ -39,6 +39,14 @@ public:
     typedef lst::List<Message, lst::CompareItemDummy, Allocator> List;
 
 public:
+    enum class Priority : quint32
+    {
+        High    = 0,
+        Normal  = 1,
+        Low     = 2
+        // LowLess = 3  Зарезервировано
+    };
+
     // Персональный идентификатор сообщения.
     QUuidEx id() const {return _id;}
 
@@ -58,6 +66,10 @@ public:
     // Статус выполнения/обработки команды. См. описание command::ExecStatus
     command::ExecStatus commandExecStatus() const;
     void setCommandExecStatus(command::ExecStatus);
+
+    // Приоритет сообщения
+    Priority priority() const;
+    void setPriority(Priority);
 
     // Максимальное время жизни сообщения. Задается в секундах в формате UTC
     // от начала эпохи. Параметр представляет абсолютное значение времени по
@@ -138,7 +150,10 @@ private:
             // соответствуют command::ExecStatus.
             quint32 _commandExecStatus: 4;
 
-            quint32 _reserved: 24;
+            // Приоритет сообщения
+            quint32 _priority: 2;
+
+            quint32 _reserved: 22;
         };
     };
 

@@ -160,6 +160,8 @@ private:
     bool _protocolSignatureRead = {false};
     bool _protocolSignatureWrite = {false};
 
+    quint32 _messagesNormCounter = {0};
+
     friend class Sender;
     friend class Listener;
     template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);

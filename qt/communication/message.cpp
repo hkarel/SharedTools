@@ -24,6 +24,7 @@ Message::Message(const QUuidEx& command) : Message()
     _command = command;
     _commandType = static_cast<quint32>(command::Type::Request);
     _commandExecStatus = static_cast<quint32>(command::ExecStatus::Unknown);
+    _priority = static_cast<quint32>(Priority::Normal);
 }
 
 void Message::setCompressionLevel(int val)
@@ -72,8 +73,6 @@ void Message::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
-
-
 command::Type Message::commandType() const
 {
     return static_cast<command::Type>(_commandType);
@@ -95,6 +94,16 @@ command::ExecStatus Message::commandExecStatus() const
 void Message::setCommandExecStatus(command::ExecStatus val)
 {
     _commandExecStatus = static_cast<quint32>(val);
+}
+
+Message::Priority Message::priority() const
+{
+    return static_cast<Priority>(_priority);
+}
+
+void Message::setPriority(Priority val)
+{
+    _priority = static_cast<quint32>(val);
 }
 
 //#pragma GCC diagnostic pop
