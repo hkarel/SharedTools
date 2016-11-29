@@ -145,12 +145,15 @@ public:
     }
 
     void attach(T* p) {
-        if (_ptr) _ptr->release();
+        if (_ptr)
+            _ptr->release();
         _ptr = p;
     }
 
     T* detach() NOEXCEPT {
-        T* p = _ptr; _ptr = 0; return p;
+        T* p = _ptr;
+        _ptr = 0;
+        return p;
     }
 
     bool empty()    const NOEXCEPT {return (_ptr == 0);}
@@ -167,7 +170,8 @@ private:
     // Используется в обычных операторах присваивания и копирования.
     template<typename otherT>
     void assign(const clife_ptr<otherT> & p) {
-        if (_ptr) _ptr->release();
+        if (_ptr)
+            _ptr->release();
         // Проверка на корректность преобразования типа. Допускается преобразо-
         // вание только от классов-наследников к базовым классам.
         _ptr = p.get();
@@ -178,7 +182,8 @@ private:
     // Используется в rvalue-операторах присваивания и копирования.
     template<typename otherT>
     void assign(clife_ptr<otherT> & p, bool /*rvalue*/) {
-        if (_ptr) _ptr->release();
+        if (_ptr)
+            _ptr->release();
         _ptr = p.get();
         p._ptr = 0;
     }
