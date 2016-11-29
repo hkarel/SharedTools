@@ -38,6 +38,8 @@ int main ()
   #if defined(_MSC_VER) || defined(__MINGW32__)
     #include <intrin.h>
     #define break_point  __debugbreak();
+  #elif defined(__arm__)
+    #define break_point
   #else
     #include <stdio.h>
     #include <signal.h>
