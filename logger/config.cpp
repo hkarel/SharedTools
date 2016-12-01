@@ -398,45 +398,47 @@ void printSaversInfo()
     for (Filter* filter : filters)
     {
         alog::Line logLine = log_info_m << "Filter : ";
-        logLine << "name: " << filter->name() << "; "
-                 << "mode: " << ((filter->mode() == Filter::Mode::Include) ? "include" : "exclude") << "; "
-                 << "filtering_errors: " << filter->filteringErrors() << "; "
-                 << "follow_thread_context: " << filter->followThreadContext() << "; ";
+        logLine << "name: " << filter->name()
+                << "; mode: " << ((filter->mode() == Filter::Mode::Include) ? "include" : "exclude")
+                << "; filtering_errors: " << filter->filteringErrors()
+                << "; follow_thread_context: " << filter->followThreadContext()
+                << "; ";
 
         if (FilterModule* modFilter = dynamic_cast<FilterModule*>(filter))
         {
             logLine << "type: module_name"
-                     << "filtering_noname_modules: " << modFilter->filteringNoNameModules() << "; ";
-            logLine << "modules: [ ";
+                    << "; filtering_noname_modules: " << modFilter->filteringNoNameModules()
+                    << "; modules: [ ";
             for (const string& module : modFilter->modules())
                 logLine << module << ", ";
             logLine << "]; ";
         }
         else if (FilterLevel* logFilter = dynamic_cast<FilterLevel*>(filter))
         {
-            logLine << "type: log_level";
-            logLine << "level: " << levelToString(logFilter->leve()) << "; ";
+            logLine << "type: log_level"
+                    << "; level: " << levelToString(logFilter->leve())
+                    << "; ";
         }
         else if (FilterFunc* funcFilter = dynamic_cast<FilterFunc*>(filter))
         {
-            logLine << "type: func_name";
-            logLine << "functions: [ ";
+            logLine << "type: func_name"
+                    << "; functions: [ ";
             for (const string& function : funcFilter->funcs())
                 logLine << function << ", ";
             logLine << "]; ";
         }
         else if (FilterFile* fileFilter = dynamic_cast<FilterFile*>(filter))
         {
-            logLine << "type: file_name";
-            logLine << "files: [ ";
+            logLine << "type: file_name"
+                    << "; files: [ ";
             for (const string& file : fileFilter->files())
                 logLine << file << ", ";
             logLine << "]; ";
         }
         else if (FilterThread* threadFilter = dynamic_cast<FilterThread*>(filter))
         {
-            logLine << "type: thread_id";
-            logLine << "threads: [ ";
+            logLine << "type: thread_id"
+                    << "; threads: [ ";
             for (pid_t tid : threadFilter->threads())
                 logLine << long(tid) << ", ";
             logLine << "]; ";
