@@ -550,7 +550,7 @@ void Socket::run()
                     {
                         compressionLevel = 0;
                         if (_compressionLevel != 0
-                            && buff.size() > _compressionSize)
+                            && buffSize > _compressionSize)
                             compressionLevel = _compressionLevel;
                     }
 
