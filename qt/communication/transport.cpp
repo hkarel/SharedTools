@@ -542,19 +542,14 @@ void Socket::run()
                         log_debug2_m << "Message before sending to the socket."
                                      << " Command " << CommandNameLog(message->command());
                     }
+
                     QByteArray buff = message->toByteArray();
                     qint32 buffSize = buff.size();
 
-                    int compressionLevel = message->compressionLevel();
-                    if (compressionLevel == -1)
-                    {
-                        compressionLevel = 0;
-                        if (_compressionLevel != 0
-                            && buffSize > _compressionSize)
-                            compressionLevel = _compressionLevel;
-                    }
-
-                    if (!isLoopback() && (compressionLevel != 0))
+                    if (!isLoopback()
+                        && message->compression() == Message::Compression::None
+                        && buffSize > _compressionSize
+                        && _compressionLevel != 0)
                     {
                         qint32 buffSizePrev = buffSize;
                         buff = qCompress(buff, _compressionLevel);

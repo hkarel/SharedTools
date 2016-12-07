@@ -28,13 +28,17 @@ namespace bserial /*binary serialization*/ {
 */
 struct ByteArray : QByteArray
 {
+    ByteArray() noexcept : QByteArray() {}
+    ByteArray(const QByteArray& ba) noexcept : QByteArray(ba) {}
+    ByteArray(const ByteArray&  ba) noexcept : QByteArray(ba) {}
+
     ByteArray& operator= (const ByteArray& ba) noexcept
         {return (ByteArray&)QByteArray::operator= (ba);}
 
     ByteArray& operator= (const QByteArray& ba) noexcept
         {return (ByteArray&)QByteArray::operator= (ba);}
 
-    ByteArray& operator= (const char *str) noexcept
+    ByteArray& operator= (const char* str) noexcept
         {return (ByteArray&)QByteArray::operator= (str);}
 
     // Функции используются в макросах B_SERIALIZE_Vx

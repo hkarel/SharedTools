@@ -44,7 +44,16 @@ public:
         High    = 0,
         Normal  = 1,
         Low     = 2
-        // LowLess = 3  Зарезервировано
+        // Reserved = 3
+    };
+
+    enum class Compression : quint32
+    {
+        None = 0,
+        Zip  = 1,
+        Lzma = 2
+        // Reserved = 3
+
     };
 
     // Персональный идентификатор сообщения.
@@ -91,17 +100,18 @@ public:
     bool processed() const {return _processed;}
     void setProcessed(bool val) {_processed = val;}
 
-    // Определяет индивидуальный уровень сжатия сообщения. Если значение этого
-    // параметра не равно -1, то сообщение будет сжато согласно значению
-    // определенному в этом параметре.
-    // Если же значение равно -1, то уровень сжатия сообщения будет определяться
-    // параметром transport::Base::compressionLevel().
-    // Данный параметр имеет приоритет перед transport::Base::compressionLevel().
-    // Допускаются значения от 0 до 9, что соответствует уровням сжатия
-    // для zip-алгоритма. Так, значение 0 будет означать, что сообщение не должно
-    // быть сжато, а значение 9 будет соответствовать максимальной степени сжатия.
-    int compressionLevel() const {return _compressionLevel;}
-    void setCompressionLevel(int val);
+    // Признак, что контент сообщения находится в сжатом состоянии.
+    Compression compression() const;
+
+    // Функция выполняет сжатие контента сообщения. Параметр level определяет
+    // уровень сжатия контента. Допускаются значения в диапазоне от 0 до 9,
+    // что соответствует уровням сжатия для zip-алгоритма.
+    // Если значение level равно -1, то уровень сжатия будет дефолтным
+    // для используемого алгоритма.
+    void compress(int level = -1, Compression compression = Compression::Zip);
+
+    // Выполняет декомпрессию контента сообщения.
+    void decompress();
 
     // Создает сообщение
     static Ptr create(const QUuidEx& command);
@@ -153,7 +163,11 @@ private:
             // Приоритет сообщения
             quint32 _priority: 2;
 
-            quint32 _reserved: 22;
+            // Признак, что контент сообщения находится в сжатом состоянии,
+            // так же содержит информацию по алгоритму сжатия.
+            quint32 _compression: 2;
+
+            quint32 _reserved: 21;
         };
     };
 
@@ -167,7 +181,6 @@ private:
 
     SocketDescriptor _socketDescriptor = {-1};
     bool _processed = {false};
-    int _compressionLevel = {-1};
 
     //template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
     //template<typename DataT> friend typename Message::Ptr createMessage(const DataT&);
@@ -177,7 +190,8 @@ private:
 //------------------------- Implementation Message ---------------------------
 
 template<typename... Args>
-bool Message::writeContent(const Args&... args) {
+bool Message::writeContent(const Args&... args)
+{
     _content.clear();
     QDataStream s(&_content, QIODevice::WriteOnly);
     writeInternal(s, args...);
@@ -185,14 +199,32 @@ bool Message::writeContent(const Args&... args) {
 }
 
 template<typename... Args>
-bool Message::readContent(Args&... args) const {
-    QDataStream s(_content);
+bool Message::readContent(Args&... args) const
+{
+    BByteArray content;
+    switch (compression())
+    {
+        case Compression::None:
+            content = _content;
+            break;
+        case Compression::Zip:
+            content = qUncompress(_content);
+            break;
+        case Compression::Lzma:
+            throw std::logic_error("communication::Message: "
+                                   "Compression algorithm LZMA not implemented");
+        default:
+            throw std::logic_error("communication::Message: "
+                                   "Unsupported compression algorithm");
+    }
+    QDataStream s(content);
     readInternal(s, args...);
     return (s.status() == QDataStream::Ok);
 }
 
 template<typename T, typename... Args>
-void Message::writeInternal(QDataStream& s, const T& t, const Args&... args) {
+void Message::writeInternal(QDataStream& s, const T& t, const Args&... args)
+{
     if (s.status() != QDataStream::Ok)
         return;
     s << t;
@@ -200,7 +232,8 @@ void Message::writeInternal(QDataStream& s, const T& t, const Args&... args) {
 }
 
 template<typename T, typename... Args>
-void Message::readInternal(QDataStream& s, T& t, Args&... args) const {
+void Message::readInternal(QDataStream& s, T& t, Args&... args) const
+{
     if (s.status() != QDataStream::Ok)
         return;
     s >> t;

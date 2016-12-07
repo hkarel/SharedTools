@@ -25,11 +25,53 @@ Message::Message(const QUuidEx& command) : Message()
     _commandType = static_cast<quint32>(command::Type::Request);
     _commandExecStatus = static_cast<quint32>(command::ExecStatus::Unknown);
     _priority = static_cast<quint32>(Priority::Normal);
+    _compression = static_cast<quint32>(Compression::None);
 }
 
-void Message::setCompressionLevel(int val)
+void Message::compress(int level, Compression compression)
 {
-    _compressionLevel = qBound(-1, val, 9);
+    level = qBound(-1, level, 9);
+    if (level != 0
+        && _content.size() > 1024 // При меньших значениях компрессирование
+                                  // становится не эффективным
+        && this->compression() == Compression ::None)
+    {
+        switch (compression)
+        {
+            case Compression::Zip:
+                _content = qCompress(_content, level);
+                _compression = static_cast<quint32>(Compression::Zip);
+                break;
+            case Compression::Lzma:
+                throw std::logic_error("communication::Message: "
+                                       "Compression algorithm LZMA not implemented");
+            default:
+                throw std::logic_error("communication::Message: "
+                                       "Unsupported compression algorithm");
+        }
+    }
+}
+
+void Message::decompress()
+{
+    if (compression() != Compression ::None)
+    {
+        BByteArray content;
+        switch (compression())
+        {
+            case Compression::Zip:
+                content = qUncompress(_content);
+                break;
+            case Compression::Lzma:
+                throw std::logic_error("communication::Message: "
+                                       "Compression algorithm LZMA not implemented");
+            default:
+                throw std::logic_error("communication::Message: "
+                                       "Unsupported compression algorithm");
+        }
+        _content = content;
+        _compression = static_cast<quint32>(Compression::None);
+    }
 }
 
 BByteArray Message::toByteArray() const
@@ -106,7 +148,11 @@ void Message::setPriority(Priority val)
     _priority = static_cast<quint32>(val);
 }
 
-//#pragma GCC diagnostic pop
+Message::Compression Message::compression() const
+{
+    return static_cast<Compression>(_compression);
+}
 
+//#pragma GCC diagnostic pop
 
 } // namespace communication
