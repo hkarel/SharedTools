@@ -54,96 +54,50 @@ extern const QUuidEx CloseConnection;
 namespace data {
 
 /**
-  Структуры DataBase и Data используется для ассоциации целевой структуры данных
-  с определенной командой. Они позволяют связать идентификатор команды со струк-
-  турой данных, а так же задать направления передачи данных (Request/Response).
+  Структура Data используется для ассоциации целевой структуры данных с опреде-
+  ленной командой. Она позволяют связать идентификатор команды со структурой
+  данных, а так же задать направления передачи данных (Request/Response).
   В дальнейшем эти параметры будут использоваться для проверки возможности
   преобразования Message-сообщения в конкретную структуру.
 */
-template<const QUuidEx* Command>
-struct DataBase
+template<
+    const QUuidEx* Command,
+    command::Type CommandType1,
+    command::Type CommandType2 = command::Type::Unknown,
+    command::Type CommandType3 = command::Type::Unknown
+> struct Data
 {
+    // Идентификатор команды
     static constexpr const QUuidEx& command() {return *Command;}
+
     // Статус состояния данных. Выставляется в TRUE когда данные были корректно
     // прочитаны из сообщения, во всех остальных случаях флаг должен быть FALSE.
     bool isValid = {false};
-};
 
-template<
-    const QUuidEx*,
-    command::Type,
-    command::Type = command::Type::Unknown
-> struct Data;
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Request> : DataBase<Command>
-{
     // Признак, что данные могут быть использованы для Message-сообщений
     // с типом Request
-    static constexpr bool forRequest() {return true;}
+    static constexpr bool forRequest() {
+        return (CommandType1 == command::Type::Request
+                || CommandType2 == command::Type::Request
+                || CommandType3 == command::Type::Request);
+    }
 
     // Признак, что данные могут быть использованы для Message-сообщений
     // с типом Response
-    static constexpr bool forResponse() {return false;}
+    static constexpr bool forResponse() {
+        return (CommandType1 == command::Type::Response
+                || CommandType2 == command::Type::Response
+                || CommandType3 == command::Type::Response);
+    }
 
     // Признак, что данные могут быть использованы для Message-сообщений
     // с типом Event
-    static constexpr bool forEvent() {return false;}
+    static constexpr bool forEvent() {
+        return (CommandType1 == command::Type::Event
+                || CommandType2 == command::Type::Event
+                || CommandType3 == command::Type::Event);
+    }
 };
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Response> : DataBase<Command>
-{
-    static constexpr bool forRequest()  {return false;}
-    static constexpr bool forResponse() {return true;}
-    static constexpr bool forEvent()    {return false;}
-};
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Event> : DataBase<Command>
-{
-    static constexpr bool forRequest()  {return false;}
-    static constexpr bool forResponse() {return false;}
-    static constexpr bool forEvent()    {return true;}
-};
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Request, command::Type::Event> : DataBase<Command>
-{
-    static constexpr bool forRequest()  {return true;}
-    static constexpr bool forResponse() {return false;}
-    static constexpr bool forEvent()    {return true;}
-};
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Event, command::Type::Request> : DataBase<Command>
-{
-    static constexpr bool forRequest()  {return true;}
-    static constexpr bool forResponse() {return false;}
-    static constexpr bool forEvent()    {return true;}
-};
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Request, command::Type::Response> : DataBase<Command>
-{
-    static constexpr bool forRequest()  {return true;}
-    static constexpr bool forResponse() {return true;}
-    static constexpr bool forEvent()    {return false;}
-};
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Response, command::Type::Request> : DataBase<Command>
-{
-    static constexpr bool forRequest()  {return true;}
-    static constexpr bool forResponse() {return true;}
-    static constexpr bool forEvent()    {return false;}
-};
-
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Request, command::Type::Request>;
-template<const QUuidEx* Command>
-struct Data<Command, command::Type::Response, command::Type::Response>;
-
 
 /**
   Структура содержит информацию об ошибке произошедшей в процессе обработки
@@ -176,7 +130,8 @@ struct MessageFailed
 /**
   Информационное сообщение о неизвестной команде
 */
-struct Unknown : Data<&command::Unknown, command::Type::Request>
+struct Unknown : Data<&command::Unknown,
+                       command::Type::Request>
 {
     QUuidEx      commandId; // Идентификатор неизвестной команды.
     QHostAddress address;   // Адрес хоста для которого команда неизвестна,
@@ -190,7 +145,8 @@ struct Unknown : Data<&command::Unknown, command::Type::Request>
   либо причине невозможно передать сообщение при помощи MessageError, то
   используется эта структура, причем как самостоятельное сообщение.
 */
-struct Error : Data<&command::Error, command::Type::Request>
+struct Error : Data<&command::Error,
+                     command::Type::Request>
 {
     QUuidEx commandId;   // Идентификатор команды для которой произошла ошибка.
     QString description; // Описание ошибки.
@@ -203,7 +159,8 @@ struct Error : Data<&command::Error, command::Type::Request>
   обмениваются этой информацией.
 */
 struct CompatibleInfo : Data<&command::CompatibleInfo,
-                             command::Type::Request, command::Type::Response>
+                              command::Type::Request,
+                              command::Type::Response>
 {
     VersionNumber    version;               // Текущая версия программы
     VersionNumber    minCompatibleVersion;  // Минимально совместимая версия
@@ -217,7 +174,8 @@ struct CompatibleInfo : Data<&command::CompatibleInfo,
   Структура описана как пример оформления возвращаемых данных.
   На практике эта структура не используется.
 */
-struct CompatibleInfo_Response : Data<&command::CompatibleInfo, command::Type::Response>
+struct CompatibleInfo_Response : Data<&command::CompatibleInfo,
+                                       command::Type::Response>
 {
     VersionNumber    version;               // Текущая версия программы
     VersionNumber    minCompatibleVersion;  // Минимально совместимая версия.
@@ -230,7 +188,8 @@ struct CompatibleInfo_Response : Data<&command::CompatibleInfo, command::Type::R
 /**
   Структура содержит информацию о причинах закрытия TCP-соединения
 */
-struct CloseConnection : Data<&command::CloseConnection, command::Type::Request>
+struct CloseConnection : Data<&command::CloseConnection,
+                               command::Type::Request>
 {
     QString description;  // Описание причины закрытия соединения
     DECLARE_B_SERIALIZE_FUNC
