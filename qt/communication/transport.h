@@ -110,7 +110,7 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(const communication::Message::Ptr&);
+    void message(communication::Message::Ptr);
 
     // Сигнал эмитируется после установления TCP-соединения и после
     // проверки совместимости версий бинарного протокола.
@@ -242,7 +242,7 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(const communication::Message::Ptr&);
+    void message(communication::Message::Ptr);
 
     // Сигнал эмитируется после установки socket-ом соединения
     void socketConnected(communication::SocketDescriptor);

@@ -184,8 +184,8 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
   Примечание: константный модификатор во втором параметре относится к структуре
   интеллектуального указателя Message::Ptr, но не к самому Message-сообщению.
 */
-bool writeToMessage(const data::MessageError&,  const Message::Ptr&);
-bool writeToMessage(const data::MessageFailed&, const Message::Ptr&);
+bool writeToMessage(const data::MessageError&,  Message::Ptr&);
+bool writeToMessage(const data::MessageFailed&, Message::Ptr&);
 
 /**
   Сервисная функция, возвращает описание ошибки из сообщений содержащих

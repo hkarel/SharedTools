@@ -62,14 +62,14 @@ void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
     throw std::logic_error(std::string(err.toUtf8().constData()));
 }
 
-bool writeToMessage(const data::MessageError& data, const Message::Ptr& message)
+bool writeToMessage(const data::MessageError& data, Message::Ptr& message)
 {
     message->setCommandType(command::Type::Response);
     message->setCommandExecStatus(command::ExecStatus::Error);
     return message->writeContent(data);
 }
 
-bool writeToMessage(const data::MessageFailed& data, const Message::Ptr& message)
+bool writeToMessage(const data::MessageFailed& data, Message::Ptr& message)
 {
     message->setCommandType(command::Type::Response);
     message->setCommandExecStatus(command::ExecStatus::Failed);
