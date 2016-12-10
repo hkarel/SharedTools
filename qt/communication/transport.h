@@ -95,8 +95,9 @@ public:
     bool send(const QUuidEx& command);
 
     template<typename CommandDataT>
-    bool send(const CommandDataT& data) {
-        Message::Ptr message = createMessage(data);
+    bool send(const CommandDataT& data, command::Type type = command::Type::Request)
+    {
+        Message::Ptr message = createMessage(data, type);
         return send(message);
     }
 
