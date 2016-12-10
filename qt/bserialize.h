@@ -64,7 +64,9 @@ template<typename T>
 QDataStream& getFromStream(QDataStream& s, T& t,
                            typename not_enum_type<T>::type = 0)
 {
-    if (s.atEnd()) return s;
+    if (s.atEnd())
+        return s;
+
     RawVector rv;
     rv.reserve(2);
     s >> rv;
@@ -88,8 +90,9 @@ QDataStream& getFromStream(QDataStream& s, T& t,
 {
     static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
                   "Base type of enum must be 'unsigned int'");
+    if (s.atEnd())
+        return s;
 
-    if (s.atEnd()) return s;
     quint32 val;
     s >> val;
     t = static_cast<T>(val);
@@ -114,15 +117,14 @@ QDataStream& putToStream(QDataStream& s, const T& t,
 template<typename T>
 QDataStream& getFromStream(QDataStream& s, clife_ptr<T>& ptr)
 {
-    static_assert(std::is_base_of<clife_base, T>::value, "Class T must be derived from clife_base");
+    static_assert(std::is_base_of<clife_base, T>::value,
+                  "Class T must be derived from clife_base");
+    if (s.atEnd())
+        return s;
 
-    // Отладить
-    break_point
-
-    if (s.atEnd()) return s;
-    quint8 isEmpty;
-    s >> isEmpty;
-    if (isEmpty)
+    bool empty;
+    s >> empty;
+    if (empty)
     {
         ptr = clife_ptr<T>();
         return s;
@@ -137,11 +139,8 @@ QDataStream& getFromStream(QDataStream& s, clife_ptr<T>& ptr)
 template<typename T>
 QDataStream& putToStream(QDataStream& s, const clife_ptr<T>& ptr)
 {
-    // Отладить
-    break_point
-
-    s << quint8(ptr.is_empty()); // isEmpty
-    if (ptr.is_empty())
+    s << ptr.empty();
+    if (ptr.empty())
         return s;
 
     putToStream(s, (*ptr));
@@ -166,8 +165,10 @@ template <
 QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& list,
                            typename derived_from_clife_base<T>::type = 0)
 {
-    // Эта функция используется когда T унаследовано от clife_base
-    if (s.atEnd()) return s;
+    /* Эта функция используется когда T унаследовано от clife_base */
+    if (s.atEnd())
+        return s;
+
     quint32 listCount; s >> listCount;
     for (quint32 i = 0; i < listCount; ++i)
     {
@@ -193,8 +194,10 @@ QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& lis
                            typename not_derived_from_clife_base<T>::type = 0)
 
 {
-    // Эта функция используется когда T НЕ унаследовано от clife_base
-    if (s.atEnd()) return s;
+    /* Эта функция используется когда T НЕ унаследовано от clife_base */
+    if (s.atEnd())
+        return s;
+
     quint32 listCount; s >> listCount;
     for (quint32 i = 0; i < listCount; ++i)
     {
@@ -222,24 +225,33 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
 } // namespace bserial
 
 #define DECLARE_B_SERIALIZE_FRIENDS \
-    template<typename T> friend \
-        QDataStream& bserial::getFromStream(QDataStream&, T&, typename not_enum_type<T>::type); \
-    template<typename T> friend \
-        QDataStream& bserial::getFromStream(QDataStream&, T&, typename is_enum_type<T>::type); \
-    template<typename T> friend \
-        QDataStream& bserial::putToStream(QDataStream&, const T&, typename not_enum_type<T>::type); \
-    template<typename T> friend \
-        QDataStream& bserial::putToStream(QDataStream&, const T&, typename is_enum_type<T>::type); \
-    template<typename T> friend QDataStream& bserial::getFromStream(QDataStream& s, clife_ptr<T>&); \
-    template<typename T> friend QDataStream& bserial::putToStream(QDataStream& s, const clife_ptr<T>&); \
-    template<typename T, typename Compare, typename Allocator> friend \
-        QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
-                                            typename derived_from_clife_base<T>::type); \
-    template<typename T, typename Compare, typename Allocator> friend \
-        QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
-                                            typename not_derived_from_clife_base<T>::type); \
-    template<typename T, typename Compare, typename Allocator> friend \
-        QDataStream& bserial::putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&);
+    template<typename T> \
+    friend QDataStream& bserial::getFromStream(QDataStream&, T&, \
+                                               typename not_enum_type<T>::type); \
+    template<typename T> \
+    friend QDataStream& bserial::getFromStream(QDataStream&, T&, \
+                                               typename is_enum_type<T>::type); \
+    template<typename T> \
+    friend QDataStream& bserial::getFromStream(QDataStream& s, clife_ptr<T>&); \
+    \
+    template<typename T, typename Compare, typename Allocator> \
+    friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
+                                               typename derived_from_clife_base<T>::type); \
+    \
+    template<typename T, typename Compare, typename Allocator> \
+    friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
+                                               typename not_derived_from_clife_base<T>::type); \
+    template<typename T> \
+    friend QDataStream& bserial::putToStream(QDataStream&, const T&, \
+                                             typename not_enum_type<T>::type); \
+    template<typename T> \
+    friend QDataStream& bserial::putToStream(QDataStream&, const T&, \
+                                             typename is_enum_type<T>::type); \
+    template<typename T> \
+    friend QDataStream& bserial::putToStream(QDataStream& s, const clife_ptr<T>&); \
+    \
+    template<typename T, typename Compare, typename Allocator> \
+    friend QDataStream& bserial::putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&);
 
 #define DECLARE_B_SERIALIZE_FUNC \
     bserial::RawVector toRaw() const; \
