@@ -153,6 +153,7 @@ private:
     mutable std::atomic_flag _removeMessagesLock = ATOMIC_FLAG_INIT;
 
     volatile int _sendMessagesCount = {0};
+    volatile bool _rereadSendMessages = {false};
 
     QWaitCondition _loopCondition;
     mutable QMutex _loopConditionLock;

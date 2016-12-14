@@ -102,7 +102,8 @@ bool Socket::send(const Message::Ptr& message)
         SpinLocker locker(_messagesLock); (void) locker;
         message->add_ref();
         _messages.add(message.get());
-
+        _rereadSendMessages = (message->priority() == Message::Priority::High
+                               || message->priority() == Message::Priority::Normal);
     }
     if (alog::logger().level() == alog::Level::Debug2)
     {
@@ -416,6 +417,7 @@ void Socket::run()
                 { //Block for SpinLocker
                     SpinLocker locker(_messagesLock); (void) locker;
                     messages.swap(_messages);
+                    _rereadSendMessages = false;
                 }
                 for (int i = 0; i < messages.count(); ++i)
                     switch (messages[i].priority())
@@ -448,7 +450,7 @@ void Socket::run()
                 {
                     bool res = removeMessages.contains(m->command());
                     if (res && (alog::logger().level() == alog::Level::Debug2))
-                        log_debug2_m << "Message removed to a queue to sending."
+                        log_debug2_m << "Message removed from a queue to sending."
                                      << " Command " << CommandNameLog(m->command());
                     return res;
                 };
@@ -502,6 +504,9 @@ void Socket::run()
                 timer.restart();
                 while (true)
                 {
+                    if (_rereadSendMessages)
+                        break;
+
                     Message::Ptr message;
                     if (!sendMessagesHigh.empty())
                         message.attach(sendMessagesHigh.release(0));
