@@ -1,5 +1,6 @@
 #include "message.h"
 #include "break_point.h"
+#include "qt/lzma/qlzma.h"
 
 namespace communication {
 
@@ -30,11 +31,18 @@ Message::Message(const QUuidEx& command) : Message()
 
 void Message::compress(int level, Compression compression)
 {
+    if (this->compression() != Compression::None)
+        return;
+
+    if (compression == Compression::Disable)
+    {
+        _compression = static_cast<quint32>(Compression::Disable);
+        return;
+    }
     level = qBound(-1, level, 9);
     if (level != 0
-        && _content.size() > 1024 // При меньших значениях компрессирование
-                                  // становится не эффективным
-        && this->compression() == Compression ::None)
+        && _content.size() > 1024) // При меньших значениях компрессирование
+                                   // становится не эффективным
     {
         switch (compression)
         {
@@ -42,9 +50,17 @@ void Message::compress(int level, Compression compression)
                 _content = qCompress(_content, level);
                 _compression = static_cast<quint32>(Compression::Zip);
                 break;
+
             case Compression::Lzma:
-                throw std::logic_error("communication::Message: "
-                                       "Compression algorithm LZMA not implemented");
+            {
+                QByteArray content;
+                if (qlzma::compress2(_content, content, level) == 0)
+                {
+                    _content = content;
+                    _compression = static_cast<quint32>(Compression::Lzma);
+                }
+                break;
+            }
             default:
                 throw std::logic_error("communication::Message: "
                                        "Unsupported compression algorithm");
@@ -52,23 +68,36 @@ void Message::compress(int level, Compression compression)
     }
 }
 
+void Message::decompress(BByteArray& content) const
+{
+    switch (compression())
+    {
+        case Compression::None:
+        case Compression::Disable:
+            content = _content;
+            break;
+
+        case Compression::Zip:
+            content = qUncompress(_content);
+            break;
+
+        case Compression::Lzma:
+            if (qlzma::decompress(_content, content) != 0)
+                content.clear();
+            break;
+
+        default:
+            throw std::logic_error("communication::Message: "
+                                   "Unsupported compression algorithm");
+    }
+}
+
 void Message::decompress()
 {
-    if (compression() != Compression ::None)
+    if (compression() != Compression::None)
     {
         BByteArray content;
-        switch (compression())
-        {
-            case Compression::Zip:
-                content = qUncompress(_content);
-                break;
-            case Compression::Lzma:
-                throw std::logic_error("communication::Message: "
-                                       "Compression algorithm LZMA not implemented");
-            default:
-                throw std::logic_error("communication::Message: "
-                                       "Unsupported compression algorithm");
-        }
+        decompress(content);
         _content = content;
         _compression = static_cast<quint32>(Compression::None);
     }

@@ -41,9 +41,9 @@ public:
 public:
     enum class Priority : quint32
     {
-        High    = 0,
-        Normal  = 1,
-        Low     = 2
+        High   = 0,
+        Normal = 1,
+        Low    = 2
         // Reserved = 3
     };
 
@@ -51,9 +51,12 @@ public:
     {
         None = 0,
         Zip  = 1,
-        Lzma = 2
-        // Reserved = 3
-
+        Lzma = 2,
+        Disable = 7 // Используется в тех случаях когда нужно явно запретить
+                    // сжатие сообщения при его отправке в TCP сокет.
+                    // Это может потребоваться когда контент изначально сжат,
+                    // например, при отправке JPG, PNG, и прочих подобных
+                    // форматов.
     };
 
     // Персональный идентификатор сообщения.
@@ -134,6 +137,8 @@ private:
     Message(const QUuidEx& command);
     DISABLE_DEFAULT_COPY(Message)
 
+    void decompress(BByteArray&) const;
+
     template<typename T, typename... Args>
     void writeInternal(QDataStream& s, const T& t, const Args&... args);
     void writeInternal(QDataStream&) {return;}
@@ -165,9 +170,9 @@ private:
 
             // Признак, что контент сообщения находится в сжатом состоянии,
             // так же содержит информацию по алгоритму сжатия.
-            quint32 _compression: 2;
+            quint32 _compression: 3;
 
-            quint32 _reserved: 21;
+            quint32 _reserved: 19;
         };
     };
 
@@ -202,21 +207,7 @@ template<typename... Args>
 bool Message::readContent(Args&... args) const
 {
     BByteArray content;
-    switch (compression())
-    {
-        case Compression::None:
-            content = _content;
-            break;
-        case Compression::Zip:
-            content = qUncompress(_content);
-            break;
-        case Compression::Lzma:
-            throw std::logic_error("communication::Message: "
-                                   "Compression algorithm LZMA not implemented");
-        default:
-            throw std::logic_error("communication::Message: "
-                                   "Unsupported compression algorithm");
-    }
+    decompress(content);
     QDataStream s(content);
     readInternal(s, args...);
     return (s.status() == QDataStream::Ok);
