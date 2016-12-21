@@ -1,6 +1,6 @@
 #include "message.h"
 #include "break_point.h"
-#include "qt/lzma/qlzma.h"
+#include "qt/compression/qlzma.h"
 
 namespace communication {
 
