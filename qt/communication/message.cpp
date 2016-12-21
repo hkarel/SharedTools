@@ -54,7 +54,7 @@ void Message::compress(int level, Compression compression)
             case Compression::Lzma:
             {
                 QByteArray content;
-                if (qlzma::compress2(_content, content, level) == 0)
+                if (qlzma::compress(_content, content, level) == 0)
                 {
                     _content = content;
                     _compression = static_cast<quint32>(Compression::Lzma);
