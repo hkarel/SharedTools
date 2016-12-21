@@ -193,7 +193,7 @@ public:
 
     ~container_ptr() {
         PRINT_DEBUG("~container_ptr(), container_ptr_check_join: ", (container_ptr_check_join<T, Allocator>::Yes))
-        __release(_counter);
+        release(_counter);
     }
 
     explicit container_ptr(T* p, bool fake = false) {
@@ -355,7 +355,7 @@ private:
         return (counter_ptr_t*) ptr;
     }
 
-    static void __release(counter_ptr_t* counter) {
+    static void release(counter_ptr_t* counter) {
         enum {join_yes = container_ptr_check_join<T, Allocator>::Yes};
         if (counter)
             if (counter->release() == 0) {
@@ -397,7 +397,7 @@ private:
     // Для использования в обычных операторах присваивания и копирования.
     template<typename otherT, template<typename> class otherA>
     void assign(const container_ptr<otherT, otherA> & p) {
-        __release(_counter);
+        release(_counter);
         _counter = p._counter;
         if (_counter)
             _counter->add_ref();
@@ -407,7 +407,7 @@ private:
     // Для использования в rvalue-операторах присваивания и копирования.
     template<typename otherT, template<typename> class otherA>
     void assign(container_ptr<otherT, otherA> & p, bool /*rvalue*/) {
-        __release(_counter);
+        release(_counter);
         _counter = p._counter;
         p._counter = 0;
         GET_DEBUG
