@@ -4,10 +4,12 @@
 #include "p7zip/C/LzmaEnc.h"
 #include "p7zip/C/Lzma2Dec.h"
 #include "p7zip/C/Lzma2Enc.h"
+#include "container_ptr.h"
 #include "spin_locker.h"
 #include "thread/thread_info.h"
 
 #include <QDataStream>
+#include <QIODevice>
 #include <atomic>
 #include <map>
 
@@ -23,6 +25,52 @@
 #endif
 
 namespace {
+
+struct CLzmaEncT
+{
+    CLzmaEncHandle handle = {0};
+
+    template<typename T>
+    struct Alloc
+    {
+        static T* create() {
+            T* enc = new T;
+            enc->handle = LzmaEnc_Create(&g_Alloc);
+            return enc;
+        }
+        static void destroy(T* enc) {
+            LzmaEnc_Destroy(enc->handle, &g_Alloc, &g_Alloc);
+            delete enc;
+        }
+    };
+    typedef container_ptr<CLzmaEncT, Alloc> Ptr;
+};
+
+struct CLzma2EncT
+{
+    CLzma2EncHandle handle = {0};
+
+    template<typename T>
+    struct Alloc
+    {
+        static T* create() {
+            T* enc = new T;
+            enc->handle = Lzma2Enc_Create(&g_Alloc, &g_Alloc);
+            return enc;
+        }
+        static void destroy(T* enc) {
+            Lzma2Enc_Destroy(enc->handle);
+            delete enc;
+        }
+    };
+    typedef container_ptr<CLzma2EncT, Alloc> Ptr;
+};
+
+static std::map<pid_t, CLzmaEncT::Ptr>  lzmaEncMap;
+static std::atomic_flag lzmaEncMapLock = ATOMIC_FLAG_INIT;
+
+static std::map<pid_t, CLzma2EncT::Ptr> lzma2EncMap;
+static std::atomic_flag lzma2EncMapLock = ATOMIC_FLAG_INIT;
 
 struct SeqInStream : ISeqInStream
 {
@@ -52,26 +100,26 @@ size_t ioWrite(void* p, const void* buf, size_t size)
     return outStream->io->write((const char*)buf, size);
 }
 
-static inline void lzmaDec_Init(CLzmaDec* state)
+inline void lzmaDec_Init(CLzmaDec* state)
 {
     LzmaDec_Init(state);
 }
 
-static inline void lzmaDec_Init(CLzma2Dec* state)
+inline void lzmaDec_Init(CLzma2Dec* state)
 {
     Lzma2Dec_Init(state);
 }
 
-static inline SRes lzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen,
-                                       const Byte *src, SizeT *srcLen,
-                                       ELzmaFinishMode finishMode, ELzmaStatus *status)
+inline SRes lzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen,
+                                const Byte *src, SizeT *srcLen,
+                                ELzmaFinishMode finishMode, ELzmaStatus *status)
 {
     return LzmaDec_DecodeToBuf(p, dest, destLen, src, srcLen, finishMode, status);
 }
 
-static inline SRes lzmaDec_DecodeToBuf(CLzma2Dec *p, Byte *dest, SizeT *destLen,
-                                       const Byte *src, SizeT *srcLen,
-                                       ELzmaFinishMode finishMode, ELzmaStatus *status)
+inline SRes lzmaDec_DecodeToBuf(CLzma2Dec *p, Byte *dest, SizeT *destLen,
+                                const Byte *src, SizeT *srcLen,
+                                ELzmaFinishMode finishMode, ELzmaStatus *status)
 {
     return Lzma2Dec_DecodeToBuf(p, dest, destLen, src, srcLen, finishMode, status);
 }
@@ -169,89 +217,78 @@ int lzmaCompress(const QByteArray& in, QByteArray& out, int compressionLevel,
         outStream.Write = &ioWrite;
         outStream.io = outstream.device();
 
+        const int callsCountLimit = 5000;
+
         if (lzmaVersion == 2)
         {
-            static std::map<pid_t, CLzma2EncHandle>  encMap;
-            static std::atomic_flag encMapLock {ATOMIC_FLAG_INIT};
-            static int encMapCalls {0};
-
-            CLzma2EncHandle enc = 0;
+            CLzma2EncT::Ptr enc;
+            static int callsCount {0};
             { //Block for SpinLocker
-                SpinLocker locker(encMapLock); (void) locker;
-                if (encMapCalls > 10000)
+                SpinLocker locker(lzma2EncMapLock); (void) locker;
+                if (++callsCount > callsCountLimit)
                 {
                     // Чистим "мусор" оставшийся от завершенных потоков
-                    for (const auto& it : encMap)
-                        if (it.second)
-                            Lzma2Enc_Destroy(it.second);
-                    encMap.clear();
-                    encMapCalls = 0;
+                    lzma2EncMap.clear();
+                    callsCount = 0;
                 }
                 pid_t tid = trd::gettid();
-                if ((enc = encMap[tid]) == 0)
+                enc = lzma2EncMap[tid];
+                if (enc.empty())
                 {
-                    enc = Lzma2Enc_Create(&g_Alloc, &g_Alloc);
-                    encMap[tid] = enc;
+                    enc = CLzma2EncT::Ptr::create_ptr();
+                    if (enc->handle == 0)
+                        return SZ_ERROR_MEM;
+                    lzma2EncMap[tid] = enc;
                 }
-                ++encMapCalls;
             }
-            if (enc == 0)
-                return SZ_ERROR_MEM;
 
             CLzma2EncProps props;
             Lzma2EncProps_Init(&props);
             props.lzmaProps.level = compressionLevel;
 
-            res = Lzma2Enc_SetProps(enc, &props);
+            res = Lzma2Enc_SetProps(enc->handle, &props);
             if (res == SZ_OK)
             {
-                quint8 lzmaProp = Lzma2Enc_WriteProperties(enc);
+                quint8 lzmaProp = Lzma2Enc_WriteProperties(enc->handle);
                 outstream << quint8(2); // lzma version;
                 outstream << uncompressedSize;
                 outstream << lzmaProp;
-                res = Lzma2Enc_Encode(enc, &outStream, &inStream, NULL);
+                res = Lzma2Enc_Encode(enc->handle, &outStream, &inStream, NULL);
             }
-            //Lzma2Enc_Destroy(enc);
         }
         else
         {
-            static std::map<pid_t, CLzma2EncHandle>  encMap;
-            static std::atomic_flag encMapLock {ATOMIC_FLAG_INIT};
-            static int encMapCalls {0};
-
-            CLzmaEncHandle enc = 0;
+            CLzmaEncT::Ptr enc;
+            static int callsCount {0};
             { //Block for SpinLocker
-                SpinLocker locker(encMapLock); (void) locker;
-                if (encMapCalls > 10000)
+                SpinLocker locker(lzmaEncMapLock); (void) locker;
+                if (++callsCount > callsCountLimit)
                 {
                     // Чистим "мусор" оставшийся от завершенных потоков
-                    for (const auto& it : encMap)
-                        if (it.second)
-                            LzmaEnc_Destroy(it.second, &g_Alloc, &g_Alloc);
-                    encMap.clear();
-                    encMapCalls = 0;
+                    lzmaEncMap.clear();
+                    callsCount = 0;
                 }
                 pid_t tid = trd::gettid();
-                if ((enc = encMap[tid]) == 0)
+                enc = lzmaEncMap[tid];
+                if (enc.empty())
                 {
-                    enc = LzmaEnc_Create(&g_Alloc);
-                    encMap[tid] = enc;
+                    enc = CLzmaEncT::Ptr::create_ptr();
+                    if (enc->handle == 0)
+                        return SZ_ERROR_MEM;
+                    lzmaEncMap[tid] = enc;
                 }
-                ++encMapCalls;
             }
-            if (enc == 0)
-                return SZ_ERROR_MEM;
 
             CLzmaEncProps props;
             LzmaEncProps_Init(&props);
             props.level = compressionLevel;
-            res = LzmaEnc_SetProps(enc, &props);
+            res = LzmaEnc_SetProps(enc->handle, &props);
             if (res != SZ_OK)
                 return res;
 
             Byte lzmaHeader[LZMA_PROPS_SIZE];
             size_t lzmaHeaderSize = LZMA_PROPS_SIZE;
-            res = LzmaEnc_WriteProperties(enc, lzmaHeader, &lzmaHeaderSize);
+            res = LzmaEnc_WriteProperties(enc->handle, lzmaHeader, &lzmaHeaderSize);
             if (res != SZ_OK)
                 return res;
 
@@ -260,7 +297,7 @@ int lzmaCompress(const QByteArray& in, QByteArray& out, int compressionLevel,
             if (outstream.writeRawData((const char*) lzmaHeader, LZMA_PROPS_SIZE) != LZMA_PROPS_SIZE)
                 return SZ_ERROR_PARAM;
 
-            res = LzmaEnc_Encode(enc, &outStream, &inStream, NULL, &g_Alloc, &g_Alloc);
+            res = LzmaEnc_Encode(enc->handle, &outStream, &inStream, NULL, &g_Alloc, &g_Alloc);
         }
     }
     if (res != SZ_OK)
@@ -274,6 +311,18 @@ int lzmaCompress(const QByteArray& in, QByteArray& out, int compressionLevel,
 
 
 namespace qlzma {
+
+void removeRancidEncoders()
+{
+    {
+        SpinLocker locker(lzmaEncMapLock); (void) locker;
+        lzmaEncMap.clear();
+    }
+    {
+        SpinLocker locker(lzma2EncMapLock); (void) locker;
+        lzma2EncMap.clear();
+    }
+}
 
 int compress(const QByteArray& in, QByteArray& out, int compressionLevel)
 {
