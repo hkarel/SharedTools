@@ -140,6 +140,7 @@ void Socket::remove(const QUuidEx& command)
 {
     SpinLocker locker(_removeMessagesLock); (void) locker;
     _removeMessages.insert(command);
+    _rereadSendMessages = true;
 }
 
 Socket::BinaryProtocol Socket::binaryProtocolStatus() const
