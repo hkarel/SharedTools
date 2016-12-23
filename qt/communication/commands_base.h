@@ -65,7 +65,8 @@ template<
     command::Type CommandType1,
     command::Type CommandType2 = command::Type::Unknown,
     command::Type CommandType3 = command::Type::Unknown
-> struct Data
+>
+struct Data
 {
     // Идентификатор команды
     static constexpr const QUuidEx& command() {return *Command;}
