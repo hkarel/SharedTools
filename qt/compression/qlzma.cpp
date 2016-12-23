@@ -9,6 +9,7 @@
 #include "thread/thread_info.h"
 
 #include <QDataStream>
+#include <stdexcept>
 #include <atomic>
 #include <map>
 
