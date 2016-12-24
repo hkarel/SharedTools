@@ -98,12 +98,26 @@ bool Socket::send(const Message::Ptr& message)
                     << " is unknown for the receiving side. Command will be discarded.";
         return false;
     }
-    { //Block for SpinLocker
-        SpinLocker locker(_messagesLock); (void) locker;
-        message->add_ref();
-        _messages.add(message.get());
-        _rereadSendMessages = (message->priority() == Message::Priority::High
-                               || message->priority() == Message::Priority::Normal);
+    message->add_ref();
+    switch (message->priority())
+    {
+        case Message::Priority::High:
+        {
+            SpinLocker locker(_messagesLock); (void) locker;
+            _messagesHigh.add(message.get());
+            break;
+        }
+        case Message::Priority::Low:
+        {
+            SpinLocker locker(_messagesLock); (void) locker;
+            _messagesLow.add(message.get());
+            break;
+        }
+        default:
+        {
+            SpinLocker locker(_messagesLock); (void) locker;
+            _messagesNorm.add(message.get());
+        }
     }
     if (alog::logger().level() == alog::Level::Debug2)
     {
@@ -138,9 +152,18 @@ bool Socket::isLoopback() const
 
 void Socket::remove(const QUuidEx& command)
 {
-    SpinLocker locker(_removeMessagesLock); (void) locker;
-    _removeMessages.insert(command);
-    _rereadSendMessages = true;
+    SpinLocker locker(_messagesLock); (void) locker;
+    auto remove_cond = [&command](Message* m) -> bool
+    {
+        bool res = (command == m->command());
+        if (res && (alog::logger().level() == alog::Level::Debug2))
+            log_debug2_m << "Message removed from a queue to sending."
+                         << " Command " << CommandNameLog(m->command());
+        return res;
+    };
+    _messagesHigh.removeCond(remove_cond);
+    _messagesNorm.removeCond(remove_cond);
+    _messagesLow.removeCond(remove_cond);
 }
 
 Socket::BinaryProtocol Socket::binaryProtocolStatus() const
@@ -195,10 +218,7 @@ void Socket::run()
                   << _address << ":" << _port
                   << "; Socket descriptor: " << _socketDescriptor;
 
-    Message::List sendMessagesHigh;
-    Message::List sendMessagesNorm;
-    Message::List sendMessagesLow;
-    //Message::List sendMessagesLowLess; Зарезервировано
+    Message::List internalMessages;
     Message::List acceptMessages;
 
     QElapsedTimer timer;
@@ -220,7 +240,7 @@ void Socket::run()
         compatibleInfo.commands = commandsPool().commands();
         Message::Ptr message = createMessage(compatibleInfo);
         message->setPriority(Message::Priority::High);
-        sendMessagesHigh.add(message.detach());
+        internalMessages.add(message.detach());
     }
 
     auto processingCompatibleInfoCommand = [&](Message::Ptr& message) -> void
@@ -291,7 +311,7 @@ void Socket::run()
                 Message::Ptr m = createMessage(closeConnection);
                 commandCloseConnectionId = m->id();
                 m->setPriority(Message::Priority::High);
-                sendMessagesHigh.add(m.detach());
+                internalMessages.add(m.detach());
             }
         }
     };
@@ -317,7 +337,7 @@ void Socket::run()
             message->setCommandExecStatus(command::ExecStatus::Success);
             message->setPriority(Message::Priority::High);
             message->add_ref();
-            sendMessagesHigh.add(message.get());
+            internalMessages.add(message.get());
         }
         else if (message->commandType() == command::Type::Response
                  && message->id() == commandCloseConnectionId)
@@ -410,72 +430,20 @@ void Socket::run()
                 _protocolSignatureRead = true;
             }
 
-            // Отправляем внешние сообщения только когда есть ясность
-            // по совместимости бинарных протоколов.
-            if (_binaryProtocolStatus == BinaryProtocol::Compatible)
-            {
-                Message::List messages;
-                { //Block for SpinLocker
-                    SpinLocker locker(_messagesLock); (void) locker;
-                    messages.swap(_messages);
-                    _rereadSendMessages = false;
-                }
-                for (int i = 0; i < messages.count(); ++i)
-                    switch (messages[i].priority())
-                    {
-                        case Message::Priority::High:
-                            sendMessagesHigh.add(messages.release(i, lst::NO_COMPRESS_LIST));
-                            break;
-                        case Message::Priority::Low:
-                            sendMessagesLow.add(messages.release(i, lst::NO_COMPRESS_LIST));
-                            break;
-                        //--- Зарезервировано ---
-                        //case Message::Priority::LowLess:
-                        //    sendMessagesLowLess.add(messages.release(i, lst::NO_COMPRESS_LIST));
-                        //    break;
-                        default:
-                            sendMessagesNorm.add(messages.release(i, lst::NO_COMPRESS_LIST));
-                    }
-                messages.clear();
-            }
-
-            // Удаление сообщений из очереди
-            QSet<QUuidEx> removeMessages;
             { //Block for SpinLocker
-                SpinLocker locker(_removeMessagesLock); (void) locker;
-                removeMessages.swap(_removeMessages);
+                SpinLocker locker(_messagesLock); (void) locker;
+                _messagesCount = _messagesHigh.count()
+                                 + _messagesNorm.count()
+                                 + _messagesLow.count();
             }
-            if (!removeMessages.isEmpty())
-            {
-                auto remove_cond = [&removeMessages](Message* m) -> bool
-                {
-                    bool res = removeMessages.contains(m->command());
-                    if (res && (alog::logger().level() == alog::Level::Debug2))
-                        log_debug2_m << "Message removed from a queue to sending."
-                                     << " Command " << CommandNameLog(m->command());
-                    return res;
-                };
-                sendMessagesHigh.removeCond(remove_cond);
-                sendMessagesNorm.removeCond(remove_cond);
-                sendMessagesLow.removeCond(remove_cond);
-                //sendMessagesLowLess.removeCond(remove_cond); Зарезервировано
-                removeMessages.clear();
-            }
-
-            _sendMessagesCount = sendMessagesHigh.count()
-                                 + sendMessagesNorm.count()
-                                 + sendMessagesLow.count();
-                                 //+ sendMessagesLowLess.count();
 
             if (_socket->bytesAvailable() == 0
-                &&_socket->bytesToWrite() == 0
-                && sendMessagesHigh.empty()
-                && sendMessagesNorm.empty()
-                && sendMessagesLow.empty()
-                //&& sendMessagesLowLess.empty()  Зарезервировано
+                && _socket->bytesToWrite() == 0
+                && _messagesCount == 0
+                && internalMessages.empty()
                 && acceptMessages.empty())
             {
-                { //Block for QMutexLocker
+                {
                     QMutexLocker locker(&_loopConditionLock); (void) locker;
                     _loopCondition.wait(&_loopConditionLock, 500);
                 }
@@ -505,42 +473,41 @@ void Socket::run()
                 timer.restart();
                 while (true)
                 {
-                    if (_rereadSendMessages)
-                        break;
-
                     Message::Ptr message;
-                    if (!sendMessagesHigh.empty())
-                        message.attach(sendMessagesHigh.release(0));
+                    if (!internalMessages.empty())
+                        message.attach(internalMessages.release(0));
 
                     if (message.empty()
-                        && !sendMessagesNorm.empty())
+                        && _binaryProtocolStatus == BinaryProtocol::Compatible)
                     {
-                        if (_messagesNormCounter < 5)
+                        SpinLocker locker(_messagesLock); (void) locker;
+                        if (!_messagesHigh.empty())
+                            message.attach(_messagesHigh.release(0));
+
+                        if (message.empty() && !_messagesNorm.empty())
                         {
-                            ++_messagesNormCounter;
-                            message.attach(sendMessagesNorm.release(0));
-                        }
-                        else
-                        {
-                            _messagesNormCounter = 0;
-                            if (!sendMessagesLow.empty())
-                                message.attach(sendMessagesLow.release(0));
+                            if (_messagesNormCounter < 5)
+                            {
+                                ++_messagesNormCounter;
+                                message.attach(_messagesNorm.release(0));
+                            }
                             else
-                                message.attach(sendMessagesNorm.release(0));
+                            {
+                                _messagesNormCounter = 0;
+                                if (!_messagesLow.empty())
+                                    message.attach(_messagesLow.release(0));
+                                else
+                                    message.attach(_messagesNorm.release(0));
+                            }
                         }
+                        if (message.empty() && !_messagesLow.empty())
+                            message.attach(_messagesLow.release(0));
+
+                        _messagesCount = _messagesHigh.count()
+                                         + _messagesNorm.count()
+                                         + _messagesLow.count();
                     }
-
-                    if (message.empty()
-                        && !sendMessagesLow.empty())
-                        message.attach(sendMessagesLow.release(0));
-
-                    //--- Зарезервировано ---
-                    //if (message.empty()
-                    //    && !sendMessagesLowLess.empty())
-                    //    message.attach(sendMessagesLowLess.release(0));
-
-                    if (loopBreak
-                        || message.empty())
+                    if (loopBreak || message.empty())
                         break;
 
                     if (alog::logger().level() == alog::Level::Debug2)
@@ -733,7 +700,8 @@ void Socket::run()
                 timer.restart();
                 while (!acceptMessages.empty())
                 {
-                    Message::Ptr m {acceptMessages.release(0), false};
+                    Message::Ptr m;
+                    m.attach(acceptMessages.release(0));
 
                     // Если команда неизвестна - отправляем об этом уведомление
                     // и переходим к обработке следующей команды.
@@ -744,9 +712,9 @@ void Socket::run()
                         unknown.address = _socket->peerAddress();
                         unknown.port = _socket->peerPort();
                         unknown.socketDescriptor = _socket->socketDescriptor();
-                        Message::Ptr mu = createMessage(unknown);
-                        mu->setPriority(Message::Priority::High);
-                        sendMessagesHigh.add(mu.detach());
+                        Message::Ptr mUnknown = createMessage(unknown);
+                        mUnknown->setPriority(Message::Priority::High);
+                        internalMessages.add(mUnknown.detach());
                         log_error_m << "Unknown command: " << unknown.commandId
                                     << "; Host: " << unknown.address << ":" << unknown.port
                                     << "; Socket descriptor: " << unknown.socketDescriptor;

@@ -105,9 +105,9 @@ public:
     // идентификатором команды
     void remove(const QUuidEx& command);
 
-    // Возвращает приблизительное количество сообщений в очереди команд
-    // на отправку в TCP-сокет. Используется для оценки загруженности очереди.
-    int sendMessagesCount() const {return _sendMessagesCount;}
+    // Возвращает количество сообщений в очереди команд на отправку в TCP-сокет.
+    // Используется для оценки загруженности очереди.
+    int messagesCount() const {return _messagesCount;}
 
 signals:
     // Сигнал эмитируется при получении сообщения
@@ -146,14 +146,13 @@ private:
 
     volatile BinaryProtocol _binaryProtocolStatus = {BinaryProtocol::Undefined};
 
-    Message::List _messages;
+    //Message::List _messages;
+    Message::List _messagesHigh;
+    Message::List _messagesNorm;
+    Message::List _messagesLow;
     mutable std::atomic_flag _messagesLock = ATOMIC_FLAG_INIT;
 
-    QSet<QUuidEx> _removeMessages;
-    mutable std::atomic_flag _removeMessagesLock = ATOMIC_FLAG_INIT;
-
-    volatile int _sendMessagesCount = {0};
-    volatile bool _rereadSendMessages = {false};
+    volatile int _messagesCount = {0};
 
     QWaitCondition _loopCondition;
     mutable QMutex _loopConditionLock;
