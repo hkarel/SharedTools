@@ -794,7 +794,8 @@ public:
   /// @brief Удаляет элементы из списка согласно условию condition.
   ///
   /// При удалении элементов из списка происходит их разрушение.
-  /// @param[in] cond Функор или функция с сигнатурой bool condition(T*).
+  /// @param[in] condition Функор или функция с сигнатурой bool condition(T*).
+  ///            Если condition возвращает TRUE, то элемент удаляется из списка.
   /// @param[in] compressList Признак сжатия списка.
   template<typename Condition>
   void removeCond(const Condition& condition, bool compressList = true);
