@@ -160,11 +160,11 @@ private:
             // Тип пересылаемого сообщения, значения в этом поле
             // соответствуют command::Type.
             // Резервируем 4 бита для возможного будущего расширения command::Type.
-            quint32 _commandType: 4;
+            quint32 _commandType: 3;
 
             // Статус выполнения/обработки команды, значения в этом поле
             // соответствуют command::ExecStatus.
-            quint32 _commandExecStatus: 4;
+            quint32 _commandExecStatus: 3;
 
             // Приоритет сообщения
             quint32 _priority: 2;
@@ -173,7 +173,7 @@ private:
             // так же содержит информацию по алгоритму сжатия.
             quint32 _compression: 3;
 
-            quint32 _reserved: 19;
+            quint32 _reserved: 21;
         };
     };
 
