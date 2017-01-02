@@ -15,9 +15,9 @@
 #pragma once
 
 #include "qt/quuidex.h"
+#include "qt/communication/message.h"
+#include "qt/communication/communication_bserialize.h"
 #include "qt/version/version_number.h"
-#include "command_type.h"
-#include "communication_bserialize.h"
 
 #include <QtCore>
 #include <QHostAddress>
@@ -56,15 +56,15 @@ namespace data {
 /**
   Структура Data используется для ассоциации целевой структуры данных с опреде-
   ленной командой. Она позволяют связать идентификатор команды со структурой
-  данных, а так же задать направления передачи данных (Request/Response).
+  данных, а так же задать направления передачи данных.
   В дальнейшем эти параметры будут использоваться для проверки возможности
   преобразования Message-сообщения в конкретную структуру.
 */
 template<
     const QUuidEx* Command,
-    command::Type CommandType1,
-    command::Type CommandType2 = command::Type::Unknown,
-    command::Type CommandType3 = command::Type::Unknown
+    Message::Type MessageType1,
+    Message::Type MessageType2 = Message::Type::Unknown,
+    Message::Type MessageType3 = Message::Type::Unknown
 >
 struct Data
 {
@@ -76,34 +76,34 @@ struct Data
     bool isValid = {false};
 
     // Признак, что данные могут быть использованы для Message-сообщений
-    // с типом Request
-    static constexpr bool forRequest() {
-        return (CommandType1 == command::Type::Request
-                || CommandType2 == command::Type::Request
-                || CommandType3 == command::Type::Request);
+    // с типом Command
+    static constexpr bool forCommandMessage() {
+        return (MessageType1 == Message::Type::Command
+                || MessageType2 == Message::Type::Command
+                || MessageType3 == Message::Type::Command);
     }
 
     // Признак, что данные могут быть использованы для Message-сообщений
-    // с типом Response
-    static constexpr bool forResponse() {
-        return (CommandType1 == command::Type::Response
-                || CommandType2 == command::Type::Response
-                || CommandType3 == command::Type::Response);
+    // с типом Answer
+    static constexpr bool forAnswerMessage() {
+        return (MessageType1 == Message::Type::Answer
+                || MessageType2 == Message::Type::Answer
+                || MessageType3 == Message::Type::Answer);
     }
 
     // Признак, что данные могут быть использованы для Message-сообщений
     // с типом Event
-    static constexpr bool forEvent() {
-        return (CommandType1 == command::Type::Event
-                || CommandType2 == command::Type::Event
-                || CommandType3 == command::Type::Event);
+    static constexpr bool forEventMessage() {
+        return (MessageType1 == Message::Type::Event
+                || MessageType2 == Message::Type::Event
+                || MessageType3 == Message::Type::Event);
     }
 };
 
 /**
   Структура содержит информацию об ошибке произошедшей в процессе обработки
-  Request-сообщения. Данная структура  отправляется  вызывающей стороне
-  как Response-сообщение, при этом статус обработки команды Message::ExecStatus
+  сообщения. Данная структура  отправляется  вызывающей стороне как Answer-
+  сообщение, при этом статус обработки команды Message::ExecStatus
   равен Error.
   См. так же описание enum Message::ExecStatus
 */
@@ -114,12 +114,11 @@ struct MessageError
 };
 
 /**
-  Сообщение о неудачной обработке Request-сообщения, которое не является ошиб-
-  кой. Такая ситуация может возникнуть когда запрашиваемое  действие не может
-  быть выполнено в силу разных причин,  например когда  недостаточно  прав на
-  запрашиваемое действие. Данная структура отправляется вызывающей стороне как
-  Response-сообщение, при этом статус обработки команды Message::ExecStatus
-  равен Failed.
+  Сообщение о неудачной обработке сообщения, которое не является ошибкой. Такая
+  ситуация может возникнуть когда запрашиваемое  действие не может быть выполне-
+  но в силу разных причин,  например когда  недостаточно  прав на запрашиваемое
+  действие. Данная структура отправляется вызывающей стороне как Answer-сообще-
+  ние, при этом статус обработки команды Message::ExecStatus равен Failed.
   См. так же описание enum Message::ExecStatus
 */
 struct MessageFailed
@@ -132,7 +131,7 @@ struct MessageFailed
   Информационное сообщение о неизвестной команде
 */
 struct Unknown : Data<&command::Unknown,
-                       command::Type::Request>
+                       Message::Type::Command>
 {
     QUuidEx      commandId; // Идентификатор неизвестной команды.
     QHostAddress address;   // Адрес хоста для которого команда неизвестна,
@@ -147,7 +146,7 @@ struct Unknown : Data<&command::Unknown,
   используется эта структура, причем как самостоятельное сообщение.
 */
 struct Error : Data<&command::Error,
-                     command::Type::Request>
+                     Message::Type::Command>
 {
     QUuidEx commandId;   // Идентификатор команды для которой произошла ошибка.
     QString description; // Описание ошибки.
@@ -160,8 +159,8 @@ struct Error : Data<&command::Error,
   обмениваются этой информацией.
 */
 struct CompatibleInfo : Data<&command::CompatibleInfo,
-                              command::Type::Request,
-                              command::Type::Response>
+                              Message::Type::Command,
+                              Message::Type::Answer>
 {
     VersionNumber    version;               // Текущая версия программы
     VersionNumber    minCompatibleVersion;  // Минимально совместимая версия
@@ -175,8 +174,8 @@ struct CompatibleInfo : Data<&command::CompatibleInfo,
   Структура описана как пример оформления возвращаемых данных.
   На практике эта структура не используется.
 */
-struct CompatibleInfo_Response : Data<&command::CompatibleInfo,
-                                       command::Type::Response>
+struct CompatibleInfo_Answer : Data<&command::CompatibleInfo,
+                                     Message::Type::Answer>
 {
     VersionNumber    version;               // Текущая версия программы
     VersionNumber    minCompatibleVersion;  // Минимально совместимая версия.
@@ -190,7 +189,7 @@ struct CompatibleInfo_Response : Data<&command::CompatibleInfo,
   Структура содержит информацию о причинах закрытия TCP-соединения
 */
 struct CloseConnection : Data<&command::CloseConnection,
-                               command::Type::Request>
+                               Message::Type::Command>
 {
     QString description;  // Описание причины закрытия соединения
     DECLARE_B_SERIALIZE_FUNC

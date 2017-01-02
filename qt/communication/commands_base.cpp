@@ -1,5 +1,5 @@
-#include "commands_base.h"
-#include "commands_pool.h"
+#include "qt/communication/commands_base.h"
+#include "qt/communication/commands_pool.h"
 
 namespace communication {
 namespace command {
@@ -99,7 +99,7 @@ void CompatibleInfo::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
-bserial::RawVector CompatibleInfo_Response::toRaw() const
+bserial::RawVector CompatibleInfo_Answer::toRaw() const
 {
     B_SERIALIZE_V1(stream)
     stream << version.vers;
@@ -108,7 +108,7 @@ bserial::RawVector CompatibleInfo_Response::toRaw() const
     B_SERIALIZE_RETURN
 }
 
-void CompatibleInfo_Response::fromRaw(const bserial::RawVector& vect)
+void CompatibleInfo_Answer::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
     stream >> version.vers;

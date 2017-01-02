@@ -24,8 +24,8 @@ Message::Message(const QUuidEx& command) : Message()
 {
     _id = QUuid::createUuid();
     _command = command;
-    _commandType = static_cast<quint32>(command::Type::Request);
-    _commandExecStatus = static_cast<quint32>(command::ExecStatus::Unknown);
+    _type = static_cast<quint32>(Type::Command);
+    _execStatus = static_cast<quint32>(ExecStatus::Unknown);
     _priority = static_cast<quint32>(Priority::Normal);
     _compression = static_cast<quint32>(Compression::None);
 }
@@ -160,27 +160,27 @@ void Message::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
-command::Type Message::commandType() const
+Message::Type Message::type() const
 {
-    return static_cast<command::Type>(_commandType);
+    return static_cast<Type>(_type);
 }
 
-void Message::setCommandType(command::Type val)
+void Message::setType(Type val)
 {
-    _commandType = static_cast<quint32>(val);
+    _type = static_cast<quint32>(val);
 }
 
 //#pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wconversion"
 
-command::ExecStatus Message::commandExecStatus() const
+Message::ExecStatus Message::execStatus() const
 {
-    return static_cast<command::ExecStatus>(_commandExecStatus);
+    return static_cast<ExecStatus>(_execStatus);
 }
 
-void Message::setCommandExecStatus(command::ExecStatus val)
+void Message::setExecStatus(ExecStatus val)
 {
-    _commandExecStatus = static_cast<quint32>(val);
+    _execStatus = static_cast<quint32>(val);
 }
 
 Message::Priority Message::priority() const

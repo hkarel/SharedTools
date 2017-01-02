@@ -11,8 +11,7 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "qt/quuidex.h"
-#include "command_type.h"
-#include "communication_bserialize.h"
+#include "qt/communication/communication_bserialize.h"
 
 #include <QtCore>
 #include <utility>
@@ -38,7 +37,37 @@ public:
     typedef clife_ptr<Message> Ptr;
     typedef lst::List<Message, lst::CompareItemDummy, Allocator> List;
 
-public:
+    enum class Type : quint32
+    {
+        Unknown = 0,
+        Command = 1, // Сообщение-команда. Это может быть сообщение с командой
+                     // на выполнение действия, либо это может быть запрос
+                     // на получение данных. Предполагается, что в ответ
+                     // на данное сообщение придет сообщение с типом Answer.
+        Answer  = 2, // Ответ на сообщением с типом Command.
+        Event   = 3  // Данный тип сообщения похож на Command, но не предполагает
+                     // получения ответа (Answer). Он используется для рассылки
+                     // широковещательных сообщений о событиях.
+    };
+
+    // Статус выполнения/обработки сообщения. Используется в сообщениях
+    // с типом Answer для того чтобы уведомить другую сторону о статусе
+    // выполнения команды с типом Command.
+    enum class ExecStatus : quint32
+    {
+        Unknown = 0,
+        Success = 1, // Сообщение было обработано успешно и содержит корректные
+                     // ответные данные.
+        Failed  = 2, // Сообщение не было обработано успешно, но результат
+                     // не является ошибкой.
+                     // В данном случае сообщение (Message) будет содержать
+                     // данные в формате communication::data::MessageFailed.
+        Error   = 3  // При обработке сообщения произошла ошибка, и в качестве
+                     // ответа отправляется сообщения с описанием причины ошибки.
+                     // В данном случае сообщение (Message) будет содержать данные
+                     // в формате communication::data::MessageError.
+    };
+
     enum class Priority : quint32
     {
         High   = 0,
@@ -73,12 +102,12 @@ public:
     bool contentIsEmpty() const {return _content.isEmpty();}
 
     // Тип пересылаемой команды.
-    command::Type commandType() const;
-    void setCommandType(command::Type);
+    Type type() const;
+    void setType(Type);
 
     // Статус выполнения/обработки команды. См. описание command::ExecStatus
-    command::ExecStatus commandExecStatus() const;
-    void setCommandExecStatus(command::ExecStatus);
+    ExecStatus execStatus() const;
+    void setExecStatus(ExecStatus);
 
     // Приоритет сообщения
     Priority priority() const;
@@ -154,23 +183,21 @@ private:
 private:
     // Битовые флаги
     union {
-        quint32 _flags; // Содержит значения всех флагов, используется
+        quint32 _flags; // Поле содержит значения всех флагов, используется
                         // при сериализации.
         struct {
-            // Тип пересылаемого сообщения, значения в этом поле
-            // соответствуют command::Type.
-            // Резервируем 4 бита для возможного будущего расширения command::Type.
-            quint32 _commandType: 3;
+            // Тип пересылаемого сообщения, соответствуют enum Type
+            quint32 _type: 3;
 
-            // Статус выполнения/обработки команды, значения в этом поле
-            // соответствуют command::ExecStatus.
-            quint32 _commandExecStatus: 3;
+            // Статус выполнения/обработки команды, соответствуют enum  ExecStatus
+            quint32 _execStatus: 3;
 
-            // Приоритет сообщения
+            // Приоритет сообщения, соответствуют enum  Priority
             quint32 _priority: 2;
 
-            // Признак, что контент сообщения находится в сжатом состоянии,
-            // так же содержит информацию по алгоритму сжатия.
+            // Признак что контент сообщения находится в сжатом состоянии,
+            // так же содержит информацию по алгоритму сжатия,
+            // соответствуют enum  Compression.
             quint32 _compression: 3;
 
             quint32 _reserved: 21;

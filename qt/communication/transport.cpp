@@ -1,10 +1,10 @@
-#include "transport.h"
-#include "commands_base.h"
-#include "commands_pool.h"
 #include "break_point.h"
 #include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
 #include "qt/version/version_number.h"
+#include "qt/communication/commands_base.h"
+#include "qt/communication/commands_pool.h"
+#include "qt/communication/transport.h"
 
 #include <stdexcept>
 
@@ -245,7 +245,7 @@ void Socket::run()
 
     auto processingCompatibleInfoCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->commandType() == command::Type::Request)
+        if (message->type() == Message::Type::Command)
         {
             VersionNumber productVersion = ::productVersion();
             VersionNumber minCompatibleVersion = ::minCompatibleVersion();
@@ -318,7 +318,7 @@ void Socket::run()
 
     auto processingCloseConnectionCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->commandType() == command::Type::Request)
+        if (message->type() == Message::Type::Command)
         {
             data::CloseConnection closeConnection;
             readFromMessage(message, closeConnection);
@@ -333,13 +333,13 @@ void Socket::run()
 
             // Отправляем ответ
             message->clearContent();
-            message->setCommandType(command::Type::Response);
-            message->setCommandExecStatus(command::ExecStatus::Success);
+            message->setType(Message::Type::Answer);
+            message->setExecStatus(Message::ExecStatus::Success);
             message->setPriority(Message::Priority::High);
             message->add_ref();
             internalMessages.add(message.get());
         }
-        else if (message->commandType() == command::Type::Response
+        else if (message->type() == Message::Type::Answer
                  && message->id() == commandCloseConnectionId)
         {
             loopBreak = true;
@@ -920,7 +920,7 @@ void Listener::send(const Message::Ptr& message,
                     const SocketDescriptorSet& excludeSockets) const
 {
     QVector<Socket::Ptr> sockets = this->sockets();
-    if (message->commandType() == command::Type::Event)
+    if (message->type() == Message::Type::Event)
     {
         for (const Socket::Ptr& s : sockets)
             if (!excludeSockets.contains(s->socketDescriptor()))

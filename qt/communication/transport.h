@@ -14,8 +14,8 @@
 #include "safe_singleton.h"
 #include "qt/thread/qthreadex.h"
 
-#include "message.h"
-#include "functions.h"
+#include "qt/communication/message.h"
+#include "qt/communication/functions.h"
 
 #include <QtCore>
 #include <QTcpSocket>
@@ -95,7 +95,7 @@ public:
     bool send(const QUuidEx& command);
 
     template<typename CommandDataT>
-    bool send(const CommandDataT& data, command::Type type = command::Type::Request)
+    bool send(const CommandDataT& data, Message::Type type = Message::Type::Command)
     {
         Message::Ptr message = createMessage(data, type);
         return send(message);
