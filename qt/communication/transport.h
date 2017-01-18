@@ -153,15 +153,11 @@ private:
     mutable std::atomic_flag _messagesLock = ATOMIC_FLAG_INIT;
 
     volatile int _messagesCount = {0};
-
-    QWaitCondition _loopCondition;
-    mutable QMutex _loopConditionLock;
+    int _messagesNormCounter = {0};
 
     static const QUuidEx _protocolSignature;
     bool _protocolSignatureRead = {false};
     bool _protocolSignatureWrite = {false};
-
-    quint32 _messagesNormCounter = {0};
 
     friend class Sender;
     friend class Listener;

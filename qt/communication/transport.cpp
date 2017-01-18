@@ -99,32 +99,26 @@ bool Socket::send(const Message::Ptr& message)
         return false;
     }
     message->add_ref();
-    switch (message->priority())
-    {
-        case Message::Priority::High:
+    { //Block for SpinLocker
+        SpinLocker locker(_messagesLock); (void) locker;
+        switch (message->priority())
         {
-            SpinLocker locker(_messagesLock); (void) locker;
-            _messagesHigh.add(message.get());
-            break;
+            case Message::Priority::High:
+                _messagesHigh.add(message.get());
+                break;
+            case Message::Priority::Low:
+                _messagesLow.add(message.get());
+                break;
+            default:
+                _messagesNorm.add(message.get());
         }
-        case Message::Priority::Low:
-        {
-            SpinLocker locker(_messagesLock); (void) locker;
-            _messagesLow.add(message.get());
-            break;
-        }
-        default:
-        {
-            SpinLocker locker(_messagesLock); (void) locker;
-            _messagesNorm.add(message.get());
-        }
+        ++_messagesCount;
     }
     if (alog::logger().level() == alog::Level::Debug2)
     {
         log_debug2_m << "Message added to a queue to sending"
                      << ". Command " << CommandNameLog(message->command());
     }
-    _loopCondition.wakeAll();
     return true;
 }
 
@@ -164,6 +158,10 @@ void Socket::remove(const QUuidEx& command)
     _messagesHigh.removeCond(remove_cond);
     _messagesNorm.removeCond(remove_cond);
     _messagesLow.removeCond(remove_cond);
+
+    _messagesCount = _messagesHigh.count()
+                     + _messagesNorm.count()
+                     + _messagesLow.count();
 }
 
 Socket::BinaryProtocol Socket::binaryProtocolStatus() const
@@ -386,6 +384,8 @@ void Socket::run()
                 s << _protocolSignature;
                 _socket->write(ba.constData(), 16);
                 CHECK_SOCKET_ERROR
+                _socket->waitForBytesWritten(delay);
+                CHECK_SOCKET_ERROR
                 _protocolSignatureWrite = true;
             }
 
@@ -437,35 +437,29 @@ void Socket::run()
                                  + _messagesLow.count();
             }
 
-            if (_socket->bytesAvailable() == 0
-                && _socket->bytesToWrite() == 0
-                && _messagesCount == 0
-                && internalMessages.empty()
-                && acceptMessages.empty())
+            while (_socket->bytesAvailable() == 0
+                   && _messagesCount == 0
+                   && internalMessages.empty()
+                   && acceptMessages.empty())
             {
+                if (threadStop())
                 {
-                    QMutexLocker locker(&_loopConditionLock); (void) locker;
-                    _loopCondition.wait(&_loopConditionLock, 500);
-                }
-                // Нет ясности, как реализованы методы waitForBytesWritten(),
-                // waitForReadyRead(), возможно они отвечают за изменение значений
-                // для bytesAvailable() и bytesToWrite(), поэтому здесь их вызываем,
-                // чтобы не попасть в мертвый цикл.
-                _socket->waitForBytesWritten(delay);
-                _socket->waitForReadyRead(delay);
-                continue;
-            }
-
-            timer.restart();
-            while (_socket->bytesToWrite())
-            {
-                _socket->waitForBytesWritten(delay);
-                CHECK_SOCKET_ERROR
-                if (timer.hasExpired(3 * delay))
+                    loopBreak = true;
                     break;
+                }
+                if (_socket->bytesToWrite())
+                    _socket->waitForBytesWritten(20);
+                _socket->waitForReadyRead(20);
+                CHECK_SOCKET_ERROR
             }
             if (loopBreak)
                 break;
+
+            if (_socket->bytesToWrite())
+            {
+                _socket->waitForBytesWritten(delay);
+                CHECK_SOCKET_ERROR
+            }
 
             //--- Отправка сообщений ---
             if (_socket->bytesToWrite() == 0)
@@ -569,9 +563,6 @@ void Socket::run()
                 if (loopBreak)
                     break;
             } //--- Отправка сообщений ---
-
-            if (_socket->bytesAvailable() == 0)
-                _socket->waitForReadyRead(3 * delay);
 
             //--- Прием сообщений ---
             if (_socket->bytesAvailable() != 0)
