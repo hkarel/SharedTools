@@ -122,6 +122,12 @@ public:
     quint64 maxTimeLife() const {return _maxTimeLife;}
     void setMaxTimeLife(quint64 val) {_maxTimeLife = val;}
 
+    // Передает пользовательские данные без сохранения их в поле content.
+    // Это позволяет сократить количество ресурсоемких операций сериализации/
+    // десериализации данных необходимых для поля content.
+    quint32 tag() const {return _tag;}
+    void setTag(quint32 val) {_tag = val;}
+
     // Вспомогательный параметр, используется на стороне сервера для идентифика-
     // ции сокета с которого было получено сообщение.
     SocketDescriptor socketDescriptor() const {return _socketDescriptor;}
@@ -143,6 +149,9 @@ public:
     // для используемого алгоритма.
     void compress(int level = -1, Compression compression = Compression::Zip);
 
+    // Запрещает сжатие сообщения на уровне сетевого сокета
+    void disableCompress() {compress(-1, Compression::Disable);}
+
     // Выполняет декомпрессию контента сообщения.
     void decompress();
 
@@ -158,7 +167,7 @@ public:
     bool readContent(Args&... args) const;
 
     // Вспомогательные функции, используются для формирования сырого потока
-    // данных для отправки в tcp-сокет.
+    // данных для отправки в сетевой сокет.
     BByteArray toByteArray() const;
     static Ptr fromByteArray(const BByteArray&);
 
@@ -184,23 +193,33 @@ private:
     // Битовые флаги
     union {
         quint32 _flags; // Поле содержит значения всех флагов, используется
-                        // при сериализации.
+                        // при сериализации
         struct {
-            // Тип пересылаемого сообщения, соответствуют enum Type
+            // Тип пересылаемого сообщения, соответствует enum Type
             quint32 _type: 3;
 
-            // Статус выполнения/обработки команды, соответствуют enum  ExecStatus
+            // Статус выполнения команды, соответствует enum ExecStatus
             quint32 _execStatus: 3;
 
-            // Приоритет сообщения, соответствуют enum  Priority
+            // Приоритет сообщения, соответствует enum Priority
             quint32 _priority: 2;
 
             // Признак что контент сообщения находится в сжатом состоянии,
-            // так же содержит информацию по алгоритму сжатия,
-            // соответствуют enum  Compression.
+            // так же содержит информацию по алгоритму сжатия, соответствует
+            // enum Compression
             quint32 _compression: 3;
 
-            quint32 _reserved: 21;
+            // Признаки используются для оптимизации размера сообщения при его
+            // сериализации
+            mutable quint32 _maxTimeLifeIsEmpty: 1;
+            mutable quint32 _contentIsEmpty: 1;
+            mutable quint32 _tagIsEmpty: 1;
+
+            quint32 _reserved: 17;
+
+            // Признак используются для оптимизации размера сообщения при его
+            // сериализации. Данный признак идет последним битом в поле _flags
+            mutable quint32 _flags2IsEmpty: 1;
         };
     };
 
@@ -211,6 +230,7 @@ private:
     QUuidEx _command;
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
+    quint32 _tag = {0};
 
     SocketDescriptor _socketDescriptor = {-1};
     bool _processed = {false};

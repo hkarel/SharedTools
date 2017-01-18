@@ -138,13 +138,23 @@ Message::Ptr Message::fromByteArray(const BByteArray& ba)
 
 bserial::RawVector Message::toRaw() const
 {
+    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
+    _contentIsEmpty = _content.isEmpty();
+    _tagIsEmpty = (_tag == 0);
+    _flags2IsEmpty = (_flags2 == 0);
+
     B_SERIALIZE_V1(stream, sizeof(Message) * 2 + _content.size())
     stream << _flags;
-    stream << _flags2;
+    if (!_flags2IsEmpty)
+        stream << _flags2;
     stream << _id;
     stream << _command;
-    stream << _maxTimeLife;
-    stream << _content;
+    if (!_maxTimeLifeIsEmpty)
+        stream << _maxTimeLife;
+    if (!_contentIsEmpty)
+        stream << _content;
+    if (!_tagIsEmpty)
+        stream << _tag;
     B_SERIALIZE_RETURN
 }
 
@@ -152,11 +162,25 @@ void Message::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
     stream >> _flags;
-    stream >> _flags2;
+
+    _flags2 = 0;
+    if (!_flags2IsEmpty)
+        stream >> _flags2;
+
     stream >> _id;
     stream >> _command;
-    stream >> _maxTimeLife;
-    stream >> _content;
+
+    _maxTimeLife = quint64(-1);
+    if (!_maxTimeLifeIsEmpty)
+        stream >> _maxTimeLife;
+
+    _content.clear();
+    if (!_contentIsEmpty)
+        stream >> _content;
+
+    _tag = 0;
+    if (!_tagIsEmpty)
+        stream >> _tag;
     B_DESERIALIZE_END
 }
 
