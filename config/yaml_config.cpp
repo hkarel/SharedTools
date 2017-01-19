@@ -102,6 +102,7 @@ bool YamlConfig::save(const std::string& filePath)
         log_error_m << "Cannot open file for write: " << _filePath;
         return false;
     }
+    _root.SetStyle(YAML::EmitterStyle::Block);
     file << _root;
     file.close();
     YAMLCONFIG_CATCH_2
