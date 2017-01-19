@@ -175,7 +175,8 @@ bool YamlConfig::getValue(const std::string& name,
     if (node.IsNull())
     {
         if (logWarnings)
-            log_warn_m << "Parameter '" << name << "' is undefined";
+            log_warn_m << "Parameter '" << name << "' is undefined"
+                       << ". Config file: " << _filePath;
         return false;
     }
     return true;
