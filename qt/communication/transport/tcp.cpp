@@ -951,7 +951,7 @@ Socket::Ptr Listener::socketByDescriptor(SocketDescriptor descr) const
 
 void Listener::incomingConnection (SocketDescriptor socketDescriptor)
 {
-    Socket::Ptr socket = Socket::Ptr::create_join_ptr();
+    Socket::Ptr socket = Socket::Ptr::create_ptr();
     socket->setSocketDescriptor(socketDescriptor);
     socket->setCompressionLevel(_compressionLevel);
     socket->setCompressionSize(_compressionSize);

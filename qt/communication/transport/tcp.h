@@ -162,7 +162,9 @@ private:
 
     friend class Sender;
     friend class Listener;
-    template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
+    friend Socket* Ptr::allocator_t::create();
+    //template<typename T> friend T* allocator_ptr<T>::create();
+    //template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
 };
 
 
