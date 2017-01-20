@@ -25,6 +25,7 @@
 
 namespace communication {
 namespace transport {
+namespace tcp {
 
 class Sender;
 class Listener;
@@ -266,8 +267,9 @@ private:
     template<typename T, int> friend T& ::safe_singleton();
 };
 
+} // namespace tcp
 } // namespace transport
 
-transport::Listener& listener();
+transport::tcp::Listener& listener();
 
 } // namespace communication

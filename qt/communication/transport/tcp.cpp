@@ -4,7 +4,7 @@
 #include "qt/version/version_number.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/commands_pool.h"
-#include "qt/communication/transport.h"
+#include "qt/communication/transport/tcp.h"
 
 #include <stdexcept>
 
@@ -56,6 +56,7 @@ Line operator<< (Line&& line, const CommandNameLog& cnl)
 
 namespace communication {
 namespace transport {
+namespace tcp {
 
 //--------------------------------- Base -------------------------------------
 
@@ -987,11 +988,12 @@ void Listener::removeClosedSockets()
     }
 }
 
+} // namespace tcp
 } // namespace transport
 
-transport::Listener& listener()
+transport::tcp::Listener& listener()
 {
-    return ::safe_singleton<transport::Listener>();
+    return ::safe_singleton<transport::tcp::Listener>();
 }
 
 } // namespace communication
