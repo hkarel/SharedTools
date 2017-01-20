@@ -18,6 +18,7 @@
 #include <QByteArray>
 #include <QDataStream>
 #include <QVector>
+#include <stdexcept>
 #include <type_traits>
 
 namespace bserial /*binary serialization*/ {
@@ -67,9 +68,15 @@ QDataStream& getFromStream(QDataStream& s, T& t,
     if (s.atEnd())
         return s;
 
-    RawVector rv;
-    rv.reserve(2);
-    s >> rv;
+    quint8 size;
+    s >> size;
+    RawVector rv {int(size)};
+    for(quint8 i = 0; i < size; ++i)
+    {
+        ByteArray ba;
+        s >> ba;
+        rv[i] = ba;
+    }
     t.fromRaw(rv);
     return s;
 }
@@ -77,7 +84,13 @@ template<typename T>
 QDataStream& putToStream(QDataStream& s, const T& t,
                          typename not_enum_type<T>::type = 0)
 {
-    s << t.toRaw();
+    RawVector rv = t.toRaw();
+    if (rv.size() > 255)
+        throw std::logic_error(std::string(
+            "Limit exceeded on number of versions for b-serialization (255)"));
+    s << quint8(rv.size());
+    for (const ByteArray& ba : rv)
+        s << ba;
     return s;
 }
 
@@ -318,6 +331,7 @@ typedef bserial::ByteArray BByteArray;
   Если есть возможность получить размер сериализуемой структуры (хотя бы прибли-
   зительный размер), то настоятельно рекомендуется указывать его в качестве вто-
   рого параметра - это сократит накладные расходы на повторное выделения памяти.
+  Максимальное количество версий синхронизации для структуры равно 255.
 
   bserial::RawVector Class::toRaw()
   {
