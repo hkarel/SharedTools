@@ -93,15 +93,23 @@ bool Socket::send(const Message::Ptr& message)
         log_error_m << "Cannot send a empty message";
         return false;
     }
-    if (!remoteCommandExists(message->command()))
+    if (_checkUnknownCommands)
     {
-        log_error_m << "Command " << CommandNameLog(message->command())
-                    << " is unknown for the receiving side. Command will be discarded.";
-        return false;
+        bool isUnknown;
+        { //Block for SpinLocker
+            SpinLocker locker(_unknownCommandsLock); (void) locker;
+            isUnknown = (_unknownCommands.constFind(message->command()) != _unknownCommands.constEnd());
+        }
+        if (isUnknown)
+        {
+            log_error_m << "Command " << CommandNameLog(message->command())
+                        << " is unknown for the receiving side. Command will be discarded.";
+            return false;
+        }
     }
     message->add_ref();
-    { //Block for SpinLocker
-        SpinLocker locker(_messagesLock); (void) locker;
+    { //Block for QMutexLocker
+        QMutexLocker locker(&_messagesLock); (void) locker;
         switch (message->priority())
         {
             case Message::Priority::High:
@@ -147,7 +155,7 @@ bool Socket::isLoopback() const
 
 void Socket::remove(const QUuidEx& command)
 {
-    SpinLocker locker(_messagesLock); (void) locker;
+    QMutexLocker locker(&_messagesLock); (void) locker;
     auto remove_cond = [&command](Message* m) -> bool
     {
         bool res = (command == m->command());
@@ -173,12 +181,6 @@ Socket::BinaryProtocol Socket::binaryProtocolStatus() const
 SocketDescriptor Socket::socketDescriptor() const
 {
     return (_socket) ? _socket->socketDescriptor() : -1;
-}
-
-bool Socket::remoteCommandExists(const QUuidEx& command) const
-{
-    SpinLocker locker(_remoteCommandsLock); (void) locker;
-    return (_remoteCommands.constFind(command) != _remoteCommands.constEnd());
 }
 
 void Socket::socketDisconnected()
@@ -233,61 +235,61 @@ void Socket::run()
 
     // Добавляем самое первое сообщение с информацией о совместимости
     {
-        data::CompatibleInfo compatibleInfo;
-        compatibleInfo.version = productVersion();
-        compatibleInfo.minCompatibleVersion = minCompatibleVersion();
-        compatibleInfo.commands = commandsPool().commands();
-        Message::Ptr message = createMessage(compatibleInfo);
+        //data::ProtocolCompatible protocolCompatible;
+        //protocolCompatible.versionLow = BPROTOCOL_VERSION_LOW;
+        //protocolCompatible.versionHigh = BPROTOCOL_VERSION_HIGH;
+        //Message::Ptr message = createMessage(protocolCompatible);
+        Message::Ptr message = Message::create(command::ProtocolCompatible);
         message->setPriority(Message::Priority::High);
         internalMessages.add(message.detach());
     }
 
-    auto processingCompatibleInfoCommand = [&](Message::Ptr& message) -> void
+    auto processingProtocolCompatibleCommand = [&](Message::Ptr& message) -> void
     {
         if (message->type() == Message::Type::Command)
         {
-            VersionNumber productVersion = ::productVersion();
-            VersionNumber minCompatibleVersion = ::minCompatibleVersion();
-            VersionNumber remoteProductVersion;
-            VersionNumber remoteMinCompatibleVersion;
+            quint16 protocolVersionLow  = message->protocolVersionLow();
+            quint16 protocolVersionHigh = message->protocolVersionHigh();
 
-            data::CompatibleInfo compatibleInfo;
-            readFromMessage(message, compatibleInfo);
-            if (compatibleInfo.isValid)
+            _binaryProtocolStatus = BinaryProtocol::Compatible;
+            if (_checkProtocolCompatibility)
             {
-                // Получаем список команд, которые доступны противоположной стороне
-                QSet<QUuidEx> remoteCommands;
-                for (const QUuidEx& command : compatibleInfo.commands)
-                    remoteCommands.insert(command);
-
-                { //Block for SpinLocker
-                    SpinLocker locker(_remoteCommandsLock); (void) locker;
-                    _remoteCommands.swap(remoteCommands);
-                }
-
-                remoteProductVersion = compatibleInfo.version;
-                remoteMinCompatibleVersion = compatibleInfo.minCompatibleVersion;
-
                 if (alog::logger().level() >= alog::Level::Debug)
                 {
                     log_debug_m
-                        << "Compatible info"
-                        << ". Product version: " << productVersion.toString()
-                        << ", min compatible version: " << minCompatibleVersion.toString()
-                        << "; Remote product version: " << remoteProductVersion.toString()
-                        << ", remote min compatible version: " << remoteMinCompatibleVersion.toString();
+                        << "Checking binary protocol compatibility"
+                        << ". This protocol version: "
+                        << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
+                        << "; Remote protocol version: "
+                        << protocolVersionLow << "-" << protocolVersionHigh;
                 }
-
-                _binaryProtocolStatus = BinaryProtocol::Compatible;
-                if (remoteProductVersion < minCompatibleVersion)
+                if (!communication::protocolCompatible(protocolVersionLow,
+                                                       protocolVersionHigh))
                     _binaryProtocolStatus = BinaryProtocol::Incompatible;
             }
-            else
-            {
-                log_error_m << "Incorrect data structure for command "
-                            << CommandNameLog(message->command());
-                _binaryProtocolStatus = BinaryProtocol::Incompatible;
-            }
+
+//            data::ProtocolCompatible pcompatible;
+//            readFromMessage(message, pcompatible);
+//            if (pcompatible.isValid)
+//            {
+//                if (alog::logger().level() >= alog::Level::Debug)
+//                {
+//                    log_debug_m
+//                        << "Checking binary protocol compatibility"
+//                        << ". This protocol version: "
+//                        << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
+//                        << "; Remote protocol version: "
+//                        << pcompatible.versionLow << "-" << pcompatible.versionHigh;
+//                }
+//                if (communication::protocolCompatible(pcompatible.versionLow,
+//                                                      pcompatible.versionHigh))
+//                    _binaryProtocolStatus = BinaryProtocol::Compatible;
+//            }
+//            else
+//            {
+//                log_error_m << "Incorrect data structure for command "
+//                            << CommandNameLog(message->command());
+//            }
 
             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
             {
@@ -298,11 +300,11 @@ void Socket::run()
                 data::CloseConnection closeConnection;
                 closeConnection.description = QString(
                     "Binary protocol versions incompatible"
-                    ". Product version: %1, min compatible version: %2"
-                    "; Remote product version: %3, remote min compatible version: %4"
+                    ". This protocol version: %1-%2"
+                    "; Remote protocol version: %3-%4"
                 )
-                .arg(productVersion.toString()).arg(minCompatibleVersion.toString())
-                .arg(remoteProductVersion.toString()).arg(remoteMinCompatibleVersion.toString());
+                .arg(BPROTOCOL_VERSION_LOW).arg(BPROTOCOL_VERSION_HIGH)
+                .arg(protocolVersionLow).arg(protocolVersionHigh);
 
                 log_verbose_m << "Send request to close the connection"
                               << "; Detail: " << closeConnection.description;
@@ -431,8 +433,8 @@ void Socket::run()
                 _protocolSignatureRead = true;
             }
 
-            { //Block for SpinLocker
-                SpinLocker locker(_messagesLock); (void) locker;
+            { //Block for QMutexLocker
+                QMutexLocker locker(&_messagesLock); (void) locker;
                 _messagesCount = _messagesHigh.count()
                                  + _messagesNorm.count()
                                  + _messagesLow.count();
@@ -475,7 +477,7 @@ void Socket::run()
                     if (message.empty()
                         && _binaryProtocolStatus == BinaryProtocol::Compatible)
                     {
-                        SpinLocker locker(_messagesLock); (void) locker;
+                        QMutexLocker locker(&_messagesLock); (void) locker;
                         if (!_messagesHigh.empty())
                             message.attach(_messagesHigh.release(0));
 
@@ -630,26 +632,10 @@ void Socket::run()
                                          << CommandNameLog(message->command());
                         }
 
-                        if (message->command() == command::Unknown)
+                        if (_binaryProtocolStatus == BinaryProtocol::Undefined
+                            && message->command() == command::ProtocolCompatible)
                         {
-                            // Обработка уведомления о неизвестной команде
-                            data::Unknown unknown;
-                            readFromMessage(message, unknown);
-                            if (unknown.isValid)
-                            {
-                                log_error_m << "Command " << CommandNameLog(unknown.commandId)
-                                            << " is unknown for the remote side"
-                                            << "; Remote host:" << unknown.address << ":" << unknown.port
-                                            << "; Socket descriptor: " << unknown.socketDescriptor;
-                            }
-                            else
-                                log_error_m << "Incorrect data structure for command "
-                                            << CommandNameLog(message->command());
-                        }
-                        else if (_binaryProtocolStatus == BinaryProtocol::Undefined
-                                 && message->command() == command::CompatibleInfo)
-                        {
-                            processingCompatibleInfoCommand(message);
+                            processingProtocolCompatibleCommand(message);
                             break;
                         }
                         else if (message->command() == command::CloseConnection)
@@ -661,10 +647,6 @@ void Socket::run()
                         }
                         else
                         {
-                            // Отправляем сообщения в очередь на обработку только
-                            // когда есть ясность по совместимости бинарных прото-
-                            // колов, в противном случае все сообщения обрабаты-
-                            // ваются как внутренние.
                             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
                             {
                                 message->add_ref();
@@ -695,22 +677,46 @@ void Socket::run()
                     Message::Ptr m;
                     m.attach(acceptMessages.release(0));
 
-                    // Если команда неизвестна - отправляем об этом уведомление
-                    // и переходим к обработке следующей команды.
-                    if (!commandsPool().commandExists(m->command()))
+                    if (_checkUnknownCommands)
                     {
-                        data::Unknown unknown;
-                        unknown.commandId = m->command();
-                        unknown.address = _socket->peerAddress();
-                        unknown.port = _socket->peerPort();
-                        unknown.socketDescriptor = _socket->socketDescriptor();
-                        Message::Ptr mUnknown = createMessage(unknown);
-                        mUnknown->setPriority(Message::Priority::High);
-                        internalMessages.add(mUnknown.detach());
-                        log_error_m << "Unknown command: " << unknown.commandId
-                                    << "; Host: " << unknown.address << ":" << unknown.port
-                                    << "; Socket descriptor: " << unknown.socketDescriptor;
-                        continue;
+                        // Обработка уведомления о неизвестной команде
+                        if (m->command() == command::Unknown)
+                        {
+                            data::Unknown unknown;
+                            readFromMessage(m, unknown);
+                            if (unknown.isValid)
+                            {
+                                log_error_m << "Command " << CommandNameLog(unknown.commandId)
+                                            << " is unknown for the remote side"
+                                            << "; Remote host:" << unknown.address << ":" << unknown.port
+                                            << "; Socket descriptor: " << unknown.socketDescriptor;
+
+                                SpinLocker locker(_unknownCommandsLock); (void) locker;
+                                _unknownCommands.insert(unknown.commandId);
+                            }
+                            else
+                                log_error_m << "Incorrect data structure for command "
+                                            << CommandNameLog(m->command());
+                            continue;
+                        }
+
+                        // Если команда неизвестна - отправляем об этом уведомление
+                        // и переходим к обработке следующей команды.
+                        if (!commandsPool().commandExists(m->command()))
+                        {
+                            data::Unknown unknown;
+                            unknown.commandId = m->command();
+                            unknown.address = _socket->peerAddress();
+                            unknown.port = _socket->peerPort();
+                            unknown.socketDescriptor = _socket->socketDescriptor();
+                            Message::Ptr mUnknown = createMessage(unknown);
+                            mUnknown->setPriority(Message::Priority::High);
+                            internalMessages.add(mUnknown.detach());
+                            log_error_m << "Unknown command: " << unknown.commandId
+                                        << "; Host: " << unknown.address << ":" << unknown.port
+                                        << "; Socket descriptor: " << unknown.socketDescriptor;
+                            continue;
+                        }
                     }
 
                     try
@@ -955,6 +961,9 @@ void Listener::incomingConnection (SocketDescriptor socketDescriptor)
     socket->setSocketDescriptor(socketDescriptor);
     socket->setCompressionLevel(_compressionLevel);
     socket->setCompressionSize(_compressionSize);
+    socket->setCheckProtocolCompatibility(_checkProtocolCompatibility);
+    socket->setCheckUnknownCommands(_checkUnknownCommands);
+    //socket->setEemitMessageRaw(_emitMessageRaw);
 
     chk_connect_d(socket.get(), SIGNAL(message(communication::Message::Ptr)),
                   this, SIGNAL(message(communication::Message::Ptr)))

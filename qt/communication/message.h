@@ -11,7 +11,8 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "qt/quuidex.h"
-#include "qt/communication/communication_bserialize.h"
+#include "qt/bserialize.h"
+//#include "qt/communication/communication_bserialize.h"
 
 #include <QtCore>
 #include <utility>
@@ -95,6 +96,10 @@ public:
     // Идентификатор комманды
     QUuidEx command() const {return _command;}
 
+    // Функции возвращают нижнюю и верхнюю границы версий бинарного протокола
+    quint16 protocolVersionLow() const {return _protocolVersionLow;}
+    quint16 protocolVersionHigh() const {return _protocolVersionHigh;}
+
     // Очищает содержимое поля _conten
     void clearContent() {_content.clear();}
 
@@ -113,6 +118,12 @@ public:
     Priority priority() const;
     void setPriority(Priority);
 
+    // Передает пользовательские данные без сохранения их в поле content.
+    // Это позволяет сократить количество ресурсоемких операций сериализации/
+    // десериализации данных необходимых для поля content.
+    quint32 tag() const {return _tag;}
+    void setTag(quint32 val) {_tag = val;}
+
     // Максимальное время жизни сообщения. Задается в секундах в формате UTC
     // от начала эпохи. Параметр представляет абсолютное значение времени по
     // достижении которого сообщение перестает быть актуальным.
@@ -121,12 +132,6 @@ public:
     //   setMaxTimeLife(std::time() + 2*60)
     quint64 maxTimeLife() const {return _maxTimeLife;}
     void setMaxTimeLife(quint64 val) {_maxTimeLife = val;}
-
-    // Передает пользовательские данные без сохранения их в поле content.
-    // Это позволяет сократить количество ресурсоемких операций сериализации/
-    // десериализации данных необходимых для поля content.
-    quint32 tag() const {return _tag;}
-    void setTag(quint32 val) {_tag = val;}
 
     // Вспомогательный параметр, используется на стороне сервера для идентифика-
     // ции сокета с которого было получено сообщение.
@@ -187,9 +192,15 @@ private:
     void readInternal(QDataStream&) const {return;}
 
     // Функции сериализации данных
-    DECLARE_B_SERIALIZE_FUNC
+    //DECLARE_B_SERIALIZE_FUNC
 
 private:
+    QUuidEx _id;
+    QUuidEx _command;
+
+    quint16 _protocolVersionLow  = {BPROTOCOL_VERSION_LOW};
+    quint16 _protocolVersionHigh = {BPROTOCOL_VERSION_HIGH};
+
     // Битовые флаги
     union {
         quint32 _flags; // Поле содержит значения всех флагов, используется
@@ -211,9 +222,9 @@ private:
 
             // Признаки используются для оптимизации размера сообщения при его
             // сериализации
+            mutable quint32 _tagIsEmpty: 1;
             mutable quint32 _maxTimeLifeIsEmpty: 1;
             mutable quint32 _contentIsEmpty: 1;
-            mutable quint32 _tagIsEmpty: 1;
 
             quint32 _reserved: 17;
 
@@ -226,11 +237,9 @@ private:
     // Зарезервировано для будущего использования
     quint32 _flags2;
 
-    QUuidEx _id;
-    QUuidEx _command;
+    quint32 _tag = {0};
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
-    quint32 _tag = {0};
 
     SocketDescriptor _socketDescriptor = {-1};
     bool _processed = {false};

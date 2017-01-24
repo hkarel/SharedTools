@@ -9,7 +9,6 @@ DEFINE_B_SERIALIZE_STREAM_OPERATORS
 
 Message::Ptr Message::create(const QUuidEx& command)
 {
-    //return Ptr::create_join_ptr(command);
     return Message::Ptr(new Message(command));
 }
 
@@ -121,68 +120,118 @@ void Message::decompress()
 
 BByteArray Message::toByteArray() const
 {
+    int reserveSize = sizeof(_id)
+                      + sizeof(_command)
+                      + sizeof(_protocolVersionLow)
+                      + sizeof(_protocolVersionHigh)
+                      + sizeof(_flags);
+
+    _flags2IsEmpty = (_flags2 == 0);
+    _tagIsEmpty = (_tag == 0);
+    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
+    _contentIsEmpty = _content.isEmpty();
+
+    if (!_flags2IsEmpty)
+        reserveSize += sizeof(_flags2);
+    if (!_tagIsEmpty)
+        reserveSize += sizeof(_tag);
+    if (!_maxTimeLifeIsEmpty)
+        reserveSize += sizeof(_maxTimeLife);
+    if (!_contentIsEmpty)
+        reserveSize += _content.size() + sizeof(quint32);
+
     BByteArray ba;
-    QDataStream s {&ba, QIODevice::WriteOnly};
-    s << *this;
+    ba.reserve(reserveSize);
+    QDataStream stream {&ba, QIODevice::WriteOnly};
+
+    stream << _id;
+    stream << _command;
+    stream << _protocolVersionLow;
+    stream << _protocolVersionHigh;
+    stream << _flags;
+
+    if (!_flags2IsEmpty)
+        stream << _flags2;
+    if (!_tagIsEmpty)
+        stream << _tag;
+    if (!_maxTimeLifeIsEmpty)
+        stream << _maxTimeLife;
+    if (!_contentIsEmpty)
+        stream << _content;
+
     return std::move(ba);
 }
 
 Message::Ptr Message::fromByteArray(const BByteArray& ba)
 {
-    //Ptr m = Ptr::create_join_ptr();
     Ptr m {new Message()};
-    QDataStream s {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
-    s >> *m;
+    QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+
+    stream >> m->_id;
+    stream >> m->_command;
+    stream >> m->_protocolVersionLow;
+    stream >> m->_protocolVersionHigh;
+    stream >> m->_flags;
+
+    if (!m->_flags2IsEmpty)
+        stream >> m->_flags2;
+    if (!m->_tagIsEmpty)
+        stream >> m->_tag;
+    if (!m->_maxTimeLifeIsEmpty)
+        stream >> m->_maxTimeLife;
+    if (!m->_contentIsEmpty)
+        stream >> m->_content;
+
     return std::move(m);
 }
 
-bserial::RawVector Message::toRaw() const
-{
-    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
-    _contentIsEmpty = _content.isEmpty();
-    _tagIsEmpty = (_tag == 0);
-    _flags2IsEmpty = (_flags2 == 0);
+//bserial::RawVector Message::toRaw() const
+//{
+//    _tagIsEmpty = (_tag == 0);
+//    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
+//    _contentIsEmpty = _content.isEmpty();
+//    _flags2IsEmpty = (_flags2 == 0);
 
-    B_SERIALIZE_V1(stream, sizeof(Message) * 2 + _content.size())
-    stream << _flags;
-    if (!_flags2IsEmpty)
-        stream << _flags2;
-    stream << _id;
-    stream << _command;
-    if (!_maxTimeLifeIsEmpty)
-        stream << _maxTimeLife;
-    if (!_contentIsEmpty)
-        stream << _content;
-    if (!_tagIsEmpty)
-        stream << _tag;
-    B_SERIALIZE_RETURN
-}
+//    B_SERIALIZE_V1(stream, sizeof(Message) * 2 + _content.size())
+//    stream << _flags;
+//    if (!_flags2IsEmpty)
+//        stream << _flags2;
+//    stream << _id;
+//    stream << _command;
+//    if (!_tagIsEmpty)
+//        stream << _tag;
+//    if (!_maxTimeLifeIsEmpty)
+//        stream << _maxTimeLife;
+//    if (!_contentIsEmpty)
+//        stream << _content;
+//    B_SERIALIZE_RETURN
+//}
 
-void Message::fromRaw(const bserial::RawVector& vect)
-{
-    B_DESERIALIZE_V1(vect, stream)
-    stream >> _flags;
+//void Message::fromRaw(const bserial::RawVector& vect)
+//{
+//    B_DESERIALIZE_V1(vect, stream)
+//    stream >> _flags;
 
-    _flags2 = 0;
-    if (!_flags2IsEmpty)
-        stream >> _flags2;
+//    _flags2 = 0;
+//    if (!_flags2IsEmpty)
+//        stream >> _flags2;
 
-    stream >> _id;
-    stream >> _command;
+//    stream >> _id;
+//    stream >> _command;
 
-    _maxTimeLife = quint64(-1);
-    if (!_maxTimeLifeIsEmpty)
-        stream >> _maxTimeLife;
+//    _tag = 0;
+//    if (!_tagIsEmpty)
+//        stream >> _tag;
 
-    _content.clear();
-    if (!_contentIsEmpty)
-        stream >> _content;
+//    _maxTimeLife = quint64(-1);
+//    if (!_maxTimeLifeIsEmpty)
+//        stream >> _maxTimeLife;
 
-    _tag = 0;
-    if (!_tagIsEmpty)
-        stream >> _tag;
-    B_DESERIALIZE_END
-}
+//    _content.clear();
+//    if (!_contentIsEmpty)
+//        stream >> _content;
+//    B_DESERIALIZE_END
+//}
 
 Message::Type Message::type() const
 {

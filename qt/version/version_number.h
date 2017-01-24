@@ -37,7 +37,3 @@ bool operator<= (const VersionNumber, const VersionNumber);
 
 // Текущая версия продукта
 const VersionNumber& productVersion();
-
-// Минимальная версия для которой еще обеспечивается совместимость
-// бинарного протокола
-const VersionNumber& minCompatibleVersion();

@@ -98,7 +98,6 @@ QString errorDescription(const Message::Ptr& message)
 }
 
 namespace data {
-
 QDataStream& operator>> (QDataStream& s, timeval& tv)
 {
     qint64 sec;
@@ -116,6 +115,19 @@ QDataStream& operator<< (QDataStream& s, const timeval& tv)
     s << qint32(tv.tv_usec);
     return s;
 }
-
 } // namespace data
+
+bool protocolCompatible(quint16 versionLow, quint16 versionHigh)
+{
+    if (versionLow > versionHigh
+        || BPROTOCOL_VERSION_LOW > BPROTOCOL_VERSION_HIGH)
+        return false;
+    quint16 protocolVersionLow = BPROTOCOL_VERSION_LOW;
+    if (versionHigh < protocolVersionLow)
+        return false;
+    if (versionLow > BPROTOCOL_VERSION_HIGH)
+        return false;
+    return true;
+}
+
 } // namespace communication

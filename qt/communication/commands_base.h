@@ -35,7 +35,7 @@ extern const QUuidEx Error;
 
 // Запрос информации о совместимости. При подключении клиент и сервер
 // отправляют друг другу информацию о совместимости.
-extern const QUuidEx CompatibleInfo;
+extern const QUuidEx ProtocolCompatible;
 
 // Требование закрыть TCP-соединение. Эта команда работает следующим образом:
 // сторона, которая хочет закрыть соединение отправляет это сообщение с инфор-
@@ -154,36 +154,18 @@ struct Error : Data<&command::Error,
 };
 
 /**
-  Сообщение содержит информацию о совместимости команд и бинарного протокола
+  Сообщение содержит информацию о совместимости версий бинарного протокола
   сервера и клиента. Сразу после установки TCP-соединения сервер и клиент
   обмениваются этой информацией.
 */
-struct CompatibleInfo : Data<&command::CompatibleInfo,
-                              Message::Type::Command,
-                              Message::Type::Answer>
-{
-    VersionNumber    version;               // Текущая версия программы
-    VersionNumber    minCompatibleVersion;  // Минимально совместимая версия
-                                            // по бинарному протоколу.
-    QVector<QUuidEx> commands;              // Список поддерживаемых команд
-                                            // клиентом/сервером.
-    DECLARE_B_SERIALIZE_FUNC
-};
-
-/**
-  Структура описана как пример оформления возвращаемых данных.
-  На практике эта структура не используется.
-*/
-struct CompatibleInfo_Answer : Data<&command::CompatibleInfo,
-                                     Message::Type::Answer>
-{
-    VersionNumber    version;               // Текущая версия программы
-    VersionNumber    minCompatibleVersion;  // Минимально совместимая версия.
-                                            // по бинарному протоколу.
-    QVector<QUuidEx> commands;              // Список поддерживаемых команд
-                                            // клиентом/сервером.
-    DECLARE_B_SERIALIZE_FUNC
-};
+//struct ProtocolCompatible : Data<&command::ProtocolCompatible,
+//                                  Message::Type::Command,
+//                                  Message::Type::Answer>
+//{
+//    quint16 versionLow;
+//    quint16 versionHigh;
+//    DECLARE_B_SERIALIZE_FUNC
+//};
 
 /**
   Структура содержит информацию о причинах закрытия TCP-соединения

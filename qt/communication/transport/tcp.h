@@ -53,9 +53,25 @@ public:
     int compressionSize() const {return _compressionSize;}
     void setCompressionSize(int val) {_compressionSize = val;}
 
+    // Определяет нужно ли проверять совместимость бинарных протоколов сразу
+    // после установления TCP-соединения
+    bool checkProtocolCompatibility() const {return _checkProtocolCompatibility;}
+    void setCheckProtocolCompatibility(bool val) {_checkProtocolCompatibility = val;}
+
+    // Определяет нужно ли проверять, что входящая команда является неизвестной
+    bool checkUnknownCommands() const {return _checkUnknownCommands;}
+    void setCheckUnknownCommands(bool val) {_checkUnknownCommands = val;}
+
+    // Определяет, что сообщение будет эмитироваться в формате MessageRaw
+    //bool emitMessageRaw() const {return _emitMessageRaw;}
+    //void setEemitMessageRaw(bool val) {_emitMessageRaw = val;}
+
 protected:
     int _compressionLevel = {-1};
     int _compressionSize  = {1024};
+    bool _checkProtocolCompatibility = true;
+    bool _checkUnknownCommands = true;
+    //bool _emitMessageRaw = false;
 };
 
 
@@ -87,9 +103,6 @@ public:
 
     // Числовой идентификатор сокета
     SocketDescriptor socketDescriptor() const;
-
-    // Возвращает TRUE если команда известна принимающей стороне
-    bool remoteCommandExists(const QUuidEx& command) const;
 
     // Функции отправки сообщений.
     bool send(const Message::Ptr&);
@@ -134,10 +147,10 @@ private:
     void setSocketDescriptor(SocketDescriptor);
 
 private:
-    // Список команд доступных на принимающей стороне, позволяет передавать
+    // Список команд неизвестных на принимающей стороне, позволяет передавать
     // только известные принимающей стороне команды.
-    QSet<QUuidEx> _remoteCommands;
-    mutable std::atomic_flag _remoteCommandsLock = ATOMIC_FLAG_INIT;
+    QSet<QUuidEx> _unknownCommands;
+    mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
 
     simple_ptr<QTcpSocket> _socket;
     SocketDescriptor _socketDescriptor = {-1};
@@ -147,11 +160,10 @@ private:
 
     volatile BinaryProtocol _binaryProtocolStatus = {BinaryProtocol::Undefined};
 
-    //Message::List _messages;
     Message::List _messagesHigh;
     Message::List _messagesNorm;
     Message::List _messagesLow;
-    mutable std::atomic_flag _messagesLock = ATOMIC_FLAG_INIT;
+    mutable QMutex _messagesLock;
 
     volatile int _messagesCount = {0};
     int _messagesNormCounter = {0};
