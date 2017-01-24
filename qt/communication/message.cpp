@@ -118,31 +118,43 @@ void Message::decompress()
     }
 }
 
-BByteArray Message::toByteArray() const
+void Message::initEmptyTraits() const
 {
-    int reserveSize = sizeof(_id)
-                      + sizeof(_command)
-                      + sizeof(_protocolVersionLow)
-                      + sizeof(_protocolVersionHigh)
-                      + sizeof(_flags);
-
     _flags2IsEmpty = (_flags2 == 0);
     _tagIsEmpty = (_tag == 0);
     _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
     _contentIsEmpty = _content.isEmpty();
+}
+
+int Message::size() const
+{
+    int sz = sizeof(_id)
+             + sizeof(_command)
+             + sizeof(_protocolVersionLow)
+             + sizeof(_protocolVersionHigh)
+             + sizeof(_flags);
+
+    initEmptyTraits();
 
     if (!_flags2IsEmpty)
-        reserveSize += sizeof(_flags2);
+        sz += sizeof(_flags2);
     if (!_tagIsEmpty)
-        reserveSize += sizeof(_tag);
+        sz += sizeof(_tag);
     if (!_maxTimeLifeIsEmpty)
-        reserveSize += sizeof(_maxTimeLife);
+        sz += sizeof(_maxTimeLife);
     if (!_contentIsEmpty)
-        reserveSize += _content.size() + sizeof(quint32);
+        sz += _content.size() + sizeof(quint32);
 
+    return sz;
+}
+
+BByteArray Message::toByteArray() const
+{
     BByteArray ba;
-    ba.reserve(reserveSize);
+    ba.reserve(size());
     QDataStream stream {&ba, QIODevice::WriteOnly};
+
+    initEmptyTraits();
 
     stream << _id;
     stream << _command;

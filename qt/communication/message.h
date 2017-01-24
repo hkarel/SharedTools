@@ -176,12 +176,18 @@ public:
     BByteArray toByteArray() const;
     static Ptr fromByteArray(const BByteArray&);
 
+    // Возвращает длину сообщения в сериализованном виде. Данный метод исполь-
+    // зуется для оценки возможности передачи сообщения посредством UDP
+    // датаграммы.
+    int size() const;
+
 private:
     Message();
     Message(const QUuidEx& command);
     DISABLE_DEFAULT_COPY(Message)
 
     void decompress(BByteArray&) const;
+    void initEmptyTraits() const;
 
     template<typename T, typename... Args>
     void writeInternal(QDataStream& s, const T& t, const Args&... args);
@@ -220,16 +226,17 @@ private:
             // enum Compression
             quint32 _compression: 3;
 
-            // Признаки используются для оптимизации размера сообщения при его
-            // сериализации
+            // Признаки 'EmptyTraits'. Признаки используются для оптимизации
+            // размера сообщения при его сериализации.
             mutable quint32 _tagIsEmpty: 1;
             mutable quint32 _maxTimeLifeIsEmpty: 1;
             mutable quint32 _contentIsEmpty: 1;
 
             quint32 _reserved: 17;
 
-            // Признак используются для оптимизации размера сообщения при его
-            // сериализации. Данный признак идет последним битом в поле _flags
+            // Признак 'EmptyTraits'. Признак используется для оптимизации
+            // размера сообщения при его сериализации. Данный признак идет
+            // последним битом в поле _flags.
             mutable quint32 _flags2IsEmpty: 1;
         };
     };
