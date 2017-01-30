@@ -475,6 +475,7 @@ void Socket::run()
                         message.attach(internalMessages.release(0));
 
                     if (message.empty()
+                        && _messagesCount != 0
                         && _binaryProtocolStatus == BinaryProtocol::Compatible)
                     {
                         QMutexLocker locker(&_messagesLock); (void) locker;
@@ -509,8 +510,8 @@ void Socket::run()
 
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
-                        log_debug2_m << "Message before sending to the socket."
-                                     << " Command " << CommandNameLog(message->command());
+                        log_debug2_m << "Message before sending to the socket"
+                                     << ". Command " << CommandNameLog(message->command());
                     }
 
                     QByteArray buff = message->toByteArray();
@@ -526,8 +527,8 @@ void Socket::run()
                         buffSize = buff.size();
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
-                            log_debug2_m << "Message was compressed."
-                                         << " Command " << CommandNameLog(message->command())
+                            log_debug2_m << "Message was compressed"
+                                         << ". Command " << CommandNameLog(message->command())
                                          << " Prev size: " << buffSizePrev
                                          << " New size: " << buffSize;
                         }
@@ -556,8 +557,8 @@ void Socket::run()
                         &&_socket->bytesToWrite() == 0)
                         //&& timer.hasExpired(3 * delay))
                     {
-                        log_debug2_m << "Message was send to the socket."
-                                     << " Command " << CommandNameLog(message->command());
+                        log_debug2_m << "Message was send to the socket"
+                                     << ". Command " << CommandNameLog(message->command());
                     }
                     if (loopBreak
                         || timer.hasExpired(3 * delay))
@@ -625,6 +626,7 @@ void Socket::run()
                     {
                         Message::Ptr message = Message::fromByteArray(buff);
                         message->setSocketDescriptor(_socket->socketDescriptor());
+                        message->setPeerPoint({_socket->peerAddress(), _socket->peerPort()});
 
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
@@ -656,7 +658,7 @@ void Socket::run()
                             {
                                 log_error_m
                                     << "Check of compatibility for the binary protocol not performed"
-                                    << " Command " << CommandNameLog(message->command()) << " discarded";
+                                    << ". Command " << CommandNameLog(message->command()) << " discarded";
                             }
                         }
                     }
@@ -926,15 +928,21 @@ void Listener::send(const Message::Ptr& message,
     }
     else
     {
+        bool messageSended = false;
         for (const Socket::Ptr& s : sockets)
-            if (s->socketDescriptor() == message->socketDescriptor())
+            if (message->destSocketDescriptors().contains(s->socketDescriptor()))
             {
                 s->send(message);
-                return;
+                messageSended = true;
             }
-        log_error_m << "Not found socket with descriptor: " << message->socketDescriptor()
-                    << ". Message with command id: " << CommandNameLog(message->command())
+        if (!messageSended)
+        {
+            alog::Line logLine = log_error_m << "Not found sockets with descriptors:";
+            for (SocketDescriptor sd : message->destSocketDescriptors())
+                logLine << " " << sd;
+            logLine << ". Message with command id: " << CommandNameLog(message->command())
                     << " will be discarded";
+        }
     }
 }
 

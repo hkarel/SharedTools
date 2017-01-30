@@ -15,9 +15,15 @@
 //#include "qt/communication/communication_bserialize.h"
 
 #include <QtCore>
+#include <QHostAddress>
 #include <utility>
 
 namespace communication {
+
+namespace transport {
+namespace tcp {class Socket;}
+namespace udp {class Socket;}
+}
 
 #if QT_VERSION >= 0x050000
 typedef qintptr SocketDescriptor;
@@ -26,7 +32,29 @@ typedef int SocketDescriptor;
 #endif
 typedef QSet<SocketDescriptor> SocketDescriptorSet;
 
+/**
+  С помощью этой структуры определяются "координаты" полученного сообщения,
+  а так же задаются "координаты" для доставки сообщения через UDP-сокет.
+*/
+struct HostPoint
+{
+    typedef QSet<HostPoint> Set;
 
+    QHostAddress address;
+    quint16 port = {0};
+
+    HostPoint() = default;
+    HostPoint(const QHostAddress& address, quint16 port);
+    bool operator== (const HostPoint&) const;
+    bool isNull() const;
+};
+uint qHash(const HostPoint&);
+
+
+/**
+  Класс Message используется для обмена сообщениями и данными между модулями
+  системы.
+*/
 class Message : public clife_base
 {
     struct Allocator
@@ -100,7 +128,7 @@ public:
     quint16 protocolVersionLow() const {return _protocolVersionLow;}
     quint16 protocolVersionHigh() const {return _protocolVersionHigh;}
 
-    // Очищает содержимое поля _conten
+    // Удаляет контент сообщения
     void clearContent() {_content.clear();}
 
     // Возвращает TRUE если сообщение не содержит дополнительных данных
@@ -133,10 +161,28 @@ public:
     quint64 maxTimeLife() const {return _maxTimeLife;}
     void setMaxTimeLife(quint64 val) {_maxTimeLife = val;}
 
+    // Адрес и порт хоста с которого было получено сообщение
+    const HostPoint& peerPoint() const {return _peerPoint;}
+
+    // Адреса и порты хостов назначения. Параметр используется для отправки
+    // сообщения через UDP-сокет.
+    const HostPoint::Set& destPoints() const {return _destPoints;}
+    void setDestPoints(const HostPoint::Set& val) {_destPoints = val;}
+
+    // Добавляет точку назначения в коллекцию destPoints
+    void appendDestPoint(const HostPoint&);
+
     // Вспомогательный параметр, используется на стороне сервера для идентифика-
-    // ции сокета с которого было получено сообщение.
+    // ции TCP-сокета с которого было получено сообщение.
     SocketDescriptor socketDescriptor() const {return _socketDescriptor;}
-    void setSocketDescriptor(SocketDescriptor val) {_socketDescriptor = val;}
+
+    // Параметр содержит идентификаторы TCP-сокетов на которые будет отправлено
+    // сообщение.
+    const SocketDescriptorSet& destSocketDescriptors() const;
+    void setDestSocketDescriptors(const SocketDescriptorSet&);
+
+    // Добавляет идентификатор сокета в коллекцию destSocketDescriptors
+    void appendDestSocketDescriptor(const SocketDescriptor&);
 
     // Вспомогательный параметр, используется для того чтобы сообщить функциям-
     // обработчикам сообщений о том, что сообщение уже было обработано ранее.
@@ -144,7 +190,8 @@ public:
     bool processed() const {return _processed;}
     void setProcessed(bool val) {_processed = val;}
 
-    // Признак, что контент сообщения находится в сжатом состоянии.
+    // Возвращает информацию о том, в каком состоянии (сжатом или несжатом)
+    // находится контент сообщения.
     Compression compression() const;
 
     // Функция выполняет сжатие контента сообщения. Параметр level определяет
@@ -173,12 +220,17 @@ public:
 
     // Вспомогательные функции, используются для формирования сырого потока
     // данных для отправки в сетевой сокет.
+    // Параметр udpSignature используется при передаче сообщения через UDP
+    // сокет.
     BByteArray toByteArray() const;
-    static Ptr fromByteArray(const BByteArray&);
+    void toDataStream(QDataStream&) const;
 
-    // Возвращает длину сообщения в сериализованном виде. Данный метод исполь-
-    // зуется для оценки возможности передачи сообщения посредством UDP
-    // датаграммы.
+    static Ptr fromByteArray(const BByteArray&);
+    static Ptr fromDataStream(QDataStream&);
+
+    // Возвращает максимально возможную длину сообщения в сериализованном виде.
+    // Данный метод используется для оценки возможности передачи сообщения
+    // посредством UDP датаграммы.
     int size() const;
 
 private:
@@ -187,7 +239,6 @@ private:
     DISABLE_DEFAULT_COPY(Message)
 
     void decompress(BByteArray&) const;
-    void initEmptyTraits() const;
 
     template<typename T, typename... Args>
     void writeInternal(QDataStream& s, const T& t, const Args&... args);
@@ -197,8 +248,8 @@ private:
     void readInternal(QDataStream& s, T& t, Args&... args) const;
     void readInternal(QDataStream&) const {return;}
 
-    // Функции сериализации данных
-    //DECLARE_B_SERIALIZE_FUNC
+    void setPeerPoint(const HostPoint& val) {_peerPoint = val;}
+    void setSocketDescriptor(SocketDescriptor val) {_socketDescriptor = val;}
 
 private:
     QUuidEx _id;
@@ -248,11 +299,14 @@ private:
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
 
+    HostPoint _peerPoint;
+    HostPoint::Set _destPoints;
     SocketDescriptor _socketDescriptor = {-1};
+    SocketDescriptorSet _destSocketDescriptors = {-1};
     bool _processed = {false};
 
-    //template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
-    //template<typename DataT> friend typename Message::Ptr createMessage(const DataT&);
+    friend class transport::tcp::Socket;
+    friend class transport::udp::Socket;
 };
 
 

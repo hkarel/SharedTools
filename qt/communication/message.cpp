@@ -5,7 +5,23 @@
 
 namespace communication {
 
-DEFINE_B_SERIALIZE_STREAM_OPERATORS
+HostPoint::HostPoint(const QHostAddress& a, quint16 p) : address(a), port(p)
+{}
+
+bool HostPoint::operator== (const HostPoint& hp) const
+{
+    return (address == hp.address) && (port == hp.port);
+}
+
+bool HostPoint::isNull() const
+{
+    return address.isNull() && (port == 0);
+}
+
+uint qHash(const HostPoint& hp)
+{
+    return qHash(qMakePair(hp.address, hp.port));
+}
 
 Message::Ptr Message::create(const QUuidEx& command)
 {
@@ -29,6 +45,26 @@ Message::Message(const QUuidEx& command) : Message()
     _compression = static_cast<quint32>(Compression::None);
 }
 
+void Message::appendDestPoint(const HostPoint& val)
+{
+    _destPoints.insert(val);
+}
+
+const SocketDescriptorSet& Message::destSocketDescriptors() const
+{
+    return _destSocketDescriptors;
+}
+
+void Message::setDestSocketDescriptors(const SocketDescriptorSet& val)
+{
+    _destSocketDescriptors = val;
+}
+
+void Message::appendDestSocketDescriptor(const SocketDescriptor& val)
+{
+    _destSocketDescriptors.insert(val);
+}
+
 void Message::compress(int level, Compression compression)
 {
     if (this->compression() != Compression::None)
@@ -40,9 +76,13 @@ void Message::compress(int level, Compression compression)
         return;
     }
     level = qBound(-1, level, 9);
-    if (level != 0
-        && _content.size() > 1024) // При меньших значениях компрессирование
-                                   // становится не эффективным
+    int sz = size() + sizeof(quint32 /*UDP signature*/);
+
+    // Здесь 508 это минимальный размер UDP пакета передаваемого по сети без
+    // фрагментации. Уже при значении 508 сжатие становится мало эффективным,
+    // но мы все равно пытаемся сжать пакет, чтобы уложиться в границы 508-ми
+    // байт.
+    if (level != 0 && sz > 508)
     {
         switch (compression)
         {
@@ -118,32 +158,17 @@ void Message::decompress()
     }
 }
 
-void Message::initEmptyTraits() const
-{
-    _flags2IsEmpty = (_flags2 == 0);
-    _tagIsEmpty = (_tag == 0);
-    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
-    _contentIsEmpty = _content.isEmpty();
-}
-
 int Message::size() const
 {
     int sz = sizeof(_id)
              + sizeof(_command)
              + sizeof(_protocolVersionLow)
              + sizeof(_protocolVersionHigh)
-             + sizeof(_flags);
-
-    initEmptyTraits();
-
-    if (!_flags2IsEmpty)
-        sz += sizeof(_flags2);
-    if (!_tagIsEmpty)
-        sz += sizeof(_tag);
-    if (!_maxTimeLifeIsEmpty)
-        sz += sizeof(_maxTimeLife);
-    if (!_contentIsEmpty)
-        sz += _content.size() + sizeof(quint32);
+             + sizeof(_flags)
+             + sizeof(_flags2)
+             + sizeof(_tag)
+             + sizeof(_maxTimeLife)
+             + _content.size() + sizeof(quint32);
 
     return sz;
 }
@@ -152,9 +177,19 @@ BByteArray Message::toByteArray() const
 {
     BByteArray ba;
     ba.reserve(size());
-    QDataStream stream {&ba, QIODevice::WriteOnly};
+    {
+        QDataStream stream {&ba, QIODevice::WriteOnly};
+        toDataStream(stream);
+    }
+    return std::move(ba);
+}
 
-    initEmptyTraits();
+void Message::toDataStream(QDataStream& stream) const
+{
+    _flags2IsEmpty = (_flags2 == 0);
+    _tagIsEmpty = (_tag == 0);
+    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
+    _contentIsEmpty = _content.isEmpty();
 
     stream << _id;
     stream << _command;
@@ -170,14 +205,17 @@ BByteArray Message::toByteArray() const
         stream << _maxTimeLife;
     if (!_contentIsEmpty)
         stream << _content;
-
-    return std::move(ba);
 }
 
 Message::Ptr Message::fromByteArray(const BByteArray& ba)
 {
-    Ptr m {new Message()};
     QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+    return std::move(fromDataStream(stream));
+}
+
+Message::Ptr Message::fromDataStream(QDataStream& stream)
+{
+    Ptr m {new Message()};
 
     stream >> m->_id;
     stream >> m->_command;
@@ -197,54 +235,6 @@ Message::Ptr Message::fromByteArray(const BByteArray& ba)
     return std::move(m);
 }
 
-//bserial::RawVector Message::toRaw() const
-//{
-//    _tagIsEmpty = (_tag == 0);
-//    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
-//    _contentIsEmpty = _content.isEmpty();
-//    _flags2IsEmpty = (_flags2 == 0);
-
-//    B_SERIALIZE_V1(stream, sizeof(Message) * 2 + _content.size())
-//    stream << _flags;
-//    if (!_flags2IsEmpty)
-//        stream << _flags2;
-//    stream << _id;
-//    stream << _command;
-//    if (!_tagIsEmpty)
-//        stream << _tag;
-//    if (!_maxTimeLifeIsEmpty)
-//        stream << _maxTimeLife;
-//    if (!_contentIsEmpty)
-//        stream << _content;
-//    B_SERIALIZE_RETURN
-//}
-
-//void Message::fromRaw(const bserial::RawVector& vect)
-//{
-//    B_DESERIALIZE_V1(vect, stream)
-//    stream >> _flags;
-
-//    _flags2 = 0;
-//    if (!_flags2IsEmpty)
-//        stream >> _flags2;
-
-//    stream >> _id;
-//    stream >> _command;
-
-//    _tag = 0;
-//    if (!_tagIsEmpty)
-//        stream >> _tag;
-
-//    _maxTimeLife = quint64(-1);
-//    if (!_maxTimeLifeIsEmpty)
-//        stream >> _maxTimeLife;
-
-//    _content.clear();
-//    if (!_contentIsEmpty)
-//        stream >> _content;
-//    B_DESERIALIZE_END
-//}
-
 Message::Type Message::type() const
 {
     return static_cast<Type>(_type);
@@ -254,9 +244,6 @@ void Message::setType(Type val)
 {
     _type = static_cast<quint32>(val);
 }
-
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Wconversion"
 
 Message::ExecStatus Message::execStatus() const
 {
@@ -282,7 +269,5 @@ Message::Compression Message::compression() const
 {
     return static_cast<Compression>(_compression);
 }
-
-//#pragma GCC diagnostic pop
 
 } // namespace communication

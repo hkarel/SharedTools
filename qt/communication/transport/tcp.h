@@ -174,8 +174,7 @@ private:
 
     friend class Sender;
     friend class Listener;
-    friend Socket* Ptr::allocator_t::create();
-    //template<typename T> friend T* allocator_ptr<T>::create();
+    template<typename T> friend T* allocator_ptr<T>::create();
     //template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
 };
 
@@ -187,9 +186,6 @@ private:
 class Sender : public Socket
 {
 public:
-    // Режим передачи сообщения: синхронный/асинхронный
-    //enum {SyncMode = true, AsyncMode = false};
-
     Sender();
     ~Sender();
 
