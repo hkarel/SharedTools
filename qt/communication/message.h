@@ -12,10 +12,9 @@
 #include "clife_ptr.h"
 #include "qt/quuidex.h"
 #include "qt/bserialize.h"
-//#include "qt/communication/communication_bserialize.h"
+#include "qt/communication/host_point.h"
 
 #include <QtCore>
-#include <QHostAddress>
 #include <utility>
 
 namespace communication {
@@ -31,24 +30,6 @@ typedef qintptr SocketDescriptor;
 typedef int SocketDescriptor;
 #endif
 typedef QSet<SocketDescriptor> SocketDescriptorSet;
-
-/**
-  С помощью этой структуры определяются "координаты" полученного сообщения,
-  а так же задаются "координаты" для доставки сообщения через UDP-сокет.
-*/
-struct HostPoint
-{
-    typedef QSet<HostPoint> Set;
-
-    QHostAddress address;
-    quint16 port = {0};
-
-    HostPoint() = default;
-    HostPoint(const QHostAddress& address, quint16 port);
-    bool operator== (const HostPoint&) const;
-    bool isNull() const;
-};
-uint qHash(const HostPoint&);
 
 
 /**

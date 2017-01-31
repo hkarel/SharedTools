@@ -1,27 +1,9 @@
-#include "message.h"
 #include "break_point.h"
 #include "qt/compression/qlzma.h"
 #include "qt/compression/qppmd.h"
+#include "qt/communication/message.h"
 
 namespace communication {
-
-HostPoint::HostPoint(const QHostAddress& a, quint16 p) : address(a), port(p)
-{}
-
-bool HostPoint::operator== (const HostPoint& hp) const
-{
-    return (address == hp.address) && (port == hp.port);
-}
-
-bool HostPoint::isNull() const
-{
-    return address.isNull() && (port == 0);
-}
-
-uint qHash(const HostPoint& hp)
-{
-    return qHash(qMakePair(hp.address, hp.port));
-}
 
 Message::Ptr Message::create(const QUuidEx& command)
 {
