@@ -27,24 +27,9 @@ Message::Message(const QUuidEx& command) : Message()
     _compression = static_cast<quint32>(Compression::None);
 }
 
-void Message::appendDestPoint(const HostPoint& val)
+SocketDescriptorSet& Message::destinationSocketDescriptors()
 {
-    _destPoints.insert(val);
-}
-
-const SocketDescriptorSet& Message::destSocketDescriptors() const
-{
-    return _destSocketDescriptors;
-}
-
-void Message::setDestSocketDescriptors(const SocketDescriptorSet& val)
-{
-    _destSocketDescriptors = val;
-}
-
-void Message::appendDestSocketDescriptor(const SocketDescriptor& val)
-{
-    _destSocketDescriptors.insert(val);
+    return _destinationSocketDescriptors;
 }
 
 void Message::compress(int level, Compression compression)

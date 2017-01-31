@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "container_ptr.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/message.h"
 
@@ -13,10 +14,14 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include <QList>
+#include <QHostAddress>
+
 namespace communication {
 
 //QString toString(Message::Type);
 //QString toString(Message::ExecStatus);
+typedef container_ptr<QList<QHostAddress>> NetAddressesPtr;
 
 /**
   Создает сообщение на основе структуры данных соответствующей определнной
@@ -200,9 +205,22 @@ QDataStream& operator<< (QDataStream&, const timeval&);
 } // namespace data
 
 
-// Выполняет проверку пересечения диапазонов версий бинарного протокола.
-// Если диапазоны не пересекаются, то считаем, что протоколы не совместимы.
+/**
+  Выполняет проверку пересечения диапазонов версий бинарного протокола.
+  Если диапазоны не пересекаются, то считаем, что протоколы не совместимы.
+*/
 bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
 
+/**
+  Возвращает список адресов для доступных на данный момент сетевых интерфейсов.
+  Адрес для интерфейса localhost не возвращается.
+*/
+NetAddressesPtr interfacesAddresses();
+
+/**
+  Возвращает список широковещательных адресов для доступных на данный момент
+  сетевых интерфейсов.
+*/
+NetAddressesPtr broadcastAddresses();
 
 } // namespace communication

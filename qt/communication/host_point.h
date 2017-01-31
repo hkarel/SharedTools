@@ -1,13 +1,13 @@
 #pragma once
 
+#include "qt/bserialize.h"
 #include <QtCore>
 #include <QHostAddress>
 
 namespace communication {
 
 /**
-  С помощью этой структуры определяются "координаты" полученного сообщения,
-  а так же задаются "координаты" для доставки сообщения через UDP-сокет.
+  Структура группирует адрес и порт
 */
 struct HostPoint
 {
@@ -20,6 +20,9 @@ struct HostPoint
     HostPoint(const QHostAddress& address, quint16 port);
     bool operator== (const HostPoint&) const;
     bool isNull() const;
+
+    // Функции сериализации данных
+    DECLARE_B_SERIALIZE_FUNC
 };
 uint qHash(const HostPoint&);
 

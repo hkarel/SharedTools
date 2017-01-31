@@ -8,12 +8,9 @@
 #pragma once
 
 #include "defmac.h"
-#include "container_ptr.h"
 #include "simple_ptr.h"
-#include "spin_locker.h"
 #include "safe_singleton.h"
 #include "qt/thread/qthreadex.h"
-
 #include "qt/communication/message.h"
 #include "qt/communication/functions.h"
 
@@ -21,6 +18,7 @@
 #include <QTcpSocket>
 #include <QTcpServer>
 #include <QHostAddress>
+#include <atomic>
 
 
 namespace communication {
@@ -103,6 +101,12 @@ public:
 
     // Числовой идентификатор сокета
     SocketDescriptor socketDescriptor() const;
+
+    // Адрес с которым установлено соединение
+    QHostAddress address() const {return _address;}
+
+    // Порт с которым установлено соединение
+    quint16 port() const {return _port;}
 
     // Функции отправки сообщений.
     bool send(const Message::Ptr&);
@@ -189,13 +193,13 @@ public:
     Sender();
     ~Sender();
 
+    // Определяет параметры подключения к удаленному хосту
     bool init(const QHostAddress& address, int port);
-    QHostAddress address() const {return _address;}
-    quint16 port() const {return _port;}
 
-    // Выполняет подключение к удаленному хосту. Если подключиться не удалось -
-    // функция ждет 10 секунд и повторяет попытку. Так будет продолжаться либо
-    // до установления соединения, либо до явного вызова функций stop()/disconnect().
+    // Выполняет подключение к удаленному хосту с параметрами address и port,
+    // определенными в методе init(). Если подключиться не удалось - функция
+    // ждет 10 секунд и повторяет попытку. Так будет продолжаться либо до уста-
+    // новления соединения, либо до явного вызова функций stop()/disconnect().
     void connect();
 
     // Разрывает соединение с удаленным хостом.

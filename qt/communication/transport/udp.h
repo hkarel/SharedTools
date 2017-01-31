@@ -8,18 +8,14 @@
 #pragma once
 
 #include "defmac.h"
-#include "container_ptr.h"
-#include "simple_ptr.h"
-#include "spin_locker.h"
-#include "safe_singleton.h"
 #include "qt/thread/qthreadex.h"
-
 #include "qt/communication/message.h"
 #include "qt/communication/functions.h"
 
 #include <QtCore>
 #include <QUdpSocket>
 #include <QHostAddress>
+#include <atomic>
 
 
 namespace communication {
@@ -74,6 +70,13 @@ public:
     bool checkUnknownCommands() const {return _checkUnknownCommands;}
     void setCheckUnknownCommands(bool val) {_checkUnknownCommands = val;}
 
+    // Сообщения приходящие с указанных в этом списке адресов будут отброшены.
+    // На данный момент предполагается использование этого списка для предотвра-
+    // щения получения собственных сообщений отправленных с помощью широковеща-
+    // тельной рассылки.
+    NetAddressesPtr discardAddresses() const;
+    void setDiscardAddresses(const NetAddressesPtr&);
+
 signals:
     // Сигнал эмитируется при получении сообщения
     void message(communication::Message::Ptr);
@@ -106,8 +109,13 @@ private:
     bool _checkProtocolCompatibility = true;
     bool _checkUnknownCommands = true;
 
+    NetAddressesPtr _discardAddresses;
+    mutable std::atomic_flag _discardAddressesLock = ATOMIC_FLAG_INIT;
+
     template<typename T> friend T* allocator_ptr<T>::create();
 };
+
+Socket& socket();
 
 } // namespace udp
 } // namespace transport

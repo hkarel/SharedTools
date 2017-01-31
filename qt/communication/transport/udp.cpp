@@ -1,60 +1,29 @@
 #include "break_point.h"
+#include "spin_locker.h"
+#include "safe_singleton.h"
 #include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
 #include "qt/version/version_number.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/commands_pool.h"
 #include "qt/communication/transport/udp.h"
+#include "qt/communication/logger_operators.h"
 
 #include <stdexcept>
 
-#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
+#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
+#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
+#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
+#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
+#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
+#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
 
-extern const quint32 udpSignature;
 
-/**
-  Вспомогательная структура, используется для отправки в лог идентификатора
-  команды вместе с именем.
-*/
 namespace {
-struct CommandNameLog
-{
-    const QUuidEx& command;
-    CommandNameLog(const QUuidEx& command) : command(command) {}
-};
-} // namespace
-
-namespace alog {
-Line& operator<< (Line& line, const CommandNameLog& cnl)
-{
-    if (line.toLogger())
-    {
-        QByteArray commandName = communication::commandsPool().commandName(cnl.command);
-        if (!commandName.isEmpty())
-            line << commandName << "/";
-        line << cnl.command;
-    }
-    return line;
+// Сигнатура для UDP протокола 'GMA7'
+//const quint32 udpSignature = 0x37414D47;
+const quint32 udpSignature = *((quint32*)UDP_SIGNATURE);
 }
-
-Line operator<< (Line&& line, const CommandNameLog& cnl)
-{
-    if (line.toLogger())
-    {
-        QByteArray commandName = communication::commandsPool().commandName(cnl.command);
-        if (!commandName.isEmpty())
-            line << commandName << "/";
-        line << cnl.command;
-    }
-    return std::move(line);
-}
-} // namespace alog
-
 
 namespace communication {
 namespace transport {
@@ -93,15 +62,32 @@ bool Socket::init(const QHostAddress& address, int port)
                     << "; Detail: " << _socket.errorString();
         return false;
     }
+    log_debug_m << "UDP socket is successfully bound"
+                << ". Address: " << _address.toString()
+                << " Port: " << _port;
+
     return true;
+}
+
+NetAddressesPtr Socket::discardAddresses() const
+{
+    SpinLocker locker(_discardAddressesLock); (void) locker;
+    return _discardAddresses;
+}
+
+void Socket::setDiscardAddresses(const NetAddressesPtr& val)
+{
+    SpinLocker locker(_discardAddressesLock); (void) locker;
+    _discardAddresses = val;
 }
 
 bool Socket::send(const Message::Ptr& message)
 {
     if (!isRunning())
     {
-        log_error_m << "Sender is not active. Command "
-                    << CommandNameLog(message->command()) << " will be discarded";
+        log_error_m << "Sender is not active"
+                    << ". Command " << CommandNameLog(message->command())
+                    << " will be discarded";
         return false;
     }
     if (message.empty())
@@ -119,7 +105,8 @@ bool Socket::send(const Message::Ptr& message)
         if (isUnknown)
         {
             log_error_m << "Command " << CommandNameLog(message->command())
-                        << " is unknown for the receiving side. Command will be discarded.";
+                        << " is unknown for the receiving side"
+                        << ". Command will be discarded";
             return false;
         }
     }
@@ -235,6 +222,11 @@ void Socket::run()
             if (loopBreak)
                 break;
 
+            NetAddressesPtr discardAddresses;
+            { //Block for SpinLocker
+                SpinLocker locker(_discardAddressesLock); (void) locker;
+                discardAddresses = _discardAddresses;
+            }
 
             //--- Отправка сообщений ---
             timer.restart();
@@ -282,11 +274,15 @@ void Socket::run()
                     log_debug2_m << "Message before sending to the UDP socket"
                                  << ". Command " << CommandNameLog(message->command());
                 }
-
                 if (message->size() > 500)
                     log_warn_m << "Too large message to send it through a UDP socket"
                                << ". The message may be lost"
                                << ". Command " << CommandNameLog(message->command());
+
+                //break_point
+                // Проверить значение udpSignature
+                //quint32 udpSignature__ = qbswap(udpSignature);
+                //quint32 udpSignature__ = udpSignature;
 
                 QByteArray buff;
                 buff.reserve(message->size() + sizeof(udpSignature));
@@ -295,16 +291,16 @@ void Socket::run()
                     stream << udpSignature;
                     message->toDataStream(stream);
                 }
-                for (const HostPoint& dp : message->destPoints())
+                for (const HostPoint& dp : message->destinationPoints())
                     _socket.writeDatagram(buff, dp.address, dp.port);
                 CHECK_SOCKET_ERROR
 
                 if (alog::logger().level() == alog::Level::Debug2
-                    && message->destPoints().count())
+                    && message->destinationPoints().count())
                 {
                     alog::Line logLine =
                         log_debug2_m << "Message was sent to the next addresses:";
-                    for (const HostPoint& dp : message->destPoints())
+                    for (const HostPoint& dp : message->destinationPoints())
                         logLine << " " << dp.address.toString() << ":" << dp.port;
                     logLine << ". Command " << CommandNameLog(message->command());
                 }
@@ -314,7 +310,6 @@ void Socket::run()
             }
             if (loopBreak)
                 break;
-            //--- Отправка сообщений ---
 
             //--- Прием сообщений ---
             timer.restart();
@@ -327,34 +322,65 @@ void Socket::run()
                 if (_socket.pendingDatagramSize() < qint64(sizeof(udpSignature)))
                     continue;
 
+                QByteArray datagram;
                 QHostAddress addr;
                 quint16 port;
-                QByteArray datagram;
-                datagram.resize(_socket.pendingDatagramSize());
+                qint64 datagramSize = _socket.pendingDatagramSize();
+                datagram.resize(datagramSize);
                 qint64 res = _socket.readDatagram((char*)datagram.constData(),
-                                                  datagram.size(), &addr, &port);
-                if (res == -1)
-                    continue;
-
-                BByteArray buff;
-                quint32 udpSign;
-                Message::Ptr message;
+                                                  datagramSize, &addr, &port);
+                if (res != datagramSize)
                 {
-                    QDataStream stream {&buff, QIODevice::ReadOnly | QIODevice::Unbuffered};
-                    stream >> udpSign;
-                    if (udpSign != udpSignature)
-                        continue;
-                    message = Message::fromDataStream(stream);
+                    log_error_m << "Failed datagram size"
+                                << ". Source: " << addr << ":" << port;
+                    continue;
+                }
+                if (alog::logger().level() == alog::Level::Debug2)
+                {
+                    log_debug2_m << "Raw message received"
+                                 << ". Source: " << addr << ":" << port;
+                }
+                if (discardAddresses
+                    && discardAddresses->contains(addr)
+                    && port == _port)
+                {
+                    if (alog::logger().level() == alog::Level::Debug2)
+                    {
+                        log_debug2_m << "Raw message discarded"
+                                     << ". Source: " << addr << ":" << port;
+                    }
+                    continue;
                 }
 
+                Message::Ptr message;
+                { //Block for QDataStream
+                    QDataStream stream {&datagram, QIODevice::ReadOnly | QIODevice::Unbuffered};
+                    quint32 udpSign;
+                    stream >> udpSign;
+                    if (udpSign != udpSignature)
+                    {
+                        if (alog::logger().level() == alog::Level::Debug2)
+                        {
+                            log_debug2_m << "Raw message incompatible signature, discarded"
+                                         << ". Source: " << addr << ":" << port;
+                        }
+                        continue;
+                    }
+                    message = Message::fromDataStream(stream);
+                }
+                if (alog::logger().level() == alog::Level::Debug2)
+                {
+                    log_debug2_m << "Message received"
+                                 << ". Command " << CommandNameLog(message->command())
+                                 << ". Source: " << addr << ":" << port;
+                }
                 //message->setSocketDescriptor(_socket->socketDescriptor());
-                message->setPeerPoint({addr, port});
-
+                message->setSourcePoint({addr, port});
+                acceptMessages.add(message.detach());
                 CHECK_SOCKET_ERROR
             }
             if (loopBreak)
                 break;
-            //--- Прием сообщений ---
 
             //--- Обработка принятых сообщений ---
             timer.restart();
@@ -424,6 +450,8 @@ void Socket::run()
                     break;
             }
         } // while (true)
+
+        _socket.close();
     }
     catch (std::exception& e)
     {
@@ -435,6 +463,11 @@ void Socket::run()
     }
 
     #undef CHECK_SOCKET_ERROR
+}
+
+Socket& socket()
+{
+    return ::safe_singleton<Socket>();
 }
 
 } // namespace udp

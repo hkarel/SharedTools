@@ -2,6 +2,13 @@
 
 namespace communication {
 
+DEFINE_B_SERIALIZE_STREAM_OPERATORS
+
+uint qHash(const HostPoint& hp)
+{
+    return qHash(qMakePair(hp.address, hp.port));
+}
+
 HostPoint::HostPoint(const QHostAddress& a, quint16 p) : address(a), port(p)
 {}
 
@@ -15,9 +22,20 @@ bool HostPoint::isNull() const
     return address.isNull() && (port == 0);
 }
 
-uint qHash(const HostPoint& hp)
+bserial::RawVector HostPoint::toRaw() const
 {
-    return qHash(qMakePair(hp.address, hp.port));
+    B_SERIALIZE_V1(stream)
+    stream << address;
+    stream << port;
+    B_SERIALIZE_RETURN
+}
+
+void HostPoint::fromRaw(const bserial::RawVector& vect)
+{
+    B_DESERIALIZE_V1(vect, stream)
+    stream >> address;
+    stream >> port;
+    B_DESERIALIZE_END
 }
 
 } // namespace communication

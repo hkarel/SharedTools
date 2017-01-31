@@ -1,58 +1,21 @@
 #include "break_point.h"
+#include "spin_locker.h"
 #include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
 #include "qt/version/version_number.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/commands_pool.h"
 #include "qt/communication/transport/tcp.h"
+#include "qt/communication/logger_operators.h"
 
 #include <stdexcept>
 
-#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Communication")
-
-/**
-  Вспомогательная структура, используется для отправки в лог идентификатора
-  команды вместе с именем.
-*/
-namespace {
-struct CommandNameLog
-{
-    const QUuidEx& command;
-    CommandNameLog(const QUuidEx& command) : command(command) {}
-};
-} // namespace
-
-namespace alog {
-Line& operator<< (Line& line, const CommandNameLog& cnl)
-{
-    if (line.toLogger())
-    {
-        QByteArray commandName = communication::commandsPool().commandName(cnl.command);
-        if (!commandName.isEmpty())
-            line << commandName << "/";
-        line << cnl.command;
-    }
-    return line;
-}
-
-Line operator<< (Line&& line, const CommandNameLog& cnl)
-{
-    if (line.toLogger())
-    {
-        QByteArray commandName = communication::commandsPool().commandName(cnl.command);
-        if (!commandName.isEmpty())
-            line << commandName << "/";
-        line << cnl.command;
-    }
-    return std::move(line);
-}
-} // namespace alog
-
+#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
+#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
+#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
+#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
+#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
+#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
 
 namespace communication {
 namespace transport {
@@ -84,8 +47,9 @@ bool Socket::send(const Message::Ptr& message)
 {
     if (!isRunning())
     {
-        log_error_m << "Socket is not active. Command "
-                    << CommandNameLog(message->command()) << " will be discarded";
+        log_error_m << "Socket is not active"
+                    << ". Command " << CommandNameLog(message->command())
+                    << " will be discarded";
         return false;
     }
     if (message.empty())
@@ -103,7 +67,8 @@ bool Socket::send(const Message::Ptr& message)
         if (isUnknown)
         {
             log_error_m << "Command " << CommandNameLog(message->command())
-                        << " is unknown for the receiving side. Command will be discarded.";
+                        << " is unknown for the receiving side"
+                        << ". Command will be discarded";
             return false;
         }
     }
@@ -324,10 +289,8 @@ void Socket::run()
             data::CloseConnection closeConnection;
             readFromMessage(message, closeConnection);
             if (closeConnection.isValid)
-            {
                 log_verbose_m << "Connection will be closed at the request remote side"
                               << "; Remote detail: " << closeConnection.description;
-            }
             else
                 log_error_m << "Incorrect data structure for command "
                             << CommandNameLog(message->command());
@@ -513,7 +476,6 @@ void Socket::run()
                         log_debug2_m << "Message before sending to the socket"
                                      << ". Command " << CommandNameLog(message->command());
                     }
-
                     QByteArray buff = message->toByteArray();
                     qint32 buffSize = buff.size();
 
@@ -525,6 +487,7 @@ void Socket::run()
                         qint32 buffSizePrev = buffSize;
                         buff = qCompress(buff, _compressionLevel);
                         buffSize = buff.size();
+
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
                             log_debug2_m << "Message was compressed"
@@ -554,7 +517,7 @@ void Socket::run()
                             break;
                     }
                     if (alog::logger().level() == alog::Level::Debug2
-                        &&_socket->bytesToWrite() == 0)
+                        && _socket->bytesToWrite() == 0)
                         //&& timer.hasExpired(3 * delay))
                     {
                         log_debug2_m << "Message was send to the socket"
@@ -566,7 +529,7 @@ void Socket::run()
                 }
                 if (loopBreak)
                     break;
-            } //--- Отправка сообщений ---
+            }
 
             //--- Прием сообщений ---
             if (_socket->bytesAvailable() != 0)
@@ -626,14 +589,13 @@ void Socket::run()
                     {
                         Message::Ptr message = Message::fromByteArray(buff);
                         message->setSocketDescriptor(_socket->socketDescriptor());
-                        message->setPeerPoint({_socket->peerAddress(), _socket->peerPort()});
+                        message->setSourcePoint({_socket->peerAddress(), _socket->peerPort()});
 
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
-                            log_debug2_m << "Message received. Command "
-                                         << CommandNameLog(message->command());
+                            log_debug2_m << "Message received"
+                                         << ". Command " << CommandNameLog(message->command());
                         }
-
                         if (_binaryProtocolStatus == BinaryProtocol::Undefined
                             && message->command() == command::ProtocolCompatible)
                         {
@@ -651,8 +613,9 @@ void Socket::run()
                         {
                             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
                             {
-                                message->add_ref();
-                                acceptMessages.add(message.get());
+                                //message->add_ref();
+                                //acceptMessages.add(message.get());
+                                acceptMessages.add(message.detach());
                             }
                             else
                             {
@@ -668,7 +631,7 @@ void Socket::run()
                 } // while (true)
                 if (loopBreak)
                     break;
-            } //--- Прием сообщений ---
+            }
 
             //--- Обработка принятых сообщений ---
             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
@@ -928,20 +891,45 @@ void Listener::send(const Message::Ptr& message,
     }
     else
     {
-        bool messageSended = false;
-        for (const Socket::Ptr& s : sockets)
-            if (message->destSocketDescriptors().contains(s->socketDescriptor()))
-            {
-                s->send(message);
-                messageSended = true;
-            }
-        if (!messageSended)
+        if (!message->destinationSocketDescriptors().isEmpty())
         {
-            alog::Line logLine = log_error_m << "Not found sockets with descriptors:";
-            for (SocketDescriptor sd : message->destSocketDescriptors())
-                logLine << " " << sd;
-            logLine << ". Message with command id: " << CommandNameLog(message->command())
-                    << " will be discarded";
+            bool messageSended = false;
+            for (const Socket::Ptr& s : sockets)
+                if (message->destinationSocketDescriptors().contains(s->socketDescriptor()))
+                {
+                    s->send(message);
+                    messageSended = true;
+                }
+            if (!messageSended)
+            {
+                alog::Line logLine =
+                    log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                                << ". Not found sockets with descriptors:";
+                for (SocketDescriptor sd : message->destinationSocketDescriptors())
+                    logLine << " " << sd;
+                logLine << ". Message will be discarded";
+            }
+        }
+        else if (message->socketDescriptor() != SocketDescriptor(-1))
+        {
+            bool messageSended = false;
+            for (const Socket::Ptr& s : sockets)
+                if (s->socketDescriptor() == message->socketDescriptor())
+                {
+                    s->send(message);
+                    messageSended = true;
+                    break;
+                }
+            if (!messageSended)
+                log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                            << ". Not found socket with descriptor: " << message->socketDescriptor()
+                            << ". Message will be discarded";
+        }
+        else
+        {
+            log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                        << ". Destination socket descriptors is undefined"
+                        << ". Message will be discarded";
         }
     }
 }

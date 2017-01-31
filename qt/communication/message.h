@@ -32,10 +32,6 @@ typedef int SocketDescriptor;
 typedef QSet<SocketDescriptor> SocketDescriptorSet;
 
 
-/**
-  Класс Message используется для обмена сообщениями и данными между модулями
-  системы.
-*/
 class Message : public clife_base
 {
     struct Allocator
@@ -143,27 +139,22 @@ public:
     void setMaxTimeLife(quint64 val) {_maxTimeLife = val;}
 
     // Адрес и порт хоста с которого было получено сообщение
-    const HostPoint& peerPoint() const {return _peerPoint;}
+    const HostPoint& sourcePoint() const {return _sourcePoint;}
 
     // Адреса и порты хостов назначения. Параметр используется для отправки
     // сообщения через UDP-сокет.
-    const HostPoint::Set& destPoints() const {return _destPoints;}
-    void setDestPoints(const HostPoint::Set& val) {_destPoints = val;}
+    HostPoint::Set& destinationPoints() {return _destinationPoints;}
 
-    // Добавляет точку назначения в коллекцию destPoints
-    void appendDestPoint(const HostPoint&);
-
-    // Вспомогательный параметр, используется на стороне сервера для идентифика-
-    // ции TCP-сокета с которого было получено сообщение.
+    // Вспомогательный параметр, используется на стороне TCP-сервера для иден-
+    // тификации TCP-сокета принявшего сообщение.
     SocketDescriptor socketDescriptor() const {return _socketDescriptor;}
 
-    // Параметр содержит идентификаторы TCP-сокетов на которые будет отправлено
-    // сообщение.
-    const SocketDescriptorSet& destSocketDescriptors() const;
-    void setDestSocketDescriptors(const SocketDescriptorSet&);
-
-    // Добавляет идентификатор сокета в коллекцию destSocketDescriptors
-    void appendDestSocketDescriptor(const SocketDescriptor&);
+    // Параметр содержит идентификаторы TCP-сокетов на которые нужно отправить
+    // сообщение. В случае если параметр destinationSocketDescriptors не со-
+    // держит ни одного идентификатора и при этом параметр socketDescriptor
+    // не равен -1, то в этом случае сообщение будет отправлено на TCP-сокет
+    // с идентификатором socketDescriptor.
+    SocketDescriptorSet& destinationSocketDescriptors();
 
     // Вспомогательный параметр, используется для того чтобы сообщить функциям-
     // обработчикам сообщений о том, что сообщение уже было обработано ранее.
@@ -229,7 +220,7 @@ private:
     void readInternal(QDataStream& s, T& t, Args&... args) const;
     void readInternal(QDataStream&) const {return;}
 
-    void setPeerPoint(const HostPoint& val) {_peerPoint = val;}
+    void setSourcePoint(const HostPoint& val) {_sourcePoint = val;}
     void setSocketDescriptor(SocketDescriptor val) {_socketDescriptor = val;}
 
 private:
@@ -280,10 +271,10 @@ private:
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
 
-    HostPoint _peerPoint;
-    HostPoint::Set _destPoints;
+    HostPoint _sourcePoint;
+    HostPoint::Set _destinationPoints;
     SocketDescriptor _socketDescriptor = {-1};
-    SocketDescriptorSet _destSocketDescriptors = {-1};
+    SocketDescriptorSet _destinationSocketDescriptors;
     bool _processed = {false};
 
     friend class transport::tcp::Socket;

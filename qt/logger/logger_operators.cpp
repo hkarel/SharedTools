@@ -1,4 +1,4 @@
-#include "logger_operators.h"
+#include "qt/logger/logger_operators.h"
 
 namespace alog {
 
