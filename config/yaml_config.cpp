@@ -1,7 +1,9 @@
 #include "yaml_config.h"
 #include "break_point.h"
 #include "spin_locker.h"
+#include "utils.h"
 #include <fstream>
+#include <stdexcept>
 
 #if defined(QT_CORE_LIB)
 #include <QByteArray>
@@ -96,15 +98,36 @@ bool YamlConfig::save(const std::string& filePath)
         log_error_m << "Cannot save data. Undefined file path";
         return false;
     }
-    std::ofstream file(_filePath, std::ifstream::out);
-    if (!file.is_open())
+
+    std::srand(std::time(0));
+    std::string fileTmp = _filePath + ".tmp" + utl::toString(std::rand());
+    std::remove(fileTmp.c_str());
+
+    try
     {
-        log_error_m << "Cannot open file for write: " << _filePath;
-        return false;
+        std::ofstream file(fileTmp, std::ios_base::out);
+        if (!file.is_open())
+            throw std::logic_error("Cannot open temporary file for write");
+
+        _root.SetStyle(YAML::EmitterStyle::Block);
+        file << _root;
+        file.close();
+
+        if (0 != std::remove(_filePath.c_str()))
+            throw std::logic_error("Failed remove old data file");
+
+        if (0 != std::rename(fileTmp.c_str(), _filePath.c_str()))
+        {
+            log_error_m << "Failed rename temporary file " << fileTmp
+                        << " to " << _filePath;
+            return false;
+        }
     }
-    _root.SetStyle(YAML::EmitterStyle::Block);
-    file << _root;
-    file.close();
+    catch (...)
+    {
+        std::remove(fileTmp.c_str());
+        throw;
+    }
     YAMLCONFIG_CATCH_2
     return true;
 }
