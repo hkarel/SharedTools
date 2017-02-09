@@ -385,8 +385,7 @@ void printSaversInfo()
         FilterList saverFilters = saver->filters();
         for (Filter* filter : saverFilters)
         {
-            lst::FindResult fr = filters.findRef(filter->name(),
-                                                 lst::FindExtParams(lst::BruteForce::Yes));
+            lst::FindResult fr = filters.findRef(filter->name(), {lst::BruteForce::Yes});
             if (fr.success())
                 continue;
 

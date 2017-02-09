@@ -905,8 +905,7 @@ void Logger::addSaver(SaverPtr saver)
 {
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
-        lst::FindResult fr = _savers.findRef(saver->name(),
-                                             lst::FindExtParams(lst::BruteForce::Yes));
+        lst::FindResult fr = _savers.findRef(saver->name(), {lst::BruteForce::Yes});
         if (fr.success())
             _savers.remove(fr.index());
 
@@ -922,7 +921,7 @@ void Logger::removeSaver(const string& name)
     waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker(_saversLock); (void) locker;
-        lst::FindResult fr = _savers.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
+        lst::FindResult fr = _savers.findRef(name, {lst::BruteForce::Yes});
         if (fr.success())
         {
             _savers.item(fr.index())->setLogger(0);
@@ -935,7 +934,7 @@ void Logger::removeSaver(const string& name)
 SaverPtr Logger::findSaver(const string& name)
 {
     SaverList savers = this->savers();
-    Saver* saver = savers.findItem(&name, lst::FindExtParams(lst::BruteForce::Yes));
+    Saver* saver = savers.findItem(&name, {lst::BruteForce::Yes});
     return SaverPtr(saver);
 }
 

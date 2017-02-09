@@ -231,7 +231,7 @@ struct FindExtParams
   int startFindIndex = {0};
 
   FindExtParams() = default;
-  explicit FindExtParams(BruteForce bruteForce)
+  FindExtParams(BruteForce bruteForce)
     : extParam(0), bruteForce(bruteForce), startFindIndex(0)
   {}
 };
