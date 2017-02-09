@@ -265,6 +265,7 @@ struct SortExtParams
   {}
 };
 
+
 /**
   @brief Функции выполняют поиск перебором (грубый поиск).
 
@@ -379,10 +380,6 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
              return 0;
            }
          };
-*/
-/*
-#define LIST_COMPARE_MULTI_ITEM(ITEM1, ITEM2) \
-   {if (ITEM1 > ITEM2) return  1; else if (ITEM1 < ITEM2) return -1;}
 */
 #define LIST_COMPARE_MULTI_ITEM(ITEM1, ITEM2) \
   if (ITEM1 != ITEM2) return (ITEM1 < ITEM2) ? -1 : 1;
@@ -1087,8 +1084,19 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
     if (startFindIndex >= d->count)
       return FindResult(false, BruteForce::Yes, d->count);
 
-    // Функция поиска перебором
-    auto bruteFind = [this, &compare, startFindIndex] () -> FindResult
+    //--- Поиск перебором ---
+    if (bruteForce == BruteForce::Yes
+        || d->sortState == NoSorted
+        || d->sortState == CustomUpSorted
+        || d->sortState == CustomDownSorted)
+        /* || (FCount < 4) Нельзя использовать данное условие для отсортирован-
+              ного списка, т.к. если результат поиска окажется отрицательным -
+              значение в поле FindResult::index() будет непригодно для использо-
+              ванияв функции addInSort(). В этом случае при вызове addInSort()
+              возникнет ситуация, когда в результате использования некорректного
+              значения FindResult::index() список окажется неотсортированным,
+              но флаг состояния сортировки (sortState) при этом сброшен не будет.
+        */
     {
       T** it = listBegin() + startFindIndex;
       T** end = listEnd();
@@ -1103,28 +1111,13 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
         ++it;
       }
       return FindResult(false, BruteForce::Yes, d->count);
-    };
-
-    if (/*(FCount < 4)*/ // Нельзя использовать данное условие для отсортированного
-                         // списка, т.к. результат поиска (FindResult::index()) будет
-                         // содержать неверное значение. Использование данного значения
-                         // в функции addInSort() для отсортированного списка приведет
-                         // к тому, что список окажется неотсортированным, но флаг
-                         // состояния сортировки (sortState) при этом сброшен не будет.
-      bruteForce == BruteForce::Yes
-      || (d->sortState == NoSorted)
-      || (d->sortState == CustomUpSorted)
-      || (d->sortState == CustomDownSorted))
-    {
-      return bruteFind();
     }
 
+    //--- Поиск по отсортированному списку ---
     int low = (startFindIndex);
     int high = d->count;
-    int mid;
-    int result;
-    SortState sort_state = (bruteForce == BruteForce::Yes) ? NoSorted : d->sortState;
-    switch (sort_state)
+    int mid, result;
+    switch (d->sortState)
     {
       case UpSorted:
         while (true)
@@ -1163,7 +1156,10 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
             return FindResult(false, BruteForce::No, (result < 0) ? mid + 1 : mid);
         }
       default:
-        return bruteFind();
+        // При поиске по отсортированному списку параметр d->sortState может
+        // быть либо UpSorted, либо DownSorted. При всех прочих значениях
+        // этого параметра поиск должен выполняться перебором.
+        throw LIST_EXCEPT("Unacceptable value of sortState parameter");
     }
   }
   catch (BreakCompare &)

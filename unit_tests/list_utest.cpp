@@ -406,7 +406,7 @@ template<typename ListT> void bruteFindTestT(const ListT& list)
     printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
     i = 4;
     ptr = lst::findItem(&i, list, compareFunc);
-    printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
 
     printf("\nFind use functor CompareFunctor \n");
     CompareFunctor compare_functor;
@@ -421,7 +421,7 @@ template<typename ListT> void bruteFindTestT(const ListT& list)
     printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
     i = 4;
     ptr = lst::findItem(&i, list, compare_functor);
-    printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
 
     void* exp_param = 0;
     auto lambda_find = [&i, exp_param] (const int* item) -> int
@@ -444,7 +444,7 @@ template<typename ListT> void bruteFindTestT(const ListT& list)
     printf("find    : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
     i = 4;
     ptr = lst::findItem(list, lambda_find);
-    printf("findItem: 4 : %s \n", (ptr) ? "OK" : "FALSE");   fsucc_check(ptr);
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
 
     printf("SUCCESS\n");
 }
@@ -468,6 +468,124 @@ void bruteFind_Test()
     list.addCopy(5);
 
     bruteFindTestT(list);
+
+    printf("TEST PASSED\n");
+}
+
+void bruteFind_Test2()
+{
+    printf("\n\n=== Brute Member Find Test ===\n");
+
+    lst::List<int> list;
+    printf("\n--- Find in lst::List: 1, 2, 3, 4, 5 ---");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(3);
+    list.addCopy(4);
+    list.addCopy(5);
+
+    int i;
+    int* ptr;
+    lst::FindResult fr;
+    CompareFunctor compare_functor;
+
+    void* exp_param = 0;
+    auto lambda_find = [&i, exp_param] (const int* item) -> int
+    {
+        return LIST_COMPARE_ITEM(i, *item);
+    };
+
+    printf("\nFind use function compareFunc\n");
+    i = 0;
+    fr = list.find(&i, compareFunc);
+    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    fr = list.findRef(2, compareFunc);
+    printf("findRef : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(5, compareFunc);
+    printf("findRef : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(7, compareFunc);
+    printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 4;
+    ptr = list.findItem(&i, compareFunc);
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
+
+    printf("\nFind use functor CompareFunctor \n");
+    i = 0;
+    fr = list.find(&i, compare_functor);
+    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    fr = list.findRef(2, compare_functor);
+    printf("findRef : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(5, compare_functor);
+    printf("findRef : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(7, compare_functor);
+    printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 4;
+    ptr = list.findItem(&i, compare_functor);
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
+
+    printf("\nFind use lambda\n");
+    i = 0;
+    fr = list.findL(lambda_find);
+    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 2;
+    fr = list.findL(lambda_find);
+    printf("find    : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    i = 5;
+    fr = list.findL(lambda_find);
+    printf("find    : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    i = 7;
+    fr = list.findL(lambda_find);
+    printf("find    : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 4;
+    ptr = list.findItemL(lambda_find);
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
+
+    //---
+    printf("\nFind use function compareFunc (with BruteForce flag)\n");
+    i = 0;
+    fr = list.find(&i, compareFunc, {lst::BruteForce::Yes});
+    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    fr = list.findRef(2, compareFunc, {lst::BruteForce::Yes});
+    printf("findRef : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(5, compareFunc, {lst::BruteForce::Yes});
+    printf("findRef : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(7, compareFunc, {lst::BruteForce::Yes});
+    printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 4;
+    ptr = list.findItem(&i, compareFunc, {lst::BruteForce::Yes});
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
+
+    printf("\nFind use functor CompareFunctor (with BruteForce flag)\n");
+    i = 0;
+    fr = list.find(&i, compare_functor, {lst::BruteForce::Yes});
+    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    fr = list.findRef(2, compare_functor, {lst::BruteForce::Yes});
+    printf("findRef : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(5, compare_functor, {lst::BruteForce::Yes});
+    printf("findRef : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    fr = list.findRef(7, compare_functor, {lst::BruteForce::Yes});
+    printf("findRef : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 4;
+    ptr = list.findItem(&i, compare_functor, {lst::BruteForce::Yes});
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
+
+    printf("\nFind use lambda (with BruteForce flag)\n");
+    i = 0;
+    fr = list.findL(lambda_find, {lst::BruteForce::Yes});
+    printf("find    : 0 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 2;
+    fr = list.findL(lambda_find, {lst::BruteForce::Yes});
+    printf("find    : 2 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    i = 5;
+    fr = list.findL(lambda_find, {lst::BruteForce::Yes});
+    printf("find    : 5 : %s : %s\n", fres(fr), fsucc(fr));  fsucc_check(fr);
+    i = 7;
+    fr = list.findL(lambda_find, {lst::BruteForce::Yes});
+    printf("find    : 7 : %s : %s\n", fres(fr), ffail(fr));  ffail_check(fr);
+    i = 4;
+    ptr = list.findItemL(lambda_find, {lst::BruteForce::Yes});
+    printf("findItem: 4 : %s : %s\n", fres(ptr), fsucc(ptr)); fsucc_check(ptr);
 
     printf("TEST PASSED\n");
 }
@@ -683,13 +801,13 @@ void findNotunique_Test()
     list.addCopy(5);
     list.sort();
 
-    //                      i0  i11 i12 i21 i22 i4  i51 i52 i7
-    findNotunique_Test(list, -1, 0,  1,  2,  5,  6,  7,  9, -1);
+    //                       i0  i11 i12 i21 i22 i4  i51 i52 i7
+    findNotunique_Test(list, -1, 0,  1,  2,  5,  6,  7,  9,  -1);
 
     printf("\n--- Test descend, 10 elements (5,5,5,4,2,2,2,2,1,1) ---\n");
     list.sort(lst::SortDown);
 
-    //                      i0  i11 i12 i21 i22 i4 i51  i52 i7
+    //                       i0  i11 i12 i21 i22 i4 i51  i52 i7
     findNotunique_Test(list, -1, 8,  9,  4,  7,  3, 0,   2,  -1);
 
     printf("TEST PASSED\n");
@@ -733,7 +851,7 @@ void findNotuniqueStruct_Test()
     v = list.add(); v->val1 = 6; v->val2 = 99;
 
     list.sort(lst::SortUp);
-    printf("\n--- List of SortTwoVal was sorted up: ---\n");
+    printf("\n--- List of SortTwoVal was sorted up ---\n");
     for (SortTwoVal* v : list)
     {
         printf("val1: %d  val2: %d\n", v->val1, v->val2);
@@ -741,7 +859,7 @@ void findNotuniqueStruct_Test()
     printf("\n");
 
     list.sort(lst::SortDown);
-    printf("\n--- List of SortTwoVal was sorted down: ---\n");
+    printf("\n--- List of SortTwoVal was sorted down ---\n");
     for (SortTwoVal* v : list)
     {
         printf("val1: %d  val2: %d\n", v->val1, v->val2);
@@ -1173,6 +1291,7 @@ int main()
 
     // Тест поиска по не отсортированному списку (поиск перебором)
     bruteFind_Test();
+    bruteFind_Test2();
 
     // Тест поиска по не уникальному отсортированному списку
     findNotunique_Test();
