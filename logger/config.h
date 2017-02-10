@@ -7,7 +7,6 @@
 #pragma once
 
 #include "logger.h"
-#include <list>
 
 namespace alog {
 
@@ -117,7 +116,8 @@ using namespace std;
         file: ./lbucd2.log3
         ...
 */
-bool loadSavers(const string& confFile, std::list<SaverPtr>& savers);
+bool loadSavers(const string& confFile, SaverList& savers);
+bool loadSavers(const string& confFile);
 
 //
 void printSaversInfo();

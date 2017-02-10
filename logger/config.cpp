@@ -148,7 +148,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "log_level")
     {
-        FilterLevelPtr filterLevel {new alog::FilterLevel()};
+        FilterLevelPtr filterLevel {new FilterLevel()};
         filterLevel->setFilteringNoNameModules(filteringNonameModules);
         filterLevel->setLevel(levelFromString(logLevel));
 
@@ -189,10 +189,10 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     filter->setFilteringErrors(filteringErrors);
     filter->setFollowThreadContext(followThreadContext);
 
-    return filter;
+    return std::move(filter);
 }
 
-SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
+SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
 {
     auto checkFiedType = [&ysaver](const string& field, YAML::NodeType::value type)
     {
@@ -291,10 +291,10 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
     for (const string& filter_ : filters_)
     {
         bool found = false;
-        for (FilterPtr filter : filters)
+        for (Filter* filter : filters)
             if (filter->name() == filter_)
             {
-                saver->addFilter(filter);
+                saver->addFilter(FilterPtr(filter));
                 found = true;
                 break;
             }
@@ -305,17 +305,17 @@ SaverPtr createSaver(const YAML::Node& ysaver, const list<FilterPtr>& filters)
                 "with name '" + filter_+ "'. Filter not found.");
     }
 
-    return saver;
+    return std::move(saver);
 }
 
-bool loadSavers(const string& confFile, std::list<SaverPtr>& savers)
+bool loadSavers(const string& confFile, SaverList& savers)
 {
     bool result = false;
     try
     {
         YAML::Node conf = YAML::LoadFile(confFile);
 
-        list<FilterPtr> filters;
+        FilterList filters;
         const YAML::Node& yfilters = conf["filters"];
         if (yfilters.IsDefined())
         {
@@ -324,7 +324,7 @@ bool loadSavers(const string& confFile, std::list<SaverPtr>& savers)
 
             for (const YAML::Node& yfilter : yfilters)
                 if (FilterPtr f = createFilter(yfilter))
-                    filters.push_back(f);
+                    filters.add(f.detach());
         }
 
         const YAML::Node& ysavers = conf["savers"];
@@ -335,7 +335,7 @@ bool loadSavers(const string& confFile, std::list<SaverPtr>& savers)
 
             for (const YAML::Node& ysaver : ysavers)
                 if (SaverPtr s = createSaver(ysaver, filters))
-                    savers.push_back(s);
+                    savers.add(s.detach());
         }
         result = true;
     }
@@ -355,6 +355,18 @@ bool loadSavers(const string& confFile, std::list<SaverPtr>& savers)
                     << ". Config file: " << confFile;
     }
     return result;
+}
+
+bool loadSavers(const string& confFile)
+{
+    SaverList savers;
+    if (alog::loadSavers(confFile, savers))
+    {
+        for (Saver* saver : savers)
+            logger().addSaver(SaverPtr(saver));
+        return true;
+    }
+    return false;
 }
 
 void printSaversInfo()
