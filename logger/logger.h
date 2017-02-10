@@ -321,12 +321,6 @@ public:
     Saver(const string& name, Level level = Error);
     virtual ~Saver() {}
 
-    Saver() = delete;
-    Saver(Saver&&) = default;
-    Saver(const Saver&) = delete;
-    Saver& operator= (Saver&&) = delete;
-    Saver& operator= (const Saver&) = delete;
-
     // Имя сэйвера
     const string& name() const {return _name;}
 
@@ -378,6 +372,13 @@ protected:
     bool skipMessage(const Message& m, const FilterList& filters);
 
     void removeIdsTimeoutThreads();
+
+private:
+    Saver() = delete;
+    Saver(Saver&&) = delete;
+    Saver(const Saver&) = delete;
+    Saver& operator= (Saver&&) = delete;
+    Saver& operator= (const Saver&) = delete;
 
 private:
     string _name;
