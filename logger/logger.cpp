@@ -18,11 +18,6 @@ namespace alog {
 
 using namespace std;
 
-Logger& logger()
-{
-    return ::safe_singleton<Logger>();
-}
-
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.
 // Информация сохраняется в файл /tmp/alogger.log для Linux/Unix,
 // и в файл %TEMP%\\alogger.log для Windows.
@@ -990,6 +985,11 @@ void Logger::redefineLevel()
             level = saver->level();
 
     _level = level;
+}
+
+Logger& logger()
+{
+    return ::safe_singleton<Logger>();
 }
 
 //---------------------------- Line operators --------------------------------
