@@ -796,13 +796,13 @@ void Sender::run()
         log_verbose_m << "Try connect: " << _address << ":" << _port;
 
         _socket->connectToHost(_address, _port);
-        if (!_socket->waitForConnected(10 * 1000 /*ждем 10 сек*/))
+        if (!_socket->waitForConnected(_waitConnection * 1000))
         {
             log_error_m << "Failed connect to host "
                         << _address << ":" << _port
                         << "; Error code: " << int(_socket->error())
                         << "; Detail: " << _socket->errorString();
-            sleep(10);
+            //sleep(10);
             continue;
         }
         Socket::run();

@@ -31,23 +31,25 @@ template<typename CommandDataT>
 Message::Ptr createMessage(const CommandDataT& data,
                            Message::Type type = Message::Type::Command)
 {
-    static_assert(CommandDataT::forCommandMessage() || CommandDataT::forEventMessage(),
+    static_assert(CommandDataT::forCommandMessage()
+                  || CommandDataT::forEventMessage(),
                   "In this function is allow 'Message::Type::Command'"
                   " or 'Message::Type::Event' type of struct only");
 
     Message::Ptr m = Message::create(data.command());
-    if (CommandDataT::forCommandMessage() && CommandDataT::forEventMessage())
+    if (CommandDataT::forCommandMessage()
+        && CommandDataT::forEventMessage())
     {
         if (type != Message::Type::Command
             && type != Message::Type::Event)
-            throw std::logic_error(std::string(
+            throw std::logic_error(
                 "Parameter 'type' must be of type 'Message::Type::Command'"
-                " or 'Message::Type::Event' only"));
+                " or 'Message::Type::Event' only");
         m->setType(type);
     }
     else if (CommandDataT::forCommandMessage())
         m->setType(Message::Type::Command);
-    else if (CommandDataT::forEventMessage())
+    else
         m->setType(Message::Type::Event);
 
     m->setExecStatus(Message::ExecStatus::Unknown);

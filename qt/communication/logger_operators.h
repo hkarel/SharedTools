@@ -5,6 +5,8 @@
 
 namespace communication {
 
+class HostPoint;
+
 /**
   Вспомогательная структура, используется для отправки в лог идентификатора
   команды вместе с именем.
@@ -18,6 +20,8 @@ struct CommandNameLog
 
 namespace alog {
 
+Line& operator<< (Line&  line, const communication::HostPoint&);
+Line  operator<< (Line&& line, const communication::HostPoint&);
 Line& operator<< (Line&  line, const communication::CommandNameLog&);
 Line  operator<< (Line&& line, const communication::CommandNameLog&);
 

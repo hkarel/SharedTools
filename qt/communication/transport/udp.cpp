@@ -291,18 +291,41 @@ void Socket::run()
                     stream << udpSignature;
                     message->toDataStream(stream);
                 }
-                for (const HostPoint& dp : message->destinationPoints())
-                    _socket.writeDatagram(buff, dp.address, dp.port);
-                CHECK_SOCKET_ERROR
 
-                if (alog::logger().level() == alog::Level::Debug2
-                    && message->destinationPoints().count())
+                if (!message->destinationPoints().isEmpty())
                 {
-                    alog::Line logLine =
-                        log_debug2_m << "Message was sent to the next addresses:";
                     for (const HostPoint& dp : message->destinationPoints())
-                        logLine << " " << dp.address.toString() << ":" << dp.port;
-                    logLine << ". Command " << CommandNameLog(message->command());
+                        _socket.writeDatagram(buff, dp.address, dp.port);
+
+                    CHECK_SOCKET_ERROR
+                    if (alog::logger().level() == alog::Level::Debug2)
+                    {
+                        alog::Line logLine =
+                            log_debug2_m << "Message was sent to the next addresses:";
+                        for (const HostPoint& dp : message->destinationPoints())
+                            logLine << " " << dp.address.toString() << ":" << dp.port;
+                        logLine << "; Command " << CommandNameLog(message->command());
+                    }
+                }
+                else if (!message->sourcePoint().isNull())
+                {
+                    _socket.writeDatagram(buff,
+                                          message->sourcePoint().address,
+                                          message->sourcePoint().port);
+                    CHECK_SOCKET_ERROR
+                    if (alog::logger().level() == alog::Level::Debug2)
+                    {
+                        log_debug2_m << "Message was sent to the address:"
+                                     << " " << message->sourcePoint().address
+                                     << ":" << message->sourcePoint().port
+                                     << "; Command " << CommandNameLog(message->command());
+                    }
+                }
+                else
+                {
+                    log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                                << ". Destination host point is undefined"
+                                << ". Message will be discarded";
                 }
                 if (loopBreak
                     || timer.hasExpired(3 * delay))

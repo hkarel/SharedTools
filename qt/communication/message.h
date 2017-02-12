@@ -15,6 +15,7 @@
 #include "qt/communication/host_point.h"
 
 #include <QtCore>
+#include <atomic>
 #include <utility>
 
 namespace communication {
@@ -142,7 +143,10 @@ public:
     const HostPoint& sourcePoint() const {return _sourcePoint;}
 
     // Адреса и порты хостов назначения. Параметр используется для отправки
-    // сообщения через UDP-сокет.
+    // сообщения через UDP-сокет. В случае если параметр destinationPoints
+    // не содержит ни одного элемента HostPoint и при этом параметр sourcePoint
+    // не пуст (!isNull), то в этом случае сообщение будет отправлено на UDP-
+    // сокет с точкой назначения sourcePoint.
     HostPoint::Set& destinationPoints() {return _destinationPoints;}
 
     // Вспомогательный параметр, используется на стороне TCP-сервера для иден-
@@ -275,7 +279,7 @@ private:
     HostPoint::Set _destinationPoints;
     SocketDescriptor _socketDescriptor = {-1};
     SocketDescriptorSet _destinationSocketDescriptors;
-    bool _processed = {false};
+    std::atomic_bool _processed = {false};
 
     friend class transport::tcp::Socket;
     friend class transport::udp::Socket;

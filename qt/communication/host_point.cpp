@@ -22,6 +22,12 @@ bool HostPoint::isNull() const
     return address.isNull() && (port == 0);
 }
 
+void HostPoint::reset()
+{
+    address = QHostAddress();
+    port = 0;
+}
+
 bserial::RawVector HostPoint::toRaw() const
 {
     B_SERIALIZE_V1(stream)

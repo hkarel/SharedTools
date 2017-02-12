@@ -69,16 +69,15 @@ Line operator<< (Line&& line, const QUuidEx& u)
 Line& operator<< (Line& line, const QHostAddress& h)
 {
     if (line.toLogger())
-        line << QStringToUtf8(h.toString());
+        line << QStringToUtf8(h.isNull() ? QString("undefined") : h.toString());
     return line;
 }
 
 Line operator<< (Line&& line, const QHostAddress& h)
 {
     if (line.toLogger())
-        line << QStringToUtf8(h.toString());
+        line << QStringToUtf8(h.isNull() ? QString("undefined") : h.toString());
     return std::move(line);
 }
-
 
 } // namespace alog

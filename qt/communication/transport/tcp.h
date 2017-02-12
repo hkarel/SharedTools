@@ -198,17 +198,24 @@ public:
 
     // Выполняет подключение к удаленному хосту с параметрами address и port,
     // определенными в методе init(). Если подключиться не удалось - функция
-    // ждет 10 секунд и повторяет попытку. Так будет продолжаться либо до уста-
-    // новления соединения, либо до явного вызова функций stop()/disconnect().
+    // ждет waitConnection секунд и повторяет попытку. Так будет продолжаться
+    // либо до установления соединения, либо до явного вызова функций
+    // stop()/disconnect().
     void connect();
 
     // Разрывает соединение с удаленным хостом.
     void disconnect();
 
+    // Интервал ожидания установления соединения (в секундах)
+    int waitConnection() const {return _waitConnection;}
+    void setWaitConnection(int  val) {_waitConnection = val;}
+
 private:
     Q_OBJECT
     DISABLE_DEFAULT_COPY(Sender)
     void run() override;
+
+    int _waitConnection = {10};
 };
 
 
