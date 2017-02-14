@@ -21,26 +21,7 @@
 *****************************************************************************/
 
 #pragma once
-
-#include "break_point.h"
 #include <QUuid>
-
-
-///**
-//  Агалог структуры win GUID
-//*/
-//struct QGUID
-//{
-//    ulong  Data1;
-//    ushort Data2;
-//    ushort Data3;
-//    uchar  Data4[8];
-////     QGUID(ulong  data1, ushort data2, ushort data3, uchar data4[8])
-////         : data1(data1), Data2(data2), Data3(data3), Data4(data4)
-////     {}
-//};
-
-
 
 template<int N> struct QUuidT : public QUuid
 {
@@ -63,72 +44,32 @@ public:
 
 #define COMPARE(f1, f2) if (f1 != f2) return (f1 < f2) ? -1 : 1;
 
-#ifdef __x86_64__
-    // equal
-    template<typename UuidT1, typename UuidT2>
-    static inline bool equal(const UuidT1& u1, const UuidT2& u2) noexcept
-    {
-        static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
-        static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
-        return ( ((quint64 *) &u1)[0] == ((quint64 *) &u2)[0]
-              && ((quint64 *) &u1)[1] == ((quint64 *) &u2)[1] );
-    }
-
     // compare
     template<typename UuidT1, typename UuidT2>
     static inline int compare(const UuidT1& u1, const UuidT2& u2) noexcept
     {
         static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
         static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
+#ifdef __x86_64__
         COMPARE(((quint64 *) &u1)[0], ((quint64 *) &u2)[0])
         COMPARE(((quint64 *) &u1)[1], ((quint64 *) &u2)[1])
-        return 0;
-    }
 #else
-    // equal
-    template<typename UuidT1, typename UuidT2>
-    static inline bool equal(const UuidT1& u1, const UuidT2& u2) noexcept
-    {
-        static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
-        static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
-        return ( ((quint32 *) &u1)[0] == ((quint32 *) &u2)[0]
-              && ((quint32 *) &u1)[1] == ((quint32 *) &u2)[1]
-              && ((quint32 *) &u1)[2] == ((quint32 *) &u2)[2]
-              && ((quint32 *) &u1)[3] == ((quint32 *) &u2)[3] );
-    }
-
-    // compare
-    template<typename UuidT1, typename UuidT2>
-    static inline int compare(const UuidT1& u1, const UuidT2& u2) noexcept
-    {
-//        if (((quint32 *) &u1)[0] == ((quint32 *) &u2)[0])
-//        {
-//            if (((quint32 *) &u1)[1] == ((quint32 *) &u2)[1])
-//            {
-//                if (((quint32 *) &u1)[2] == ((quint32 *) &u2)[2])
-//                {
-//                    if (((quint32 *) &u1)[3] == ((quint32 *) &u2)[3])
-//                        return 0;
-//                    else
-//                        return (((quint32 *) &u1)[3] > ((quint32 *) &u2)[3]) ? 1 : -1;
-//                }
-//                return (((quint32 *) &u1)[2] > ((quint32 *) &u2)[2]) ? 1 : -1;
-//            }
-//            return (((quint32 *) &u1)[1] > ((quint32 *) &u2)[1]) ? 1 : -1;
-//        }
-//        return (((quint32 *) &u1)[0] > ((quint32 *) &u2)[0]) ? 1 : -1;
-
-        static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
-        static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
         COMPARE(((quint32 *) &u1)[0], ((quint32 *) &u2)[0])
         COMPARE(((quint32 *) &u1)[1], ((quint32 *) &u2)[1])
         COMPARE(((quint32 *) &u1)[2], ((quint32 *) &u2)[2])
         COMPARE(((quint32 *) &u1)[3], ((quint32 *) &u2)[3])
+#endif
         return 0;
     }
-#endif
 
 #undef COMPARE
+
+    // equal
+    template<typename UuidT1, typename UuidT2>
+    static inline bool equal(const UuidT1& u1, const UuidT2& u2) noexcept
+    {
+        return (compare(u1, u2) == 0);
+    }
 
     template<int NN>
     bool operator== (const QUuidT<NN>& u) noexcept {return equal(*this, u);}
