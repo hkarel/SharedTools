@@ -15,7 +15,6 @@
 #include "qt/communication/host_point.h"
 
 #include <QtCore>
-#include <atomic>
 #include <utility>
 
 namespace communication {
@@ -186,6 +185,21 @@ public:
     // Создает сообщение
     static Ptr create(const QUuidEx& command);
 
+    // Создает отдельную копию сообщения, которую можно использовать как сообще-
+    // ние-ответ. Основная причина введения данной функции заключается в том,
+    // что не всегда возможно изменять параметры исходного сообщения, особенно
+    // в многопоточном приложении.
+    // Параметры, которые не клонируются (инициализируются дефолтными
+    // значениями):
+    //   - контент сообщения;
+    //   - compression (информация о сжатии контента);
+    //   - destinationPoints;
+    //   - destinationSocketDescriptors.
+    // Параметры, которые инициализируются предопределенными значениями:
+    //   - type = Answer;
+    //   - execStatus = Success
+    Ptr cloneForAnswer() const;
+
     // Функция записи данных
     template<typename... Args>
     bool writeContent(const Args&... args);
@@ -211,7 +225,6 @@ public:
 
 private:
     Message();
-    Message(const QUuidEx& command);
     DISABLE_DEFAULT_COPY(Message)
 
     void decompress(BByteArray&) const;
@@ -279,7 +292,7 @@ private:
     HostPoint::Set _destinationPoints;
     SocketDescriptor _socketDescriptor = {-1};
     SocketDescriptorSet _destinationSocketDescriptors;
-    std::atomic_bool _processed = {false};
+    volatile bool _processed = {false};
 
     friend class transport::tcp::Socket;
     friend class transport::udp::Socket;

@@ -5,11 +5,6 @@
 
 namespace communication {
 
-Message::Ptr Message::create(const QUuidEx& command)
-{
-    return Message::Ptr(new Message(command));
-}
-
 Message::Message() : _flags(0), _flags2(0)
 {
     // Флаги _flags, _flags2 должны быть инициализированы обязательно
@@ -17,14 +12,42 @@ Message::Message() : _flags(0), _flags2(0)
     // не именованных union-параметров при их объявлении в классе.
 }
 
-Message::Message(const QUuidEx& command) : Message()
+Message::Ptr Message::create(const QUuidEx& command)
 {
-    _id = QUuid::createUuid();
-    _command = command;
-    _type = static_cast<quint32>(Type::Command);
-    _execStatus = static_cast<quint32>(ExecStatus::Unknown);
-    _priority = static_cast<quint32>(Priority::Normal);
-    _compression = static_cast<quint32>(Compression::None);
+    Ptr m {new Message};
+
+    m->_id = QUuid::createUuid();
+    m->_command = command;
+    m->_type = static_cast<quint32>(Type::Command);
+    m->_execStatus = static_cast<quint32>(ExecStatus::Unknown);
+    m->_priority = static_cast<quint32>(Priority::Normal);
+    m->_compression = static_cast<quint32>(Compression::None);
+
+    return std::move(m);
+}
+
+Message::Ptr Message::cloneForAnswer() const
+{
+    Ptr m {new Message};
+
+    // Клонируемые параметры
+    m->_id = _id;
+    m->_command = _command;
+    m->_protocolVersionLow = _protocolVersionLow;
+    m->_protocolVersionHigh = _protocolVersionHigh;
+    m->_flags = _flags;
+    m->_flags2 = _flags2;
+    m->_tag = _tag;
+    m->_maxTimeLife = _maxTimeLife;
+    m->_sourcePoint = _sourcePoint;
+    m->_socketDescriptor = _socketDescriptor;
+
+    // Инициализируемые параметры
+    m->_type = static_cast<quint32>(Type::Answer);
+    m->_execStatus = static_cast<quint32>(ExecStatus::Success);
+    m->_compression = static_cast<quint32>(Compression::None);
+
+    return std::move(m);
 }
 
 SocketDescriptorSet& Message::destinationSocketDescriptors()
@@ -182,7 +205,7 @@ Message::Ptr Message::fromByteArray(const BByteArray& ba)
 
 Message::Ptr Message::fromDataStream(QDataStream& stream)
 {
-    Ptr m {new Message()};
+    Ptr m {new Message};
 
     stream >> m->_id;
     stream >> m->_command;
