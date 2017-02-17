@@ -131,6 +131,17 @@ bool protocolCompatible(quint16 versionLow, quint16 versionHigh)
     return true;
 }
 
+void registrationQtMetatypes()
+{
+    static bool first {true};
+    if (first)
+    {
+        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
+        qRegisterMetaType<communication::SocketDescriptor>("communication::SocketDescriptor");
+        first = false;
+    }
+}
+
 //NetAddressesPtr netAddresses(bool returnBroadcast)
 //{
 //    NetAddressesPtr la = NetAddressesPtr::create_ptr();

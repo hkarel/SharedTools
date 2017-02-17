@@ -31,12 +31,7 @@ namespace udp {
 
 Socket::Socket()
 {
-    static bool first {true};
-    if (first)
-    {
-        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
-        first = false;
-    }
+    registrationQtMetatypes();
 }
 
 bool Socket::init(const QHostAddress& address, int port)

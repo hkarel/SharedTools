@@ -741,13 +741,7 @@ void Socket::run()
 
 Sender::Sender()
 {
-    static bool first {true};
-    if (first)
-    {
-        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
-        qRegisterMetaType<communication::SocketDescriptor>("communication::SocketDescriptor");
-        first = false;
-    }
+    registrationQtMetatypes();
 }
 
 Sender::~Sender()
@@ -818,14 +812,7 @@ void Sender::run()
 
 Listener::Listener() : QTcpServer(0)
 {
-    static bool first {true};
-    if (first)
-    {
-        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
-        qRegisterMetaType<communication::SocketDescriptor>("communication::SocketDescriptor");
-        first = false;
-    }
-
+    registrationQtMetatypes();
     chk_connect_q(&_removeClosedSockets, SIGNAL(timeout()),
                   this, SLOT(removeClosedSockets()))
 }

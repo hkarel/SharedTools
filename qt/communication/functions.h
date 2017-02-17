@@ -218,6 +218,11 @@ QDataStream& operator<< (QDataStream&, const timeval&);
 */
 bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
 
+/**
+  Функция регистрации Qt-метатипов для работы с коммуникационными механизмами.
+*/
+void registrationQtMetatypes();
+
 ///**
 //  Возвращает список адресов для доступных на данный момент сетевых интерфейсов.
 //  Адрес для интерфейса localhost не возвращается.
