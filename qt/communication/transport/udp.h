@@ -74,8 +74,8 @@ public:
     // На данный момент предполагается использование этого списка для предотвра-
     // щения получения собственных сообщений отправленных с помощью широковеща-
     // тельной рассылки.
-    NetAddressesPtr discardAddresses() const;
-    void setDiscardAddresses(const NetAddressesPtr&);
+    QList<QHostAddress> discardAddresses() const;
+    void setDiscardAddresses(const QList<QHostAddress>&);
 
 signals:
     // Сигнал эмитируется при получении сообщения
@@ -109,7 +109,7 @@ private:
     bool _checkProtocolCompatibility = true;
     bool _checkUnknownCommands = true;
 
-    NetAddressesPtr _discardAddresses;
+    QList<QHostAddress> _discardAddresses;
     mutable std::atomic_flag _discardAddressesLock = ATOMIC_FLAG_INIT;
 
     template<typename T> friend T* allocator_ptr<T>::create();

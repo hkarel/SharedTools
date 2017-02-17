@@ -69,13 +69,13 @@ bool Socket::init(const QHostAddress& address, int port)
     return true;
 }
 
-NetAddressesPtr Socket::discardAddresses() const
+QList<QHostAddress> Socket::discardAddresses() const
 {
     SpinLocker locker(_discardAddressesLock); (void) locker;
     return _discardAddresses;
 }
 
-void Socket::setDiscardAddresses(const NetAddressesPtr& val)
+void Socket::setDiscardAddresses(const QList<QHostAddress>& val)
 {
     SpinLocker locker(_discardAddressesLock); (void) locker;
     _discardAddresses = val;
@@ -222,7 +222,7 @@ void Socket::run()
             if (loopBreak)
                 break;
 
-            NetAddressesPtr discardAddresses;
+            QList<QHostAddress> discardAddresses;
             { //Block for SpinLocker
                 SpinLocker locker(_discardAddressesLock); (void) locker;
                 discardAddresses = _discardAddresses;
@@ -363,9 +363,7 @@ void Socket::run()
                     log_debug2_m << "Raw message received"
                                  << ". Source: " << addr << ":" << port;
                 }
-                if (discardAddresses
-                    && discardAddresses->contains(addr)
-                    && port == _port)
+                if (discardAddresses.contains(addr) && (port == _port))
                 {
                     if (alog::logger().level() == alog::Level::Debug2)
                     {

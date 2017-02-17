@@ -21,7 +21,7 @@ namespace communication {
 
 //QString toString(Message::Type);
 //QString toString(Message::ExecStatus);
-typedef container_ptr<QList<QHostAddress>> NetAddressesPtr;
+//typedef container_ptr<QList<QHostAddress>> NetAddressesPtr;
 
 /**
   Создает сообщение на основе структуры данных соответствующей определнной
@@ -55,6 +55,11 @@ Message::Ptr createMessage(const CommandDataT& data,
     m->setExecStatus(Message::ExecStatus::Unknown);
     m->writeContent(data);
     return std::move(m);
+}
+
+inline Message::Ptr createMessage(const QUuidEx& command)
+{
+    return Message::create(command);
 }
 
 /**
@@ -213,16 +218,16 @@ QDataStream& operator<< (QDataStream&, const timeval&);
 */
 bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
 
-/**
-  Возвращает список адресов для доступных на данный момент сетевых интерфейсов.
-  Адрес для интерфейса localhost не возвращается.
-*/
-NetAddressesPtr interfacesAddresses();
+///**
+//  Возвращает список адресов для доступных на данный момент сетевых интерфейсов.
+//  Адрес для интерфейса localhost не возвращается.
+//*/
+//NetAddressesPtr interfacesAddresses();
 
-/**
-  Возвращает список широковещательных адресов для доступных на данный момент
-  сетевых интерфейсов.
-*/
-NetAddressesPtr broadcastAddresses();
+///**
+//  Возвращает список широковещательных адресов для доступных на данный момент
+//  сетевых интерфейсов.
+//*/
+//NetAddressesPtr broadcastAddresses();
 
 } // namespace communication

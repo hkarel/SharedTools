@@ -131,36 +131,36 @@ bool protocolCompatible(quint16 versionLow, quint16 versionHigh)
     return true;
 }
 
-NetAddressesPtr netAddresses(bool returnBroadcast)
-{
-    NetAddressesPtr la = NetAddressesPtr::create_ptr();
+//NetAddressesPtr netAddresses(bool returnBroadcast)
+//{
+//    NetAddressesPtr la = NetAddressesPtr::create_ptr();
 
-    for (const QNetworkInterface& interface : QNetworkInterface::allInterfaces())
-        for (const QNetworkAddressEntry& entry : interface.addressEntries())
-        {
-            QHostAddress address = entry.ip();
-            QHostAddress broadcast = entry.broadcast();
-            if (address != QHostAddress::LocalHost
-                && broadcast != QHostAddress::Null)
-            {
-                if (returnBroadcast)
-                    la->append(broadcast);
-                else
-                    la->append(address);
-            }
-        }
+//    for (const QNetworkInterface& interface : QNetworkInterface::allInterfaces())
+//        for (const QNetworkAddressEntry& entry : interface.addressEntries())
+//        {
+//            QHostAddress address = entry.ip();
+//            QHostAddress broadcast = entry.broadcast();
+//            if (address != QHostAddress::LocalHost
+//                && broadcast != QHostAddress::Null)
+//            {
+//                if (returnBroadcast)
+//                    la->append(broadcast);
+//                else
+//                    la->append(address);
+//            }
+//        }
 
-    return std::move(la);
-}
+//    return std::move(la);
+//}
 
-NetAddressesPtr interfacesAddresses()
-{
-    return netAddresses(false);
-}
+//NetAddressesPtr interfacesAddresses()
+//{
+//    return netAddresses(false);
+//}
 
-NetAddressesPtr broadcastAddresses()
-{
-    return netAddresses(true);
-}
+//NetAddressesPtr broadcastAddresses()
+//{
+//    return netAddresses(true);
+//}
 
 } // namespace communication
