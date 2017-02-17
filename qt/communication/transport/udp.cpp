@@ -229,7 +229,7 @@ void Socket::run()
             }
 
             //--- Отправка сообщений ---
-            timer.restart();
+            timer.start();
             while (true)
             {
                 Message::Ptr message;
@@ -335,7 +335,7 @@ void Socket::run()
                 break;
 
             //--- Прием сообщений ---
-            timer.restart();
+            timer.start();
             while (_socket.hasPendingDatagrams())
             {
                 if (loopBreak
@@ -406,7 +406,7 @@ void Socket::run()
                 break;
 
             //--- Обработка принятых сообщений ---
-            timer.restart();
+            timer.start();
             while (!acceptMessages.empty())
             {
                 Message::Ptr m;

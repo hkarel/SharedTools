@@ -358,7 +358,7 @@ void Socket::run()
             // Проверка сигнатуры протокола
             if (!_protocolSignatureRead)
             {
-                timer.restart();
+                timer.start();
                 while (_socket->bytesAvailable() < 16)
                 {
                     _socket->waitForReadyRead(delay);
@@ -430,7 +430,7 @@ void Socket::run()
             //--- Отправка сообщений ---
             if (_socket->bytesToWrite() == 0)
             {
-                timer.restart();
+                timer.start();
                 while (true)
                 {
                     Message::Ptr message;
@@ -534,7 +534,7 @@ void Socket::run()
             //--- Прием сообщений ---
             if (_socket->bytesAvailable() != 0)
             {
-                timer.restart();
+                timer.start();
                 while (true)
                 {
                     if (qAbs(readBuffSize) == 0)
@@ -636,7 +636,7 @@ void Socket::run()
             //--- Обработка принятых сообщений ---
             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
             {
-                timer.restart();
+                timer.start();
                 while (!acceptMessages.empty())
                 {
                     Message::Ptr m;
