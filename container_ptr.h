@@ -174,7 +174,7 @@ class container_ptr
 {
 public:
     typedef T element_t;
-    typedef Allocator<T>  allocator_t;
+    typedef Allocator<T> allocator_t;
     typedef container_ptr<T, Allocator> self_t;
 
     // См. описание counter_ptr_t::fake
@@ -223,14 +223,16 @@ public:
     template<typename otherT, template<typename> class otherA>
     container_ptr(const container_ptr<otherT, otherA> & p) {
         PRINT_DEBUG("container_ptr(const container_ptr<otherT, otherA> &)", "")
-        check_converting(p);
+        check_allocators_is_equal(p);
+        check_converting_to_self_type(p);
         assign(p);
     }
 
     template<typename otherT, template<typename> class otherA>
     self_t& operator= (const container_ptr<otherT, otherA> & p) {
         PRINT_DEBUG("operator= (const container_ptr<otherT, otherA> &)", "")
-        check_converting(p);
+        check_allocators_is_equal(p);
+        check_converting_to_self_type(p);
         assign(p);
         return *this;
     }
@@ -251,39 +253,38 @@ public:
     template<typename otherT, template<typename> class otherA>
     container_ptr(container_ptr<otherT, otherA> && p) {
         PRINT_DEBUG("container_ptr(container_ptr<otherT, otherA> &&)", "")
-        check_converting(p);
+        check_allocators_is_equal(p);
+        check_converting_to_self_type(p);
         assign(p, true);
     }
 
     template<typename otherT, template<typename> class otherA>
     self_t& operator= (container_ptr<otherT, otherA> && p) {
         PRINT_DEBUG("operator= (container_ptr<otherT, otherA> &&)", "")
-        check_converting(p);
+        check_allocators_is_equal(p);
+        check_converting_to_self_type(p);
         assign(p, true);
         return *this;
     }
 
-    // Динамическое преобразование типа.
-    template<typename other_cptrT>
-    other_cptrT dynamic_cast_to() const {
-        if (!empty()) {
-            typedef typename other_cptrT::element_t other_element_t;
-            if (dynamic_cast<other_element_t*>(get())) {
-                other_cptrT other_cptr(_counter, 0, 0);
-                return other_cptr;
-            }
-        }
-        return other_cptrT();
-    }
-
     // Проверяет возможность динамического преобразования к указанному типу.
     template<typename other_cptrT>
-    bool dynamic_cast_to(int) const {
+    bool dynamic_cast_is_possible() const {
+        other_cptrT p;
+        check_allocators_is_equal(p);
         if (!empty()) {
             typedef typename other_cptrT::element_t other_element_t;
             return dynamic_cast<other_element_t*>(get());
         }
         return false;
+    }
+
+    // Динамическое преобразование типа.
+    template<typename other_cptrT>
+    other_cptrT dynamic_cast_to() const {
+        return (dynamic_cast_is_possible<other_cptrT>())
+               ? other_cptrT(_counter, 0, 0)
+               : other_cptrT();
     }
 
     //self_t clone() const {
@@ -323,9 +324,11 @@ public:
     template <typename... Args>
     static self_t create_join_ptr(Args&&... args) {
         enum {join_yes = container_ptr_check_join<T, Allocator>::Yes};
-        static_assert(join_yes, "Allocators must have function with signature: destroy(T* x, bool join)");
+        static_assert(join_yes,
+            "Allocators must have function with signature: destroy(T* x, bool join)");
         self_t self;
-        const int size = sizeof(counter_ptr_t) - sizeof(((counter_ptr_t*)0)->ptr) + sizeof(T);
+        const int size = sizeof(counter_ptr_t)
+                         - sizeof(((counter_ptr_t*)0)->ptr) + sizeof(T);
         void* ptr = malloc(size);
         if (ptr == 0)
             throw std::bad_alloc();
@@ -339,7 +342,7 @@ private:
     // Вспомогательный конструктор, используется в функции dynamic_cast_to().
     // Добавлены два фиктивных параметра, чтобы избежать неоднозначностей
     // компиляции.
-    explicit container_ptr(/*const*/ counter_ptr_t* counter, int, int) {
+    container_ptr(/*const*/ counter_ptr_t* counter, int, int) {
         _counter = counter;
         if (_counter)
             _counter->add_ref();
@@ -363,11 +366,13 @@ private:
         if (counter)
             if (counter->release() == 0) {
                 if (counter->join) {
-                    container_ptr_destroy<join_yes>::template destroy<T, Allocator>(get(counter), true);
+                    container_ptr_destroy<join_yes>::template
+                        destroy<T, Allocator>(get(counter), true);
                 }
                 else {
                     if (!counter->fake)
-                        container_ptr_destroy<join_yes>::template destroy<T, Allocator>(get(counter), false);
+                        container_ptr_destroy<join_yes>::template
+                            destroy<T, Allocator>(get(counter), false);
                 }
                 counter->~counter_ptr_t();
                 free(counter);
@@ -378,17 +383,20 @@ private:
         return static_cast<T*>(counter ? counter->__ptr() : 0);
     }
 
-    // Проверяет эквивалентность аллокаторов, и корректность преобразования
-    // к базовому типу
+    // Проверяет эквивалентность аллокаторов
     template<typename otherT, template<typename> class otherA>
-    static void check_converting(const container_ptr<otherT, otherA> &) {
-        // Проверка на эквивалентность аллокаторов
-        static_assert(allocator_ptr_equal<Allocator, otherA>::Yes, "Allocators must be identical");
+    static void check_allocators_is_equal(
+                                      const container_ptr<otherT, otherA> &) {
+        static_assert(allocator_ptr_equal<Allocator, otherA>::Yes,
+                      "Allocators must be identical");
+    }
 
-        // Проверяем корректность преобразования типа. Допускается преобразование
-        // только от классов-наследников к базовым классам.
-        // T* base = p.get();
-        static_assert(std::is_base_of<T, otherT>::value, "Type otherT must be derived from T");
+    // Проверяет корректность преобразования типа otherT к типу T.
+    template<typename otherT, template<typename> class otherA>
+    static void check_converting_to_self_type(
+                                      const container_ptr<otherT, otherA> &) {
+        static_assert(std::is_base_of<T, otherT>::value,
+                      "Type otherT must be derived from T");
     }
 
     // Потенциальная уязвимость функций assign: если эти функции одновременно
