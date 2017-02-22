@@ -84,7 +84,7 @@ template<typename T>
 QDataStream& putToStream(QDataStream& s, const T& t,
                          typename not_enum_type<T>::type = 0)
 {
-    RawVector rv = t.toRaw();
+    const RawVector rv = t.toRaw();
     if (rv.size() > 255)
         throw std::logic_error(std::string(
             "Limit exceeded on number of versions for b-serialization (255)"));
