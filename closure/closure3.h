@@ -47,7 +47,7 @@
 namespace closure
 {
     // Forward декларация
-    template <typename> struct CreateHelper;
+    template<typename> struct CreateHelper;
 
 } // namespace closure
 
@@ -79,13 +79,13 @@ inline bool operator!= (const ClosureBase& c1, const ClosureBase& c2) NOEXCEPT
 }
 
 // Обобщенная декларация
-template <typename, typename... > class Closure;
+template<typename, typename... > class Closure;
 
 
 /**
   Closure
 */
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 class Closure<R (Args...)> : public ClosureBase
 {
 public:
@@ -134,22 +134,22 @@ private:
         this->proxy = (void*)proxy;
     }
 
-    template <typename> friend struct closure::CreateHelper;
+    template<typename> friend struct closure::CreateHelper;
 };
 
 
 namespace closure
 {
-    template <typename... Args>
+    template<typename... Args>
     struct ProxyFunc
     {
-        template <typename T, typename R, R (T::*mem_func)(Args...)>
+        template<typename T, typename R, R (T::*mem_func)(Args...)>
         static R Func(void* self, Args... args)
         {
             return (static_cast<T*>(self) ->* mem_func)(std::forward<Args>(args)...);
         }
 
-        template <typename T, typename R, R (T::*mem_func)(Args...) const>
+        template<typename T, typename R, R (T::*mem_func)(Args...) const>
         static R Func(void* self, Args... args)
         {
             return (static_cast<T*>(self) ->* mem_func)(std::forward<Args>(args)...);
@@ -157,14 +157,14 @@ namespace closure
     };
 
     // Обобщенная декларация
-    template <typename> struct CreateHelper {};
+    template<typename> struct CreateHelper {};
 
-    template <typename B, typename R, typename... Args>
+    template<typename B, typename R, typename... Args>
     struct CreateHelper<R (B::*)(Args...)>
     {
         typedef Closure<R (Args...)> ClosureType;
 
-        template <R (B::*mem_func)(Args...), typename D>
+        template<R (B::*mem_func)(Args...), typename D>
         static ClosureType Init(D *d) NOEXCEPT
         {
             // Проверяем корректность преобразования типа. Допускается преобразование
@@ -174,12 +174,12 @@ namespace closure
         }
     };
 
-    template <typename B, typename R, typename... Args>
+    template<typename B, typename R, typename... Args>
     struct CreateHelper<R (B::*)(Args...) const>
     {
         typedef Closure<R (Args...)> ClosureType;
 
-        template <R (B::*mem_func)(Args...) const, typename D>
+        template<R (B::*mem_func)(Args...) const, typename D>
         static ClosureType Init(D *d) NOEXCEPT
         {
             B* b = d;
@@ -187,12 +187,12 @@ namespace closure
         }
     };
 
-    template <typename R, typename... Args>
+    template<typename R, typename... Args>
     struct CreateHelper<R (*)(Args...)>
     {
         typedef Closure<R (Args...)> ClosureType;
 
-        template <R (*func)(Args...)>
+        template<R (*func)(Args...)>
         constexpr static ClosureType Init() NOEXCEPT
         {
             return ClosureType(func);

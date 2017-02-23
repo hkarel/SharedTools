@@ -41,7 +41,7 @@
     Примечание: если сделать все методы clife_ptr потокобезопасными - это
     понизит общую эффективность и быстродействие при использовании clife_ptr.
 */
-template <typename T> class clife_ptr
+template<typename T> class clife_ptr
 {
 public:
     typedef T element_t;
@@ -191,7 +191,7 @@ private:
 private:
     T* _ptr = {0};
 
-    template <typename> friend class clife_ptr;
+    template<typename> friend class clife_ptr;
 };
 
 //#pragma GCC diagnostic pop

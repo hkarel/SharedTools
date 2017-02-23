@@ -179,7 +179,7 @@ private:
     friend class Sender;
     friend class Listener;
     template<typename T> friend T* allocator_ptr<T>::create();
-    //template <typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
+    //template<typename... Args> friend Ptr::self_t Ptr::create_join_ptr(Args&&...);
 };
 
 

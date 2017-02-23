@@ -76,8 +76,8 @@ FindResult firstFindResultL(const ListT&, const CompareL&, const FindResult&);
 template<typename ListT, typename CompareL>
 FindResult lastFindResultL(const ListT&, const CompareL&, const FindResult&);
 
-template <typename, typename, typename> class CustomList;
-template <typename, typename, typename> class List;
+template<typename, typename, typename> class CustomList;
+template<typename, typename, typename> class List;
 
 
 /// @brief Функция проверяет попадает ли значение index в диапазон minVal-maxVal,
@@ -187,7 +187,7 @@ private:
   FindResult(bool success, BruteForce bruteForce, int index)
     : _index(index), _success(success), _bruteForce(bool(bruteForce))
   {}
-  template <typename, typename, typename> friend class CustomList;
+  template<typename, typename, typename> friend class CustomList;
 
   template<typename ListT, typename CompareT>
   friend FindResult find(const ListT&, const CompareT&);
@@ -447,7 +447,7 @@ template<typename T> struct AllocatorItem
   Этот класс не является потокобезопасным, следует с осторожностью допускать
   одновременный вызов методов данного класса из разных потоков.
 */
-template <
+template<
   typename T,
   typename Compare,
   typename Allocator
@@ -637,7 +637,7 @@ public:
     Range() {}
     IteratorT** _begin;
     IteratorT** _end;
-    template <typename, typename, typename> friend class CustomList;
+    template<typename, typename, typename> friend class CustomList;
   };
   typedef Range<T> RangeType;
 
@@ -679,7 +679,7 @@ private:
   DataType* d;
 
   DataType* d_func() const {CHECK_INTERNAL_DATA_PTR(d); return d;}
-  template <typename, typename, typename> friend class List;
+  template<typename, typename, typename> friend class List;
 };
 
 
@@ -688,7 +688,7 @@ private:
   Этот класс не является потокобезопасным, поэтому не следует допускать
   одновременный вызов методов данного класса из разных потоков.
 */
-template <
+template<
   typename T,
   typename Compare = CompareItem<T>,
   typename Allocator = AllocatorItem<T>

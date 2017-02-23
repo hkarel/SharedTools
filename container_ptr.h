@@ -321,7 +321,7 @@ public:
 
     // Создает объект container_ptr с единым сегментом памяти для целевого
     // объекта и экземпляра counter_ptr_t.
-    template <typename... Args>
+    template<typename... Args>
     static self_t create_join_ptr(Args&&... args) {
         enum {join_yes = container_ptr_check_join<T, Allocator>::Yes};
         static_assert(join_yes,

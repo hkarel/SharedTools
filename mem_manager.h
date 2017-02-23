@@ -63,7 +63,7 @@ struct MemBlock
     MemBlock* next;
 };
 
-template <typename T> struct MemBlockArray
+template<typename T> struct MemBlockArray
 {
     MemBlockArray<T>* next;
     MemBlock* array_;
@@ -150,7 +150,7 @@ template<typename T> struct MemLocker
 /**
   @brief Класс MemManager.
 */
-template <
+template<
     typename T,
     typename LockT = MemLockDummy
 >

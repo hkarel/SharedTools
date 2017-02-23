@@ -66,7 +66,7 @@
 /**
   SimpleSignalBase - базовая реализация механизма SIGNAL.
 */
-template <
+template<
     typename R,
     typename... Args
 >
@@ -157,12 +157,12 @@ private:
 
 
 // Обобщенная декларация
-template <typename, typename... > struct SimpleSignal;
+template<typename, typename... > struct SimpleSignal;
 
 /**
   Специализации для SimpleSignal
 */
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 struct SimpleSignal<Closure<R (Args...)>> : public SimpleSignalBase<R, Args...>
 {
     typedef typename SimpleSignalBase<R, Args...>::Slot     Slot;
@@ -171,7 +171,7 @@ struct SimpleSignal<Closure<R (Args...)>> : public SimpleSignalBase<R, Args...>
     void test() {}
 };
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 struct SimpleSignal<R (Args...)> : public SimpleSignalBase<R, Args...>
 {
     typedef typename SimpleSignalBase<R, Args...>::Slot     Slot;
@@ -183,7 +183,7 @@ struct SimpleSignal<R (Args...)> : public SimpleSignalBase<R, Args...>
 
 //----------------------------- Implementation ------------------------------
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 void SimpleSignalBase<R, Args...>::connect(const Slot& f, bool unique)
 {
     SpinLocker locker(_slotsLock); (void) locker;
@@ -202,7 +202,7 @@ void SimpleSignalBase<R, Args...>::connect(const Slot& f, bool unique)
     _slots.push_back(f);
 }
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 void SimpleSignalBase<R, Args...>::disconnect(const Slot& f, bool all)
 {
     std::size_t index = 0;
@@ -238,7 +238,7 @@ void SimpleSignalBase<R, Args...>::disconnect(const Slot& f, bool all)
     }
 }
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 bool SimpleSignalBase<R, Args...>::exists(const Slot& f) const
 {
     SpinLocker locker(_slotsLock); (void) locker;
@@ -249,14 +249,14 @@ bool SimpleSignalBase<R, Args...>::exists(const Slot& f) const
     return false;
 }
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 bool SimpleSignalBase<R, Args...>::empty() const
 {
     SpinLocker locker(_slotsLock); (void) locker;
     return _slots.empty();
 }
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 R SimpleSignalBase<R, Args...>::emit_(Args... args) const
 {
     //std::lock_guard<std::mutex> locker(_emitLock); (void) locker;
@@ -266,14 +266,14 @@ R SimpleSignalBase<R, Args...>::emit_(Args... args) const
     return call<R>(args...);
 }
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 void SimpleSignalBase<R, Args...>::clear()
 {
     SpinLocker locker(_slotsLock); (void) locker;
     _slots.clear();
 }
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
     template<typename Res>
 Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Res>::type) const
 {
@@ -303,7 +303,7 @@ Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Re
     return res;
 }
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
     template<typename Res>
 void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Res>::type) const
 {

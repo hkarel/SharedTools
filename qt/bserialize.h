@@ -170,10 +170,10 @@ struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base,
   для записи/чтения структур lst::List<T> из потока данных,
   где T унаследовано от clife_base.
 */
-template <
-  typename T,
-  typename Compare,
-  typename Allocator
+template<
+    typename T,
+    typename Compare,
+    typename Allocator
 >
 QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& list,
                            typename derived_from_clife_base<T>::type = 0)
@@ -198,10 +198,10 @@ QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& lis
     return s;
 }
 
-template <
-  typename T,
-  typename Compare,
-  typename Allocator
+template<
+    typename T,
+    typename Compare,
+    typename Allocator
 >
 QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& list,
                            typename not_derived_from_clife_base<T>::type = 0)
@@ -222,10 +222,10 @@ QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& lis
     return s;
 }
 
-template <
-  typename T,
-  typename Compare,
-  typename Allocator
+template<
+    typename T,
+    typename Compare,
+    typename Allocator
 >
 QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>& list)
 {
