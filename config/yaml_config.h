@@ -204,7 +204,7 @@ char* YamlConfig::typeName()
         if (_readOnly) {\
             alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig") \
                 << "Failed to set parameter: " << name \
-                << ". Config data is read only."; \
+                << ". Config data is read only"; \
             return false;  \
         }
 

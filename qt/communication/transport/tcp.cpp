@@ -148,6 +148,11 @@ SocketDescriptor Socket::socketDescriptor() const
     return (_socket) ? _socket->socketDescriptor() : -1;
 }
 
+void Socket::disconnect(unsigned long time)
+{
+    stop(time);
+}
+
 void Socket::socketDisconnected()
 {
     _protocolSignatureRead = false;
@@ -177,11 +182,10 @@ void Socket::run()
         }
     }
     _socketDescriptor = _socket->socketDescriptor();
-    _address = _socket->peerAddress();
-    _port = _socket->peerPort();
+    _peerPoint.setAddress(_socket->peerAddress());
+    _peerPoint.setPort(_socket->peerPort());
 
-    log_verbose_m << "Connect " << connectDirection << " host "
-                  << _address << ":" << _port
+    log_verbose_m << "Connect " << connectDirection << " host " << _peerPoint
                   << "; Socket descriptor: " << _socketDescriptor;
 
     Message::List internalMessages;
@@ -321,7 +325,7 @@ void Socket::run()
         { \
             if (_socket->error() == QAbstractSocket::RemoteHostClosedError) { \
                 log_verbose_m << _socket->errorString() \
-                              << "; Remote host: " << _address << ":" << _port \
+                              << "; Remote host: " << _peerPoint \
                               << "; Socket descriptor: " << _socketDescriptor; \
             } else { \
                 log_error_m << "Socket error code: " << int(_socket->error()) \
@@ -748,31 +752,20 @@ Sender::~Sender()
 {
 }
 
-bool Sender::init(const QHostAddress& address, int port)
+bool Sender::init(const HostPoint& peerPoint)
 {
     if (isRunning())
     {
         log_error_m << "Impossible execute a initialization because Sender thread is running.";
         return false;
     }
-    if (port < 1 || port > 65535)
-    {
-        log_error_m << "A port must be in interval 1 - 65535. Assigned value: " << port;
-        return false;
-    }
-    _address = address;
-    _port = quint16(port);
+    _peerPoint = peerPoint;
     return true;
 }
 
 void Sender::connect()
 {
     start();
-}
-
-void Sender::disconnect()
-{
-    stop();
 }
 
 void Sender::run()
@@ -787,13 +780,12 @@ void Sender::run()
         if (threadStop())
             break;
 
-        log_verbose_m << "Try connect: " << _address << ":" << _port;
+        log_verbose_m << "Try connect: " << _peerPoint;
 
-        _socket->connectToHost(_address, _port);
+        _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
         if (!_socket->waitForConnected(_waitConnection * 1000))
         {
-            log_error_m << "Failed connect to host "
-                        << _address << ":" << _port
+            log_error_m << "Failed connect to host " << _peerPoint
                         << "; Error code: " << int(_socket->error())
                         << "; Detail: " << _socket->errorString();
             //sleep(10);
@@ -817,23 +809,18 @@ Listener::Listener() : QTcpServer(0)
                   this, SLOT(removeClosedSockets()))
 }
 
-bool Listener::init(const QHostAddress& address, int port)
+bool Listener::init(const HostPoint& hostPoint)
 {
-    if (port < 1 || port > 65535)
-    {
-        log_error_m << "A port must be in interval 1 - 65535. Assigned value: " << port;
-        return false;
-    }
-
     int attempt = 0;
-    while (!QTcpServer::listen(address, quint16(port)))
+    while (!QTcpServer::listen(hostPoint.address(), hostPoint.port()))
     {
         if (++attempt > 10)
             break;
         QThread::usleep(100);
     }
     if (attempt > 10)
-        log_error_m << "Start listener of connection is failed";
+        log_error_m << "Start listener of connection is failed"
+                    << ". Detail: " << errorString();
     else
         log_verbose_m << "Start listener of connection with params: "
                       << serverAddress() << ":" << serverPort();
@@ -853,7 +840,8 @@ void Listener::close()
             s->wait();
         }
     QTcpServer::close();
-    log_verbose_m << "Stop listener of connection";
+    log_verbose_m << "Stop listener of connection with params: "
+                  << serverAddress() << ":" << serverPort();
 }
 
 QVector<Socket::Ptr> Listener::sockets() const
@@ -930,11 +918,46 @@ void Listener::send(const Message::Ptr& message, SocketDescriptor excludeSocket)
 
 Socket::Ptr Listener::socketByDescriptor(SocketDescriptor descr) const
 {
-    QVector<Socket::Ptr> sockets = this->sockets();
-    for (const Socket::Ptr& s : sockets)
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    for (const Socket::Ptr& s : _sockets)
         if (s->socketDescriptor() == descr)
             return s;
 
+    return Socket::Ptr();
+}
+
+void Listener::addSocket(const Socket::Ptr& socket)
+{
+    if (socket.empty()
+        || socket->socketDescriptor() == SocketDescriptor(-1))
+        return;
+
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    bool socketExists = false;
+    for (int i = 0; i < _sockets.count(); ++i)
+        if (_sockets.at(i)->socketDescriptor() == socket->socketDescriptor())
+        {
+            socketExists = true;
+            break;
+        }
+    if (!socketExists)
+    {
+        _sockets.append(socket);
+        connectSignals(socket);
+    }
+}
+
+Socket::Ptr Listener::releaseSocket(SocketDescriptor descr)
+{
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    for (int i = 0; i < _sockets.count(); ++i)
+        if (_sockets.at(i)->socketDescriptor() == descr)
+        {
+            Socket::Ptr socket = _sockets.at(i);
+            disconnectSignals(socket);
+            _sockets.remove(i);
+            return socket;
+        }
     return Socket::Ptr();
 }
 
@@ -946,16 +969,8 @@ void Listener::incomingConnection (SocketDescriptor socketDescriptor)
     socket->setCompressionSize(_compressionSize);
     socket->setCheckProtocolCompatibility(_checkProtocolCompatibility);
     socket->setCheckUnknownCommands(_checkUnknownCommands);
-    //socket->setEemitMessageRaw(_emitMessageRaw);
 
-    chk_connect_d(socket.get(), SIGNAL(message(communication::Message::Ptr)),
-                  this, SIGNAL(message(communication::Message::Ptr)))
-
-    chk_connect_d(socket.get(), SIGNAL(connected(communication::SocketDescriptor)),
-                  this, SIGNAL(socketConnected(communication::SocketDescriptor)))
-
-    chk_connect_d(socket.get(), SIGNAL(disconnected(communication::SocketDescriptor)),
-                  this, SIGNAL(socketDisconnected(communication::SocketDescriptor)))
+    connectSignals(socket);
 
     // Примечание: выход из функции start() происходит только тогда, когда
     // поток гарантированно запустится, поэтому случайное удаление нового
@@ -970,14 +985,28 @@ void Listener::removeClosedSockets()
 {
     QMutexLocker locker(&_socketsLock); (void) locker;
     for (int i = 0; i < _sockets.size(); ++i)
-    {
-        Socket::Ptr s = _sockets[i];
-        if (!s->isRunning())
+        if (!_sockets.at(i)->isRunning())
         {
             _sockets.remove(i--);
             break;
         }
-    }
+}
+
+void Listener::connectSignals(const Socket::Ptr& socket)
+{
+    chk_connect_d(socket.get(), SIGNAL(message(communication::Message::Ptr)),
+                  this, SIGNAL(message(communication::Message::Ptr)))
+
+    chk_connect_d(socket.get(), SIGNAL(connected(communication::SocketDescriptor)),
+                  this, SIGNAL(socketConnected(communication::SocketDescriptor)))
+
+    chk_connect_d(socket.get(), SIGNAL(disconnected(communication::SocketDescriptor)),
+                  this, SIGNAL(socketDisconnected(communication::SocketDescriptor)))
+}
+
+void Listener::disconnectSignals(const Socket::Ptr& socket)
+{
+    QObject::disconnect(socket.get(), 0, this, 0);
 }
 
 } // namespace tcp

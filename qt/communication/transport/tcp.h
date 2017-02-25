@@ -8,11 +8,13 @@
 #pragma once
 
 #include "defmac.h"
+#include "container_ptr.h"
 #include "simple_ptr.h"
 #include "safe_singleton.h"
 #include "qt/thread/qthreadex.h"
 #include "qt/communication/message.h"
 #include "qt/communication/functions.h"
+#include "qt/communication/host_point.h"
 
 #include <QtCore>
 #include <QTcpSocket>
@@ -60,10 +62,6 @@ public:
     bool checkUnknownCommands() const {return _checkUnknownCommands;}
     void setCheckUnknownCommands(bool val) {_checkUnknownCommands = val;}
 
-    // Определяет, что сообщение будет эмитироваться в формате MessageRaw
-    //bool emitMessageRaw() const {return _emitMessageRaw;}
-    //void setEemitMessageRaw(bool val) {_emitMessageRaw = val;}
-
 protected:
     int _compressionLevel = {-1};
     int _compressionSize  = {1024};
@@ -102,11 +100,11 @@ public:
     // Числовой идентификатор сокета
     SocketDescriptor socketDescriptor() const;
 
-    // Адрес с которым установлено соединение
-    QHostAddress address() const {return _address;}
+    // Адрес и порт с которыми установлено соединение
+    HostPoint peerPoint() const {return _peerPoint;}
 
-    // Порт с которым установлено соединение
-    quint16 port() const {return _port;}
+    // Разрывает соединение с удаленным хостом.
+    void disconnect(unsigned long time = ULONG_MAX);
 
     // Функции отправки сообщений.
     bool send(const Message::Ptr&);
@@ -131,7 +129,7 @@ signals:
     // Сигнал эмитируется при получении сообщения
     void message(communication::Message::Ptr);
 
-    // Сигнал эмитируется после установления TCP-соединения и после
+    // Сигнал эмитируется после установки TCP-соединения и после
     // проверки совместимости версий бинарного протокола.
     void connected(communication::SocketDescriptor);
 
@@ -158,9 +156,7 @@ private:
 
     simple_ptr<QTcpSocket> _socket;
     SocketDescriptor _socketDescriptor = {-1};
-
-    QHostAddress _address;
-    quint16 _port = {0};
+    HostPoint _peerPoint;
 
     volatile BinaryProtocol _binaryProtocolStatus = {BinaryProtocol::Undefined};
 
@@ -190,11 +186,13 @@ private:
 class Sender : public Socket
 {
 public:
+    typedef container_ptr<Sender> Ptr;
+
     Sender();
     ~Sender();
 
     // Определяет параметры подключения к удаленному хосту
-    bool init(const QHostAddress& address, int port);
+    bool init(const HostPoint&);
 
     // Выполняет подключение к удаленному хосту с параметрами address и port,
     // определенными в методе init(). Если подключиться не удалось - функция
@@ -202,9 +200,6 @@ public:
     // либо до установления соединения, либо до явного вызова функций
     // stop()/disconnect().
     void connect();
-
-    // Разрывает соединение с удаленным хостом.
-    void disconnect();
 
     // Интервал ожидания установления соединения (в секундах)
     int waitConnection() const {return _waitConnection;}
@@ -230,7 +225,7 @@ public:
     Listener();
 
     // Переводит Listener в режим приема внешних подключений
-    bool init(const QHostAddress& address, int port);
+    bool init(const HostPoint&);
 
     // Listener останавливает прием внешних подключений. Помимо этого все
     // активные соединения будут закрыты.
@@ -259,11 +254,18 @@ public:
     // сокет уже будет добавлен с список Listener::_sockets.
     Socket::Ptr socketByDescriptor(SocketDescriptor) const;
 
+    // Добавляет сокет в коллекцию сокетов
+    void addSocket(const Socket::Ptr&);
+
+    // Удаляет сокет из колекции сокетов
+    Socket::Ptr releaseSocket(SocketDescriptor);
+
 signals:
     // Сигнал эмитируется при получении сообщения
     void message(communication::Message::Ptr);
 
-    // Сигнал эмитируется после установки socket-ом соединения
+    // Сигнал эмитируется после установки socket-ом соединения и после
+    // проверки совместимости версий бинарного протокола.
     void socketConnected(communication::SocketDescriptor);
 
     // Сигнал эмитируется после разрыва socket-ом соединения
@@ -276,6 +278,9 @@ private:
     Q_OBJECT
     DISABLE_DEFAULT_COPY(Listener)
     void incomingConnection (SocketDescriptor socketDescriptor) override;
+
+    void connectSignals(const Socket::Ptr&);
+    void disconnectSignals(const Socket::Ptr&);
 
 private:
     QVector<Socket::Ptr> _sockets;

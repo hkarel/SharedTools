@@ -8,9 +8,11 @@
 #pragma once
 
 #include "defmac.h"
+#include "container_ptr.h"
 #include "qt/thread/qthreadex.h"
 #include "qt/communication/message.h"
 #include "qt/communication/functions.h"
+#include "qt/communication/host_point.h"
 
 #include <QtCore>
 #include <QUdpSocket>
@@ -31,16 +33,13 @@ public:
     typedef container_ptr<Socket> Ptr;
 
     Socket();
-    bool init(const QHostAddress& address, int port);
+    bool init(const HostPoint&);
 
     // Числовой идентификатор сокета
     SocketDescriptor socketDescriptor() const;
 
-    // Адрес с которым связан UDP-сокет
-    QHostAddress address() const {return _address;}
-
-    // Порт с которым связан UDP-сокет
-    quint16 port() const {return _port;}
+    // Адрес и порт с которыми связан UDP-сокет
+    HostPoint bindPoint() const {return _bindPoint;}
 
     // Функции отправки сообщений.
     bool send(const Message::Ptr&);
@@ -95,8 +94,7 @@ private:
     mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
 
     QUdpSocket _socket;
-    QHostAddress _address;
-    quint16 _port = {0};
+    HostPoint _bindPoint;
 
     Message::List _messagesHigh;
     Message::List _messagesNorm;

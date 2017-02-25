@@ -86,8 +86,8 @@ QDataStream& putToStream(QDataStream& s, const T& t,
 {
     const RawVector rv = t.toRaw();
     if (rv.size() > 255)
-        throw std::logic_error(std::string(
-            "Limit exceeded on number of versions for b-serialization (255)"));
+        throw std::logic_error(
+            "Limit exceeded on number of versions for b-serialization (255)");
     s << quint8(rv.size());
     for (const ByteArray& ba : rv)
         s << ba;

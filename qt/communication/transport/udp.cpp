@@ -34,22 +34,15 @@ Socket::Socket()
     registrationQtMetatypes();
 }
 
-bool Socket::init(const QHostAddress& address, int port)
+bool Socket::init(const HostPoint& bindPoint)
 {
     if (isRunning())
     {
         log_error_m << "Impossible execute a initialization because Sender thread is running.";
         return false;
     }
-    if (port < 1 || port > 65535)
-    {
-        log_error_m << "A port must be in interval 1 - 65535. Assigned value: " << port;
-        return false;
-    }
-    _address = address;
-    _port = quint16(port);
-
-    if (!_socket.bind(_address, _port,
+    _bindPoint = bindPoint;
+    if (!_socket.bind(_bindPoint.address(), _bindPoint.port(),
                       QUdpSocket::ShareAddress|QUdpSocket::ReuseAddressHint))
     {
         log_error_m << "Failed bind UDP socket"
@@ -57,10 +50,7 @@ bool Socket::init(const QHostAddress& address, int port)
                     << "; Detail: " << _socket.errorString();
         return false;
     }
-    log_debug_m << "UDP socket is successfully bound"
-                << ". Address: " << _address.toString()
-                << " Port: " << _port;
-
+    log_debug_m << "UDP socket is successfully bound to point " << _bindPoint;
     return true;
 }
 
@@ -290,7 +280,7 @@ void Socket::run()
                 if (!message->destinationPoints().isEmpty())
                 {
                     for (const HostPoint& dp : message->destinationPoints())
-                        _socket.writeDatagram(buff, dp.address, dp.port);
+                        _socket.writeDatagram(buff, dp.address(), dp.port());
 
                     CHECK_SOCKET_ERROR
                     if (alog::logger().level() == alog::Level::Debug2)
@@ -298,21 +288,20 @@ void Socket::run()
                         alog::Line logLine =
                             log_debug2_m << "Message was sent to the next addresses:";
                         for (const HostPoint& dp : message->destinationPoints())
-                            logLine << " " << dp.address.toString() << ":" << dp.port;
+                            logLine << " " << dp;
                         logLine << "; Command " << CommandNameLog(message->command());
                     }
                 }
                 else if (!message->sourcePoint().isNull())
                 {
                     _socket.writeDatagram(buff,
-                                          message->sourcePoint().address,
-                                          message->sourcePoint().port);
+                                          message->sourcePoint().address(),
+                                          message->sourcePoint().port());
                     CHECK_SOCKET_ERROR
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
-                        log_debug2_m << "Message was sent to the address:"
-                                     << " " << message->sourcePoint().address
-                                     << ":" << message->sourcePoint().port
+                        log_debug2_m << "Message was sent to the address"
+                                     << ": " << message->sourcePoint()
                                      << "; Command " << CommandNameLog(message->command());
                     }
                 }
@@ -358,7 +347,7 @@ void Socket::run()
                     log_debug2_m << "Raw message received"
                                  << ". Source: " << addr << ":" << port;
                 }
-                if (discardAddresses.contains(addr) && (port == _port))
+                if (discardAddresses.contains(addr) && (port == _bindPoint.port()))
                 {
                     if (alog::logger().level() == alog::Level::Debug2)
                     {

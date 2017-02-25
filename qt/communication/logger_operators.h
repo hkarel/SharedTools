@@ -14,7 +14,11 @@ class HostPoint;
 struct CommandNameLog
 {
     const QUuidEx& command;
-    CommandNameLog(const QUuidEx& command) : command(command) {}
+    bool onlyCommandName;
+    CommandNameLog(const QUuidEx& command, bool onlyCommandName = true)
+        : command(command),
+          onlyCommandName(onlyCommandName)
+    {}
 };
 } // namespace communication
 
