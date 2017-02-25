@@ -1,5 +1,4 @@
 #include "qt/communication/functions.h"
-#include <QNetworkInterface>
 
 namespace communication {
 
@@ -141,37 +140,5 @@ void registrationQtMetatypes()
         first = false;
     }
 }
-
-//NetAddressesPtr netAddresses(bool returnBroadcast)
-//{
-//    NetAddressesPtr la = NetAddressesPtr::create_ptr();
-
-//    for (const QNetworkInterface& interface : QNetworkInterface::allInterfaces())
-//        for (const QNetworkAddressEntry& entry : interface.addressEntries())
-//        {
-//            QHostAddress address = entry.ip();
-//            QHostAddress broadcast = entry.broadcast();
-//            if (address != QHostAddress::LocalHost
-//                && broadcast != QHostAddress::Null)
-//            {
-//                if (returnBroadcast)
-//                    la->append(broadcast);
-//                else
-//                    la->append(address);
-//            }
-//        }
-
-//    return std::move(la);
-//}
-
-//NetAddressesPtr interfacesAddresses()
-//{
-//    return netAddresses(false);
-//}
-
-//NetAddressesPtr broadcastAddresses()
-//{
-//    return netAddresses(true);
-//}
 
 } // namespace communication

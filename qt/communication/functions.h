@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "container_ptr.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/message.h"
 
@@ -13,9 +12,6 @@
 #include <typeinfo>
 #include <stdexcept>
 #include <type_traits>
-
-#include <QList>
-#include <QHostAddress>
 
 namespace communication {
 
@@ -222,17 +218,5 @@ bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
   Функция регистрации Qt-метатипов для работы с коммуникационными механизмами.
 */
 void registrationQtMetatypes();
-
-///**
-//  Возвращает список адресов для доступных на данный момент сетевых интерфейсов.
-//  Адрес для интерфейса localhost не возвращается.
-//*/
-//NetAddressesPtr interfacesAddresses();
-
-///**
-//  Возвращает список широковещательных адресов для доступных на данный момент
-//  сетевых интерфейсов.
-//*/
-//NetAddressesPtr broadcastAddresses();
 
 } // namespace communication
