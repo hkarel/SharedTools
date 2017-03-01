@@ -1,6 +1,10 @@
 #include "break_point.h"
+#ifdef LZMA_COMPRESSION
 #include "qt/compression/qlzma.h"
+#endif
+#ifdef PPMD_COMPRESSION
 #include "qt/compression/qppmd.h"
+#endif
 #include "qt/communication/message.h"
 
 namespace communication {
@@ -80,7 +84,7 @@ void Message::compress(int level, Compression compression)
                 _content = qCompress(_content, level);
                 _compression = static_cast<quint32>(Compression::Zip);
                 break;
-
+#ifdef LZMA_COMPRESSION
             case Compression::Lzma:
             {
                 QByteArray content;
@@ -91,6 +95,8 @@ void Message::compress(int level, Compression compression)
                 }
                 break;
             }
+#endif
+#ifdef PPMD_COMPRESSION
             case Compression::Ppmd:
             {
                 QByteArray content;
@@ -101,6 +107,7 @@ void Message::compress(int level, Compression compression)
                 }
                 break;
             }
+#endif
             default:
                 throw std::logic_error("communication::Message: "
                                        "Unsupported compression algorithm");
@@ -120,17 +127,18 @@ void Message::decompress(BByteArray& content) const
         case Compression::Zip:
             content = qUncompress(_content);
             break;
-
+#ifdef LZMA_COMPRESSION
         case Compression::Lzma:
             if (qlzma::decompress(_content, content) != 0)
                 content.clear();
             break;
-
+#endif
+#ifdef PPMD_COMPRESSION
         case Compression::Ppmd:
             if (qppmd::decompress(_content, content) != 0)
                 content.clear();
             break;
-
+#endif
         default:
             throw std::logic_error("communication::Message: "
                                    "Unsupported compression algorithm");
