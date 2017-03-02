@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <fstream>
 #include <stdexcept>
+#include <errno.h>
 
 #if defined(QT_CORE_LIB)
 #include <QByteArray>
@@ -107,26 +108,35 @@ bool YamlConfig::save(const std::string& filePath)
     {
         std::ofstream file(fileTmp, std::ios_base::out);
         if (!file.is_open())
-            throw std::logic_error("Cannot open temporary file for write");
+        {
+            log_error_m << "Cannot open temporary file " << fileTmp << " for write";
+            std::remove(fileTmp.c_str());
+            return false;
+        }
 
         _root.SetStyle(YAML::EmitterStyle::Block);
         file << _root;
         file.close();
-
-        if (0 != std::remove(_filePath.c_str()))
-            throw std::logic_error("Failed remove old data file");
-
-        if (0 != std::rename(fileTmp.c_str(), _filePath.c_str()))
-        {
-            log_error_m << "Failed rename temporary file " << fileTmp
-                        << " to " << _filePath;
-            return false;
-        }
     }
     catch (...)
     {
         std::remove(fileTmp.c_str());
         throw;
+    }
+
+    if (0 != std::remove(_filePath.c_str()))
+        if (errno != ENOENT)
+        {
+            log_error_m << "Failed remove old data file " << _filePath;
+            std::remove(fileTmp.c_str());
+            return false;
+        }
+
+    if (0 != std::rename(fileTmp.c_str(), _filePath.c_str()))
+    {
+        log_error_m << "Failed rename temporary file " << fileTmp
+                    << " to " << _filePath;
+        return false;
     }
     YAMLCONFIG_CATCH_2
     return true;
