@@ -35,7 +35,7 @@ const QUuidEx Socket::_protocolSignature = {"82c40273-4037-4f1b-a823-38123435b22
 bool Socket::isConnected() const
 {
     return (socketIsConnected()
-            && (_binaryProtocolStatus == BinaryProtocol::Compatible));
+            && _binaryProtocolStatus == BinaryProtocol::Compatible);
 }
 
 void Socket::setSocketDescriptor(SocketDescriptor socketDescriptor)
@@ -106,7 +106,7 @@ bool Socket::socketIsConnected() const
 {
     return (_socket
             && _socket->isValid()
-            && (_socket->state() == QAbstractSocket::ConnectedState));
+            && _socket->state() == QAbstractSocket::ConnectedState);
 }
 
 bool Socket::isLoopback() const
@@ -314,14 +314,8 @@ void Socket::run()
         }
     };
 
-    auto socketIsActual = [this]() -> bool
-    {
-        return (this->_socket->isValid()
-                && (this->_socket->state() != QAbstractSocket::UnconnectedState));
-    };
-
     #define CHECK_SOCKET_ERROR \
-        if (!socketIsActual()) \
+        if (!socketIsConnected()) \
         { \
             if (_socket->error() == QAbstractSocket::RemoteHostClosedError) { \
                 log_verbose_m << _socket->errorString() \
@@ -717,7 +711,8 @@ void Socket::run()
 
     try
     {
-        if (socketIsActual())
+        if (_socket->isValid()
+            && _socket->state() != QAbstractSocket::UnconnectedState)
         {
             log_verbose_m << "Disconnected from host "
                           << _socket->peerAddress() << ":" << _socket->peerPort()
@@ -775,29 +770,42 @@ void Sender::run()
 
     _socketDescriptor = -1;
 
-    while (true)
-    {
-        if (threadStop())
-            break;
+//    int waitCounter = 0;
+//    while (waitCounter < _waitConnection)
+//    {
+//        if (threadStop())
+//            break;
 
-        log_verbose_m << "Try connect: " << _peerPoint;
+//        log_verbose_m << "Try connect: " << _peerPoint;
 
-        _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
-        if (!_socket->waitForConnected(_waitConnection * 1000))
-        {
-            log_error_m << "Failed connect to host " << _peerPoint
-                        << "; Error code: " << int(_socket->error())
-                        << "; Detail: " << _socket->errorString();
-            //sleep(10);
-            continue;
-        }
+//        _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
+//        if (!_socket->waitForConnected(3 * 1000))
+//        {
+//            log_error_m << "Failed connect to host " << _peerPoint
+//                        << "; Error code: " << int(_socket->error())
+//                        << "; Detail: " << _socket->errorString();
+//            ++waitCounter;
+//            sleep(1);
+//            continue;
+//        }
+//        Socket::run();
+
+//        if (_socket->socketDescriptor() == -1)
+//            break;
+//        if (binaryProtocolStatus() == BinaryProtocol::Incompatible)
+//            break;
+//    }
+
+
+    log_verbose_m << "Try connect to host " << _peerPoint;
+
+    _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
+    if (!_socket->waitForConnected(3 * 1000))
+        log_error_m << "Failed connect to host " << _peerPoint
+                    << "; Error code: " << int(_socket->error())
+                    << "; Detail: " << _socket->errorString();
+    else
         Socket::run();
-
-        if (_socket->socketDescriptor() == -1)
-            break;
-        if (binaryProtocolStatus() == BinaryProtocol::Incompatible)
-            break;
-    }
 }
 
 //------------------------------- Listener -----------------------------------
@@ -816,7 +824,7 @@ bool Listener::init(const HostPoint& hostPoint)
     {
         if (++attempt > 10)
             break;
-        QThread::usleep(100);
+        QThread::msleep(200);
     }
     if (attempt > 10)
         log_error_m << "Start listener of connection is failed"

@@ -195,15 +195,12 @@ public:
     bool init(const HostPoint&);
 
     // Выполняет подключение к удаленному хосту с параметрами address и port,
-    // определенными в методе init(). Если подключиться не удалось - функция
-    // ждет waitConnection секунд и повторяет попытку. Так будет продолжаться
-    // либо до установления соединения, либо до явного вызова функций
-    // stop()/disconnect().
+    // определенными в методе init().
     void connect();
 
-    // Интервал ожидания установления соединения (в секундах)
-    int waitConnection() const {return _waitConnection;}
-    void setWaitConnection(int  val) {_waitConnection = val;}
+//    // Интервал ожидания установления соединения (в секундах)
+//    int waitConnection() const {return _waitConnection;}
+//    void setWaitConnection(int  val) {_waitConnection = val;}
 
 private:
     Q_OBJECT
