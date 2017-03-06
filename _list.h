@@ -1464,7 +1464,9 @@ DECL_IMPL_LIST(int)::releaseItem(T* item, bool compressList)
 DECL_IMPL_LIST(T*)::releaseLast()
 {
   DataType* d = d_func();
-  if (d->count == 0) return 0;
+  if (d->count == 0)
+    return 0;
+
   T* item = *(this->listEnd() - 1);
   --d->count;
   return item;
