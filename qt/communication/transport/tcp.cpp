@@ -38,6 +38,32 @@ bool Socket::isConnected() const
             && _binaryProtocolStatus == BinaryProtocol::Compatible);
 }
 
+bool Socket::socketIsConnected() const
+{
+    return (_socket
+            && _socket->isValid()
+            && _socket->state() == QAbstractSocket::ConnectedState);
+}
+
+bool Socket::isLoopback() const
+{
+#if QT_VERSION >= 0x050000
+    return (_socket && _socket->peerAddress().isLoopback());
+#else
+    return (_socket && (_socket->peerAddress() == QHostAddress::LocalHost));
+#endif
+}
+
+Socket::BinaryProtocol Socket::binaryProtocolStatus() const
+{
+    return _binaryProtocolStatus;
+}
+
+SocketDescriptor Socket::socketDescriptor() const
+{
+    return (_socket) ? _socket->socketDescriptor() : -1;
+}
+
 void Socket::setSocketDescriptor(SocketDescriptor socketDescriptor)
 {
     _socketDescriptor = socketDescriptor;
@@ -102,22 +128,6 @@ bool Socket::send(const QUuidEx& command)
     return send(message);
 }
 
-bool Socket::socketIsConnected() const
-{
-    return (_socket
-            && _socket->isValid()
-            && _socket->state() == QAbstractSocket::ConnectedState);
-}
-
-bool Socket::isLoopback() const
-{
-#if QT_VERSION >= 0x050000
-    return (_socket && _socket->peerAddress().isLoopback());
-#else
-    return (_socket && (_socket->peerAddress() == QHostAddress::LocalHost));
-#endif
-}
-
 void Socket::remove(const QUuidEx& command)
 {
     QMutexLocker locker(&_messagesLock); (void) locker;
@@ -136,16 +146,6 @@ void Socket::remove(const QUuidEx& command)
     _messagesCount = _messagesHigh.count()
                      + _messagesNorm.count()
                      + _messagesLow.count();
-}
-
-Socket::BinaryProtocol Socket::binaryProtocolStatus() const
-{
-    return _binaryProtocolStatus;
-}
-
-SocketDescriptor Socket::socketDescriptor() const
-{
-    return (_socket) ? _socket->socketDescriptor() : -1;
 }
 
 void Socket::disconnect(unsigned long time)
