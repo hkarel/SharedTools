@@ -38,19 +38,23 @@
 
 // It corresponds to the connection Qt::AutoConnection
 #define chk_connect_a(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::AutoConnection));
+            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                        Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection)));
 
 // It corresponds to the connection Qt::DirectConnection
 #define chk_connect_d(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::DirectConnection));
+            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                        Qt::ConnectionType(Qt::DirectConnection | Qt::UniqueConnection)));
 
 // It corresponds to the connection Qt::QueuedConnection
 #define chk_connect_q(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::QueuedConnection));
+            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                        Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection)));
 
 // It corresponds to the connection Qt::BlockingQueuedConnection
 #define chk_connect_bq(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::BlockingQueuedConnection));
+            Q_ASSERT(QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                        Qt::ConnectionType(Qt::BlockingQueuedConnection | Qt::UniqueConnection)));
 
 #else //NDEBUG
 #define chk_connect(SOURCE_, SIGNAL_, DEST_, SLOT_, CONNECT_TYPE_) \
@@ -58,18 +62,22 @@
 
 // It corresponds to the connection Qt::AutoConnection
 #define chk_connect_a(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::AutoConnection);
+            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                Qt::ConnectionType((Qt::AutoConnection | Qt::UniqueConnection));
 
 // It corresponds to the connection Qt::DirectConnection
 #define chk_connect_d(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::DirectConnection);
+            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                Qt::ConnectionType(Qt::DirectConnection | Qt::UniqueConnection));
 
 // It corresponds to the connection Qt::QueuedConnection
 #define chk_connect_q(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::QueuedConnection);
+            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection));
 
 // It corresponds to the connection Qt::BlockingQueuedConnection
 #define chk_connect_bq(SOURCE_, SIGNAL_, DEST_, SLOT_) \
-            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, Qt::BlockingQueuedConnection);
+            QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
+                Qt::ConnectionType(Qt::BlockingQueuedConnection | Qt::UniqueConnection));
 
 #endif //NDEBUG
