@@ -286,6 +286,8 @@ private:
     // Используется для удаления сокетов для которых остановлен поток обработки
     QTimer _removeClosedSockets;
 
+    HostPoint _listenPoint;
+
     friend class Socket;
     template<typename T, int> friend T& ::safe_singleton();
 };

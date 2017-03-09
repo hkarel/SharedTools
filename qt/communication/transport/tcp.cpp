@@ -117,7 +117,8 @@ bool Socket::send(const Message::Ptr& message)
     if (alog::logger().level() == alog::Level::Debug2)
     {
         log_debug2_m << "Message added to a queue to sending"
-                     << ". Command " << CommandNameLog(message->command());
+                     << "; message id: " << message->id()
+                     << "; command: " << CommandNameLog(message->command());
     }
     return true;
 }
@@ -135,8 +136,9 @@ void Socket::remove(const QUuidEx& command)
     {
         bool res = (command == m->command());
         if (res && (alog::logger().level() == alog::Level::Debug2))
-            log_debug2_m << "Message removed from a queue to sending."
-                         << " Command " << CommandNameLog(m->command());
+            log_debug2_m << "Message removed from a queue to sending"
+                         << "; message id: " << m->id()
+                         << "; command: " << CommandNameLog(m->command());
         return res;
     };
     _messagesHigh.removeCond(remove_cond);
@@ -176,8 +178,8 @@ void Socket::run()
         if (!_socket->setSocketDescriptor(_socketDescriptor))
         {
             log_error_m << "Failed set socket descriptor"
-                        << "; Error code: " << int(_socket->error())
-                        << "; Detail: " << _socket->errorString();
+                        << ". Error code: " << int(_socket->error())
+                        << ". Detail: " << _socket->errorString();
             return;
         }
     }
@@ -186,7 +188,7 @@ void Socket::run()
     _peerPoint.setPort(_socket->peerPort());
 
     log_verbose_m << "Connect " << connectDirection << " host " << _peerPoint
-                  << "; Socket descriptor: " << _socketDescriptor;
+                  << "; socket descriptor: " << _socketDescriptor;
 
     Message::List internalMessages;
     Message::List acceptMessages;
@@ -229,7 +231,7 @@ void Socket::run()
                         << "Checking binary protocol compatibility"
                         << ". This protocol version: "
                         << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
-                        << "; Remote protocol version: "
+                        << ". Remote protocol version: "
                         << protocolVersionLow << "-" << protocolVersionHigh;
                 }
                 if (!communication::protocolCompatible(protocolVersionLow,
@@ -270,13 +272,13 @@ void Socket::run()
                 closeConnection.description = QString(
                     "Binary protocol versions incompatible"
                     ". This protocol version: %1-%2"
-                    "; Remote protocol version: %3-%4"
+                    ". Remote protocol version: %3-%4"
                 )
                 .arg(BPROTOCOL_VERSION_LOW).arg(BPROTOCOL_VERSION_HIGH)
                 .arg(protocolVersionLow).arg(protocolVersionHigh);
 
                 log_verbose_m << "Send request to close the connection"
-                              << "; Detail: " << closeConnection.description;
+                              << ". Detail: " << closeConnection.description;
 
                 Message::Ptr m = createMessage(closeConnection);
                 commandCloseConnectionId = m->id();
@@ -294,7 +296,7 @@ void Socket::run()
             readFromMessage(message, closeConnection);
             if (closeConnection.isValid)
                 log_verbose_m << "Connection will be closed at the request remote side"
-                              << "; Remote detail: " << closeConnection.description;
+                              << ". Remote detail: " << closeConnection.description;
             else
                 log_error_m << "Incorrect data structure for command "
                             << CommandNameLog(message->command());
@@ -319,11 +321,11 @@ void Socket::run()
         { \
             if (_socket->error() == QAbstractSocket::RemoteHostClosedError) { \
                 log_verbose_m << _socket->errorString() \
-                              << "; Remote host: " << _peerPoint \
-                              << "; Socket descriptor: " << _socketDescriptor; \
+                              << "; remote host: " << _peerPoint \
+                              << "; socket descriptor: " << _socketDescriptor; \
             } else { \
                 log_error_m << "Socket error code: " << int(_socket->error()) \
-                            << "; Detail: " << _socket->errorString(); \
+                            << ". Detail: " << _socket->errorString(); \
             } \
             loopBreak = true; \
             break; \
@@ -472,7 +474,8 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
                         log_debug2_m << "Message before sending to the socket"
-                                     << ". Command " << CommandNameLog(message->command());
+                                     << "; message id: " << message->id()
+                                     << "; command: " << CommandNameLog(message->command());
                     }
                     QByteArray buff = message->toByteArray();
                     qint32 buffSize = buff.size();
@@ -489,9 +492,9 @@ void Socket::run()
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
                             log_debug2_m << "Message was compressed"
-                                         << ". Command " << CommandNameLog(message->command())
-                                         << " Prev size: " << buffSizePrev
-                                         << " New size: " << buffSize;
+                                         << "; command: " << CommandNameLog(message->command())
+                                         << "; prev size: " << buffSizePrev
+                                         << "; new size: " << buffSize;
                         }
                         // Передаем признак сжатия потока через знаковый бит
                         // параметра buffSize
@@ -519,7 +522,8 @@ void Socket::run()
                         //&& timer.hasExpired(3 * delay))
                     {
                         log_debug2_m << "Message was send to the socket"
-                                     << ". Command " << CommandNameLog(message->command());
+                                     << "; message id: " << message->id()
+                                     << "; command: " << CommandNameLog(message->command());
                     }
                     if (loopBreak
                         || timer.hasExpired(3 * delay))
@@ -592,7 +596,8 @@ void Socket::run()
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
                             log_debug2_m << "Message received"
-                                         << ". Command " << CommandNameLog(message->command());
+                                         << "; message id: " << message->id()
+                                         << "; command: " << CommandNameLog(message->command());
                         }
                         if (_binaryProtocolStatus == BinaryProtocol::Undefined
                             && message->command() == command::ProtocolCompatible)
@@ -651,8 +656,8 @@ void Socket::run()
                             {
                                 log_error_m << "Command " << CommandNameLog(unknown.commandId)
                                             << " is unknown for the remote side"
-                                            << "; Remote host:" << unknown.address << ":" << unknown.port
-                                            << "; Socket descriptor: " << unknown.socketDescriptor;
+                                            << "; remote host: " << unknown.address << ":" << unknown.port
+                                            << "; socket descriptor: " << unknown.socketDescriptor;
 
                                 SpinLocker locker(_unknownCommandsLock); (void) locker;
                                 _unknownCommands.insert(unknown.commandId);
@@ -676,14 +681,20 @@ void Socket::run()
                             mUnknown->setPriority(Message::Priority::High);
                             internalMessages.add(mUnknown.detach());
                             log_error_m << "Unknown command: " << unknown.commandId
-                                        << "; Host: " << unknown.address << ":" << unknown.port
-                                        << "; Socket descriptor: " << unknown.socketDescriptor;
+                                        << "; host: " << unknown.address << ":" << unknown.port
+                                        << "; socket descriptor: " << unknown.socketDescriptor;
                             continue;
                         }
                     }
 
                     try
                     {
+                        if (alog::logger().level() == alog::Level::Debug2)
+                        {
+                            log_debug2_m << "Message emit"
+                                         << "; message id: " << m->id()
+                                         << "; command: " << CommandNameLog(m->command());
+                        }
                         emit message(m);
                     }
                     catch (std::exception& e)
@@ -716,7 +727,7 @@ void Socket::run()
         {
             log_verbose_m << "Disconnected from host "
                           << _socket->peerAddress() << ":" << _socket->peerPort()
-                          << "; Socket descriptor: " << _socket->socketDescriptor();
+                          << "; socket descriptor: " << _socket->socketDescriptor();
 
             _socket->disconnectFromHost();
             if (_socket->state() != QAbstractSocket::UnconnectedState)
@@ -802,8 +813,8 @@ void Sender::run()
     _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
     if (!_socket->waitForConnected(3 * 1000))
         log_error_m << "Failed connect to host " << _peerPoint
-                    << "; Error code: " << int(_socket->error())
-                    << "; Detail: " << _socket->errorString();
+                    << ". Error code: " << int(_socket->error())
+                    << ". Detail: " << _socket->errorString();
     else
         Socket::run();
 }
@@ -817,18 +828,19 @@ Listener::Listener() : QTcpServer(0)
                   this, SLOT(removeClosedSockets()))
 }
 
-bool Listener::init(const HostPoint& hostPoint)
+bool Listener::init(const HostPoint& listenPoint)
 {
     int attempt = 0;
-    while (!QTcpServer::listen(hostPoint.address(), hostPoint.port()))
+    _listenPoint = listenPoint;
+    while (!QTcpServer::listen(_listenPoint.address(), _listenPoint.port()))
     {
         if (++attempt > 10)
             break;
         QThread::msleep(200);
     }
     if (attempt > 10)
-        log_error_m << "Start listener of connection is failed"
-                    << ". Detail: " << errorString();
+        log_error_m << "Start listener of connection to " << _listenPoint
+                    << " is failed. Detail: " << errorString();
     else
         log_verbose_m << "Start listener of connection with params: "
                       << serverAddress() << ":" << serverPort();
@@ -848,8 +860,7 @@ void Listener::close()
             s->wait();
         }
     QTcpServer::close();
-    log_verbose_m << "Stop listener of connection with params: "
-                  << serverAddress() << ":" << serverPort();
+    log_verbose_m << "Stop listener of connection with params: " << _listenPoint;
 }
 
 QVector<Socket::Ptr> Listener::sockets() const
