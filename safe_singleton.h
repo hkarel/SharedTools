@@ -26,7 +26,11 @@ T& safe_singleton()
 {
     static std::unique_ptr<T> t;
     static std::mutex lock;
+#if defined(_MSC_VER) || defined(__MINGW32__)
     if (!t)
+#else
+    if (__builtin_expect(!t, 0))
+#endif
     {
         std::lock_guard<std::mutex> locker(lock); (void) locker;
         if (!t)
