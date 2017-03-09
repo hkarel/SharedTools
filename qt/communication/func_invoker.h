@@ -6,6 +6,7 @@
 #pragma once
 
 #include "_list.h"
+#include "break_point.h"
 #include "qt/communication/message.h"
 
 namespace communication {
@@ -20,10 +21,12 @@ class FunctionInvoker
 
         struct Compare
         {
-            int operator() (const BaseItem* item1, const BaseItem* item2, void*) const {
+            int operator() (const BaseItem* item1, const BaseItem* item2, void*) const
+            {
                 return QUuidEx::compare(item1->command, item2->command);
             }
-            int operator() (const QUuidEx* command, const BaseItem* item2, void*) const {
+            int operator() (const QUuidEx* command, const BaseItem* item2, void*) const
+            {
                 return QUuidEx::compare(*command, item2->command);
             }
         };
@@ -36,7 +39,8 @@ class FunctionInvoker
         typedef void (T::*Func)(const Message::Ptr&);
         T* instance;
         Func func;
-        void call(const Message::Ptr& message) const {
+        void call(const Message::Ptr& message) const
+        {
             (instance->*func)(message);
         }
     };
@@ -47,7 +51,8 @@ class FunctionInvoker
         typedef void (T::*Func)(const Message::Ptr&) const;
         T* instance;
         Func func;
-        void call(const Message::Ptr& message) const {
+        void call(const Message::Ptr& message) const
+        {
             (instance->*func)(message);
         }
     };
@@ -55,7 +60,8 @@ class FunctionInvoker
 public:
     template<typename T>
     void registration(const QUuidEx& command,
-                      void (T::*func)(const Message::Ptr&), T* instance) {
+                      void (T::*func)(const Message::Ptr&), T* instance)
+    {
         Item<T>* item = new Item<T>;
         item->command = command;
         item->instance = instance;
@@ -65,7 +71,8 @@ public:
 
     template<typename T>
     void registration(const QUuidEx& command,
-                      void (T::*func)(const Message::Ptr&) const, T* instance) {
+                      void (T::*func)(const Message::Ptr&) const, T* instance)
+    {
         ItemConst<T>* item = new ItemConst<T>;
         item->command = command;
         item->instance = instance;
@@ -73,23 +80,40 @@ public:
         _functions.add(item);
     }
 
-    void sort() {
-        _functions.sort();
+    void sort()
+    {
+        _functions.sort(lst::SortUp);
     }
 
-    bool containsCommand(const QUuidEx& command) {
+    bool containsCommand(const QUuidEx& command)
+    {
+        checkFunctionsSort();
         return _functions.findRef(command).success();
     }
 
-    void call(const Message::Ptr& message) {
-        lst::FindResult fr = _functions.findRef(message->command());
-        if (fr.success())
+    void call(const Message::Ptr& message)
+    {
+        checkFunctionsSort();
+        if (lst::FindResult fr = _functions.findRef(message->command()))
             _functions.item(fr.index())->call(message);
     }
 
 private:
-    BaseItem::List _functions;
+    void checkFunctionsSort()
+    {
+#ifndef NDEBUG
+        if (_functions.sortState() != lst::SortUp)
+        {
+            break_point
+            // --- Напоминание о необходимости сортировать список функций ---
+            // После регистрации всех функций-обработчиков сообщений необходимо
+            // отсортировать список функций-обработчиков. Для этого нужно явно
+            // вызвать метод FunctionInvoker::sort()
+        }
+    }
+#endif
 
+    BaseItem::List _functions;
 };
 
 } // namespace communication
