@@ -40,6 +40,12 @@ bool Socket::isConnected() const
 
 bool Socket::socketIsConnected() const
 {
+    SpinLocker locker(_socketLock); (void) locker;
+    return socketIsConnectedInternal();
+}
+
+bool Socket::Socket::socketIsConnectedInternal() const
+{
     return (_socket
             && _socket->isValid()
             && _socket->state() == QAbstractSocket::ConnectedState);
@@ -47,6 +53,7 @@ bool Socket::socketIsConnected() const
 
 bool Socket::isLoopback() const
 {
+    SpinLocker locker(_socketLock); (void) locker;
 #if QT_VERSION >= 0x050000
     return (_socket && _socket->peerAddress().isLoopback());
 #else
@@ -61,6 +68,7 @@ Socket::BinaryProtocol Socket::binaryProtocolStatus() const
 
 SocketDescriptor Socket::socketDescriptor() const
 {
+    SpinLocker locker(_socketLock); (void) locker;
     return (_socket) ? _socket->socketDescriptor() : -1;
 }
 
@@ -168,7 +176,10 @@ void Socket::run()
 
     if (_socket.empty())
     {
-        _socket = simple_ptr<QTcpSocket>(new QTcpSocket(0));
+        { // Block for SpinLocker
+            SpinLocker locker(_socketLock); (void) locker;
+            _socket = simple_ptr<QTcpSocket>(new QTcpSocket(0));
+        }
         chk_connect_d(_socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()))
     }
 
@@ -317,7 +328,7 @@ void Socket::run()
     };
 
     #define CHECK_SOCKET_ERROR \
-        if (!socketIsConnected()) \
+        if (!socketIsConnectedInternal()) \
         { \
             if (_socket->error() == QAbstractSocket::RemoteHostClosedError) { \
                 log_verbose_m << _socket->errorString() \
@@ -776,7 +787,10 @@ void Sender::connect()
 
 void Sender::run()
 {
-    _socket = simple_ptr<QTcpSocket>(new QTcpSocket(0));
+    { // Block for SpinLocker
+        SpinLocker locker(_socketLock); (void) locker;
+        _socket = simple_ptr<QTcpSocket>(new QTcpSocket(0));
+    }
     chk_connect_d(_socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()))
 
     _socketDescriptor = -1;

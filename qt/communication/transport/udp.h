@@ -9,6 +9,7 @@
 
 #include "defmac.h"
 #include "container_ptr.h"
+#include "simple_ptr.h"
 #include "qt/thread/qthreadex.h"
 #include "qt/communication/message.h"
 #include "qt/communication/functions.h"
@@ -40,6 +41,8 @@ public:
 
     // Адрес и порт с которыми связан UDP-сокет
     HostPoint bindPoint() const {return _bindPoint;}
+
+    bool isBound() const;
 
     // Функции отправки сообщений.
     bool send(const Message::Ptr&);
@@ -93,7 +96,9 @@ private:
     QSet<QUuidEx> _unknownCommands;
     mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
 
-    QUdpSocket _socket;
+    simple_ptr<QUdpSocket> _socket;
+    mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
+
     HostPoint _bindPoint;
 
     Message::List _messagesHigh;

@@ -147,6 +147,7 @@ private:
     Socket() = default;
     void run() override;
     void setSocketDescriptor(SocketDescriptor);
+    bool socketIsConnectedInternal() const;
 
 private:
     // Список команд неизвестных на принимающей стороне, позволяет передавать
@@ -155,9 +156,10 @@ private:
     mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
 
     simple_ptr<QTcpSocket> _socket;
-    SocketDescriptor _socketDescriptor = {-1};
-    HostPoint _peerPoint;
+    mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
 
+    HostPoint _peerPoint;
+    SocketDescriptor _socketDescriptor = {-1};
     volatile BinaryProtocol _binaryProtocolStatus = {BinaryProtocol::Undefined};
 
     Message::List _messagesHigh;

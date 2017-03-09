@@ -42,16 +42,20 @@ bool Socket::init(const HostPoint& bindPoint)
         return false;
     }
     _bindPoint = bindPoint;
-    if (!_socket.bind(_bindPoint.address(), _bindPoint.port(),
-                      QUdpSocket::ShareAddress|QUdpSocket::ReuseAddressHint))
-    {
-        log_error_m << "Failed bind UDP socket"
-                    << ". Error code: " << int(_socket.error())
-                    << ". Detail: " << _socket.errorString();
-        return false;
-    }
-    log_debug_m << "UDP socket is successfully bound to point " << _bindPoint;
     return true;
+}
+
+SocketDescriptor Socket::socketDescriptor() const
+{
+    SpinLocker locker(_socketLock); (void) locker;
+    return (_socket) ? _socket->socketDescriptor() : -1;
+}
+
+bool Socket::isBound() const
+{
+    SpinLocker locker(_socketLock); (void) locker;
+    return (_socket
+            && _socket->state() == QAbstractSocket::BoundState);
 }
 
 QList<QHostAddress> Socket::discardAddresses() const
@@ -147,13 +151,22 @@ void Socket::remove(const QUuidEx& command)
                      + _messagesLow.count();
 }
 
-SocketDescriptor Socket::socketDescriptor() const
-{
-    return _socket.socketDescriptor();
-}
-
 void Socket::run()
 {
+    { //Block for SpinLocker
+        SpinLocker locker(_socketLock); (void) locker;
+        _socket = simple_ptr<QUdpSocket>(new QUdpSocket(0));
+    }
+    if (!_socket->bind(_bindPoint.address(), _bindPoint.port(),
+                       QUdpSocket::ShareAddress|QUdpSocket::ReuseAddressHint))
+    {
+        log_error_m << "Failed bind UDP socket"
+                    << ". Error code: " << int(_socket->error())
+                    << ". Detail: " << _socket->errorString();
+        return;
+    }
+    log_debug_m << "UDP socket is successfully bound to point " << _bindPoint;
+
     Message::List internalMessages;
     Message::List acceptMessages;
 
@@ -161,18 +174,11 @@ void Socket::run()
     bool loopBreak = false;
     const int delay = 50;
 
-    auto socketIsActual = [this]() -> bool
-    {
-        //return (this->_socket->isValid()
-        //        && (this->_socket->state() == QAbstractSocket::BoundState));
-        return (this->_socket.state() == QAbstractSocket::BoundState);
-    };
-
     #define CHECK_SOCKET_ERROR \
-        if (!socketIsActual()) \
+        if (_socket->state() != QAbstractSocket::BoundState) \
         { \
-            log_error_m << "UDP socket error code: " << int(_socket.error()) \
-                       << ". Detail: " << _socket.errorString(); \
+            log_error_m << "UDP socket error code: " << int(_socket->error()) \
+                        << ". Detail: " << _socket->errorString(); \
             loopBreak = true; \
             break; \
         }
@@ -195,7 +201,7 @@ void Socket::run()
                                  + _messagesLow.count();
             }
 
-            while (!_socket.hasPendingDatagrams()
+            while (!_socket->hasPendingDatagrams()
                    && _messagesCount == 0
                    && acceptMessages.empty())
             {
@@ -283,7 +289,7 @@ void Socket::run()
                 if (!message->destinationPoints().isEmpty())
                 {
                     for (const HostPoint& dp : message->destinationPoints())
-                        _socket.writeDatagram(buff, dp.address(), dp.port());
+                        _socket->writeDatagram(buff, dp.address(), dp.port());
 
                     CHECK_SOCKET_ERROR
                     if (alog::logger().level() == alog::Level::Debug2)
@@ -298,9 +304,9 @@ void Socket::run()
                 }
                 else if (!message->sourcePoint().isNull())
                 {
-                    _socket.writeDatagram(buff,
-                                          message->sourcePoint().address(),
-                                          message->sourcePoint().port());
+                    _socket->writeDatagram(buff,
+                                           message->sourcePoint().address(),
+                                           message->sourcePoint().port());
                     CHECK_SOCKET_ERROR
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
@@ -326,22 +332,22 @@ void Socket::run()
 
             //--- Прием сообщений ---
             timer.start();
-            while (_socket.hasPendingDatagrams())
+            while (_socket->hasPendingDatagrams())
             {
                 if (loopBreak
                     || timer.hasExpired(3 * delay))
                     break;
 
-                if (_socket.pendingDatagramSize() < qint64(sizeof(udpSignature)))
+                if (_socket->pendingDatagramSize() < qint64(sizeof(udpSignature)))
                     continue;
 
                 QByteArray datagram;
                 QHostAddress addr;
                 quint16 port;
-                qint64 datagramSize = _socket.pendingDatagramSize();
+                qint64 datagramSize = _socket->pendingDatagramSize();
                 datagram.resize(datagramSize);
-                qint64 res = _socket.readDatagram((char*)datagram.constData(),
-                                                  datagramSize, &addr, &port);
+                qint64 res = _socket->readDatagram((char*)datagram.constData(),
+                                                   datagramSize, &addr, &port);
                 if (res != datagramSize)
                 {
                     log_error_m << "Failed datagram size"
@@ -433,9 +439,9 @@ void Socket::run()
 
                         data::Unknown unknown;
                         unknown.commandId = m->command();
-                        unknown.address = _socket.localAddress();
-                        unknown.port = _socket.localPort();
-                        unknown.socketDescriptor = _socket.socketDescriptor();
+                        unknown.address = _socket->localAddress();
+                        unknown.port = _socket->localPort();
+                        unknown.socketDescriptor = _socket->socketDescriptor();
                         Message::Ptr mUnknown = createMessage(unknown);
                         mUnknown->setPriority(Message::Priority::High);
                         internalMessages.add(mUnknown.detach());
@@ -469,7 +475,7 @@ void Socket::run()
             }
         } // while (true)
 
-        _socket.close();
+        _socket->close();
     }
     catch (std::exception& e)
     {
