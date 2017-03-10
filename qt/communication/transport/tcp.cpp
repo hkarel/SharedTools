@@ -785,6 +785,23 @@ void Sender::connect()
     start();
 }
 
+void Sender::waitConnection(int time)
+{
+    if ((time <= 0) || isConnected())
+        return;
+
+    QElapsedTimer timer;
+    timer.start();
+    while (!timer.hasExpired(time * 1000))
+    {
+        if (threadStop())
+            break;
+        msleep(100);
+        if (isConnected())
+            break;
+    }
+}
+
 void Sender::run()
 {
     { // Block for SpinLocker

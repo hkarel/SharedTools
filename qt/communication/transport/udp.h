@@ -34,15 +34,21 @@ public:
     typedef container_ptr<Socket> Ptr;
 
     Socket();
-    bool init(const HostPoint&);
+    bool init(const HostPoint& bindPoint);
 
-    // Числовой идентификатор сокета
-    SocketDescriptor socketDescriptor() const;
+    // Ожидает (в секундах) выполнение привязки UDP-сокета к адресу и порту
+    // определенными в методе init().
+    void waitBinding(int time = 0);
 
     // Адрес и порт с которыми связан UDP-сокет
     HostPoint bindPoint() const {return _bindPoint;}
 
+    // Возвращает TRUE если UDP-сокет был связан с параметрами address и port,
+    // определенными в методе init().
     bool isBound() const;
+
+    // Числовой идентификатор сокета
+    SocketDescriptor socketDescriptor() const;
 
     // Функции отправки сообщений.
     bool send(const Message::Ptr&);

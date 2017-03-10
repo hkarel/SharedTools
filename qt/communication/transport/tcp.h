@@ -196,20 +196,16 @@ public:
     // Определяет параметры подключения к удаленному хосту
     bool init(const HostPoint&);
 
-    // Выполняет подключение к удаленному хосту с параметрами address и port,
+    // Выполняет подключение к удаленному хосту с адресом и портом,
     // определенными в методе init().
     void connect();
 
-//    // Интервал ожидания установления соединения (в секундах)
-//    int waitConnection() const {return _waitConnection;}
-//    void setWaitConnection(int  val) {_waitConnection = val;}
+    // Ожидает (в секундах) подключения к удаленному хосту.
+    void waitConnection(int time = 0);
 
 private:
-    Q_OBJECT
     DISABLE_DEFAULT_COPY(Sender)
     void run() override;
-
-    int _waitConnection = {10};
 };
 
 

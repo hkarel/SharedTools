@@ -45,10 +45,21 @@ bool Socket::init(const HostPoint& bindPoint)
     return true;
 }
 
-SocketDescriptor Socket::socketDescriptor() const
+void Socket::waitBinding(int time)
 {
-    SpinLocker locker(_socketLock); (void) locker;
-    return (_socket) ? _socket->socketDescriptor() : -1;
+    if ((time <= 0) || isBound())
+        return;
+
+    QElapsedTimer timer;
+    timer.start();
+    while (!timer.hasExpired(time * 1000))
+    {
+        if (threadStop())
+            break;
+        msleep(100);
+        if (isBound())
+            break;
+    }
 }
 
 bool Socket::isBound() const
@@ -56,6 +67,12 @@ bool Socket::isBound() const
     SpinLocker locker(_socketLock); (void) locker;
     return (_socket
             && _socket->state() == QAbstractSocket::BoundState);
+}
+
+SocketDescriptor Socket::socketDescriptor() const
+{
+    SpinLocker locker(_socketLock); (void) locker;
+    return (_socket) ? _socket->socketDescriptor() : -1;
 }
 
 QList<QHostAddress> Socket::discardAddresses() const
