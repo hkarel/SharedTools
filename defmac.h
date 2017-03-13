@@ -63,7 +63,7 @@
 // It corresponds to the connection Qt::AutoConnection
 #define chk_connect_a(SOURCE_, SIGNAL_, DEST_, SLOT_) \
             QObject::connect(SOURCE_, SIGNAL_, DEST_, SLOT_, \
-                Qt::ConnectionType((Qt::AutoConnection | Qt::UniqueConnection));
+                Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
 
 // It corresponds to the connection Qt::DirectConnection
 #define chk_connect_d(SOURCE_, SIGNAL_, DEST_, SLOT_) \
