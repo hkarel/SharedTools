@@ -49,6 +49,11 @@ protected:
     // только внутри run().
     void sleep(unsigned long timeout);
 
+    // Вызывается из метода stopImpl() в тот момент когда параметр threadStop
+    // уже установлен в TRUE, но поток еще не завершил свою работу. Основное
+    // назначение данной функции - вывод потока из состояния ожидания.
+    virtual void threadStopEstablished() {}
+
 private:
     Q_OBJECT
     volatile bool _threadStop;

@@ -52,6 +52,7 @@ bool QThreadEx::stopImpl(unsigned long time)
     while (_waitThreadStart) {}
 
     _threadStop = true;
+    threadStopEstablished();
 
     bool res = true;
     if (isRunning())
