@@ -495,12 +495,6 @@ struct Line
     simple_ptr<Impl> impl;
 };
 
-template<typename T>
-Line& operator<< (Line& line, const T& t);
-
-template<typename T>
-Line operator<< (Line&& line, const T& t);
-
 
 /**
   Вспомогательная структура, используется для формирования строки вида:
@@ -656,7 +650,7 @@ inline bool Line::toLogger() const
 }
 
 template<typename T>
-inline Line& operator<< (Line& line, const T& t)
+Line& operator<< (Line& line, const T& t)
 {
     if (line.toLogger())
         line.impl->buff << t;
@@ -664,29 +658,21 @@ inline Line& operator<< (Line& line, const T& t)
 }
 
 template<typename T>
-inline Line operator<< (Line&& line, const T& t)
+Line operator<< (Line&& line, const T& t)
 {
     if (line.toLogger())
         line.impl->buff << t;
     return std::move(line);
 }
 
-inline Line& operator<< (Line& line, bool b)
-{
-    if (line.toLogger())
-        line.impl->buff << (b ? "true" : "false");
-    return line;
-}
+Line& operator<< (Line&  line, bool);
+Line  operator<< (Line&& line, bool);
 
-inline Line operator<< (Line&& line, bool b)
-{
-    if (line.toLogger())
-        line.impl->buff << (b ? "true" : "false");
-    return std::move(line);
-}
+Line& operator<< (Line&  line, const char*);
+Line  operator<< (Line&& line, const char*);
 
-Line& operator<< (Line&  line, const timeval& tv);
-Line  operator<< (Line&& line, const timeval& tv);
+Line& operator<< (Line&  line, const timeval&);
+Line  operator<< (Line&& line, const timeval&);
 
 } // namespace alog
 

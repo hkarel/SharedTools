@@ -994,6 +994,34 @@ Logger& logger()
 
 //---------------------------- Line operators --------------------------------
 
+Line& operator<< (Line& line, bool b)
+{
+    if (line.toLogger())
+        line.impl->buff << (b ? "true" : "false");
+    return line;
+}
+
+Line operator<< (Line&& line, bool b)
+{
+    if (line.toLogger())
+        line.impl->buff << (b ? "true" : "false");
+    return std::move(line);
+}
+
+Line& operator<< (Line& line, const char* c)
+{
+    if (line.toLogger())
+        line.impl->buff << c;
+    return line;
+}
+
+Line operator<< (Line&& line, const char* c)
+{
+    if (line.toLogger())
+        line.impl->buff << c;
+    return std::move(line);
+}
+
 Line& operator<< (Line& line, const timeval& tv)
 {
     if (line.toLogger())
