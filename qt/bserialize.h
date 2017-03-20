@@ -113,7 +113,7 @@ QDataStream& getFromStream(QDataStream& s, T& t,
 }
 
 template<typename T>
-QDataStream& putToStream(QDataStream& s, const T& t,
+QDataStream& putToStream(QDataStream& s, const T t,
                          typename is_enum_type<T>::type = 0)
 {
     static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
