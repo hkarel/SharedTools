@@ -161,7 +161,7 @@ bool YamlConfig::remove(const std::string& name, bool logWarnings)
      std::string namePre = name.substr(0, pos);
      std::string nameKey = name.substr(pos + 1);
 
-     YAML::Node node = nodeGetValue(namePre, logWarnings);
+     YAML::Node node = nodeGet(namePre, logWarnings);
      if (!node)
          return false;
 
@@ -170,7 +170,7 @@ bool YamlConfig::remove(const std::string& name, bool logWarnings)
     return true;
 }
 
-YAML::Node YamlConfig::nodeGetValue(const std::string& name, bool logWarnings) const
+YAML::Node YamlConfig::nodeGet(const std::string& name, bool logWarnings) const
 {
     std::vector<std::string> parts = utl::split(name, '.');
     if (parts.empty())
@@ -199,10 +199,10 @@ YAML::Node YamlConfig::nodeGetValue(const std::string& name, bool logWarnings) c
     return getNode(_root, 0);
 }
 
-bool YamlConfig::getValue(const std::string& name,
-                           YAML::Node& node, bool logWarnings) const
+bool YamlConfig::nodeGet(const std::string& name,
+                         YAML::Node& node, bool logWarnings) const
 {
-    node = nodeGetValue(name, logWarnings);
+    node = nodeGet(name, logWarnings);
     if (!node)
         return false;
 
@@ -216,11 +216,12 @@ bool YamlConfig::getValue(const std::string& name,
     return true;
 }
 
-YAML::Node YamlConfig::nodeSetValue(const std::string& name)
+YAML::Node YamlConfig::nodeSet(const std::string& name)
 {
     std::vector<std::string> parts = utl::split(name, '.');
-    std::function<YAML::Node (YAML::Node&, size_t)> getNode =
-    [&](YAML::Node& node, size_t i)
+
+    typedef std::function<YAML::Node (YAML::Node&, size_t)> NodeFunc;
+    NodeFunc getNode = [&](YAML::Node& node, size_t i)
     {
         if (i == parts.size())
             return node;
@@ -239,7 +240,7 @@ bool YamlConfig::getValue(const std::string& name,
     std::lock_guard<std::mutex> locker(_configLock); (void) locker;
 
     YAML::Node node;
-    if (!getValue(name, node, logWarnings))
+    if (!nodeGet(name, node, logWarnings))
             return false;
 
     YAMLCONFIG_TRY
@@ -253,7 +254,7 @@ bool YamlConfig::setValue(const std::string& name, Func func)
 
     std::lock_guard<std::mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node = nodeSetValue(name);
+    YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
     return func(node, false);
     YAMLCONFIG_CATCH(1, false)

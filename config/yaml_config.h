@@ -134,16 +134,14 @@ private:
         static  T getter(T t) {return t;}
     };
 
-    // Используется в функциях getValue(). Возвращает ноду по имени 'name'.
-    // Если ноды с заданным именем нет в списке - возвращает пустую ноду.
-    YAML::Node nodeGetValue(const std::string& name, bool logWarnings = true) const;
+    // Возвращает ноду по имени 'name'. Если ноды с заданным именем нет
+    // в списке, то будет возвращена пустая нода.
+    YAML::Node nodeGet(const std::string& name, bool logWarnings) const;
+    bool nodeGet(const std::string& name, YAML::Node&, bool logWarnings) const;
 
-    // Используется в функциях setValue(). Строит иерархию нод согласно задан-
-    // ному параметру 'name'.
-    YAML::Node nodeSetValue(const std::string& name);
-
-    bool getValue(const std::string& name,
-                  YAML::Node&, bool logWarnings = true) const;
+    // Используется в функциях setValue(). Строит иерархию нод согласно
+    // заданному параметру 'name'.
+    YAML::Node nodeSet(const std::string& name);
 
     template<typename VectorT>
     bool getValueVect(const std::string& name,
@@ -224,7 +222,7 @@ bool YamlConfig::getValue(const std::string& name, T& value, bool logWarnings) c
     std::lock_guard<std::mutex> locker(_configLock); (void) locker;
 
     YAML::Node node;
-    if (!getValue(name, node, logWarnings))
+    if (!nodeGet(name, node, logWarnings))
             return false;
 
     if (!node.IsScalar())
@@ -247,7 +245,7 @@ bool YamlConfig::getValueVect(const std::string& name,
                               VectorT& value, bool logWarnings) const
 {
     YAML::Node node;
-    if (!getValue(name, node, logWarnings))
+    if (!nodeGet(name, node, logWarnings))
             return false;
 
     if (!node.IsSequence())
@@ -305,7 +303,7 @@ bool YamlConfig::setValue(const std::string& name, const T& value)
 
     std::lock_guard<std::mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node = nodeSetValue(name);
+    YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
     node = YAML::Node(ProxyStdString<T>::setter(value));
     YAMLCONFIG_CATCH(1, false)
@@ -319,7 +317,7 @@ bool YamlConfig::setValueVect(const std::string& name, const VectorT& value)
 
     std::lock_guard<std::mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node = nodeSetValue(name);
+    YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
     node = YAML::Node();
     typedef typename VectorT::value_type ValueType;
