@@ -66,6 +66,7 @@ Line operator<< (Line&& line, const QUuidEx& u)
     return std::move(line);
 }
 
+#ifdef QT_NETWORK_LIB
 Line& operator<< (Line& line, const QHostAddress& h)
 {
     if (line.toLogger())
@@ -79,5 +80,6 @@ Line operator<< (Line&& line, const QHostAddress& h)
         line << QStringToUtf8(h.isNull() ? QString("undefined") : h.toString());
     return std::move(line);
 }
+#endif
 
 } // namespace alog
