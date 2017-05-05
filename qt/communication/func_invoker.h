@@ -101,7 +101,7 @@ public:
 private:
     void checkFunctionsSort()
     {
-#ifndef NDEBUG
+        #ifndef NDEBUG
         if (_functions.sortState() != lst::SortUp)
         {
             break_point
@@ -110,8 +110,8 @@ private:
             // отсортировать список функций-обработчиков. Для этого нужно явно
             // вызвать метод FunctionInvoker::sort()
         }
+        #endif
     }
-#endif
 
     BaseItem::List _functions;
 };
