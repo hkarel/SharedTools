@@ -32,7 +32,7 @@
 class YamlConfig
 {
 public:
-    typedef std::function<bool (YAML::Node&, bool)> Func;
+    typedef std::function<bool (YAML::Node&, bool /*logWarnings*/)> Func;
 
     YamlConfig() = default;
 
