@@ -252,7 +252,7 @@ public:
     // Добавляет сокет в коллекцию сокетов
     void addSocket(const Socket::Ptr&);
 
-    // Удаляет сокет из колекции сокетов
+    // Извлекает сокет из коллекции сокетов
     Socket::Ptr releaseSocket(SocketDescriptor);
 
 signals:
