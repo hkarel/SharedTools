@@ -109,7 +109,8 @@ struct Data
 */
 struct MessageError
 {
-    QString description;  // Описание ошибки.
+    int code = {0};       // Код ошибки
+    QString description;  // Описание ошибки
     DECLARE_B_SERIALIZE_FUNC
 };
 
@@ -123,7 +124,8 @@ struct MessageError
 */
 struct MessageFailed
 {
-    QString description;  // Описание неудачи.
+    int code = {0};       // Код неудачи
+    QString description;  // Описание неудачи
     DECLARE_B_SERIALIZE_FUNC
 };
 
@@ -148,8 +150,9 @@ struct Unknown : Data<&command::Unknown,
 struct Error : Data<&command::Error,
                      Message::Type::Command>
 {
-    QUuidEx commandId;   // Идентификатор команды для которой произошла ошибка.
-    QString description; // Описание ошибки.
+    QUuidEx commandId;   // Идентификатор команды для которой произошла ошибка
+    int code = {0};      // Код ошибки
+    QString description; // Описание ошибки
     DECLARE_B_SERIALIZE_FUNC
 };
 

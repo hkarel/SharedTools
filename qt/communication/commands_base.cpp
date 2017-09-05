@@ -20,6 +20,7 @@ namespace data {
 bserial::RawVector MessageError::toRaw() const
 {
     B_SERIALIZE_V1(stream)
+    stream << code;
     stream << description;
     B_SERIALIZE_RETURN
 }
@@ -27,6 +28,7 @@ bserial::RawVector MessageError::toRaw() const
 void MessageError::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
+    stream >> code;
     stream >> description;
     B_DESERIALIZE_END
 }
@@ -34,6 +36,7 @@ void MessageError::fromRaw(const bserial::RawVector& vect)
 bserial::RawVector MessageFailed::toRaw() const
 {
     B_SERIALIZE_V1(stream)
+    stream << code;
     stream << description;
     B_SERIALIZE_RETURN
 }
@@ -41,6 +44,7 @@ bserial::RawVector MessageFailed::toRaw() const
 void MessageFailed::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
+    stream >> code;
     stream >> description;
     B_DESERIALIZE_END
 }
@@ -69,6 +73,7 @@ bserial::RawVector Error::toRaw() const
 {
     B_SERIALIZE_V1(stream)
     stream << commandId;
+    stream << code;
     stream << description;
     B_SERIALIZE_RETURN
 }
@@ -77,6 +82,7 @@ void Error::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
     stream >> commandId;
+    stream >> code;
     stream >> description;
     B_DESERIALIZE_END
 }
