@@ -1,4 +1,4 @@
-#include "qt/communication/transport/tcp.h"
+#include "qt/communication/transport/local.h"
 
 #include "break_point.h"
 #include "logger/logger.h"
@@ -9,48 +9,46 @@
 #include <stdexcept>
 #include <unistd.h>
 
-#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
+#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportSoc")
+#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportSoc")
+#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportSoc")
+#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportSoc")
+#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportSoc")
+#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportSoc")
 
 namespace communication {
 namespace transport {
-namespace tcp {
+namespace local {
 
 //-------------------------------- Socket ------------------------------------
 
-bool Socket::init(const HostPoint& peerPoint)
+bool Socket::init(const QString& serverName)
 {
     if (isRunning())
     {
         log_error_m << "Impossible execute a initialization because Sender thread is running.";
         return false;
     }
-    _peerPoint = peerPoint;
+    _serverName = serverName;
     return true;
 }
 
 void Socket::socketCreate()
 {
-    _socket = simple_ptr<QTcpSocket>(new QTcpSocket(0));
+    _socket = simple_ptr<QLocalSocket>(new QLocalSocket(0));
     chk_connect_d(_socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()))
 }
 
 bool Socket::socketInit()
 {
-    const char* connectDirection;
     if (initSocketDescriptor() == -1)
     {
-        log_verbose_m << "Try connect to host " << _peerPoint;
+        log_verbose_m << "Try connect to socket " << _serverName;
 
-        connectDirection = "to";
-        _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
+        _socket->connectToServer(_serverName, QIODevice::ReadWrite);
         if (!_socket->waitForConnected(3 * 1000))
         {
-            log_error_m << "Failed connect to host " << _peerPoint
+            log_error_m << "Failed connect to socket " << _serverName
                         << ". Error code: " << int(_socket->error())
                         << ". Detail: " << _socket->errorString();
             return false;
@@ -58,7 +56,6 @@ bool Socket::socketInit()
     }
     else
     {
-        connectDirection = "from";
         if (!_socket->setSocketDescriptor(initSocketDescriptor()))
         {
             log_error_m << "Failed set socket descriptor"
@@ -67,22 +64,21 @@ bool Socket::socketInit()
             return false;
         }
     }
-    _peerPoint.setAddress(_socket->peerAddress());
-    _peerPoint.setPort(_socket->peerPort());
+    _serverName = _socket->serverName();
     _printSocketDescriptor = _socket->socketDescriptor();
 
-    log_verbose_m << "Connect " << connectDirection << " host " << _peerPoint
-                  << "; socket descriptor: " << _printSocketDescriptor;
+    alog::Line logLine = log_verbose_m
+        << "Connect to socket"
+        << "; socket descriptor: " << _printSocketDescriptor;
+    if (!_serverName.isEmpty())
+        logLine << "; socket name: " << _serverName;
+
     return true;
 }
 
 bool Socket::isLocalInternal() const
 {
-#if QT_VERSION >= 0x050000
-    return (_socket && _socket->peerAddress().isLoopback());
-#else
-    return (_socket && (_socket->peerAddress() == QHostAddress::LocalHost));
-#endif
+    return true;
 }
 
 SocketDescriptor Socket::socketDescriptorInternal() const
@@ -94,18 +90,20 @@ bool Socket::socketIsConnectedInternal() const
 {
     return (_socket
             && _socket->isValid()
-            && _socket->state() == QAbstractSocket::ConnectedState);
+            && _socket->state() == QLocalSocket::ConnectedState);
 }
 
 void Socket::printSocketError(const char* file, const char* func, int line,
                               const char* module)
 {
-    if (_socket->error() == QAbstractSocket::RemoteHostClosedError)
+    if (_socket->error() == QLocalSocket::PeerClosedError)
     {
-        alog::logger().verbose_f(file, func, line, "TransportTCP")
-            << _socket->errorString()
-            << "; remote host: " << _peerPoint
-            << "; socket descriptor: " << _printSocketDescriptor;
+        alog::Line logLine =
+            alog::logger().verbose_f(file, func, line, "TransportSoc")
+                << _socket->errorString()
+                << "; socket descriptor: " << _printSocketDescriptor;
+        if (!_serverName.isEmpty())
+            logLine << "; socket name: " << _serverName;
     }
     else
     {
@@ -150,14 +148,13 @@ void Socket::socketClose()
     try
     {
         if (_socket->isValid()
-            && _socket->state() != QAbstractSocket::UnconnectedState)
+            && _socket->state() != QLocalSocket::UnconnectedState)
         {
-            log_verbose_m << "Disconnected from host "
-                          << _socket->peerAddress() << ":" << _socket->peerPort()
+            log_verbose_m << "Disconnected from socket " << _socket->serverName()
                           << "; socket descriptor: " << _socket->socketDescriptor();
 
-            _socket->disconnectFromHost();
-            if (_socket->state() != QAbstractSocket::UnconnectedState)
+            _socket->disconnectFromServer();
+            if (_socket->state() != QLocalSocket::UnconnectedState)
                 _socket->waitForDisconnected(1000);
         }
         _socket->close();
@@ -180,20 +177,20 @@ void Socket::socketClose()
 Message::Ptr Socket::messageFromByteArray(const BByteArray& buff)
 {
     Message::Ptr m = Message::fromByteArray(buff);
-    m->setSocketType(Message::SocketType::Tcp);
+    m->setSocketType(Message::SocketType::Local);
     m->setSocketDescriptor(_socket->socketDescriptor());
-    m->setSourcePoint({_socket->peerAddress(), _socket->peerPort()});
+    m->setSocketName(_socket->serverName());
     return m;
 }
 
 void Socket::fillUnknownMessage(const Message::Ptr& message, data::Unknown& unknown)
 {
     unknown.commandId = message->command();
-    unknown.socketType = Message::SocketType::Tcp;
+    unknown.socketType = Message::SocketType::Local;
     unknown.socketDescriptor = _socket->socketDescriptor();
-    unknown.socketName.clear();
-    unknown.address = _socket->peerAddress();
-    unknown.port = _socket->peerPort();
+    unknown.socketName = _socket->serverName();
+    unknown.address = QHostAddress();
+    unknown.port = 0;
 }
 
 //------------------------------- Listener -----------------------------------
@@ -205,22 +202,21 @@ Listener::Listener()
                   this, SLOT(removeClosedSockets()))
 }
 
-bool Listener::init(const HostPoint& listenPoint)
+bool Listener::init(const QString& serverName)
 {
-    _listenPoint = listenPoint;
+    _serverName = serverName;
     int attempt = 0;
-    while (!QTcpServer::listen(_listenPoint.address(), _listenPoint.port()))
+    while (!QLocalServer::listen(_serverName))
     {
         if (++attempt > 10)
             break;
         usleep(200*1000);
     }
     if (attempt > 10)
-        log_error_m << "Start listener of connection to " << _listenPoint
+        log_error_m << "Start listener of connection to " << _serverName
                     << " is failed. Detail: " << errorString();
     else
-        log_verbose_m << "Start listener of connection with params: "
-                      << serverAddress() << ":" << serverPort();
+        log_verbose_m << "Start listener of connection to " << _serverName;
 
     _removeClosedSockets.start(15*1000);
     return (attempt <= 10);
@@ -229,8 +225,8 @@ bool Listener::init(const HostPoint& listenPoint)
 void Listener::close()
 {
     closeSockets();
-    QTcpServer::close();
-    log_verbose_m << "Stop listener of connection with params: " << _listenPoint;
+    QLocalServer::close();
+    log_verbose_m << "Stop listener of connection to " << _serverName;
 }
 
 void Listener::removeClosedSockets()
@@ -238,9 +234,9 @@ void Listener::removeClosedSockets()
     removeClosedSocketsInternal();
 }
 
-void Listener::incomingConnection(SocketDescriptor socketDescriptor)
+void Listener::incomingConnection(quintptr socketDescriptor)
 {
-    incomingConnectionInternal(socketDescriptor);
+    incomingConnectionInternal(SocketDescriptor(socketDescriptor));
 }
 
 void Listener::connectSignals(base::Socket* socket)
@@ -265,7 +261,7 @@ Listener& listener()
     return ::safe_singleton<Listener>();
 }
 
-} // namespace tcp
+} // namespace local
 } // namespace transport
 } // namespace communication
 
@@ -275,3 +271,4 @@ Listener& listener()
 #undef log_verbose_m
 #undef log_debug_m
 #undef log_debug2_m
+

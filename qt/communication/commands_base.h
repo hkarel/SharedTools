@@ -135,10 +135,13 @@ struct MessageFailed
 struct Unknown : Data<&command::Unknown,
                        Message::Type::Command>
 {
-    QUuidEx      commandId; // Идентификатор неизвестной команды.
-    QHostAddress address;   // Адрес хоста для которого команда неизвестна,
-    quint16      port;      // порт,
-    quint64      socketDescriptor; // идентификатор сокета.
+    QUuidEx              commandId;        // Идентификатор неизвестной команды.
+    Message::SocketType  socketType;       // Тип сокета для которого было создано
+                                           // сообщение.
+    quint64              socketDescriptor; // Идентификатор сокета.
+    QString              socketName;       // Наименование локального сокета.
+    QHostAddress         address;          // Адрес и порт хоста для которого
+    quint16              port;             // команда неизвестна.
     DECLARE_B_SERIALIZE_FUNC
 };
 

@@ -53,9 +53,11 @@ bserial::RawVector Unknown::toRaw() const
 {
     B_SERIALIZE_V1(stream)
     stream << commandId;
+    stream << socketType;
+    stream << socketDescriptor;
+    stream << socketName;
     stream << address;
     stream << port;
-    stream << socketDescriptor;
     B_SERIALIZE_RETURN
 }
 
@@ -63,9 +65,11 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
     stream >> commandId;
+    stream >> socketType;
+    stream >> socketDescriptor;
+    stream >> socketName;
     stream >> address;
     stream >> port;
-    stream >> socketDescriptor;
     B_DESERIALIZE_END
 }
 

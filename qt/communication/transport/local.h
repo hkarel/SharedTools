@@ -1,22 +1,20 @@
 /*****************************************************************************
   В модуле реализованы механизмы доставки сообщений между программными компо-
-  нентами с использование TCP протокола.
+  нентами с использование UNIX-сокетов.
 
 *****************************************************************************/
 
 #pragma once
 
 #include "safe_singleton.h"
-#include "qt/communication/host_point.h"
 #include "qt/communication/transport/base.h"
 
-#include <QTcpSocket>
-#include <QTcpServer>
-#include <QHostAddress>
+#include <QLocalSocket>
+#include <QLocalServer>
 
 namespace communication {
 namespace transport {
-namespace tcp {
+namespace local {
 
 /**
   Используется для создания соединения и отправки сообщений на клиентской
@@ -30,10 +28,10 @@ public:
     Socket() = default;
 
     // Определяет параметры подключения к удаленному хосту
-    bool init(const HostPoint&);
+    bool init(const QString& serverName);
 
-    // Адрес и порт с которыми установлено соединение
-    HostPoint peerPoint() const {return _peerPoint;}
+    // Наименование сокета с которым установлено соединение
+    QString serverName() const {return _serverName;}
 
 private:
     Q_OBJECT
@@ -61,8 +59,8 @@ private:
     void fillUnknownMessage(const Message::Ptr&, data::Unknown&) override;
 
 private:
-    simple_ptr<QTcpSocket> _socket;
-    HostPoint _peerPoint;
+    simple_ptr<QLocalSocket> _socket;
+    QString _serverName;
 
     // Используется для вывода в лог сообщений об уже закрытом сокете.
     SocketDescriptor _printSocketDescriptor = {-1};
@@ -76,13 +74,13 @@ private:
   с последующей установкой соединения с ними, так же используется для приема
   и отправки сообщений.
 */
-class Listener : public QTcpServer, public base::Listener<Socket>
+class Listener : public QLocalServer, public base::Listener<Socket>
 {
 public:
     Listener();
 
     // Инициализация режима приема внешних подключений
-    bool init(const HostPoint&);
+    bool init(const QString& serverName);
 
     // Listener останавливает прием внешних подключений. Помимо этого все
     // активные соединения будут закрыты.
@@ -105,18 +103,19 @@ private slots:
 private:
     Q_OBJECT
     DISABLE_DEFAULT_COPY(Listener)
-    void incomingConnection(SocketDescriptor) override;
+    void incomingConnection(quintptr) override;
 
     void connectSignals(base::Socket*) override;
     void disconnectSignals(base::Socket*) override;
 
-    HostPoint _listenPoint;
+    QString _serverName;
 
     template<typename T, int> friend T& ::safe_singleton();
 };
 
 Listener& listener();
 
-} // namespace tcp
+} // namespace local
 } // namespace transport
 } // namespace communication
+

@@ -20,8 +20,9 @@
 namespace communication {
 
 namespace transport {
-namespace tcp {class Socket;}
-namespace udp {class Socket;}
+namespace local {class Socket;}
+namespace tcp   {class Socket;}
+namespace udp   {class Socket;}
 }
 
 #if QT_VERSION >= 0x050000
@@ -95,6 +96,13 @@ public:
                     // форматов.
     };
 
+    enum class SocketType : quint32
+    {
+        Local = 0,
+        Tcp   = 1,
+        Udp   = 2
+    };
+
     // Персональный идентификатор сообщения.
     QUuidEx id() const {return _id;}
 
@@ -138,7 +146,12 @@ public:
     quint64 maxTimeLife() const {return _maxTimeLife;}
     void setMaxTimeLife(quint64 val) {_maxTimeLife = val;}
 
-    // Адрес и порт хоста с которого было получено сообщение
+    // Тип сокета из которого было получено сообщение
+    SocketType socketType() const {return _socketType;}
+
+    // Адрес и порт хоста с которого было получено сообщение. Поле имеет
+    // валидное значение только если тип сокета соответствует значениям
+    // SocketType::Tcp или SocketType::Udp.
     const HostPoint& sourcePoint() const {return _sourcePoint;}
 
     // Адреса и порты хостов назначения. Параметр используется для отправки
@@ -150,14 +163,20 @@ public:
 
     // Вспомогательный параметр, используется на стороне TCP-сервера для иден-
     // тификации TCP-сокета принявшего сообщение.
+    // Поле имеет валидное значение только если тип сокета соответствует значе-
+    // ниям SocketType::Tcp или SocketType::Local.
     SocketDescriptor socketDescriptor() const {return _socketDescriptor;}
 
-    // Параметр содержит идентификаторы TCP-сокетов на которые нужно отправить
+    // Параметр содержит идентификаторы сокетов на которые нужно отправить
     // сообщение. В случае если параметр destinationSocketDescriptors не со-
     // держит ни одного идентификатора и при этом параметр socketDescriptor
-    // не равен -1, то в этом случае сообщение будет отправлено на TCP-сокет
+    // не равен -1, то в этом случае сообщение будет отправлено на сокет
     // с идентификатором socketDescriptor.
     SocketDescriptorSet& destinationSocketDescriptors();
+
+    // Наименование сокета с которого было получено сообщение. Поле имеет
+    // валидное значение только если тип сокета соответствует SocketType::Local.
+    QString socketName() const {return _socketName;}
 
     // Вспомогательный параметр, используется для того чтобы сообщить функциям-
     // обработчикам сообщений о том, что сообщение уже было обработано ранее.
@@ -238,8 +257,10 @@ private:
     void readInternal(QDataStream& s, T& t, Args&... args) const;
     void readInternal(QDataStream&) const {return;}
 
+    void setSocketType(SocketType val) {_socketType = val;}
     void setSourcePoint(const HostPoint& val) {_sourcePoint = val;}
     void setSocketDescriptor(SocketDescriptor val) {_socketDescriptor = val;}
+    void setSocketName(const QString& val) {_socketName = val;}
 
 private:
     QUuidEx _id;
@@ -289,12 +310,15 @@ private:
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
 
+    SocketType _socketType = {SocketType::Tcp};
     HostPoint _sourcePoint;
     HostPoint::Set _destinationPoints;
     SocketDescriptor _socketDescriptor = {-1};
     SocketDescriptorSet _destinationSocketDescriptors;
+    QString _socketName;
     volatile bool _processed = {false};
 
+    friend class transport::local::Socket;
     friend class transport::tcp::Socket;
     friend class transport::udp::Socket;
 };

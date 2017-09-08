@@ -102,7 +102,7 @@ private:
     void checkFunctionsSort()
     {
         #ifndef NDEBUG
-        if (_functions.sortState() != lst::SortUp)
+        if (_functions.sortState() != lst::UpSorted)
         {
             break_point
             // --- Напоминание о необходимости сортировать список функций ---

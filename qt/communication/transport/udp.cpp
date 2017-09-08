@@ -409,6 +409,7 @@ void Socket::run()
                                  << "; command: " << CommandNameLog(message->command())
                                  << "; source: " << addr << ":" << port;
                 }
+                message->setSocketType(Message::SocketType::Udp);
                 //message->setSocketDescriptor(_socket->socketDescriptor());
                 message->setSourcePoint({addr, port});
                 acceptMessages.add(message.detach());
