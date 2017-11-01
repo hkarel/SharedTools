@@ -1,28 +1,47 @@
 /* clang-format off */
 /*****************************************************************************
-  Прототипом модуля является Closure library 1.1 созданная
-  Ivan Yankov aka _Winnie (woowoowoow@bk.ru)
+  The MIT License
 
+  Copyright © 2015 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2004 Ivan Yankov aka _Winnie <woowoowoow@bk.ru>
+
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of this software and associated documentation files (the
+  "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to
+  the following conditions:
+
+  The above copyright notice and this permission notice shall be included
+  in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  ---
+
+  Прототипом модуля является Closure library 1.1 (автор: Ivan Yankov)
   Исходное решение переработано под механизм typename...
-  Автор переработанного решения: Карелин Павел (hkarel), hkarel@yandex.ru
-
-  В модуле представлен аналог функции std::bind. Исходное решение (Closure library)
-  было придумано в 2004 году, когда полноценной std::bind еще не существовало.
-  В отличие от std::bind данное решение более примитивное, как с точки зрения
-  реализации, так и с точки зрения связывания: сигнатуры функций должны совпадать.
+  В модуле представлен аналог функции std::bind. Исходное решение (Closure
+  library) было придумано в 2004 году, когда полноценной std::bind еще
+  не существовало. В отличие от std::bind данное решение более примитивное,
+  как с точки зрения реализации, так и с точки зрения связывания: сигнатуры
+  функций должны совпадать.
   К достоинствам можно отнести следующие аспекты:
     - память выделяется только на стеке (не используется new());
-    - не хранится значение указателя на связываемую функцию (т.е. в отличии от
-      аналогичных решений, например FastDelegate, не требует учитывать особен-
-      ности работы с указателями на функции на разных платформах и на разных
-      компиляторах);
-    - сигнатуры функций должны совпадать, как следствие, форма записи связывания
-      CLOSURE более простая и наглядная. Подобное ограничение не допускает связы-
-      вания в стиле std::bind, что в некоторой степени делает код более строгим.
-
-  Вероятно, название CLOSURE происходит от директивы __closure  компилятора
-  Borland C++Builder, которая выполняет аналогичную функцию.
-
+    - не хранится значение указателя на связываемую функцию (т.е. в отличии
+      от аналогичных решений, например FastDelegate, не требует учитывать
+      особенности работы с указателями на функции на разных платформах и
+      на разных компиляторах);
+    - сигнатуры функций должны совпадать, как следствие, форма записи
+      связывания CLOSURE более простая и наглядная. Подобное ограничение
+      не допускает связывания в стиле std::bind, что в некоторой степени
+      делает код более строгим.
 *****************************************************************************/
 
 #pragma once

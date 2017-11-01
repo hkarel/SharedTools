@@ -6,7 +6,7 @@
   Written by Ivan Yankov aka _Winnie (woowoowoow@bk.ru)
   Many thanks to Wolfhound
 
-  Modyfied:  Karelin Pavel (hkarel), hkarel@yandex.ru
+  Modyfied:  Pavel Karelin (hkarel), hkarel@yandex.ru
 */
 
 

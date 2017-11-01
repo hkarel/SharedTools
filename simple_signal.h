@@ -1,10 +1,33 @@
 /* clang-format off */
 /*****************************************************************************
-  Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
+  The MIT License
+
+  Copyright © 2013 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of this software and associated documentation files (the
+  "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to
+  the following conditions:
+
+  The above copyright notice and this permission notice shall be included
+  in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  ---
 
   В модуле реализован простейший событийный механизм типа signal/slot.
-  В качестве слотов могут использоваться как обычные функции, так и функции
-  члены классов. Связывание слота и функции выполняется через механизм CLOSURE.
+  В качестве слотов могут использоваться как обычные функции, так и
+  функции члены классов. Связывание слота и функции выполняется через
+  механизм CLOSURE.
   Пример использования:
   struct A
   {
@@ -28,16 +51,17 @@
   Call b()
   Call с()
 
-  Предполагается, что если слот связан с функцией-членом класса, то при разруше-
-  нии объекта данного класса необходимо выполнить процедуру отсоединение слота.
+  Предполагается, что если слот связан с функцией-членом класса, то
+  при разрушении объекта данного класса необходимо выполнить процедуру
+  отсоединения слота.
   Для примера выше это будет вызов:
     signal.disconnect(fb);
     signal.disconnect(fc);
 
   Примечание: качестве слотов не могут использоваться функции с сигнатурами
-  содержащими rvalue-параметры. При передаче rvalue-параметров в список слотов-
-  обработчиков - корректным будет вызов только первого слота, а все последующие
-  слоты будут получать некорректные значения rvalue-параметров.
+  содержащими rvalue-параметры. При передаче rvalue-параметров в список
+  слотов-обработчиков - корректным будет вызов только первого слота, а все
+  последующие слоты будут получать некорректные значения rvalue-параметров.
   По этой причине в функциях emit_() и call() при передаче параметров args...
   не используется вызов функции std::forward().
 *****************************************************************************/

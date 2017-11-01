@@ -1,5 +1,26 @@
 /*****************************************************************************
-  Author:  Karelin Pavel (hkarel), hkarel@yandex.ru
+  The MIT License
+
+  Copyright © 2010 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of this software and associated documentation files (the
+  "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to
+  the following conditions:
+
+  The above copyright notice and this permission notice shall be included
+  in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
 #pragma once
@@ -13,8 +34,6 @@
   ее первоначальное значение.
   Реализован механизм отмены автовозврата предыдущего параметра.
 */
-
-
 struct AutoBackMemberBase
 {
     virtual ~AutoBackMemberBase() {}
@@ -60,7 +79,6 @@ inline AutoBackMember<T, M> createAutoBackMember(/*const*/ T* c,
 }
 
 
-
 template<
     typename ClassT,
     typename MemberT
@@ -99,7 +117,6 @@ inline AutoBackMemberVlt<T, M> createAutoBackMember(/*const*/ T* c,
                                                     volatile M (T::*pm), M m, bool* cancel = 0) {
     return AutoBackMemberVlt<T, M>(c, pm, m, cancel);
 }
-
 
 
 template<
@@ -152,7 +169,6 @@ inline AutoBackMemberFunc<T, R, M> createAutoBackMemberFunc(/*const*/ T* c,
 }
 
 
-
 #define ABACK(MEMBER_, VALUE_) \
     const AutoBackMemberBase& auto_back_member__(createAutoBackMember(this, MEMBER_, VALUE_));  \
     (void) auto_back_member__;
@@ -184,7 +200,6 @@ inline AutoBackMemberFunc<T, R, M> createAutoBackMemberFunc(/*const*/ T* c,
 #define ABACK4_C(MEMBER_, VALUE_, CANCEL_) \
     const AutoBackMemberBase& auto_back_member_4c_(createAutoBackMember(this, MEMBER_, VALUE_, CANCEL_)); \
     (void) auto_back_member_4c_;
-
 
 
 #define ABACK_F(MEMBER_, VALUE_, PREVAL_) \
