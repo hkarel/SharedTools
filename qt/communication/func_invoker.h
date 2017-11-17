@@ -106,7 +106,7 @@ public:
 
     void sort()
     {
-        _functions.sort(lst::SortUp);
+        _functions.sort(lst::SortMode::Up);
     }
 
     bool containsCommand(const QUuidEx& command)
@@ -126,7 +126,7 @@ private:
     void checkFunctionsSort()
     {
         #ifndef NDEBUG
-        if (_functions.sortState() != lst::UpSorted)
+        if (_functions.sortState() != lst::SortState::Up)
         {
             break_point
             // --- Напоминание о необходимости сортировать список функций ---

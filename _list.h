@@ -62,27 +62,27 @@ enum class BruteForce {No = 0, Yes = 1};
 
 
 /// @brief Флаги направления сортировки.
-enum SortMode
+enum class SortMode
 {
-  SortDown = 0,  /// Сортировать по убыванию
-  SortUp = 1     /// Сортировать по возрастанию
+  Down = 0,  /// Сортировать по убыванию
+  Up = 1     /// Сортировать по возрастанию
 };
 
 /// @brief Флаги сдвига списка.
-enum ShiftMode
+enum class ShiftMode
 {
-  ShiftLeft = 0,  /// Сдвинуть элементы списка влево
-  ShiftRight = 1  /// Сдвинуть элементы списка вправо
+  Left = 0,  /// Сдвинуть элементы списка влево
+  Right = 1  /// Сдвинуть элементы списка вправо
 };
 
 /// @brief Флаги состояний сортировки.
-enum SortState
+enum class SortState
 {
-  NoSorted = 0,         /// Список находится в не отсортированном состоянии
-  UpSorted = 1,         /// Список отсортирован по возрастанию
-  DownSorted = 2,       /// Список отсортирован по убыванию
-  CustomUpSorted = 3,   /// Список частично отсортирован по возрастанию
-  CustomDownSorted = 4  /// Список частично отсортирован по убыванию
+  Unknown = 0,     /// Список находится в не отсортированном состоянии
+  Up = 1,          /// Список отсортирован по возрастанию
+  Down = 2,        /// Список отсортирован по убыванию
+  CustomUp = 3,    /// Список частично отсортирован по возрастанию
+  CustomDown = 4   /// Список частично отсортирован по убыванию
 };
 
 
@@ -691,7 +691,7 @@ private:
     DataT**   list      = {0};
     int       count     = {0};
     int       capacity  = {0};
-    SortState sortState = {NoSorted};
+    SortState sortState = {SortState::Unknown};
     bool      container = {CONTAINER_CLASS};
     Compare   compare;
     Allocator allocator;
@@ -942,12 +942,12 @@ public:
   /// @param[in] extParams Используется для задания расширенных параметров
   ///            сортировки.
   template<typename CompareU>
-  void sort(CompareU& compare, SortMode sortMode = SortUp,
+  void sort(CompareU& compare, SortMode sortMode = SortMode::Up,
             const SortExtParams& extParams = SortExtParams());
 
   /// @brief Функция сортировки, используется стратегия сортировки по умолчанию.
   ///
-  void sort(SortMode sortMode = SortUp,
+  void sort(SortMode sortMode = SortMode::Up,
             const SortExtParams& extParams = SortExtParams());
 
   /// @brief Функция для расширенной сортировки.
@@ -956,7 +956,7 @@ public:
   /// избежать конфликта имен в компиляторе от Borland.
   /// Объект стратегии сортировки CompareU создается внутри функции.
   template<typename CompareU>
-  void sort2(SortMode sortMode = SortUp,
+  void sort2(SortMode sortMode = SortMode::Up,
              const SortExtParams& extParams = SortExtParams());
 
   /// @brief Выполняет обмен данных между списками.
@@ -1107,9 +1107,9 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
 
     //--- Поиск перебором ---
     if (bruteForce == BruteForce::Yes
-        || d->sortState == NoSorted
-        || d->sortState == CustomUpSorted
-        || d->sortState == CustomDownSorted)
+        || d->sortState == SortState::Unknown
+        || d->sortState == SortState::CustomUp
+        || d->sortState == SortState::CustomDown)
         /* || (FCount < 4) Нельзя использовать данное условие для отсортирован-
               ного списка, т.к. если результат поиска окажется отрицательным -
               значение в поле FindResult::index() будет непригодно для использо-
@@ -1140,7 +1140,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
     int mid, result;
     switch (d->sortState)
     {
-      case UpSorted:
+      case SortState::Up:
         while (true)
         {
           mid = (low + high) >> 1;
@@ -1158,7 +1158,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
           if ((high - low) < 1)
             return FindResult(false, BruteForce::No, (result > 0) ? mid + 1 : mid);
         }
-      case DownSorted:
+      case SortState::Down:
         while (true)
         {
           mid = (low + high) >> 1;
@@ -1284,7 +1284,7 @@ DECL_IMPL_LIST(void)::init(bool container/*, const Allocator& allocator*/)
   CustomListType::d->list = 0;
   CustomListType::d->count = 0;
   CustomListType::d->capacity = 0;
-  CustomListType::d->sortState = NoSorted;
+  CustomListType::d->sortState = SortState::Unknown;
   CustomListType::d->container = container;
   //CustomListType::d->allocator = allocator;
 }
@@ -1327,7 +1327,7 @@ DECL_IMPL_LIST(T*)::add()
 DECL_IMPL_LIST(T*)::add(T* item)
 {
   DataType* d = d_func();
-  setSortState(NoSorted);
+  setSortState(SortState::Unknown);
   if (d->count == d->capacity)
     grow();
 
@@ -1360,7 +1360,7 @@ DECL_IMPL_LIST(void)::clear()
     }
   }
   d->count = 0;
-  d->sortState = NoSorted;
+  d->sortState = SortState::Unknown;
 }
 
 DECL_IMPL_LIST(void)::remove(int index, bool compressList)
@@ -1439,7 +1439,7 @@ DECL_IMPL_LIST(void)::replace(int index, T* item, bool keepSortState)
   *it = item;
 
   if (!keepSortState)
-    setSortState(NoSorted);
+    setSortState(SortState::Unknown);
 
   if (d->container && itemOld)
     d->allocator.destroy(itemOld);
@@ -1499,7 +1499,7 @@ DECL_IMPL_LIST(void)::exchange(int index1, int index2)
   CHECK_BORDERS(index1)
   CHECK_BORDERS(index2)
 
-  setSortState(NoSorted);
+  setSortState(SortState::Unknown);
   T* item = d->list[index1];
   d->list[index1] = d->list[index2];
   d->list[index2] = item;
@@ -1511,7 +1511,7 @@ DECL_IMPL_LIST(T*)::addInSort(T* item, const FindResult& fr)
   //if ((sort_state == NoSorted)
   //     || (sort_state == CustomUpSorted)
   //     || (sort_state == CustomDownSorted))
-  if ((sortState != UpSorted) && (sortState != DownSorted))
+  if ((sortState != SortState::Up) && (sortState != SortState::Down))
     return add(item);
 
   item = insert(item, fr.index());
@@ -1544,7 +1544,7 @@ DECL_IMPL_LIST(T*)::insert(int index)
 DECL_IMPL_LIST(T*)::insert(T* item, int index)
 {
   DataType* d = d_func();
-  setSortState(NoSorted);
+  setSortState(SortState::Unknown);
   if ((index < 0) || (index >= d->count))
     return add(item);
 
@@ -1576,7 +1576,7 @@ DECL_IMPL_LIST(void)::move(int curIndex, int newIndex)
 {
   if (curIndex != newIndex)
   {
-    setSortState(NoSorted);
+    setSortState(SortState::Unknown);
     T* item = release(curIndex);
     insert(item, newIndex);
   }
@@ -1681,7 +1681,7 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   setAllocator(list.allocator());
   setContainer(list.container());
   setCount(list.count());
-  setSortState(NoSorted);
+  setSortState(SortState::Unknown);
 
   T** srcIt = list.listBegin();
   T** srcEnd = list.listEnd();
@@ -1754,7 +1754,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::QSort(T** sortList,
   {
     switch (sortMode)
     {
-      case SortUp:
+      case SortMode::Up:
         while ((compare(sortList[i], x, extParam) < 0) && (i < R)) ++i;
         while ((compare(sortList[j], x, extParam) > 0) && (j > L)) --j;
         break;
@@ -1782,7 +1782,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
   // Выставляем флаг сортировки даже если в списке один элемент
   // или нет элементов вовсе. Это необходимо для корректной работы
   // функции addInSort().
-  setSortState((sortMode == SortUp) ? UpSorted : DownSorted);
+  setSortState((sortMode == SortMode::Up) ? SortState::Up : SortState::Down);
 
   DataType* d = d_func();
   if (d->list && (d->count > 1))
@@ -1800,18 +1800,18 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
         hiSortBorder = d->count;
 
       if ((loSortBorder != 0) || (hiSortBorder != d->count))
-        setSortState((sortMode == SortUp) ? CustomUpSorted : CustomDownSorted);
+        setSortState((sortMode == SortMode::Up) ? SortState::CustomUp : SortState::CustomDown);
 
       QSort<CompareU>(d->list, loSortBorder, hiSortBorder - 1,
                       compare, sortMode, extParams.extParam);
     }
     catch (BreakCompare &)
     {
-      setSortState(NoSorted);
+      setSortState(SortState::Unknown);
     }
     catch (...)
     {
-      setSortState(NoSorted);
+      setSortState(SortState::Unknown);
     }
   }
 }

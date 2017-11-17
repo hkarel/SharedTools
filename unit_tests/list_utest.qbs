@@ -11,10 +11,10 @@ CppApplication {
         "-Wno-unused-parameter",
     ]
 
-    cpp.linkerFlags: [
-        "-static-libstdc++",
-        "-static-libgcc",
-    ]
+    //cpp.linkerFlags: [
+    //    "-static-libstdc++",
+    //    "-static-libgcc",
+    //]
 
     files: [
         "../_list.h",

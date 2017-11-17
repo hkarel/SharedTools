@@ -135,7 +135,7 @@ bool find_Test()
 
     printf("\n--- Test descend, 0 elements ---\n");
     list.clear();
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     fr = list.findRef(2);
     printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
@@ -147,7 +147,7 @@ bool find_Test()
     printf("\n--- Test descend, 1 elements (1) ---\n");
     list.clear();
     list.addCopy(1);
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     fr = list.findRef(2);
     printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
@@ -160,7 +160,7 @@ bool find_Test()
     list.clear();
     list.addCopy(1);
     list.addCopy(2);
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     fr = list.findRef(3);
     printf("3 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
@@ -177,7 +177,7 @@ bool find_Test()
     list.addCopy(1);
     list.addCopy(2);
     list.addCopy(3);
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     fr = list.findRef(6);
     printf("6 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
@@ -197,7 +197,7 @@ bool find_Test()
     list.addCopy(3);
     list.addCopy(4);
     list.addCopy(5);
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     fr = list.findRef(6);
     printf("6 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
@@ -298,7 +298,7 @@ bool find_addInSort_Test()
 
     printf("\n--- Test descend, 0 elements ---\n");
     list.clear();
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     fr = list.findRef(2);
     printf("2 : %s : %s (insert index: %i)\n", fres(fr), ffail(fr), fr.index()); ffail_check(fr);
@@ -348,7 +348,7 @@ bool find_addInSort_Test()
 
     printf("\n--- Test descend, 4 elements (5,4,3,1) ---\n");
     list.addCopy(5);
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     fr = list.findRef(4);
     list.addCopyInSort(4, fr);
@@ -805,7 +805,7 @@ void findNotunique_Test()
     findNotunique_Test(list, -1, 0,  1,  2,  5,  6,  7,  9,  -1);
 
     printf("\n--- Test descend, 10 elements (5,5,5,4,2,2,2,2,1,1) ---\n");
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
 
     //                       i0  i11 i12 i21 i22 i4 i51  i52 i7
     findNotunique_Test(list, -1, 8,  9,  4,  7,  3, 0,   2,  -1);
@@ -850,7 +850,7 @@ void findNotuniqueStruct_Test()
     v = list.add(); v->val1 = 6; v->val2 = 15;
     v = list.add(); v->val1 = 6; v->val2 = 99;
 
-    list.sort(lst::SortUp);
+    list.sort(lst::SortMode::Up);
     printf("\n--- List of SortTwoVal was sorted up ---\n");
     for (SortTwoVal* v : list)
     {
@@ -858,7 +858,7 @@ void findNotuniqueStruct_Test()
     }
     printf("\n");
 
-    list.sort(lst::SortDown);
+    list.sort(lst::SortMode::Down);
     printf("\n--- List of SortTwoVal was sorted down ---\n");
     for (SortTwoVal* v : list)
     {
