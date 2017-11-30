@@ -219,7 +219,7 @@ YAML::Node YamlConfig::nodeGet(const std::string& name, bool logWarnings) const
         if (!n.IsDefined())
             return YAML::Node();
         return getNode(n, ++i);
-        YAMLCONFIG_CATCH(0, (YAML::Node()))
+        YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(YAML::Node()))
     };
     return getNode(_root, 0);
 }
@@ -254,7 +254,7 @@ YAML::Node YamlConfig::nodeSet(const std::string& name)
         std::string s = parts[i];
         YAML::Node n = node[s];
         return getNode(n, ++i);
-        YAMLCONFIG_CATCH(1, (YAML::Node()))
+        YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(YAML::Node()))
     };
     return getNode(_root, 0);
 }
@@ -270,7 +270,7 @@ bool YamlConfig::getValue(const std::string& name,
 
     YAMLCONFIG_TRY
     return func(node, logWarnings);
-    YAMLCONFIG_CATCH(0, false)
+    YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
 }
 
 bool YamlConfig::setValue(const std::string& name, Func func)
@@ -282,7 +282,7 @@ bool YamlConfig::setValue(const std::string& name, Func func)
     YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
     return func(node, false);
-    YAMLCONFIG_CATCH(1, false)
+    YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
 }
 
 #undef YAMLCONFIG_CATCH_2

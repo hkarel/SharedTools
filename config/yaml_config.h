@@ -24,8 +24,8 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   ---
 
-  В модуле реализован механизм чтения конфигурационных файлов записанных
-  в YAML нотации.
+  В модуле реализован механизм чтения и записи конфигурационных
+  файлов в YAML-нотации.
 *****************************************************************************/
 
 #pragma once
@@ -196,6 +196,10 @@ char* YamlConfig::typeName()
 #endif
 }
 
+#define YAMLGET_FUNC 0
+#define YAMLSET_FUNC 1
+#define YAMLRETURN(VAL) (VAL)
+
 #define YAMLCONFIG_LOG_ERROR(ERROR, GETSET) \
     alog::Line logLine = \
     alog::logger().error_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig") \
@@ -260,7 +264,7 @@ bool YamlConfig::getValue(const std::string& name, T& value, bool logWarnings) c
     YAMLCONFIG_TRY
     // было так: value = node.as<T>();
     value = ProxyStdString<T>::getter(node.as<typename ProxyStdString<T>::Type>());
-    YAMLCONFIG_CATCH(0, false)
+    YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
     return true;
 }
 
@@ -296,7 +300,7 @@ bool YamlConfig::getValueVect(const std::string& name,
         // было так: v.push_back(n.as<ValueType>());
         v.push_back(ProxyStdString<ValueType>::getter(
                         n.as<typename ProxyStdString<ValueType>::Type>()));
-        YAMLCONFIG_CATCH(0, false)
+        YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
     }
     value.swap(v);
     return true;
@@ -330,7 +334,7 @@ bool YamlConfig::setValue(const std::string& name, const T& value)
     YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
     node = YAML::Node(ProxyStdString<T>::setter(value));
-    YAMLCONFIG_CATCH(1, false)
+    YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
     return true;
 }
 
@@ -347,7 +351,7 @@ bool YamlConfig::setValueVect(const std::string& name, const VectorT& value)
     typedef typename VectorT::value_type ValueType;
     for (const ValueType& v : value)
         node.push_back(ProxyStdString<ValueType>::setter(v));
-    YAMLCONFIG_CATCH(1, false)
+    YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
     return true;
 }
 
