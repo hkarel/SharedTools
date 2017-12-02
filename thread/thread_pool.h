@@ -31,6 +31,7 @@
 #include "safe_singleton.h"
 
 #include <atomic>
+#include <chrono>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -78,6 +79,7 @@ public:
         Func _func;
         thread _thread;
         ThreadPool* _pool;
+        chrono::seconds _timeout;
 
         atomic_bool   _working  = {true};  // Признак, что поток выполняет работу.
         volatile bool _sleeps   = {false}; // Поток находится в состоянии ожидания.
@@ -102,6 +104,12 @@ public:
     // Возвращает TRUE, когда пул потоков остановлен.
     bool stopped() const {return _stopped;}
 
+    // Интервал времени (в секундах) по истечении которого неиспользуемый поток
+    // будет уничтожен. Установить новый интервал можно только когда пул потоков
+    // остановлен. По умолчанию интервал равен 15.
+    int timeout() const {return _timeout;}
+    void setTimeout(int timeout);
+
     // Выполняет функцию runFunc в отдельном потоке, при условии, что пул
     // потоков не остановлен. Если пул потоков остановлен, то функция runFunc
     // будет выполнена в вызывающем потоке.
@@ -120,6 +128,8 @@ private:
     DISABLE_DEFAULT_COPY(ThreadPool)
 
     atomic_bool _stopped = {false};
+    atomic_int  _timeout = {15};
+
     vector<Item*> _threads;
     mutex _threadsLock;
 

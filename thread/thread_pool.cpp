@@ -65,6 +65,12 @@ void ThreadPool::stop()
     _threads.clear();
 }
 
+void ThreadPool::setTimeout(int timeout)
+{
+    if (_stopped)
+        _timeout = timeout;
+}
+
 ThreadPool::Item* ThreadPool::run(Func runFunc)
 {
     if (!runFunc)
@@ -109,6 +115,7 @@ ThreadPool::Item* ThreadPool::run(Func runFunc)
         _threads.push_back(item);
     }
     item->_pool = this;
+    item->_timeout = chrono::seconds(_timeout);
     item->_working = true;
     item->_sleeps = false;
     item->_finished = false;
@@ -154,8 +161,8 @@ void ThreadPool::Item::run()
                 if (_working || _pool->_stopped)
                     break;
 
-                static chrono::seconds timeout {15};
-                stat = _sleepCond.wait_for(locker, timeout);
+                //static chrono::seconds timeout {15};
+                stat = _sleepCond.wait_for(locker, _timeout);
 
             } while (stat != cv_status::timeout);
             _sleeps = false;
