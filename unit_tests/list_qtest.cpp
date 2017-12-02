@@ -32,6 +32,9 @@ private slots:
     void bruteFind();
     void bruteFind2();
 
+    // Проверка работы функции range()
+    void checkRange();
+
     // Тест поиска по не уникальному отсортированному списку
     void notUniqueFind();
 
@@ -39,10 +42,7 @@ private slots:
     // выполнена по двум полям и оба не уникальные.
     // Требования к поиску: искомое значение должно быть >= поля1 и <= поля2.
     // Так же нужно вернуть граничные значения удовлетворяющие условию.
-    //void notUniqueStructFind();
-
-    // Проверка работы функции range()
-    void checkRange();
+    void notUniqueStructFind();
 };
 
 int compareFunc(const int* item1, const int* item2, void*)
@@ -1084,6 +1084,125 @@ void ListTest::bruteFind2()
     QVERIFY(ptr != 0);
 }
 
+void ListTest::checkRange()
+{
+    lst::FindResult fr;
+    lst::FindResultRange frr;
+    lst::List<int> list;
+    int index, i;
+
+    auto lambda_find = [&i] (const int* item) -> int
+    {
+        return LIST_COMPARE_ITEM(i, *item);
+    };
+
+    qInfo("Test for empty list");
+    lst::List<int>::RangeType range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+    for (int* val : range)
+    {
+        (void) val;
+        QVERIFY2(false, "Not empty list");
+    }
+
+    qInfo("Test for 10 elements (1,1,2,2,2,2,4,5,5,5)");
+    list.clear();
+    list.addCopy(1);
+    list.addCopy(1);
+    list.addCopy(2);
+    list.addCopy(2);
+    list.addCopy(2);
+    list.addCopy(2);
+    list.addCopy(4);
+    list.addCopy(5);
+    list.addCopy(5);
+    list.addCopy(5);
+    list.sort();
+
+    // === Диапазон для числа 0 ===
+    i = 0;
+    fr = list.findRef(i);
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+    for (int* val : range)
+    {
+        (void) val;
+        QVERIFY2(false, "Not empty list");
+    }
+
+    // === Диапазон для числа 1 ===
+    i = 1;
+    fr = list.findRef(i);
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   != list.end());
+
+    index = list.indexOf(*range.begin());
+    QCOMPARE(index, 0);
+
+    index = list.indexOf(*(range.end() - 1));
+    QCOMPARE(index, 1);
+
+    // === Диапазон для числа 2 ===
+    i = 2;
+    fr = list.findRef(i);
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   != list.end());
+
+    index = list.indexOf(*range.begin());
+    QCOMPARE(index, 2);
+
+    index = list.indexOf(*(range.end() - 1));
+    QCOMPARE(index, 5);
+
+    // === Диапазон для числа 4 ===
+    i = 4;
+    fr = list.findRef(i);
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   != list.end());
+
+    index = list.indexOf(*range.begin());
+    QCOMPARE(index, 6);
+
+    index = list.indexOf(*(range.end() - 1));
+    QCOMPARE(index, 6);
+
+    // === Диапазон для числа 5 ===
+    i = 5;
+    fr = list.findRef(i);
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   == list.end());
+
+    index = list.indexOf(*range.begin());
+    QCOMPARE(index, 7);
+
+    index = list.indexOf(*(range.end() - 1));
+    QCOMPARE(index, 9);
+
+    // === Диапазон для числа 7 ===
+    i = 7;
+    fr = list.findRef(i);
+    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+    for (int* val : range)
+    {
+        (void) val;
+        QVERIFY2(false, "Not empty list");
+    }
+}
+
 void notUniqueFind_(const lst::List<int>& list, int i0, int i11, int i12, int i21, int i22, int i3, int i4, int i51, int i52, int i7)
 {
     lst::FindResult fr;
@@ -1292,6 +1411,8 @@ struct SortTwoVal
 {
     int val1;
     int val2;
+    SortTwoVal() {}
+    SortTwoVal(int v1, int v2) : val1(v1), val2(v2) {}
 
     struct Compare
     {
@@ -1304,163 +1425,222 @@ struct SortTwoVal
 
 };
 
-//void ListTest::notUniqueStructFind()
-//{
-//    lst::List<SortTwoVal, SortTwoVal::Compare> list;
-
-//    // 4
-
-//    SortTwoVal* v;
-//    v = list.add(); v->val1 = 1; v->val2 = 2;
-//    v = list.add(); v->val1 = 1; v->val2 = 3;
-//    v = list.add(); v->val1 = 1; v->val2 = 5;
-//    v = list.add(); v->val1 = 3; v->val2 = 7;
-//    v = list.add(); v->val1 = 3; v->val2 = 7;
-//    v = list.add(); v->val1 = 3; v->val2 = 8;
-//    v = list.add(); v->val1 = 4; v->val2 = 7;
-//    v = list.add(); v->val1 = 4; v->val2 = 8;
-//    v = list.add(); v->val1 = 6; v->val2 = 10;
-//    v = list.add(); v->val1 = 6; v->val2 = 15;
-//    v = list.add(); v->val1 = 6; v->val2 = 99;
-
-//    list.sort(lst::SortMode::Up);
-//    qInfo("List of SortTwoVal was sorted up");
-
-//    for (SortTwoVal* v : list)
-//    {
-//        printf("val1: %d  val2: %d\n", v->val1, v->val2);
-//    }
-//    printf("\n");
-
-//    list.sort(lst::SortMode::Down);
-//    qInfo("List of SortTwoVal was sorted down");
-
-//    for (SortTwoVal* v : list)
-//    {
-//        printf("val1: %d  val2: %d\n", v->val1, v->val2);
-//    }
-
-//    printf("TEST PASSED\n");
-//}
-
-void ListTest::checkRange()
+void ListTest::notUniqueStructFind()
 {
     lst::FindResult fr;
     lst::FindResultRange frr;
-    lst::List<int> list;
-    int index, i;
 
-    auto lambda_find = [&i] (const int* item) -> int
-    {
-        return LIST_COMPARE_ITEM(i, *item);
-    };
+    typedef lst::List<SortTwoVal, SortTwoVal::Compare> ListType;
+    ListType list;
 
-    qInfo("Test for empty list");
-    lst::List<int>::RangeType range = list.range(frr);
+    SortTwoVal* v;
+    v = list.add(); v->val1 = 1; v->val2 = 2;
+    v = list.add(); v->val1 = 1; v->val2 = 3;
+    v = list.add(); v->val1 = 1; v->val2 = 5;
+    v = list.add(); v->val1 = 3; v->val2 = 7;
+    v = list.add(); v->val1 = 3; v->val2 = 7;
+    v = list.add(); v->val1 = 3; v->val2 = 8;
+    v = list.add(); v->val1 = 4; v->val2 = 7;
+    v = list.add(); v->val1 = 4; v->val2 = 8;
+    v = list.add(); v->val1 = 6; v->val2 = 10;
+    v = list.add(); v->val1 = 6; v->val2 = 10;
+    v = list.add(); v->val1 = 6; v->val2 = 15;
+    v = list.add(); v->val1 = 6; v->val2 = 99;
+
+    list.sort(lst::SortMode::Up);
+    qInfo("List of SortTwoVal was sorted UP and DOWN");
+    for (SortTwoVal* v : list)
+        qInfo() << "  val1:" << v->val1 << " val2:" << v->val2;
+
+    // Поиск пары 0,5
+    fr = list.findRef(SortTwoVal{0, 5});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 0);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    ListType::RangeType range = list.range(frr);
     QVERIFY(range.begin() == list.end());
     QVERIFY(range.end()   == list.end());
-    for (int* val : range)
+    for (SortTwoVal* val : range)
     {
         (void) val;
         QVERIFY2(false, "Not empty list");
     }
 
-    qInfo("Test for 10 elements (1,1,2,2,2,2,4,5,5,5)");
-    list.clear();
-    list.addCopy(1);
-    list.addCopy(1);
-    list.addCopy(2);
-    list.addCopy(2);
-    list.addCopy(2);
-    list.addCopy(2);
-    list.addCopy(4);
-    list.addCopy(5);
-    list.addCopy(5);
-    list.addCopy(5);
-    list.sort();
+    // Поиск пары 1,4
+    fr = list.findRef(SortTwoVal{1, 4});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 1);
 
-    // === Диапазон для числа 0 ===
-    i = 0;
-    fr = list.findRef(i);
-    frr = lst::rangeFindResultL(list, lambda_find, fr);
+    frr = lst::rangeFindResult(list, list.compare(), fr);
     range = list.range(frr);
     QVERIFY(range.begin() == list.end());
     QVERIFY(range.end()   == list.end());
-    for (int* val : range)
+
+    // Поиск пары 3,7
+    fr = list.findRef(SortTwoVal{3, 7});
+    QCOMPARE(fr.success(), true);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 4);
+    QCOMPARE(frr.last.index(),  5);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   != list.end());
+
+    // Поиск пары 4,8
+    fr = list.findRef(SortTwoVal{4, 8});
+    QCOMPARE(fr.success(), true);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 6);
+    QCOMPARE(frr.last.index(),  6);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   != list.end());
+
+    // Поиск пары 6,10
+    fr = list.findRef(SortTwoVal{6, 10});
+    QCOMPARE(fr.success(), true);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 10);
+    QCOMPARE(frr.last.index(),  11);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   == list.end());
+
+    // Поиск пары 6,6
+    fr = list.findRef(SortTwoVal{6, 6});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 12);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 12);
+    QCOMPARE(frr.last.index(),  12);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+
+    // Поиск пары 7,6
+    fr = list.findRef(SortTwoVal{7, 6});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 12);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 12);
+    QCOMPARE(frr.last.index(),  12);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+
+
+    //---
+    list.sort(lst::SortMode::Down);
+    qInfo("List of SortTwoVal was sorted DOWN and UP");
+    for (SortTwoVal* v : list)
+        qInfo() << "  val1:" << v->val1 << " val2:" << v->val2;
+
+    // Поиск пары 7,6
+    fr = list.findRef(SortTwoVal{7, 6});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 0);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 0);
+    QCOMPARE(frr.last.index(),  0);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+
+    // Поиск пары 6,6
+    fr = list.findRef(SortTwoVal{6, 6});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 0);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 0);
+    QCOMPARE(frr.last.index(),  0);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+
+    // Поиск пары 6,10
+    fr = list.findRef(SortTwoVal{6, 10});
+    QCOMPARE(fr.success(), true);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 0);
+    QCOMPARE(frr.last.index(),  1);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.begin());
+    QVERIFY(range.end()   != list.end());
+
+    // Поиск пары 4,8
+    fr = list.findRef(SortTwoVal{4, 8});
+    QCOMPARE(fr.success(), true);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 5);
+    QCOMPARE(frr.last.index(),  5);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   != list.end());
+
+    // Поиск пары 3,7
+    fr = list.findRef(SortTwoVal{3, 7});
+    QCOMPARE(fr.success(), true);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 6);
+    QCOMPARE(frr.last.index(),  7);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() != list.end());
+    QVERIFY(range.end()   != list.end());
+
+    // Поиск пары 1,4
+    fr = list.findRef(SortTwoVal{1, 4});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 11);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 11);
+    QCOMPARE(frr.last.index(),  11);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+
+    // Поиск пары 0,5
+    fr = list.findRef(SortTwoVal{0, 5});
+    QCOMPARE(fr.success(), false);
+    QCOMPARE(fr.index(), 12);
+
+    frr = lst::rangeFindResult(list, list.compare(), fr);
+    QCOMPARE(frr.first.index(), 12);
+    QCOMPARE(frr.last.index(),  12);
+
+    range = list.range(frr);
+    QVERIFY(range.begin() == list.end());
+    QVERIFY(range.end()   == list.end());
+    for (SortTwoVal* val : range)
     {
         (void) val;
         QVERIFY2(false, "Not empty list");
     }
 
-    // === Диапазон для числа 1 ===
-    i = 1;
-    fr = list.findRef(i);
-    frr = lst::rangeFindResultL(list, lambda_find, fr);
-    range = list.range(frr);
-    QVERIFY(range.begin() != list.end());
-    QVERIFY(range.end()   != list.end());
-
-    index = list.indexOf(*range.begin());
-    QCOMPARE(index, 0);
-
-    index = list.indexOf(*(range.end() - 1));
-    QCOMPARE(index, 1);
-
-    // === Диапазон для числа 2 ===
-    i = 2;
-    fr = list.findRef(i);
-    frr = lst::rangeFindResultL(list, lambda_find, fr);
-    range = list.range(frr);
-    QVERIFY(range.begin() != list.end());
-    QVERIFY(range.end()   != list.end());
-
-    index = list.indexOf(*range.begin());
-    QCOMPARE(index, 2);
-
-    index = list.indexOf(*(range.end() - 1));
-    QCOMPARE(index, 5);
-
-    // === Диапазон для числа 4 ===
-    i = 4;
-    fr = list.findRef(i);
-    frr = lst::rangeFindResultL(list, lambda_find, fr);
-    range = list.range(frr);
-    QVERIFY(range.begin() != list.end());
-    QVERIFY(range.end()   != list.end());
-
-    index = list.indexOf(*range.begin());
-    QCOMPARE(index, 6);
-
-    index = list.indexOf(*(range.end() - 1));
-    QCOMPARE(index, 6);
-
-    // === Диапазон для числа 5 ===
-    i = 5;
-    fr = list.findRef(i);
-    frr = lst::rangeFindResultL(list, lambda_find, fr);
-    range = list.range(frr);
-    QVERIFY(range.begin() != list.end());
-    QVERIFY(range.end()   == list.end());
-
-    index = list.indexOf(*range.begin());
-    QCOMPARE(index, 7);
-
-    index = list.indexOf(*(range.end() - 1));
-    QCOMPARE(index, 9);
-
-    // === Диапазон для числа 7 ===
-    i = 7;
-    fr = list.findRef(i);
-    frr = lst::rangeFindResultL(list, lambda_find, fr);
-    range = list.range(frr);
-    QVERIFY(range.begin() == list.end());
-    QVERIFY(range.end()   == list.end());
-    for (int* val : range)
-    {
-        (void) val;
-        QVERIFY2(false, "Not empty list");
-    }
 }
+
 
 QTEST_MAIN(ListTest)
 #include "list_qtest.moc"
