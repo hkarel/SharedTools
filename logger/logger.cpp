@@ -30,6 +30,7 @@
 #include "spin_locker.h"
 #include "steady_timer.h"
 #include "utils.h"
+#include "thread/thread_pool.h"
 
 #include <ctime>
 #include <stdexcept>
@@ -700,6 +701,10 @@ void Logger::run()
     steady_timer flushTimer;
     MessageList messagesBuff;
 
+    trd::ThreadPool threadPool;
+    threadPool.setTimeout(60);
+    threadPool.start();
+
     // Вспомогательный флаг, нужен чтобы дать возможность перед прерываением
     // потока сделать лишний цикл while (true) и сбросить все буферы в сэйверы.
     // Примечание: threadStop() для этой цели использовать нельзя.
@@ -773,20 +778,36 @@ void Logger::run()
 
             int step = messages.count();
             int threadIndex = 0;
-            vector<thread> threads;
-            if (threadsCount)
+
+//            vector<thread> threads;
+//            if (threadsCount)
+//            {
+//                step = messages.count() / (threadsCount + 1);
+//                for (; threadIndex < threadsCount; ++threadIndex)
+//                    threads.push_back(thread(prefixFormatterL,
+//                                             std::ref(messages),
+//                                             threadIndex * step,
+//                                             (threadIndex + 1) * step));
+//            }
+//            prefixFormatterL(messages, threadIndex * step, messages.count());
+
+//            for (size_t i = 0; i < threads.size(); ++i)
+//                threads[i].join();
+
+            vector<trd::ThreadPool::Item*> threads;
+            for (int i = 0; i < threadsCount; ++i)
             {
-                step = messages.count() / (threadsCount + 1);
-                for (; threadIndex < threadsCount; ++threadIndex)
-                    threads.push_back(thread(prefixFormatterL,
-                                             std::ref(messages),
-                                             threadIndex * step,
-                                             (threadIndex + 1) * step));
+                trd::ThreadPool::Item* thread = threadPool.run(prefixFormatterL,
+                                                               std::ref(messages),
+                                                               threadIndex * step,
+                                                               (threadIndex + 1) * step);
+                if (thread)
+                    threads.push_back(thread);
             }
             prefixFormatterL(messages, threadIndex * step, messages.count());
 
             for (size_t i = 0; i < threads.size(); ++i)
-                threads[i].join();
+                threads[i]->join();
 
             SaverPtr saverOut;
             SaverPtr saverErr;
@@ -828,6 +849,8 @@ void Logger::run()
         if (threadStop())
             loopBreak = true;
     } //while (true)
+
+    threadPool.stop();
 }
 
 void Logger::flush()
