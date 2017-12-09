@@ -293,10 +293,13 @@ private:
     quint16 _protocolVersionHigh = {BPROTOCOL_VERSION_HIGH};
 
     // Битовые флаги
+    // TODO: Проверить значения битовых флагов при пересылке сообщения
+    //       из little-endian системы в big-endian систему.
     union {
         quint32 _flags; // Поле содержит значения всех флагов, используется
                         // при сериализации
         struct {
+            //=== Байт 1 ===
             // Тип пересылаемого сообщения, соответствует enum Type
             quint32 _type: 3;
 
@@ -306,6 +309,7 @@ private:
             // Приоритет сообщения, соответствует enum Priority
             quint32 _priority: 2;
 
+            //=== Байт 2 ===
             // Признак что контент сообщения находится в сжатом состоянии,
             // так же содержит информацию по алгоритму сжатия, соответствует
             // enum Compression
@@ -317,8 +321,13 @@ private:
             mutable quint32 _maxTimeLifeIsEmpty: 1;
             mutable quint32 _contentIsEmpty: 1;
 
-            quint32 _reserved: 17;
+            quint32 _reserved1: 2;
 
+            //=== Байт 3 ===
+            quint32 _reserved2: 8;
+
+            //=== Байт 4 ===
+            quint32 _reserved3: 7;
             // Признак 'EmptyTraits'. Признак используется для оптимизации
             // размера сообщения при его сериализации. Данный признак идет
             // последним битом в поле _flags.
