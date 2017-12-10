@@ -25,11 +25,13 @@
 *****************************************************************************/
 
 #include "utils.h"
-#include "logger/logger.h"
+#include "break_point.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <cmath>
+#include <sstream>
+#include <stdexcept>
 #include <unistd.h>
 
 namespace utl {
@@ -74,7 +76,7 @@ void savePidFile(const string& fileName)
             fclose(pf);
         }
         else
-            log_error << "Can not open pid-file " << fileName << " for writing.";
+            throw logic_error("Can not open pid-file " + fileName + " for writing");
     }
 }
 
