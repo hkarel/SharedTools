@@ -68,6 +68,7 @@ Message::Ptr Message::cloneForAnswer() const
     m->_flags2 = _flags2;
     m->_tag = _tag;
     m->_maxTimeLife = _maxTimeLife;
+    m->_socketType = _socketType;
     m->_sourcePoint = _sourcePoint;
     m->_socketDescriptor = _socketDescriptor;
 
