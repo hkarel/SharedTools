@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include "simple_ptr.h"
 #include "safe_singleton.h"
 #include "qt/communication/host_point.h"
 #include "qt/communication/transport/base.h"
@@ -48,9 +49,9 @@ namespace tcp {
 class Socket : public base::Socket
 {
 public:
-    typedef container_ptr<Socket> Ptr;
+    typedef clife_ptr<Socket> Ptr;
 
-    Socket() = default;
+    Socket() : base::Socket(SocketType::Tcp) {}
 
     // Определяет параметры подключения к удаленному хосту
     bool init(const HostPoint&);
@@ -99,7 +100,7 @@ private:
   с последующей установкой соединения с ними, так же используется для приема
   и отправки сообщений.
 */
-class Listener : public QTcpServer, public base::Listener<Socket>
+class Listener : public QTcpServer, public base::Listener
 {
 public:
     Listener();

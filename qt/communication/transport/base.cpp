@@ -33,6 +33,7 @@
 #include "qt/communication/commands_pool.h"
 #include "qt/communication/logger_operators.h"
 
+#include <utility>
 #include <stdexcept>
 
 #define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Transport")
@@ -57,7 +58,7 @@ void Properties::setCompressionLevel(int val)
 
 const QUuidEx Socket::_protocolSignature = {"82c40273-4037-4f1b-a823-38123435b22f"};
 
-Socket::Socket()
+Socket::Socket(SocketType type) : _type(type)
 {
     registrationQtMetatypes();
 }
@@ -719,9 +720,9 @@ void Socket::run()
                                     << "Command " << CommandNameLog(unknown.commandId)
                                     << " is unknown for the remote side"
                                     << "; socket descriptor: " << unknown.socketDescriptor;
-                                if (unknown.socketType == Message::SocketType::Tcp)
+                                if (unknown.socketType == SocketType::Tcp)
                                     logLine << "; host: " << unknown.address << ":" << unknown.port;
-                                else if (unknown.socketType == Message::SocketType::Local)
+                                else if (unknown.socketType == SocketType::Local)
                                     logLine << "; socket name: " << unknown.socketName;
                                 else
                                     logLine << "; unsupported socket type";
@@ -755,9 +756,9 @@ void Socket::run()
                             alog::Line logLine = log_error_m
                                 << "Unknown command: " << unknown.commandId
                                 << "; socket descriptor: " << unknown.socketDescriptor;
-                            if (unknown.socketType == Message::SocketType::Tcp)
+                            if (unknown.socketType == SocketType::Tcp)
                                 logLine << "; host: " << unknown.address << ":" << unknown.port;
-                            else if (unknown.socketType == Message::SocketType::Local)
+                            else if (unknown.socketType == SocketType::Local)
                                 logLine << "; socket name: " << unknown.socketName;
                             else
                                 logLine << "; unsupported socket type";
@@ -806,7 +807,198 @@ void Socket::run()
     #undef CHECK_SOCKET_ERROR
 }
 
+//-------------------------------- Listener ----------------------------------
+
+Socket::List Listener::sockets() const
+{
+    Socket::List sockets;
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    for (Socket* s : _sockets)
+        if (s->isRunning())
+        {
+            s->add_ref();
+            sockets.add(s);
+        }
+
+    return std::move(sockets);
+}
+
+void Listener::send(const Message::Ptr& message,
+                    const SocketDescriptorSet& excludeSockets) const
+{
+    Socket::List sockets = this->sockets();
+    communication::transport::send(sockets, message, excludeSockets);
+}
+
+void Listener::send(const Message::Ptr& message,
+                    SocketDescriptor excludeSocket) const
+{
+    Socket::List sockets = this->sockets();
+    SocketDescriptorSet excludeSockets;
+    excludeSockets << excludeSocket;
+    communication::transport::send(sockets, message, excludeSockets);
+}
+
+Socket::Ptr Listener::socketByDescriptor(SocketDescriptor descr) const
+{
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    for (Socket* s : _sockets)
+        if (s->socketDescriptor() == descr)
+            return Socket::Ptr(s);
+
+    return Socket::Ptr();
+}
+
+void Listener::addSocket(const Socket::Ptr& socket)
+{
+    if (socket.empty()
+        || socket->socketDescriptor() == SocketDescriptor(-1))
+        return;
+
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    bool socketExists = false;
+    for (int i = 0; i < _sockets.count(); ++i)
+        if (_sockets.item(i)->socketDescriptor() == socket->socketDescriptor())
+        {
+            socketExists = true;
+            break;
+        }
+
+    if (!socketExists)
+    {
+        socket->add_ref();
+        _sockets.add(socket);
+        connectSignals(socket.get());
+    }
+}
+
+Socket::Ptr Listener::releaseSocket(SocketDescriptor descr)
+{
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    Socket::Ptr socket;
+    for (int i = 0; i < _sockets.count(); ++i)
+        if (_sockets.item(i)->socketDescriptor() == descr)
+        {
+            socket.attach(_sockets.release(i));
+            disconnectSignals(socket.get());
+            break;
+        }
+
+    return std::move(socket);
+}
+
+void Listener::closeSockets()
+{
+    _removeClosedSockets.stop();
+    Socket::List sockets = this->sockets();
+    for (Socket* s : sockets)
+        if (s->isRunning())
+        {
+            s->stop();
+            s->wait();
+        }
+}
+
+void Listener::removeClosedSocketsInternal()
+{
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    for (int i = 0; i < _sockets.count(); ++i)
+        if (!_sockets.item(i)->isRunning())
+            _sockets.remove(i--);
+}
+
+void Listener::incomingConnectionInternal(Socket::Ptr socket,
+                                          SocketDescriptor socketDescriptor)
+{
+    socket->setInitSocketDescriptor(socketDescriptor);
+    socket->setCompressionLevel(_compressionLevel);
+    socket->setCompressionSize(_compressionSize);
+    socket->setCheckProtocolCompatibility(_checkProtocolCompatibility);
+    socket->setCheckUnknownCommands(_checkUnknownCommands);
+
+    connectSignals(socket.get());
+
+    // Примечание: выход из функции start() происходит только тогда, когда
+    // поток гарантированно запустится, поэтому случайное удаление нового
+    // сокета в функции removeClosedSockets() исключено.
+    socket->start();
+
+    QMutexLocker locker(&_socketsLock); (void) locker;
+    _sockets.add(socket.detach());
+}
+
 } // namespace base
+
+void send(const base::Socket::List& sockets,
+          const Message::Ptr& message,
+          const SocketDescriptorSet& excludeSockets)
+{
+    if (message->type() == Message::Type::Event)
+    {
+        for (base::Socket* s : sockets)
+            if (!excludeSockets.contains(s->socketDescriptor()))
+                s->send(message);
+    }
+    else
+    {
+        if (!message->destinationSocketDescriptors().isEmpty())
+        {
+            bool messageSended = false;
+            for (base::Socket* s : sockets)
+                if (message->destinationSocketDescriptors().contains(s->socketDescriptor()))
+                {
+                    s->send(message);
+                    messageSended = true;
+                }
+            if (!messageSended)
+            {
+                alog::Line logLine =
+                    log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                                << ". Not found sockets with descriptors:";
+                for (SocketDescriptor sd : message->destinationSocketDescriptors())
+                    logLine << " " << sd;
+                logLine << ". Message will be discarded";
+            }
+        }
+        else if (message->socketDescriptor() != SocketDescriptor(-1))
+        {
+            bool messageSended = false;
+            for (base::Socket* s : sockets)
+                if (s->socketDescriptor() == message->socketDescriptor()
+                    && s->type() == message->socketType())
+                {
+                    s->send(message);
+                    messageSended = true;
+                    break;
+                }
+            if (!messageSended)
+                log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                            << ". Not found socket with descriptor: " << message->socketDescriptor()
+                            << ". Message will be discarded";
+        }
+        else
+        {
+            log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                        << ". Destination socket descriptors is undefined"
+                        << ". Message will be discarded";
+        }
+    }
+}
+
+void send(const base::Socket::List& sockets,
+          const Message::Ptr& message,
+          SocketDescriptor excludeSocket)
+{
+    SocketDescriptorSet excludeSockets;
+    excludeSockets << excludeSocket;
+    send(sockets, message, excludeSockets);
+}
+
+base::Socket::List concatSockets(const base::Listener& listener)
+{
+    return listener.sockets();
+}
+
 } // namespace transport
 } // namespace communication
 

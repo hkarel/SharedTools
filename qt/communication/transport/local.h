@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include "simple_ptr.h"
 #include "safe_singleton.h"
 #include "qt/communication/transport/base.h"
 
@@ -46,9 +47,9 @@ namespace local {
 class Socket : public base::Socket
 {
 public:
-    typedef container_ptr<Socket> Ptr;
+    typedef clife_ptr<Socket> Ptr;
 
-    Socket() = default;
+    Socket() : base::Socket(SocketType::Local) {}
 
     // Определяет параметры подключения к удаленному хосту
     bool init(const QString& serverName);
@@ -97,7 +98,7 @@ private:
   с последующей установкой соединения с ними, так же используется для приема
   и отправки сообщений.
 */
-class Listener : public QLocalServer, public base::Listener<Socket>
+class Listener : public QLocalServer, public base::Listener
 {
 public:
     Listener();

@@ -48,6 +48,13 @@ namespace tcp   {class Socket;}
 namespace udp   {class Socket;}
 }
 
+enum class SocketType : quint32
+{
+    Local = 0,
+    Tcp   = 1,
+    Udp   = 2
+};
+
 #if QT_VERSION >= 0x050000
 typedef qintptr SocketDescriptor;
 #else
@@ -94,8 +101,8 @@ public:
                      // данные в формате communication::data::MessageFailed.
         Error   = 3  // При обработке сообщения произошла ошибка, и в качестве
                      // ответа отправляется сообщения с описанием причины ошибки.
-                     // В данном случае сообщение (Message) будет содержать данные
-                     // в формате communication::data::MessageError.
+                     // В данном случае сообщение (Message) будет содержать
+                     // данные в формате communication::data::MessageError.
     };
 
     enum class Priority : quint32
@@ -117,13 +124,6 @@ public:
                     // Это может потребоваться когда контент изначально сжат,
                     // например, при отправке JPG, PNG, и прочих подобных
                     // форматов.
-    };
-
-    enum class SocketType : quint32
-    {
-        Local = 0,
-        Tcp   = 1,
-        Udp   = 2
     };
 
     // Персональный идентификатор сообщения.
@@ -154,9 +154,9 @@ public:
     Priority priority() const;
     void setPriority(Priority);
 
-    // Передает пользовательские данные без сохранения их в поле content.
-    // Это позволяет сократить количество ресурсоемких операций сериализации/
-    // десериализации данных необходимых для поля content.
+    // Передает пользовательские данные размером не более 4 байт без сохранения
+    // их в поле content. Это позволяет сократить количество ресурсоемких опера-
+    // ций сериализации/десериализации данных необходимых для поля content.
     quint32 tag() const {return _tag;}
     void setTag(quint32 val) {_tag = val;}
 

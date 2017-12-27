@@ -205,7 +205,7 @@ void Socket::socketClose()
 Message::Ptr Socket::messageFromByteArray(const BByteArray& buff)
 {
     Message::Ptr m = Message::fromByteArray(buff);
-    m->setSocketType(Message::SocketType::Tcp);
+    m->setSocketType(SocketType::Tcp);
     m->setSocketDescriptor(_socket->socketDescriptor());
     m->setSourcePoint({_socket->peerAddress(), _socket->peerPort()});
     return m;
@@ -214,7 +214,7 @@ Message::Ptr Socket::messageFromByteArray(const BByteArray& buff)
 void Socket::fillUnknownMessage(const Message::Ptr& message, data::Unknown& unknown)
 {
     unknown.commandId = message->command();
-    unknown.socketType = Message::SocketType::Tcp;
+    unknown.socketType = SocketType::Tcp;
     unknown.socketDescriptor = _socket->socketDescriptor();
     unknown.socketName.clear();
     unknown.address = _socket->peerAddress();
@@ -265,7 +265,8 @@ void Listener::removeClosedSockets()
 
 void Listener::incomingConnection(SocketDescriptor socketDescriptor)
 {
-    incomingConnectionInternal(socketDescriptor);
+    Socket::Ptr socket {new Socket};
+    incomingConnectionInternal(socket, socketDescriptor);
 }
 
 void Listener::connectSignals(base::Socket* socket)

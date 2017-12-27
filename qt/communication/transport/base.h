@@ -29,9 +29,10 @@
 
 #pragma once
 
+#include "_list.h"
 #include "defmac.h"
-#include "container_ptr.h"
-#include "simple_ptr.h"
+#include "clife_base.h"
+#include "clife_ptr.h"
 #include "qt/thread/qthreadex.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/message.h"
@@ -43,8 +44,6 @@
 namespace communication {
 namespace transport {
 namespace base {
-
-template<typename> class Listener;
 
 /**
   Определяет некоторые свойства для механизма коммуникаций
@@ -89,10 +88,16 @@ protected:
   Базовый класс для создания соединения и отправки сообщений. Используется как
   на клиентской, так и на серверной стороне.
 */
-class Socket : public QThreadEx, public Properties
+class Socket : public QThreadEx, public clife_base, public Properties
 {
+    struct Allocator
+    {
+        void destroy(Socket* x) {if (x) x->release();}
+    };
+
 public:
-    typedef container_ptr<Socket> Ptr;
+    typedef clife_ptr<Socket> Ptr;
+    typedef lst::List<Socket, lst::CompareItemDummy, Allocator> List;
 
     // Статус совместимости версий бинарного протокола
     enum class BinaryProtocol {Compatible, Incompatible, Undefined};
@@ -112,8 +117,11 @@ public:
     // Возвращает статус проверки совместимости версий бинарного протокола
     BinaryProtocol binaryProtocolStatus() const;
 
+    // Возвращает тип сокета
+    SocketType type() const {return _type;}
+
     // Числовой идентификатор сокета
-    virtual SocketDescriptor socketDescriptor() const;
+    SocketDescriptor socketDescriptor() const;
 
     // Выполняет подключение к удаленному сокету с параметрами определенными
     // в методе init() в классе-наследнике
@@ -144,10 +152,6 @@ public:
     // Ожидает (в секундах) подключения к удаленному хосту.
     void waitConnection(int time = 0);
 
-    // Используется для связывания сокета созданного в Listener.
-    SocketDescriptor initSocketDescriptor() const {return _initSocketDescriptor;}
-    void setInitSocketDescriptor(SocketDescriptor val) {_initSocketDescriptor = val;}
-
 signals:
     // Сигнал эмитируется при получении сообщения
     void message(communication::Message::Ptr);
@@ -164,7 +168,7 @@ private slots:
     void socketDisconnected();
 
 protected:
-    Socket();
+    Socket(SocketType type);
     void run() override;
 
     virtual void socketCreate() = 0;
@@ -187,6 +191,10 @@ protected:
     virtual Message::Ptr messageFromByteArray(const BByteArray&) = 0;
     virtual void fillUnknownMessage(const Message::Ptr&, data::Unknown&) = 0;
 
+    // Используется для связывания сокета созданного в Listener.
+    SocketDescriptor initSocketDescriptor() const {return _initSocketDescriptor;}
+    void setInitSocketDescriptor(SocketDescriptor val) {_initSocketDescriptor = val;}
+
 private:
     Q_OBJECT
     DISABLE_DEFAULT_COPY(Socket)
@@ -196,6 +204,7 @@ private:
     QSet<QUuidEx> _unknownCommands;
     mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
 
+    const SocketType _type;
     volatile BinaryProtocol _binaryProtocolStatus = {BinaryProtocol::Undefined};
 
     Message::List _messagesHigh;
@@ -212,6 +221,8 @@ private:
 
     SocketDescriptor _initSocketDescriptor = {-1};
     mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
+
+    friend class Listener;
 };
 
 
@@ -220,15 +231,11 @@ private:
   с последующей установкой соединения с ними, так же используется для приема
   и отправки сообщений.
 */
-template<typename SocketT>
 class Listener : public Properties
 {
 public:
-    typedef typename SocketT::Ptr SocketPtr;
-    typedef QVector<SocketPtr> SocketList;
-
     // Возвращает список подключенных сокетов
-    SocketList sockets() const;
+    Socket::List sockets() const;
 
     // Функция отправки сообщений.
     // Параметр excludeSockets используется когда отправляемое сообщение имеет
@@ -248,22 +255,22 @@ public:
     // исхода событий достаточно низкая, т.к. до момента испускания сигнала
     // Socket::connected() выполняется ряд операций, и за это время новый
     // сокет уже будет добавлен с список Listener::_sockets.
-    SocketPtr socketByDescriptor(SocketDescriptor) const;
+    Socket::Ptr socketByDescriptor(SocketDescriptor) const;
 
     // Добавляет сокет в коллекцию сокетов
-    void addSocket(const SocketPtr&);
+    void addSocket(const Socket::Ptr&);
 
     // Извлекает сокет из коллекции сокетов
-    SocketPtr releaseSocket(SocketDescriptor);
+    Socket::Ptr releaseSocket(SocketDescriptor);
 
 protected:
     Listener() = default;
     void closeSockets();
     void removeClosedSocketsInternal();
-    void incomingConnectionInternal(SocketDescriptor);
+    void incomingConnectionInternal(Socket::Ptr, SocketDescriptor);
 
-    virtual void connectSignals(base::Socket*) = 0;
-    virtual void disconnectSignals(base::Socket*) = 0;
+    virtual void connectSignals(Socket*) = 0;
+    virtual void disconnectSignals(Socket*) = 0;
 
     // Используется для удаления сокетов для которых остановлен поток обработки
     QTimer _removeClosedSockets;
@@ -271,13 +278,38 @@ protected:
 private:
     DISABLE_DEFAULT_COPY(Listener)
 
-    SocketList _sockets;
+    Socket::List _sockets;
     mutable QMutex _socketsLock;
 };
 
 } // namespace base
+
+// Функция отправки сообщений.
+// Параметр excludeSockets используется когда отправляемое сообщение имеет
+// тип Event. На сокеты содержащиеся в excludeSockets сообщение отправлено
+// не будет.
+void send(const base::Socket::List& sockets,
+          const Message::Ptr& message,
+          const SocketDescriptorSet& excludeSockets = SocketDescriptorSet());
+
+void send(const base::Socket::List& sockets,
+          const Message::Ptr& message,
+          SocketDescriptor excludeSocket);
+
+// Вспомогательная функция
+base::Socket::List concatSockets(const base::Listener& listener);
+
+// Возвращает единый список сокетов для заданных listener-ов
+template<typename... Args>
+base::Socket::List concatSockets(const base::Listener& listener, const Args&... args)
+{
+    base::Socket::List sl = concatSockets(args...);
+    base::Socket::List ss = listener.sockets();
+    for (int i = 0; i < ss.count(); ++i)
+        sl.add(ss.release(i, lst::NO_COMPRESS_LIST));
+
+    return std::move(sl);
+}
+
 } // namespace transport
 } // namespace communication
-
-#include "base_impl.h"
-

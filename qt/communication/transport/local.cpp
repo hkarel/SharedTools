@@ -202,7 +202,7 @@ void Socket::socketClose()
 Message::Ptr Socket::messageFromByteArray(const BByteArray& buff)
 {
     Message::Ptr m = Message::fromByteArray(buff);
-    m->setSocketType(Message::SocketType::Local);
+    m->setSocketType(SocketType::Local);
     m->setSocketDescriptor(_socket->socketDescriptor());
     m->setSocketName(_socket->serverName());
     return m;
@@ -211,7 +211,7 @@ Message::Ptr Socket::messageFromByteArray(const BByteArray& buff)
 void Socket::fillUnknownMessage(const Message::Ptr& message, data::Unknown& unknown)
 {
     unknown.commandId = message->command();
-    unknown.socketType = Message::SocketType::Local;
+    unknown.socketType = SocketType::Local;
     unknown.socketDescriptor = _socket->socketDescriptor();
     unknown.socketName = _socket->serverName();
     unknown.address = QHostAddress();
@@ -261,7 +261,8 @@ void Listener::removeClosedSockets()
 
 void Listener::incomingConnection(quintptr socketDescriptor)
 {
-    incomingConnectionInternal(SocketDescriptor(socketDescriptor));
+    Socket::Ptr socket {new Socket};
+    incomingConnectionInternal(socket, SocketDescriptor(socketDescriptor));
 }
 
 void Listener::connectSignals(base::Socket* socket)
