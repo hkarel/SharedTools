@@ -36,15 +36,15 @@ const VersionNumber& productVersion()
 VersionNumber::VersionNumber(quint8 major, quint8 minor, quint8 patch)
 
 {
-    this->major = major;
-    this->minor = minor;
-    this->patch = patch;
-    this->build = 0;
+    ver.major = major;
+    ver.minor = minor;
+    ver.patch = patch;
+    ver.build = 0;
 }
 
 QString VersionNumber::toString() const
 {
-    return QString("%1.%2.%3").arg(major).arg(minor).arg(patch);
+    return QString("%1.%2.%3").arg(ver.major).arg(ver.minor).arg(ver.patch);
 }
 
 bool operator== (const VersionNumber v1, const VersionNumber v2)
@@ -60,9 +60,9 @@ bool operator!= (const VersionNumber v1, const VersionNumber v2)
 static int compare(const VersionNumber v1, const VersionNumber v2)
 {
     #define COMPARE(f1, f2) if (f1 != f2) return (f1 < f2) ? -1 : 1;
-    COMPARE(v1.major, v2.major)
-    COMPARE(v1.minor, v2.minor)
-    COMPARE(v1.patch, v2.patch)
+    COMPARE(v1.ver.major, v2.ver.major)
+    COMPARE(v1.ver.minor, v2.ver.minor)
+    COMPARE(v1.ver.patch, v2.ver.patch)
     #undef COMPARE
     return 0;
 }

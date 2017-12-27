@@ -42,7 +42,7 @@ struct VersionNumber
             quint8 patch;   // Номер исправления
             quint8 build;   // Зарезервировано
 
-        };
+        } ver;
     };
     VersionNumber() : vers(0) {}
     VersionNumber(quint32 vers) : vers(vers) {}
