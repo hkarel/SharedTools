@@ -297,7 +297,6 @@ void Socket::run()
 
             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
             {
-                //emit connected(_socket->socketDescriptor());
                 emit connected(socketDescriptorInternal());
             }
             else // BinaryProtocol::Incompatible
@@ -375,10 +374,8 @@ void Socket::run()
                 QByteArray ba;
                 QDataStream s {&ba, QIODevice::WriteOnly};
                 s << _protocolSignature;
-                //_socket->write(ba.constData(), 16);
                 socketWrite(ba.constData(), 16);
                 CHECK_SOCKET_ERROR
-                //_socket->waitForBytesWritten(delay);
                 socketWaitForBytesWritten(delay);
                 CHECK_SOCKET_ERROR
                 _protocolSignatureWrite = true;
@@ -388,10 +385,8 @@ void Socket::run()
             if (!_protocolSignatureRead)
             {
                 timer.start();
-                //while (_socket->bytesAvailable() < 16)
                 while (socketBytesAvailable() < 16)
                 {
-                    //_socket->waitForReadyRead(delay);
                     socketWaitForReadyRead(delay);
                     CHECK_SOCKET_ERROR
                     static const int timeout {40 * delay};
@@ -408,7 +403,6 @@ void Socket::run()
 
                 QByteArray ba;
                 ba.resize(16);
-                //if (_socket->read((char*)ba.data(), 16) != 16)
                 if (socketRead((char*)ba.data(), 16) != 16)
                 {
                     log_error_m << "Failed read protocol signature";
@@ -435,7 +429,6 @@ void Socket::run()
                                  + _messagesLow.count();
             }
 
-            //while (_socket->bytesAvailable() == 0
             while (socketBytesAvailable() == 0
                    && _messagesCount == 0
                    && internalMessages.empty()
@@ -446,9 +439,6 @@ void Socket::run()
                     loopBreak = true;
                     break;
                 }
-                //if (_socket->bytesToWrite())
-                //    _socket->waitForBytesWritten(20);
-                //_socket->waitForReadyRead(20);
                 if (socketBytesToWrite())
                     socketWaitForBytesWritten(20);
                 socketWaitForReadyRead(20);
@@ -457,11 +447,6 @@ void Socket::run()
             if (loopBreak)
                 break;
 
-            //if (_socket->bytesToWrite())
-            //{
-            //    _socket->waitForBytesWritten(delay);
-            //    CHECK_SOCKET_ERROR
-            //}
             if (socketBytesToWrite())
             {
                 socketWaitForBytesWritten(delay);
@@ -469,7 +454,6 @@ void Socket::run()
             }
 
             //--- Отправка сообщений ---
-            //if (_socket->bytesToWrite() == 0)
             if (socketBytesToWrite() == 0)
             {
                 timer.start();
@@ -546,26 +530,19 @@ void Socket::run()
                     if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
                         buffSize = qbswap(buffSize);
 
-                    //_socket->write((const char*)&buffSize, sizeof(qint32));
                     socketWrite((const char*)&buffSize, sizeof(qint32));
                     CHECK_SOCKET_ERROR
 
-                    //_socket->write(buff.constData(), buff.size());
                     socketWrite(buff.constData(), buff.size());
                     CHECK_SOCKET_ERROR
 
-                    //while (_socket->bytesToWrite())
                     while (socketBytesToWrite())
                     {
-                        //_socket->waitForBytesWritten(delay);
                         socketWaitForBytesWritten(delay);
                         CHECK_SOCKET_ERROR
                         if (timer.hasExpired(3 * delay))
                             break;
                     }
-                    //if (alog::logger().level() == alog::Level::Debug2
-                    //    && _socket->bytesToWrite() == 0)
-                    //    //&& timer.hasExpired(3 * delay))
                     if (alog::logger().level() == alog::Level::Debug2
                         && socketBytesToWrite() == 0)
                     {
@@ -582,7 +559,6 @@ void Socket::run()
             }
 
             //--- Прием сообщений ---
-            //if (_socket->bytesAvailable() != 0)
             if (socketBytesAvailable() != 0)
             {
                 timer.start();
@@ -590,10 +566,8 @@ void Socket::run()
                 {
                     if (qAbs(readBuffSize) == 0)
                     {
-                        //while (_socket->bytesAvailable() < (int)sizeof(qint32))
                         while (socketBytesAvailable() < (int)sizeof(qint32))
                         {
-                            //_socket->waitForReadyRead(delay);
                             socketWaitForReadyRead(delay);
                             CHECK_SOCKET_ERROR
                             if (timer.hasExpired(3 * delay))
@@ -601,11 +575,9 @@ void Socket::run()
                         }
                         if (loopBreak
                             || timer.hasExpired(3 * delay)
-                            //|| _socket->bytesAvailable() < (int)sizeof(qint32))
                             || socketBytesAvailable() < (int)sizeof(qint32))
                             break;
 
-                        //_socket->read((char*)&readBuffSize, sizeof(qint32));
                         socketRead((char*)&readBuffSize, sizeof(qint32));
                         CHECK_SOCKET_ERROR
 
@@ -613,10 +585,8 @@ void Socket::run()
                             readBuffSize = qbswap(readBuffSize);
                     }
 
-                    //while (_socket->bytesAvailable() < qAbs(readBuffSize))
                     while (socketBytesAvailable() < qAbs(readBuffSize))
                     {
-                        //_socket->waitForReadyRead(delay);
                         socketWaitForReadyRead(delay);
                         CHECK_SOCKET_ERROR
                         if (timer.hasExpired(3 * delay))
@@ -624,13 +594,11 @@ void Socket::run()
                     }
                     if (loopBreak
                         || timer.hasExpired(3 * delay)
-                        //|| _socket->bytesAvailable() < qAbs(readBuffSize))
                         || socketBytesAvailable() < qAbs(readBuffSize))
                         break;
 
                     BByteArray buff;
                     buff.resize(qAbs(readBuffSize));
-                    //if (_socket->read((char*)buff.data(), qAbs(readBuffSize)) != qAbs(readBuffSize))
                     if (socketRead((char*)buff.data(), qAbs(readBuffSize)) != qAbs(readBuffSize))
                     {
                         log_error_m << "Socket error: failed read data from socket";
@@ -646,9 +614,6 @@ void Socket::run()
 
                     if (!buff.isEmpty())
                     {
-                        //Message::Ptr message = Message::fromByteArray(buff);
-                        //message->setSocketDescriptor(_socket->socketDescriptor());
-                        //message->setSourcePoint({_socket->peerAddress(), _socket->peerPort()});
                         Message::Ptr message = messageFromByteArray(buff);
 
                         if (alog::logger().level() == alog::Level::Debug2)
@@ -674,8 +639,6 @@ void Socket::run()
                         {
                             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
                             {
-                                //message->add_ref();
-                                //acceptMessages.add(message.get());
                                 acceptMessages.add(message.detach());
                             }
                             else
@@ -712,10 +675,6 @@ void Socket::run()
                             readFromMessage(m, unknown);
                             if (unknown.isValid)
                             {
-                                //log_error_m << "Command " << CommandNameLog(unknown.commandId)
-                                //            << " is unknown for the remote side"
-                                //            << "; remote host: " << unknown.address << ":" << unknown.port
-                                //            << "; socket descriptor: " << unknown.socketDescriptor;
                                 alog::Line logLine = log_error_m
                                     << "Command " << CommandNameLog(unknown.commandId)
                                     << " is unknown for the remote side"
@@ -742,17 +701,10 @@ void Socket::run()
                         {
                             data::Unknown unknown;
                             fillUnknownMessage(m, unknown);
-                            //unknown.commandId = m->command();
-                            //unknown.address = _socket->peerAddress();
-                            //unknown.port = _socket->peerPort();
-                            //unknown.socketDescriptor = _socket->socketDescriptor();
                             Message::Ptr mUnknown = createMessage(unknown);
                             mUnknown->setPriority(Message::Priority::High);
                             internalMessages.add(mUnknown.detach());
 
-                            //log_error_m << "Unknown command: " << unknown.commandId
-                            //            << "; host: " << unknown.address << ":" << unknown.port
-                            //            << "; socket descriptor: " << unknown.socketDescriptor;
                             alog::Line logLine = log_error_m
                                 << "Unknown command: " << unknown.commandId
                                 << "; socket descriptor: " << unknown.socketDescriptor;
