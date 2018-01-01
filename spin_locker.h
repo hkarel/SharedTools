@@ -43,9 +43,15 @@
 struct SpinLocker
 {
     explicit SpinLocker(std::atomic_flag& locker) NOEXCEPT : locker(locker) {
-        while (this->locker.test_and_set(std::memory_order_acquire)) {}
+        lock();
     }
     ~SpinLocker() NOEXCEPT {
+        unlock();
+    }
+    void lock() {
+        while (locker.test_and_set(std::memory_order_acquire)) {}
+    }
+    void unlock() {
         locker.clear(std::memory_order_release);
     }
     std::atomic_flag& locker;
