@@ -441,7 +441,7 @@ void Socket::run()
                 }
                 if (socketBytesToWrite())
                     socketWaitForBytesWritten(20);
-                socketWaitForReadyRead(10);
+                socketWaitForReadyRead(20);
                 CHECK_SOCKET_ERROR
             }
             if (loopBreak)
