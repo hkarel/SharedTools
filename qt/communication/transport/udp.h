@@ -109,7 +109,7 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(communication::Message::Ptr);
+    void message(const communication::Message::Ptr&);
 
 private:
     Q_OBJECT

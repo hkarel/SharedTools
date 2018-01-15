@@ -114,7 +114,7 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(communication::Message::Ptr);
+    void message(const communication::Message::Ptr&);
 
     // Сигнал эмитируется после установки socket-ом соединения и после
     // проверки совместимости версий бинарного протокола.
