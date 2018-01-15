@@ -33,8 +33,9 @@
 #pragma once
 #include <atomic>
 
-struct clife_base
+class clife_base
 {
+public:
     // Если предполагается, что основная работа с объектом clife_base будет
     // осуществляться через clife_ptr<>(), то в этом случае при создании
     // объекта clife_base предпочтительно счетчик жизни объекта выставлять в 0.
@@ -44,12 +45,15 @@ struct clife_base
     // передача во владение clife_ptr<>(), то целесообразно счетчик жизни
     // устанавливать в 1. В этом случае в коде будет меньше вызовов метода
     // add_ref().
-    clife_base() : clife_count(0) {}
-    clife_base(bool add_ref) : clife_count(add_ref ? 1 : 0) {}
+    clife_base() : _clife_count(0) {}
+    clife_base(bool add_ref) : _clife_count(add_ref ? 1 : 0) {}
     virtual ~clife_base() = default;
 
-    inline void add_ref() const {++clife_count;}
-    inline void release() const {if (--clife_count == 0) delete this;}
+    void add_ref() const {++_clife_count;}
+    void release() const {if (--_clife_count == 0) delete this;}
 
-    mutable std::atomic<uint32_t> clife_count;
+    uint32_t clife_count() const {return _clife_count;}
+
+private:
+    mutable std::atomic<uint32_t> _clife_count;
 };
