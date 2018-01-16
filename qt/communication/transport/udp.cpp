@@ -43,7 +43,6 @@
 #define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
 #define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
 
-
 namespace {
 // Сигнатура для UDP протокола 'GMA7'
 //const quint32 udpSignature = 0x37414D47;
@@ -90,8 +89,7 @@ void Socket::waitBinding(int time)
 bool Socket::isBound() const
 {
     SpinLocker locker(_socketLock); (void) locker;
-    return (_socket
-            && _socket->state() == QAbstractSocket::BoundState);
+    return (_socket && (_socket->state() == QAbstractSocket::BoundState));
 }
 
 SocketDescriptor Socket::socketDescriptor() const
@@ -110,87 +108,6 @@ void Socket::setDiscardAddresses(const QList<QHostAddress>& val)
 {
     SpinLocker locker(_discardAddressesLock); (void) locker;
     _discardAddresses = val;
-}
-
-bool Socket::send(const Message::Ptr& message)
-{
-    if (!isRunning())
-    {
-        log_error_m << "Sender is not active"
-                    << ". Command " << CommandNameLog(message->command())
-                    << " will be discarded";
-        return false;
-    }
-    if (message.empty())
-    {
-        log_error_m << "Cannot send a empty message";
-        return false;
-    }
-    if (_checkUnknownCommands)
-    {
-        bool isUnknown;
-        { //Block for SpinLocker
-            SpinLocker locker(_unknownCommandsLock); (void) locker;
-            isUnknown = (_unknownCommands.constFind(message->command()) != _unknownCommands.constEnd());
-        }
-        if (isUnknown)
-        {
-            log_error_m << "Command " << CommandNameLog(message->command())
-                        << " is unknown for the receiving side"
-                        << ". Command will be discarded";
-            return false;
-        }
-    }
-    message->add_ref();
-    { //Block for QMutexLocker
-        QMutexLocker locker(&_messagesLock); (void) locker;
-        switch (message->priority())
-        {
-            case Message::Priority::High:
-                _messagesHigh.add(message.get());
-                break;
-            case Message::Priority::Low:
-                _messagesLow.add(message.get());
-                break;
-            default:
-                _messagesNorm.add(message.get());
-        }
-        ++_messagesCount;
-    }
-    if (alog::logger().level() == alog::Level::Debug2)
-    {
-        log_debug2_m << "Message added to a queue to sending"
-                     << "; message id: " << message->id()
-                     << "; command: " << CommandNameLog(message->command());
-    }
-    return true;
-}
-
-bool Socket::send(const QUuidEx& command)
-{
-    Message::Ptr message = Message::create(command);
-    return send(message);
-}
-
-void Socket::remove(const QUuidEx& command)
-{
-    QMutexLocker locker(&_messagesLock); (void) locker;
-    auto remove_cond = [&command](Message* m) -> bool
-    {
-        bool res = (command == m->command());
-        if (res && (alog::logger().level() == alog::Level::Debug2))
-            log_debug2_m << "Message removed from a queue to sending"
-                         << "; message id: " << m->id()
-                         << "; command: " << CommandNameLog(m->command());
-        return res;
-    };
-    _messagesHigh.removeCond(remove_cond);
-    _messagesNorm.removeCond(remove_cond);
-    _messagesLow.removeCond(remove_cond);
-
-    _messagesCount = _messagesHigh.count()
-                     + _messagesNorm.count()
-                     + _messagesLow.count();
 }
 
 void Socket::run()

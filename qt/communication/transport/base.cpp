@@ -54,45 +54,9 @@ void Properties::setCompressionLevel(int val)
     _compressionLevel = qBound(-1, val, 9);
 }
 
-//-------------------------------- Socket ------------------------------------
+//----------------------------- SocketCommon ---------------------------------
 
-const QUuidEx Socket::_protocolSignature = {"82c40273-4037-4f1b-a823-38123435b22f"};
-
-Socket::Socket(SocketType type) : _type(type)
-{
-    registrationQtMetatypes();
-}
-
-bool Socket::isConnected() const
-{
-    return (socketIsConnected()
-            && _binaryProtocolStatus == BinaryProtocol::Compatible);
-}
-
-bool Socket::socketIsConnected() const
-{
-    SpinLocker locker(_socketLock); (void) locker;
-    return socketIsConnectedInternal();
-}
-
-bool Socket::isLocal() const
-{
-    SpinLocker locker(_socketLock); (void) locker;
-    return isLocalInternal();
-}
-
-Socket::BinaryProtocol Socket::binaryProtocolStatus() const
-{
-    return _binaryProtocolStatus;
-}
-
-SocketDescriptor Socket::socketDescriptor() const
-{
-    SpinLocker locker(_socketLock); (void) locker;
-    return socketDescriptorInternal();
-}
-
-bool Socket::send(const Message::Ptr& message)
+bool SocketCommon::send(const Message::Ptr& message)
 {
     if (!isRunning())
     {
@@ -146,13 +110,13 @@ bool Socket::send(const Message::Ptr& message)
     return true;
 }
 
-bool Socket::send(const QUuidEx& command)
+bool SocketCommon::send(const QUuidEx& command)
 {
     Message::Ptr message = Message::create(command);
     return send(message);
 }
 
-void Socket::remove(const QUuidEx& command)
+void SocketCommon::remove(const QUuidEx& command)
 {
     QMutexLocker locker(&_messagesLock); (void) locker;
     auto remove_cond = [&command](Message* m) -> bool
@@ -171,6 +135,44 @@ void Socket::remove(const QUuidEx& command)
     _messagesCount = _messagesHigh.count()
                      + _messagesNorm.count()
                      + _messagesLow.count();
+}
+
+//-------------------------------- Socket ------------------------------------
+
+const QUuidEx Socket::_protocolSignature = {"82c40273-4037-4f1b-a823-38123435b22f"};
+
+Socket::Socket(SocketType type) : _type(type)
+{
+    registrationQtMetatypes();
+}
+
+bool Socket::isConnected() const
+{
+    return (socketIsConnected()
+            && _binaryProtocolStatus == BinaryProtocol::Compatible);
+}
+
+bool Socket::socketIsConnected() const
+{
+    SpinLocker locker(_socketLock); (void) locker;
+    return socketIsConnectedInternal();
+}
+
+bool Socket::isLocal() const
+{
+    SpinLocker locker(_socketLock); (void) locker;
+    return isLocalInternal();
+}
+
+Socket::BinaryProtocol Socket::binaryProtocolStatus() const
+{
+    return _binaryProtocolStatus;
+}
+
+SocketDescriptor Socket::socketDescriptor() const
+{
+    SpinLocker locker(_socketLock); (void) locker;
+    return socketDescriptorInternal();
 }
 
 void Socket::connect()

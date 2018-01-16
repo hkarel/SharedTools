@@ -67,28 +67,69 @@ public:
     int compressionSize() const {return _compressionSize;}
     void setCompressionSize(int val) {_compressionSize = val;}
 
-    // Определяет нужно ли проверять совместимость бинарных протоколов сразу
-    // после установления TCP-соединения
+    // Определяет нужно ли проверять совместимость бинарных протоколов после
+    // создания TCP-соединения
     bool checkProtocolCompatibility() const {return _checkProtocolCompatibility;}
     void setCheckProtocolCompatibility(bool val) {_checkProtocolCompatibility = val;}
+
+protected:
+    int _compressionLevel = {-1};
+    int _compressionSize  = {1024};
+    bool _checkProtocolCompatibility = {true};
+};
+
+/**
+  Класс содержит общие функции и поля для всех сокетов.
+*/
+class SocketCommon : public QThreadEx
+{
+public:
+    // Функции отправки сообщений.
+    bool send(const Message::Ptr&);
+    bool send(const QUuidEx& command);
+
+    template<typename CommandDataT>
+    bool send(const CommandDataT& data, Message::Type type = Message::Type::Command)
+    {
+        Message::Ptr message = createMessage(data, type);
+        return send(message);
+    }
+
+    // Удаляет из очереди сообщений на отправку сообщения с заданным
+    // идентификатором команды
+    void remove(const QUuidEx& command);
+
+    // Возвращает количество сообщений в очереди команд на отправку в сокет.
+    // Используется для оценки загруженности очереди.
+    int messagesCount() const {return _messagesCount;}
 
     // Определяет нужно ли проверять, что входящая команда является неизвестной
     bool checkUnknownCommands() const {return _checkUnknownCommands;}
     void setCheckUnknownCommands(bool val) {_checkUnknownCommands = val;}
 
 protected:
-    int _compressionLevel = {-1};
-    int _compressionSize  = {1024};
-    bool _checkProtocolCompatibility = true;
-    bool _checkUnknownCommands = true;
-};
+    Message::List _messagesHigh;
+    Message::List _messagesNorm;
+    Message::List _messagesLow;
+    mutable QMutex _messagesLock;
 
+    volatile int _messagesCount = {0};
+    int _messagesNormCounter = {0};
+
+    // Список команд неизвестных на принимающей стороне, позволяет передавать
+    // только известные принимающей стороне команды.
+    QSet<QUuidEx> _unknownCommands;
+    mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
+    bool _checkUnknownCommands = {true};
+};
 
 /**
   Базовый класс для создания соединения и отправки сообщений. Используется как
   на клиентской, так и на серверной стороне.
 */
-class Socket : public QThreadEx, public clife_base, public Properties
+class Socket : public SocketCommon,
+               public clife_base,
+               public Properties
 {
     struct Allocator
     {
@@ -129,25 +170,6 @@ public:
 
     // Разрывает соединение с удаленным сокетом
     void disconnect(unsigned long time = ULONG_MAX);
-
-    // Функции отправки сообщений.
-    bool send(const Message::Ptr&);
-    bool send(const QUuidEx& command);
-
-    template<typename CommandDataT>
-    bool send(const CommandDataT& data, Message::Type type = Message::Type::Command)
-    {
-        Message::Ptr message = createMessage(data, type);
-        return send(message);
-    }
-
-    // Удаляет из очереди сообщений на отправку сообщения с заданным
-    // идентификатором команды
-    void remove(const QUuidEx& command);
-
-    // Возвращает количество сообщений в очереди команд на отправку в TCP-сокет.
-    // Используется для оценки загруженности очереди.
-    int messagesCount() const {return _messagesCount;}
 
     // Ожидает (в секундах) подключения к удаленному хосту.
     void waitConnection(int time = 0);
@@ -199,21 +221,8 @@ private:
     Q_OBJECT
     DISABLE_DEFAULT_COPY(Socket)
 
-    // Список команд неизвестных на принимающей стороне, позволяет передавать
-    // только известные принимающей стороне команды.
-    QSet<QUuidEx> _unknownCommands;
-    mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
-
     const SocketType _type;
     volatile BinaryProtocol _binaryProtocolStatus = {BinaryProtocol::Undefined};
-
-    Message::List _messagesHigh;
-    Message::List _messagesNorm;
-    Message::List _messagesLow;
-    mutable QMutex _messagesLock;
-
-    volatile int _messagesCount = {0};
-    int _messagesNormCounter = {0};
 
     static const QUuidEx _protocolSignature;
     bool _protocolSignatureRead = {false};
@@ -224,7 +233,6 @@ private:
 
     friend class Listener;
 };
-
 
 /**
   Базовый класс для получения запросов на соединения от клиентских частей
@@ -263,6 +271,10 @@ public:
     // Извлекает сокет из коллекции сокетов
     Socket::Ptr releaseSocket(SocketDescriptor);
 
+    // Определяет нужно ли проверять, что входящая команда является неизвестной
+    bool checkUnknownCommands() const {return _checkUnknownCommands;}
+    void setCheckUnknownCommands(bool val) {_checkUnknownCommands = val;}
+
 protected:
     Listener() = default;
     void closeSockets();
@@ -280,6 +292,7 @@ private:
 
     Socket::List _sockets;
     mutable QMutex _socketsLock;
+    bool _checkUnknownCommands = {true};
 };
 
 } // namespace base
