@@ -40,8 +40,10 @@ public:
     typedef QSet<HostPoint> Set;
 
     HostPoint() = default;
+    HostPoint(const HostPoint&) = default;
     HostPoint(const QHostAddress& address, int port);
 
+    HostPoint& operator= (const HostPoint&) = default;
     bool operator== (const HostPoint&) const;
     bool isNull() const;
     void reset();
