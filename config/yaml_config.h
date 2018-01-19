@@ -129,13 +129,15 @@ public:
     // Используется для записи списка значений в ноду с именем name.
     // Возвращает TRUE если список был удачно записан в ноду.
     template<typename T>
-    bool setValue(const std::string& name, const std::vector<T>& value);
+    bool setValue(const std::string& name, const std::vector<T>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
 
 #if defined(QT_CORE_LIB)
     // Перегруженная функция, используется для записи списка значений
     // из QVector.
     template<typename T>
-    bool setValue(const std::string& name, const QVector<T>& value);
+    bool setValue(const std::string& name, const QVector<T>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
 #endif
 
     // Используется для записи значений для нод сложной конфигурации,
@@ -172,7 +174,8 @@ private:
                       VectorT& value, bool logWarnings = true) const;
 
     template<typename VectorT>
-    bool setValueVect(const std::string& name, const VectorT& value);
+    bool setValueVect(const std::string& name,
+                      const VectorT& value, YAML::EmitterStyle::value nodeStyle);
 
 private:
     std::atomic_bool _readOnly = {false};
@@ -339,7 +342,9 @@ bool YamlConfig::setValue(const std::string& name, const T& value)
 }
 
 template<typename VectorT>
-bool YamlConfig::setValueVect(const std::string& name, const VectorT& value)
+bool YamlConfig::setValueVect(const std::string& name,
+                              const VectorT& value,
+                              YAML::EmitterStyle::value nodeStyle)
 {
     YAMLCONFIG_CHECK_READONLY
 
@@ -348,6 +353,7 @@ bool YamlConfig::setValueVect(const std::string& name, const VectorT& value)
     YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
     node = YAML::Node();
+    node.SetStyle(nodeStyle);
     typedef typename VectorT::value_type ValueType;
     for (const ValueType& v : value)
         node.push_back(ProxyStdString<ValueType>::setter(v));
@@ -356,16 +362,20 @@ bool YamlConfig::setValueVect(const std::string& name, const VectorT& value)
 }
 
 template<typename T>
-bool YamlConfig::setValue(const std::string& name, const std::vector<T>& value)
+bool YamlConfig::setValue(const std::string& name,
+                          const std::vector<T>& value,
+                          YAML::EmitterStyle::value nodeStyle)
 {
-    return setValueVect(name, value);
+    return setValueVect(name, value, nodeStyle);
 }
 
 #if defined(QT_CORE_LIB)
 template<typename T>
-bool YamlConfig::setValue(const std::string& name, const QVector<T>& value)
+bool YamlConfig::setValue(const std::string& name,
+                          const QVector<T>& value,
+                          YAML::EmitterStyle::value nodeStyle)
 {
-    return setValueVect(name, value);
+    return setValueVect(name, value, nodeStyle);
 }
 #endif
 
