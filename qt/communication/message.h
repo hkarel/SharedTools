@@ -300,38 +300,38 @@ private:
         struct {
             //=== Байт 1 ===
             // Тип пересылаемого сообщения, соответствует enum Type
-            quint32 _type: 3;
+            quint32 type: 3;
 
             // Статус выполнения команды, соответствует enum ExecStatus
-            quint32 _execStatus: 3;
+            quint32 execStatus: 3;
 
             // Приоритет сообщения, соответствует enum Priority
-            quint32 _priority: 2;
+            quint32 priority: 2;
 
             //=== Байт 2 ===
             // Признак что контент сообщения находится в сжатом состоянии,
             // так же содержит информацию по алгоритму сжатия, соответствует
             // enum Compression
-            quint32 _compression: 3;
+            quint32 compression: 3;
 
             // Признаки пустых полей. Признаки используются для оптимизации
             // размера сообщения при его сериализации.
-            mutable quint32 _tagIsEmpty: 1;
-            mutable quint32 _maxTimeLifeIsEmpty: 1;
-            mutable quint32 _contentIsEmpty: 1;
+            mutable quint32 tagIsEmpty: 1;
+            mutable quint32 maxTimeLifeIsEmpty: 1;
+            mutable quint32 contentIsEmpty: 1;
 
-            quint32 _reserved1: 2;
+            quint32 reserved1: 2;
 
             //=== Байт 3 ===
-            quint32 _reserved2: 8;
+            quint32 reserved2: 8;
 
             //=== Байт 4 ===
-            quint32 _reserved3: 7;
+            quint32 reserved3: 7;
             // Признак пустого поля. Признак используется для оптимизации
             // размера сообщения при его сериализации. Данный признак идет
             // последним битом в поле _flags.
-            mutable quint32 _flags2IsEmpty: 1;
-        };
+            mutable quint32 flags2IsEmpty: 1;
+        } _flag;
     };
 
     // Зарезервировано для будущего использования

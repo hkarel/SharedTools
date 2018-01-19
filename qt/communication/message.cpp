@@ -47,10 +47,10 @@ Message::Ptr Message::create(const QUuidEx& command)
 
     m->_id = QUuid::createUuid();
     m->_command = command;
-    m->_type = static_cast<quint32>(Type::Command);
-    m->_execStatus = static_cast<quint32>(ExecStatus::Unknown);
-    m->_priority = static_cast<quint32>(Priority::Normal);
-    m->_compression = static_cast<quint32>(Compression::None);
+    m->_flag.type = static_cast<quint32>(Type::Command);
+    m->_flag.execStatus = static_cast<quint32>(ExecStatus::Unknown);
+    m->_flag.priority = static_cast<quint32>(Priority::Normal);
+    m->_flag.compression = static_cast<quint32>(Compression::None);
 
     return std::move(m);
 }
@@ -73,9 +73,9 @@ Message::Ptr Message::cloneForAnswer() const
     m->_socketDescriptor = _socketDescriptor;
 
     // Инициализируемые параметры
-    m->_type = static_cast<quint32>(Type::Answer);
-    m->_execStatus = static_cast<quint32>(ExecStatus::Success);
-    m->_compression = static_cast<quint32>(Compression::None);
+    m->_flag.type = static_cast<quint32>(Type::Answer);
+    m->_flag.execStatus = static_cast<quint32>(ExecStatus::Success);
+    m->_flag.compression = static_cast<quint32>(Compression::None);
 
     return std::move(m);
 }
@@ -92,7 +92,7 @@ void Message::compress(int level, Compression compression)
 
     if (compression == Compression::Disable)
     {
-        _compression = static_cast<quint32>(Compression::Disable);
+        _flag.compression = static_cast<quint32>(Compression::Disable);
         return;
     }
     level = qBound(-1, level, 9);
@@ -108,7 +108,7 @@ void Message::compress(int level, Compression compression)
         {
             case Compression::Zip:
                 _content = qCompress(_content, level);
-                _compression = static_cast<quint32>(Compression::Zip);
+                _flag.compression = static_cast<quint32>(Compression::Zip);
                 break;
 #ifdef LZMA_COMPRESSION
             case Compression::Lzma:
@@ -117,7 +117,7 @@ void Message::compress(int level, Compression compression)
                 if (qlzma::compress(_content, content, level) == 0)
                 {
                     _content = content;
-                    _compression = static_cast<quint32>(Compression::Lzma);
+                    _flag.compression = static_cast<quint32>(Compression::Lzma);
                 }
                 break;
             }
@@ -129,7 +129,7 @@ void Message::compress(int level, Compression compression)
                 if (qppmd::compress(_content, content, level) == 0)
                 {
                     _content = content;
-                    _compression = static_cast<quint32>(Compression::Ppmd);
+                    _flag.compression = static_cast<quint32>(Compression::Ppmd);
                 }
                 break;
             }
@@ -178,7 +178,7 @@ void Message::decompress()
         BByteArray content;
         decompress(content);
         _content = content;
-        _compression = static_cast<quint32>(Compression::None);
+        _flag.compression = static_cast<quint32>(Compression::None);
     }
 }
 
@@ -210,10 +210,10 @@ BByteArray Message::toByteArray() const
 
 void Message::toDataStream(QDataStream& stream) const
 {
-    _flags2IsEmpty = (_flags2 == 0);
-    _tagIsEmpty = (_tag == 0);
-    _maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
-    _contentIsEmpty = _content.isEmpty();
+    _flag.flags2IsEmpty = (_flags2 == 0);
+    _flag.tagIsEmpty = (_tag == 0);
+    _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
+    _flag.contentIsEmpty = _content.isEmpty();
 
     stream << _id;
     stream << _command;
@@ -221,13 +221,13 @@ void Message::toDataStream(QDataStream& stream) const
     stream << _protocolVersionHigh;
     stream << _flags;
 
-    if (!_flags2IsEmpty)
+    if (!_flag.flags2IsEmpty)
         stream << _flags2;
-    if (!_tagIsEmpty)
+    if (!_flag.tagIsEmpty)
         stream << _tag;
-    if (!_maxTimeLifeIsEmpty)
+    if (!_flag.maxTimeLifeIsEmpty)
         stream << _maxTimeLife;
-    if (!_contentIsEmpty)
+    if (!_flag.contentIsEmpty)
         stream << _content;
 }
 
@@ -247,13 +247,13 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
     stream >> m->_protocolVersionHigh;
     stream >> m->_flags;
 
-    if (!m->_flags2IsEmpty)
+    if (!m->_flag.flags2IsEmpty)
         stream >> m->_flags2;
-    if (!m->_tagIsEmpty)
+    if (!m->_flag.tagIsEmpty)
         stream >> m->_tag;
-    if (!m->_maxTimeLifeIsEmpty)
+    if (!m->_flag.maxTimeLifeIsEmpty)
         stream >> m->_maxTimeLife;
-    if (!m->_contentIsEmpty)
+    if (!m->_flag.contentIsEmpty)
         stream >> m->_content;
 
     return std::move(m);
@@ -261,37 +261,37 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
 Message::Type Message::type() const
 {
-    return static_cast<Type>(_type);
+    return static_cast<Type>(_flag.type);
 }
 
 void Message::setType(Type val)
 {
-    _type = static_cast<quint32>(val);
+    _flag.type = static_cast<quint32>(val);
 }
 
 Message::ExecStatus Message::execStatus() const
 {
-    return static_cast<ExecStatus>(_execStatus);
+    return static_cast<ExecStatus>(_flag.execStatus);
 }
 
 void Message::setExecStatus(ExecStatus val)
 {
-    _execStatus = static_cast<quint32>(val);
+    _flag.execStatus = static_cast<quint32>(val);
 }
 
 Message::Priority Message::priority() const
 {
-    return static_cast<Priority>(_priority);
+    return static_cast<Priority>(_flag.priority);
 }
 
 void Message::setPriority(Priority val)
 {
-    _priority = static_cast<quint32>(val);
+    _flag.priority = static_cast<quint32>(val);
 }
 
 Message::Compression Message::compression() const
 {
-    return static_cast<Compression>(_compression);
+    return static_cast<Compression>(_flag.compression);
 }
 
 } // namespace communication
