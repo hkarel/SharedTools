@@ -38,6 +38,7 @@
 #include "qt/communication/host_point.h"
 
 #include <QtCore>
+#include <atomic>
 #include <utility>
 
 namespace communication {
@@ -205,7 +206,7 @@ public:
     // обработчикам сообщений о том, что сообщение уже было обработано ранее.
     // Таким образом последующие обработчики могут проигнорировать это сообщение.
     bool processed() const {return _processed;}
-    void setProcessed(bool val) {_processed = val;}
+    void markAsProcessed() const {_processed = true;}
 
     // Возвращает информацию о том, в каком состоянии (сжатом или несжатом)
     // находится контент сообщения.
@@ -347,7 +348,7 @@ private:
     SocketDescriptor _socketDescriptor = {-1};
     SocketDescriptorSet _destinationSocketDescriptors;
     QString _socketName;
-    volatile bool _processed = {false};
+    mutable std::atomic_bool _processed = {false};
 
     friend class transport::local::Socket;
     friend class transport::tcp::Socket;
