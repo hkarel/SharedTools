@@ -155,11 +155,11 @@ public:
     Priority priority() const;
     void setPriority(Priority);
 
-    // Передает пользовательские данные размером не более 4 байт без сохранения
+    // Передает пользовательские данные размером не более 8 байт без сохранения
     // их в поле content. Это позволяет сократить количество ресурсоемких опера-
     // ций сериализации/десериализации данных необходимых для поля content.
-    quint32 tag() const {return _tag;}
-    void setTag(quint32 val) {_tag = val;}
+    quint64 tag() const {return _tag;}
+    void setTag(quint64 val) {_tag = val;}
 
     // Максимальное время жизни сообщения. Задается в секундах в формате UTC
     // от начала эпохи. Параметр представляет абсолютное значение времени по
@@ -338,7 +338,7 @@ private:
     // Зарезервировано для будущего использования
     quint32 _flags2;
 
-    quint32 _tag = {0};
+    quint64 _tag = {0};
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
 
