@@ -27,28 +27,6 @@
 
 namespace communication {
 
-//QString toString(Message::Type t)
-//{
-//    switch (t)
-//    {
-//        case Message::Type::Command:  return "Command";
-//        case Message::Type::Answer:   return "Answer";
-//        case Message::Type::Event:    return "Event";
-//        default:                      return "Unknown";
-//    }
-//}
-
-//QString toString(Message::ExecStatus e)
-//{
-//    switch (e)
-//    {
-//        case command::ExecStatus::Success: return "Success";
-//        case command::ExecStatus::Failed:  return "Failed";
-//        case command::ExecStatus::Error:   return "Error";
-//        default:                           return "Unknown";
-//    }
-//}
-
 void readFromMessage(const Message::Ptr& message, data::MessageError& data)
 {
     QString err;

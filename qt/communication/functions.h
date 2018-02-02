@@ -39,10 +39,6 @@
 
 namespace communication {
 
-//QString toString(Message::Type);
-//QString toString(Message::ExecStatus);
-//typedef container_ptr<QList<QHostAddress>> NetAddressesPtr;
-
 /**
   Создает сообщение на основе структуры данных соответствующей определнной
   команде. Структуры данных описаны в модулях commands_base и commands.
