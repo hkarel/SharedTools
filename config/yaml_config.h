@@ -83,6 +83,9 @@ public:
     // Удаляет ноду по имени
     bool remove(const std::string& name, bool logWarnings = true);
 
+    // Возвращает ноду с именем name
+    YAML::Node getNode(const std::string& name, bool logWarnings = true) const;
+
     // Используется для получения простого значения (скаляр) из ноды
     // с именем name. Имя может быть составным. Составное имя записывается
     // следующим образом: 'param1.param2.param3'.

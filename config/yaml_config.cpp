@@ -195,6 +195,11 @@ bool YamlConfig::remove(const std::string& name, bool logWarnings)
     return true;
 }
 
+YAML::Node YamlConfig::getNode(const std::string& name, bool logWarnings) const
+{
+    return nodeGet(name, logWarnings);
+}
+
 YAML::Node YamlConfig::nodeGet(const std::string& name, bool logWarnings) const
 {
     std::vector<std::string> parts = utl::split(name, '.');
