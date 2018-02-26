@@ -82,9 +82,17 @@ FilterPtr createFilter(const YAML::Node& yfilter)
         checkFiedType("type", YAML::NodeType::Scalar);
         type = yfilter["type"].as<string>();
     }
-    if ( !(type == "module_name" || type == "log_level"))
-        throw std::logic_error("In a filter-node a field 'type' can take "
-                               "the values: 'module_name' or 'log_level'");
+    if (type != "module_name"
+        && type != "log_level"
+        && type != "func_name"
+        && type != "file_name"
+        && type != "thread_id")
+    {
+        throw std::logic_error(
+            "In a filter-node a field 'type' can take one of the following "
+            "values: module_name, log_level, func_name, file_name, thread_id. "
+            "Current value: " + type);
+    }
 
     string mode = "include";
     if (yfilter["mode"].IsDefined())
@@ -371,7 +379,7 @@ bool loadSavers(const string& confFile, SaverList& savers)
     }
     catch (std::exception& e)
     {
-        log_error_m << "YAML error. Detail: " << e.what()
+        log_error_m << "Configuration error. Detail: " << e.what()
                     << ". Config file: " << confFile;
     }
     catch (...)
