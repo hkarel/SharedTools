@@ -112,6 +112,7 @@ protected:
     Message::List _messagesNorm;
     Message::List _messagesLow;
     mutable QMutex _messagesLock;
+    mutable QWaitCondition _messagesCond;
 
     volatile int _messagesCount = {0};
     int _messagesNormCounter = {0};

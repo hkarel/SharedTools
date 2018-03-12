@@ -169,7 +169,10 @@ void Socket::run()
                     loopBreak = true;
                     break;
                 }
-                msleep(20);
+                QMutexLocker locker(&_messagesLock); (void) locker;
+                if (_messagesCount != 0)
+                    break;
+                _messagesCond.wait(&_messagesLock, 20);
             }
             if (loopBreak)
                 break;

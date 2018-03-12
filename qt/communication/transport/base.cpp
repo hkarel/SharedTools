@@ -100,6 +100,7 @@ bool SocketCommon::send(const Message::Ptr& message)
                 _messagesNorm.add(message.get());
         }
         ++_messagesCount;
+        _messagesCond.wakeAll();
     }
     if (alog::logger().level() == alog::Level::Debug2)
     {
@@ -431,10 +432,10 @@ void Socket::run()
                                  + _messagesLow.count();
             }
 
-            while (socketBytesAvailable() == 0
-                   && _messagesCount == 0
+            while (_messagesCount == 0
+                   && acceptMessages.empty()
                    && internalMessages.empty()
-                   && acceptMessages.empty())
+                   && socketBytesAvailable() == 0)
             {
                 if (threadStop())
                 {
@@ -442,9 +443,19 @@ void Socket::run()
                     break;
                 }
                 if (socketBytesToWrite())
+                {
                     socketWaitForBytesWritten(20);
-                socketWaitForReadyRead(20);
+                    CHECK_SOCKET_ERROR
+                }
+                socketWaitForReadyRead(5);
                 CHECK_SOCKET_ERROR
+                if (socketBytesAvailable() != 0)
+                    break;
+
+                QMutexLocker locker(&_messagesLock); (void) locker;
+                if (_messagesCount != 0)
+                    break;
+                _messagesCond.wait(&_messagesLock, 20);
             }
             if (loopBreak)
                 break;
@@ -652,7 +663,8 @@ void Socket::run()
                         }
                     }
                     if (loopBreak
-                        || timer.hasExpired(3 * delay))
+                        || timer.hasExpired(3 * delay)
+                        || socketBytesAvailable() == 0)
                         break;
                 } // while (true)
                 if (loopBreak)
