@@ -253,7 +253,8 @@ void Socket::run()
 
     auto processingProtocolCompatibleCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->type() == Message::Type::Command)
+        if (message->command() == command::ProtocolCompatible
+            && message->type() == Message::Type::Command)
         {
             quint16 protocolVersionLow  = message->protocolVersionLow();
             quint16 protocolVersionHigh = message->protocolVersionHigh();
@@ -275,28 +276,30 @@ void Socket::run()
                     _binaryProtocolStatus = BinaryProtocol::Incompatible;
             }
 
-//            data::ProtocolCompatible pcompatible;
-//            readFromMessage(message, pcompatible);
-//            if (pcompatible.isValid)
-//            {
-//                if (alog::logger().level() >= alog::Level::Debug)
-//                {
-//                    log_debug_m
-//                        << "Checking binary protocol compatibility"
-//                        << ". This protocol version: "
-//                        << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
-//                        << "; Remote protocol version: "
-//                        << pcompatible.versionLow << "-" << pcompatible.versionHigh;
-//                }
-//                if (communication::protocolCompatible(pcompatible.versionLow,
-//                                                      pcompatible.versionHigh))
-//                    _binaryProtocolStatus = BinaryProtocol::Compatible;
-//            }
-//            else
-//            {
-//                log_error_m << "Incorrect data structure for command "
-//                            << CommandNameLog(message->command());
-//            }
+            /** Старый код **
+            data::ProtocolCompatible pcompatible;
+            readFromMessage(message, pcompatible);
+            if (pcompatible.isValid)
+            {
+                if (alog::logger().level() >= alog::Level::Debug)
+                {
+                    log_debug_m
+                        << "Checking binary protocol compatibility"
+                        << ". This protocol version: "
+                        << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
+                        << "; Remote protocol version: "
+                        << pcompatible.versionLow << "-" << pcompatible.versionHigh;
+                }
+                if (communication::protocolCompatible(pcompatible.versionLow,
+                                                      pcompatible.versionHigh))
+                    _binaryProtocolStatus = BinaryProtocol::Compatible;
+            }
+            else
+            {
+                log_error_m << "Incorrect data structure for command "
+                            << CommandNameLog(message->command());
+            }
+            */
 
             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
             {
@@ -326,7 +329,8 @@ void Socket::run()
 
     auto processingCloseConnectionCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->type() == Message::Type::Command)
+        if (message->command() == command::CloseConnection
+            && message->type() == Message::Type::Command)
         {
             data::CloseConnection closeConnection;
             readFromMessage(message, closeConnection);

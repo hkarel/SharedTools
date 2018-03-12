@@ -185,8 +185,8 @@ public:
     // сокет с точкой назначения sourcePoint.
     HostPoint::Set& destinationPoints() {return _destinationPoints;}
 
-    // Вспомогательный параметр, используется на стороне TCP сервера для иден-
-    // тификации TCP сокета принявшего сообщение.
+    // Вспомогательный параметр, используется на стороне TCP (или Local) сервера
+    // для идентификации TCP (или Local) сокета принявшего сообщение.
     // Поле имеет валидное значение только если тип сокета соответствует значе-
     // ниям SocketType::Tcp или SocketType::Local.
     SocketDescriptor socketDescriptor() const {return _socketDescriptor;}

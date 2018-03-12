@@ -355,7 +355,7 @@ void Socket::run()
                                  << "; source: " << addr << ":" << port;
                 }
                 message->setSocketType(SocketType::Udp);
-                //message->setSocketDescriptor(_socket->socketDescriptor());
+                message->setSocketDescriptor(SocketDescriptor(-1));
                 message->setSourcePoint({addr, port});
                 acceptMessages.add(message.detach());
                 CHECK_SOCKET_ERROR

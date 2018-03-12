@@ -88,7 +88,6 @@ private:
     DISABLE_DEFAULT_COPY(Socket)
 
     void run() override;
-    //void setSocketDescriptor(SocketDescriptor);
 
 private:
     simple_ptr<QUdpSocket> _socket;
