@@ -231,8 +231,12 @@ void Socket::run()
 
     QElapsedTimer timer;
     bool loopBreak = false;
-    qint32 readBuffSize = 0;
     const int delay = 50;
+
+    QByteArray readBuff;
+    qint32 readBuffSize = 0;
+    char* readBuffCur = 0;
+    char* readBuffEnd = 0;
 
     // Идентификатор команды CloseConnection, используется для отслеживания
     // ответа на запрос о разрыве соединения.
@@ -394,7 +398,8 @@ void Socket::run()
                 timer.start();
                 while (socketBytesAvailable() < 16)
                 {
-                    socketWaitForReadyRead(delay);
+                    msleep(10);
+                    socketWaitForReadyRead(0);
                     CHECK_SOCKET_ERROR
                     static const int timeout {40 * delay};
                     if (timer.hasExpired(timeout))
@@ -451,7 +456,7 @@ void Socket::run()
                     socketWaitForBytesWritten(20);
                     CHECK_SOCKET_ERROR
                 }
-                socketWaitForReadyRead(5);
+                socketWaitForReadyRead(0);
                 CHECK_SOCKET_ERROR
                 if (socketBytesAvailable() != 0)
                     break;
@@ -576,104 +581,110 @@ void Socket::run()
             }
 
             //--- Прием сообщений ---
-            if (socketBytesAvailable() != 0)
+            socketWaitForReadyRead(0);
+            CHECK_SOCKET_ERROR
+            timer.start();
+            while (socketBytesAvailable() != 0)
             {
-                timer.start();
-                while (true)
+                if (qAbs(readBuffSize) == 0)
                 {
-                    if (qAbs(readBuffSize) == 0)
+                    while (socketBytesAvailable() < qint64(sizeof(qint32)))
                     {
-                        while (socketBytesAvailable() < (int)sizeof(qint32))
-                        {
-                            socketWaitForReadyRead(delay);
-                            CHECK_SOCKET_ERROR
-                            if (timer.hasExpired(3 * delay))
-                                break;
-                        }
-                        if (loopBreak
-                            || timer.hasExpired(3 * delay)
-                            || socketBytesAvailable() < (int)sizeof(qint32))
-                            break;
-
-                        socketRead((char*)&readBuffSize, sizeof(qint32));
-                        CHECK_SOCKET_ERROR
-
-                        if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
-                            readBuffSize = qbswap(readBuffSize);
-                    }
-
-                    while (socketBytesAvailable() < qAbs(readBuffSize))
-                    {
-                        socketWaitForReadyRead(delay);
+                        msleep(10);
+                        socketWaitForReadyRead(0);
                         CHECK_SOCKET_ERROR
                         if (timer.hasExpired(3 * delay))
                             break;
                     }
                     if (loopBreak
-                        || timer.hasExpired(3 * delay)
-                        || socketBytesAvailable() < qAbs(readBuffSize))
+                        || timer.hasExpired(3 * delay))
                         break;
 
-                    BByteArray buff;
-                    buff.resize(qAbs(readBuffSize));
-                    if (socketRead((char*)buff.data(), qAbs(readBuffSize)) != qAbs(readBuffSize))
+                    socketRead((char*)&readBuffSize, sizeof(qint32));
+                    CHECK_SOCKET_ERROR
+
+                    if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
+                        readBuffSize = qbswap(readBuffSize);
+
+                    readBuff.resize(qAbs(readBuffSize));
+                    readBuffCur = (char*)readBuff.constData();
+                    readBuffEnd = readBuffCur + readBuff.size();
+                }
+
+                while (readBuffCur < readBuffEnd)
+                {
+                    socketWaitForReadyRead(delay);
+                    CHECK_SOCKET_ERROR
+                    qint64 readBytes = qMin(socketBytesAvailable(),
+                                            qint64(readBuffEnd - readBuffCur));
+                    if (socketRead(readBuffCur, readBytes) != readBytes)
                     {
                         log_error_m << "Socket error: failed read data from socket";
                         loopBreak = true;
                         break;
                     }
-                    if (readBuffSize < 0)
-                        buff = qUncompress(buff);
+                    readBuffCur += readBytes;
+                    if (timer.hasExpired(3 * delay))
+                        break;
+                }
+                if (loopBreak
+                    || timer.hasExpired(3 * delay))
+                    break;
 
-                    // Обнуляем размер буфера для того, чтобы можно было начать
-                    // считывать новое сообщение.
-                    readBuffSize = 0;
+                if (readBuffSize < 0)
+                    readBuff = qUncompress(readBuff);
 
-                    if (!buff.isEmpty())
+                // Обнуляем размер буфера для того, чтобы можно было начать
+                // считывать новое сообщение.
+                readBuffSize = 0;
+
+                if (!readBuff.isEmpty())
+                {
+                    Message::Ptr message = messageFromByteArray(readBuff);
+                    readBuff.clear();
+
+                    if (alog::logger().level() == alog::Level::Debug2)
                     {
-                        Message::Ptr message = messageFromByteArray(buff);
-
-                        if (alog::logger().level() == alog::Level::Debug2)
+                        log_debug2_m << "Message received"
+                                     << "; message id: " << message->id()
+                                     << "; command: " << CommandNameLog(message->command());
+                    }
+                    if (_binaryProtocolStatus == BinaryProtocol::Undefined
+                        && message->command() == command::ProtocolCompatible)
+                    {
+                        processingProtocolCompatibleCommand(message);
+                        break;
+                    }
+                    else if (message->command() == command::CloseConnection)
+                    {
+                        processingCloseConnectionCommand(message);
+                        // Уходим на новый цикл, что бы как можно быстрее
+                        // получить ответ по команде command::CloseConnection.
+                        break;
+                    }
+                    else
+                    {
+                        if (_binaryProtocolStatus == BinaryProtocol::Compatible)
                         {
-                            log_debug2_m << "Message received"
-                                         << "; message id: " << message->id()
-                                         << "; command: " << CommandNameLog(message->command());
-                        }
-                        if (_binaryProtocolStatus == BinaryProtocol::Undefined
-                            && message->command() == command::ProtocolCompatible)
-                        {
-                            processingProtocolCompatibleCommand(message);
-                            break;
-                        }
-                        else if (message->command() == command::CloseConnection)
-                        {
-                            processingCloseConnectionCommand(message);
-                            // Уходим на новый цикл, что бы как можно быстрее
-                            // получить ответ по команде command::CloseConnection.
-                            break;
+                            acceptMessages.add(message.detach());
                         }
                         else
                         {
-                            if (_binaryProtocolStatus == BinaryProtocol::Compatible)
-                            {
-                                acceptMessages.add(message.detach());
-                            }
-                            else
-                            {
-                                log_error_m
-                                    << "Check of compatibility for the binary protocol not performed"
-                                    << ". Command " << CommandNameLog(message->command()) << " discarded";
-                            }
+                            log_error_m
+                                << "Check of compatibility for the binary protocol not performed"
+                                << ". Command " << CommandNameLog(message->command()) << " discarded";
                         }
                     }
-                    if (loopBreak
-                        || timer.hasExpired(3 * delay)
-                        || socketBytesAvailable() == 0)
-                        break;
-                } // while (true)
-                if (loopBreak)
+                }
+                if (loopBreak
+                    || timer.hasExpired(3 * delay))
                     break;
-            }
+
+                socketWaitForReadyRead(0);
+                CHECK_SOCKET_ERROR
+            } // while (socketBytesAvailable() != 0)
+            if (loopBreak)
+                break;
 
             //--- Обработка принятых сообщений ---
             if (_binaryProtocolStatus == BinaryProtocol::Compatible)
