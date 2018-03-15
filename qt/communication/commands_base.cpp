@@ -30,7 +30,7 @@ namespace communication {
 namespace command {
 
 #define REGISTRY_COMMAND(COMMAND, UUID) \
-    const QUuidEx COMMAND = CommandsPool::Registry{UUID, #COMMAND};
+    const QUuidEx COMMAND = CommandsPool::Registry{UUID, #COMMAND, true};
 
 REGISTRY_COMMAND(Unknown,            "4aef29d6-5b1a-4323-8655-ef0d4f1bb79d")
 REGISTRY_COMMAND(Error,              "b18b98cc-b026-4bfe-8e33-e7afebfbe78b")

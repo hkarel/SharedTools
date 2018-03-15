@@ -46,21 +46,44 @@ public:
     bool checkUnique() const;
 
     // Добавляет команду в пул.
-    void add(QUuidEx* command, const char* commandName);
+    void add(QUuidEx* command, const char* commandName, bool multiproc);
 
     // Возвращает список идентификаторов команд.
     QVector<QUuidEx> commands() const;
 
     // Возвращает строковое наименование команды по ее идентификатору
-    QByteArray commandName(const QUuidEx& command) const;
+    const char* commandName(const QUuidEx& command) const;
 
-    // Возвращает TRUE если команда существует в пуле команд
-    bool commandExists(const QUuidEx& command) const;
+    // Возвращает значение большее нуля если команда существует в пуле команд.
+    // В случае когда признак multiproc для команды равен FALSE, то будет
+    // возвращено значение 1, если же multiproc равен TRUE - будет возвращено
+    // значение 2.
+    quint32 commandExists(const QUuidEx& command) const;
 
-    // Используется для регистрации команд в пуле
+    // Возвращает TRUE когда для команды установлен признак multiproc
+    bool commandIsMultiproc(const QUuidEx& command) const;
+
+    // Используется для регистрации команд в пуле. Параметр multiproc определяет
+    // как команда будет восприниматься обработчиками команд. Если параметр
+    // multiproc равен TRUE, то предполагается, что команда может или должна
+    // быть обработана несколькими обработчиками. В этом случае при обработке
+    // сообщения с данной командой обработчик не должен выставлять для сообщения
+    // статус processed.
     struct Registry : public QUuidEx
     {
-        Registry(const char* uuidStr, const char* commandName);
+        Registry(const char* uuidStr, const char* commandName, bool multiproc);
+    };
+
+    struct CommandTraits
+    {
+        const char* commandName = "";
+
+        // Вспомогательный параметр, используется чтобы отразить тот факт,
+        // что команда ориентирована на обработку несколькими обработчиками.
+        bool multiproc = {false};
+
+        CommandTraits(const char* commandName, bool multiproc);
+        bool operator== (const CommandTraits&) const;
     };
 
 private:
@@ -68,14 +91,15 @@ private:
     DISABLE_DEFAULT_COPY(CommandsPool)
 
 private:
-    // Параметр _map используется для проверки уникальности идентификаторов
-    // команд. Если идентификатор окажется не уникальным, то QSet будет
+    // Параметр используется для проверки уникальности идентификаторов команд.
+    // Если идентификатор окажется не уникальным, то QSet<СommandTraits> будет
     // содержать более одного значения.
-    QMap<QUuidEx, QSet<QByteArray>> _map;
+    QMap<QUuidEx, QSet<CommandTraits>> _map;
 
     template<typename T, int> friend T& ::safe_singleton();
 };
-CommandsPool& commandsPool();
 
+CommandsPool& commandsPool();
+uint qHash(const CommandsPool::CommandTraits&);
 
 } // namespace communication

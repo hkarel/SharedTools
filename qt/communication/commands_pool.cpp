@@ -43,18 +43,18 @@ bool CommandsPool::checkUnique() const
         {
             alog::Line logLine =
                 log_error << "Identifier " << it.key()
-                          << " was be assigned to several commands: ";
-            for (const QByteArray& b : it.value())
-                logLine << b << ", ";
+                          << " was be assigned to several commands:";
+            for (const CommandTraits& t : it.value())
+                logLine << " name=" << t.commandName << ", multiproc=" << t.multiproc << ";";
             return false;
         }
     return true;
 }
 
-void CommandsPool::add(QUuidEx* command, const char* commandName)
+void CommandsPool::add(QUuidEx* command, const char* commandName, bool multiproc)
 {
-    QSet<QByteArray>& set = _map[*command];
-    set.insert(commandName);
+    QSet<CommandTraits>& set = _map[*command];
+    set.insert({commandName, multiproc});
 }
 
 QVector<QUuidEx> CommandsPool::commands() const
@@ -65,27 +65,55 @@ QVector<QUuidEx> CommandsPool::commands() const
     return std::move(commands);
 }
 
-QByteArray CommandsPool::commandName(const QUuidEx& command) const
+const char* CommandsPool::commandName(const QUuidEx& command) const
 {
     const auto it = _map.constFind(command);
     if (it != _map.constEnd())
     {
-        const QSet<QByteArray>& set = *it;
-        if (!set.empty())
-            return *set.constBegin();
+        const QSet<CommandTraits>& set = *it;
+        return (*set.constBegin()).commandName;
     }
-    return QByteArray();
+    return "";
 }
 
-bool CommandsPool::commandExists(const QUuidEx& command) const
+quint32 CommandsPool::commandExists(const QUuidEx& command) const
 {
-    return (_map.constFind(command) != _map.constEnd());
+    //return (_map.constFind(command) != _map.constEnd());
+
+    auto it = _map.constFind(command);
+    if (it == _map.constEnd())
+        return 0;
+
+    const QSet<CommandTraits>& set = *it;
+    return (*set.constBegin()).multiproc ? 2 : 1;
 }
 
-CommandsPool::Registry::Registry(const char* uuidStr, const char* commandName)
+bool CommandsPool::commandIsMultiproc(const QUuidEx& command) const
+{
+    return (commandExists(command) == 2);
+}
+
+CommandsPool::Registry::Registry(const char* uuidStr,
+                                 const char* commandName, bool multiproc)
     : QUuidEx(uuidStr)
 {
-    commandsPool().add(this, commandName);
+    commandsPool().add(this, commandName, multiproc);
+}
+
+CommandsPool::CommandTraits::CommandTraits(const char* commandName, bool multiproc)
+    : commandName(commandName), multiproc(multiproc)
+{}
+
+bool CommandsPool::CommandTraits::operator== (const CommandTraits& ct) const
+{
+    return (strcmp(commandName, ct.commandName) == 0) && (multiproc == ct.multiproc);
+}
+
+uint qHash(const CommandsPool::CommandTraits& ct)
+{
+    const QByteArray& commandName =
+        QByteArray::fromRawData(ct.commandName, strlen(ct.commandName));
+    return qHash(commandName) + uint(ct.multiproc);
 }
 
 } // namespace communication
