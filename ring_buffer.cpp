@@ -12,7 +12,7 @@ void RingBuffer::init(size_t bufferSize)
     std::lock_guard<std::mutex> locker(_buffLock); (void) locker;
 
     if (_buffBegin)
-        free(_buffEnd);
+        free(_buffBegin);
 
     _buffSize = bufferSize;
     _buffBegin = (char*) malloc(_buffSize);
