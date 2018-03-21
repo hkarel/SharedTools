@@ -99,7 +99,6 @@ bool SocketCommon::send(const Message::Ptr& message)
             default:
                 _messagesNorm.add(message.get());
         }
-        ++_messagesCount;
         _messagesCond.wakeAll();
     }
     if (alog::logger().level() == alog::Level::Debug2)
@@ -132,10 +131,14 @@ void SocketCommon::remove(const QUuidEx& command)
     _messagesHigh.removeCond(remove_cond);
     _messagesNorm.removeCond(remove_cond);
     _messagesLow.removeCond(remove_cond);
+}
 
-    _messagesCount = _messagesHigh.count()
-                     + _messagesNorm.count()
-                     + _messagesLow.count();
+int SocketCommon::messagesCount() const
+{
+    QMutexLocker locker(&_messagesLock); (void) locker;
+    return _messagesHigh.count()
+           + _messagesNorm.count()
+           + _messagesLow.count();
 }
 
 //-------------------------------- Socket ------------------------------------
@@ -434,14 +437,7 @@ void Socket::run()
                 _protocolSignatureRead = true;
             }
 
-            { //Block for QMutexLocker
-                QMutexLocker locker(&_messagesLock); (void) locker;
-                _messagesCount = _messagesHigh.count()
-                                 + _messagesNorm.count()
-                                 + _messagesLow.count();
-            }
-
-            while (_messagesCount == 0
+            while (messagesCount() == 0
                    && acceptMessages.empty()
                    && internalMessages.empty()
                    && socketBytesAvailable() == 0)
@@ -462,8 +458,6 @@ void Socket::run()
                     break;
 
                 QMutexLocker locker(&_messagesLock); (void) locker;
-                if (_messagesCount != 0)
-                    break;
                 _messagesCond.wait(&_messagesLock, 20);
             }
             if (loopBreak)
@@ -486,7 +480,7 @@ void Socket::run()
                         message.attach(internalMessages.release(0));
 
                     if (message.empty()
-                        && _messagesCount != 0
+                        && messagesCount() != 0
                         && _binaryProtocolStatus == BinaryProtocol::Compatible)
                     {
                         QMutexLocker locker(&_messagesLock); (void) locker;
@@ -511,10 +505,6 @@ void Socket::run()
                         }
                         if (message.empty() && !_messagesLow.empty())
                             message.attach(_messagesLow.release(0));
-
-                        _messagesCount = _messagesHigh.count()
-                                         + _messagesNorm.count()
-                                         + _messagesLow.count();
                     }
                     if (loopBreak || message.empty())
                         break;

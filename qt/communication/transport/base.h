@@ -101,7 +101,7 @@ public:
 
     // Возвращает количество сообщений в очереди команд на отправку в сокет.
     // Используется для оценки загруженности очереди.
-    int messagesCount() const {return _messagesCount;}
+    int messagesCount() const;
 
     // Определяет нужно ли проверять, что входящая команда является неизвестной
     bool checkUnknownCommands() const {return _checkUnknownCommands;}
@@ -114,7 +114,6 @@ protected:
     mutable QMutex _messagesLock;
     mutable QWaitCondition _messagesCond;
 
-    volatile int _messagesCount = {0};
     int _messagesNormCounter = {0};
 
     // Список команд неизвестных на принимающей стороне, позволяет передавать

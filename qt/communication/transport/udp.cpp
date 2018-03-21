@@ -153,15 +153,8 @@ void Socket::run()
             if (loopBreak)
                 break;
 
-            { //Block for QMutexLocker
-                QMutexLocker locker(&_messagesLock); (void) locker;
-                _messagesCount = _messagesHigh.count()
-                                 + _messagesNorm.count()
-                                 + _messagesLow.count();
-            }
-
             while (!_socket->hasPendingDatagrams()
-                   && _messagesCount == 0
+                   && messagesCount() == 0
                    && acceptMessages.empty())
             {
                 if (threadStop())
@@ -170,8 +163,6 @@ void Socket::run()
                     break;
                 }
                 QMutexLocker locker(&_messagesLock); (void) locker;
-                if (_messagesCount != 0)
-                    break;
                 _messagesCond.wait(&_messagesLock, 20);
             }
             if (loopBreak)
@@ -192,8 +183,8 @@ void Socket::run()
                     message.attach(internalMessages.release(0));
 
                 if (message.empty()
-                    && _messagesCount != 0)
-                { //Block for QMutexLocker
+                    && messagesCount() != 0)
+                {
                     QMutexLocker locker(&_messagesLock); (void) locker;
                     if (!_messagesHigh.empty())
                         message.attach(_messagesHigh.release(0));
@@ -216,10 +207,6 @@ void Socket::run()
                     }
                     if (message.empty() && !_messagesLow.empty())
                         message.attach(_messagesLow.release(0));
-
-                    _messagesCount = _messagesHigh.count()
-                                     + _messagesNorm.count()
-                                     + _messagesLow.count();
                 }
                 if (loopBreak || message.empty())
                     break;
