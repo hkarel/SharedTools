@@ -191,7 +191,9 @@ private slots:
 
 protected:
     Socket(SocketType type);
+
     void run() override;
+    void emitMessage(const communication::Message::Ptr&);
 
     virtual void socketCreate() = 0;
     virtual bool socketInit() = 0;

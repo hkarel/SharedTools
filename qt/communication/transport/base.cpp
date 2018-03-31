@@ -260,8 +260,10 @@ void Socket::run()
 
     auto processingProtocolCompatibleCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->command() == command::ProtocolCompatible
-            && message->type() == Message::Type::Command)
+        if (message->command() != command::ProtocolCompatible)
+            return;
+
+        if (message->type() == Message::Type::Command)
         {
             quint16 protocolVersionLow  = message->protocolVersionLow();
             quint16 protocolVersionHigh = message->protocolVersionHigh();
@@ -327,7 +329,6 @@ void Socket::run()
                               << ". Detail: " << closeConnection.description;
 
                 Message::Ptr m = createMessage(closeConnection);
-                commandCloseConnectionId = m->id();
                 m->setPriority(Message::Priority::High);
                 internalMessages.add(m.detach());
             }
@@ -336,8 +337,10 @@ void Socket::run()
 
     auto processingCloseConnectionCommand = [&](Message::Ptr& message) -> void
     {
-        if (message->command() == command::CloseConnection
-            && message->type() == Message::Type::Command)
+        if (message->command() != command::CloseConnection)
+            return;
+
+        if (message->type() == Message::Type::Command)
         {
             data::CloseConnection closeConnection;
             readFromMessage(message, closeConnection);
@@ -349,12 +352,9 @@ void Socket::run()
                             << CommandNameLog(message->command());
 
             // Отправляем ответ
-            message->clearContent();
-            message->setType(Message::Type::Answer);
-            message->setExecStatus(Message::ExecStatus::Success);
-            message->setPriority(Message::Priority::High);
-            message->add_ref();
-            internalMessages.add(message.get());
+            Message::Ptr answer = message->cloneForAnswer();
+            answer->setPriority(Message::Priority::High);
+            internalMessages.add(answer.detach());
         }
         else if (message->type() == Message::Type::Answer
                  && message->id() == commandCloseConnectionId)
@@ -484,6 +484,8 @@ void Socket::run()
                         && _binaryProtocolStatus == BinaryProtocol::Compatible)
                     {
                         QMutexLocker locker(&_messagesLock); (void) locker;
+
+                        //--- Приоритезация сообщений ---
                         if (!_messagesHigh.empty())
                             message.attach(_messagesHigh.release(0));
 
@@ -508,6 +510,12 @@ void Socket::run()
                     }
                     if (loopBreak || message.empty())
                         break;
+
+                    if (message->command() == command::CloseConnection
+                        && message->type() == Message::Type::Command)
+                    {
+                        commandCloseConnectionId = message->id();
+                    }
 
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
@@ -648,6 +656,11 @@ void Socket::run()
                     else if (message->command() == command::CloseConnection)
                     {
                         processingCloseConnectionCommand(message);
+
+                        // Оправляем команду во внешние обработчики
+                        if (message->type() == Message::Type::Command)
+                            emitMessage(message);
+
                         // Уходим на новый цикл, что бы как можно быстрее
                         // получить ответ по команде command::CloseConnection.
                         break;
@@ -738,22 +751,7 @@ void Socket::run()
                         }
                     }
 
-                    try
-                    {
-                        if (alog::logger().level() == alog::Level::Debug2)
-                            log_debug2_m << "Message emit"
-                                         << "; message id: " << m->id()
-                                         << "; command: " << CommandNameLog(m->command());
-                        emit message(m);
-                    }
-                    catch (std::exception& e)
-                    {
-                        log_error_m << "Failed processing a message. Detail: " << e.what();
-                    }
-                    catch (...)
-                    {
-                        log_error_m << "Failed processing a message. Unknown error";
-                    }
+                    emitMessage(m);
                     if (timer.hasExpired(3 * delay))
                         break;
                 }
@@ -776,6 +774,26 @@ void Socket::run()
     _initSocketDescriptor = -1;
 
     #undef CHECK_SOCKET_ERROR
+}
+
+void Socket::emitMessage(const communication::Message::Ptr& m)
+{
+    try
+    {
+        if (alog::logger().level() == alog::Level::Debug2)
+            log_debug2_m << "Message emit"
+                         << "; message id: " << m->id()
+                         << "; command: " << CommandNameLog(m->command());
+        emit message(m);
+    }
+    catch (std::exception& e)
+    {
+        log_error_m << "Failed processing a message. Detail: " << e.what();
+    }
+    catch (...)
+    {
+        log_error_m << "Failed processing a message. Unknown error";
+    }
 }
 
 //-------------------------------- Listener ----------------------------------
