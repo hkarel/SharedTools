@@ -438,6 +438,7 @@ void Socket::run()
             }
 
             while (messagesCount() == 0
+                   && readBuffSize == 0
                    && acceptMessages.empty()
                    && internalMessages.empty()
                    && socketBytesAvailable() == 0)
@@ -582,9 +583,9 @@ void Socket::run()
             socketWaitForReadyRead(0);
             CHECK_SOCKET_ERROR
             timer.start();
-            while (socketBytesAvailable() != 0)
+            while (socketBytesAvailable() || readBuffSize)
             {
-                if (qAbs(readBuffSize) == 0)
+                if (readBuffSize == 0)
                 {
                     while (socketBytesAvailable() < qint64(sizeof(qint32)))
                     {
@@ -685,7 +686,7 @@ void Socket::run()
 
                 socketWaitForReadyRead(0);
                 CHECK_SOCKET_ERROR
-            } // while (socketBytesAvailable() != 0)
+            } // while (socketBytesAvailable() || readBuffSize)
             if (loopBreak)
                 break;
 
