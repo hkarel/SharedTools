@@ -56,7 +56,8 @@ public:
     typedef container_ptr<Socket> Ptr;
 
     Socket();
-    bool init(const HostPoint& bindPoint);
+    bool init(const HostPoint& bindPoint,
+              QUdpSocket::BindMode bindMode = QUdpSocket::DefaultForPlatform);
 
     // Ожидает (в секундах) выполнение привязки UDP-сокета к адресу и порту
     // определенными в методе init().
@@ -94,6 +95,7 @@ private:
     mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
 
     HostPoint _bindPoint;
+    QUdpSocket::BindMode _bindMode;
     QList<QHostAddress> _discardAddresses;
     mutable std::atomic_flag _discardAddressesLock = ATOMIC_FLAG_INIT;
 

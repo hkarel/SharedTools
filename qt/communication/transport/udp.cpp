@@ -58,14 +58,15 @@ Socket::Socket()
     registrationQtMetatypes();
 }
 
-bool Socket::init(const HostPoint& bindPoint)
+bool Socket::init(const HostPoint& bindPoint, QUdpSocket::BindMode bindMode)
 {
     if (isRunning())
     {
-        log_error_m << "Impossible execute a initialization because Sender thread is running.";
+        log_error_m << "Impossible execute a initialization because Sender thread is running";
         return false;
     }
     _bindPoint = bindPoint;
+    _bindMode = bindMode;
     return true;
 }
 
@@ -116,8 +117,7 @@ void Socket::run()
         SpinLocker locker(_socketLock); (void) locker;
         _socket = simple_ptr<QUdpSocket>(new QUdpSocket(0));
     }
-    if (!_socket->bind(_bindPoint.address(), _bindPoint.port(),
-                       QUdpSocket::ShareAddress|QUdpSocket::ReuseAddressHint))
+    if (!_socket->bind(_bindPoint.address(), _bindPoint.port(), _bindMode))
     {
         log_error_m << "Failed bind UDP socket"
                     << ". Error code: " << int(_socket->error())
