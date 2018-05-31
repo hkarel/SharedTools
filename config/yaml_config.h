@@ -257,7 +257,7 @@ bool YamlConfig::getValue(const std::string& name, T& value, bool logWarnings) c
 
     YAML::Node node;
     if (!nodeGet(name, node, logWarnings))
-            return false;
+        return false;
 
     if (!node.IsScalar())
     {
@@ -280,7 +280,7 @@ bool YamlConfig::getValueVect(const std::string& name,
 {
     YAML::Node node;
     if (!nodeGet(name, node, logWarnings))
-            return false;
+        return false;
 
     if (!node.IsSequence())
     {
