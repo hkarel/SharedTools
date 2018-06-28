@@ -51,9 +51,10 @@ namespace udp   {class Socket;}
 
 enum class SocketType : quint32
 {
-    Local = 0,
-    Tcp   = 1,
-    Udp   = 2
+    Unknown = 0,
+    Local   = 1,
+    Tcp     = 2,
+    Udp     = 3,
 };
 
 #if QT_VERSION >= 0x050000
@@ -202,6 +203,15 @@ public:
     // валидное значение только если тип сокета соответствует SocketType::Local.
     QString socketName() const {return _socketName;}
 
+    // Вспомогательный параметр, используется для хранения произвольной инфор-
+    // мации. Данный параметр не сериализуется, поэтому он не является частью
+    // передаваемого сообщения.
+    // Параметр может использоваться в качестве идентификатора сообщения,
+    // в ситуациях когда сообщение получено не из сокета, и socketDescriptor()
+    // не может быть использован для этой цели.
+    qint64 auxiliary() const {return _auxiliary;}
+    void setAuxiliary(qint64 val) {_auxiliary = val;}
+
     // Вспомогательный параметр, используется для того чтобы сообщить функциям-
     // обработчикам сообщений о том, что сообщение уже было обработано ранее.
     // Таким образом последующие обработчики могут проигнорировать это сообщение.
@@ -342,12 +352,13 @@ private:
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
 
-    SocketType _socketType = {SocketType::Tcp};
+    SocketType _socketType = {SocketType::Unknown};
     HostPoint _sourcePoint;
     HostPoint::Set _destinationPoints;
     SocketDescriptor _socketDescriptor = {-1};
     SocketDescriptorSet _destinationSocketDescriptors;
     QString _socketName;
+    qint64 _auxiliary = {0};
     mutable std::atomic_bool _processed = {false};
 
     friend class transport::local::Socket;

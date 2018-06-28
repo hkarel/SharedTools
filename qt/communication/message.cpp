@@ -31,6 +31,7 @@
 #include "qt/compression/qppmd.h"
 #endif
 #include "qt/communication/message.h"
+#include <stdexcept>
 
 namespace communication {
 
@@ -71,6 +72,8 @@ Message::Ptr Message::cloneForAnswer() const
     m->_socketType = _socketType;
     m->_sourcePoint = _sourcePoint;
     m->_socketDescriptor = _socketDescriptor;
+    m->_socketName = _socketName;
+    m->_auxiliary = _auxiliary;
 
     // Инициализируемые параметры
     m->_flag.type = static_cast<quint32>(Type::Answer);
