@@ -191,11 +191,12 @@ int Message::size() const
              + sizeof(_command)
              + sizeof(_protocolVersionLow)
              + sizeof(_protocolVersionHigh)
-             + sizeof(_flags)
-             + sizeof(_flags2)
-             + sizeof(_tag)
-             + sizeof(_maxTimeLife)
-             + _content.size() + sizeof(quint32);
+             + sizeof(_flags);
+
+    if (_flags2 != 0)                sz += sizeof(_flags2);
+    if (_tag != 0)                   sz += sizeof(_tag);
+    if (_maxTimeLife != quint64(-1)) sz += sizeof(_maxTimeLife);
+    if (!_content.isEmpty())         sz += _content.size() + sizeof(quint32);
 
     return sz;
 }
@@ -213,10 +214,10 @@ BByteArray Message::toByteArray() const
 
 void Message::toDataStream(QDataStream& stream) const
 {
-    _flag.flags2IsEmpty = (_flags2 == 0);
-    _flag.tagIsEmpty = (_tag == 0);
+    _flag.flags2IsEmpty      = (_flags2 == 0);
+    _flag.tagIsEmpty         = (_tag == 0);
     _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
-    _flag.contentIsEmpty = _content.isEmpty();
+    _flag.contentIsEmpty     = _content.isEmpty();
 
     stream << _id;
     stream << _command;
@@ -224,14 +225,10 @@ void Message::toDataStream(QDataStream& stream) const
     stream << _protocolVersionHigh;
     stream << _flags;
 
-    if (!_flag.flags2IsEmpty)
-        stream << _flags2;
-    if (!_flag.tagIsEmpty)
-        stream << _tag;
-    if (!_flag.maxTimeLifeIsEmpty)
-        stream << _maxTimeLife;
-    if (!_flag.contentIsEmpty)
-        stream << _content;
+    if (!_flag.flags2IsEmpty)      stream << _flags2;
+    if (!_flag.tagIsEmpty)         stream << _tag;
+    if (!_flag.maxTimeLifeIsEmpty) stream << _maxTimeLife;
+    if (!_flag.contentIsEmpty)     stream << _content;
 }
 
 Message::Ptr Message::fromByteArray(const BByteArray& ba)
@@ -250,14 +247,10 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
     stream >> m->_protocolVersionHigh;
     stream >> m->_flags;
 
-    if (!m->_flag.flags2IsEmpty)
-        stream >> m->_flags2;
-    if (!m->_flag.tagIsEmpty)
-        stream >> m->_tag;
-    if (!m->_flag.maxTimeLifeIsEmpty)
-        stream >> m->_maxTimeLife;
-    if (!m->_flag.contentIsEmpty)
-        stream >> m->_content;
+    if (!m->_flag.flags2IsEmpty)      stream >> m->_flags2;
+    if (!m->_flag.tagIsEmpty)         stream >> m->_tag;
+    if (!m->_flag.maxTimeLifeIsEmpty) stream >> m->_maxTimeLife;
+    if (!m->_flag.contentIsEmpty)     stream >> m->_content;
 
     return std::move(m);
 }
