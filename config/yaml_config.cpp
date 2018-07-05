@@ -60,7 +60,7 @@
 
 bool YamlConfig::read(const std::string& filePath)
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAMLCONFIG_TRY
     _filePath = filePath;
@@ -113,7 +113,7 @@ bool YamlConfig::save(const std::string& filePath)
         return false;
     }
 
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAMLCONFIG_TRY
     if (!filePath.empty())
@@ -141,6 +141,7 @@ bool YamlConfig::save(const std::string& filePath)
 
         _root.SetStyle(YAML::EmitterStyle::Block);
         file << _root;
+        file.flush();
         file.close();
     }
     catch (...)
@@ -174,7 +175,7 @@ std::string YamlConfig::filePath() const
 
 bool YamlConfig::remove(const std::string& name, bool logWarnings)
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAMLCONFIG_TRY
      size_t pos = name.find_last_of('.');
@@ -186,8 +187,8 @@ bool YamlConfig::remove(const std::string& name, bool logWarnings)
      std::string namePre = name.substr(0, pos);
      std::string nameKey = name.substr(pos + 1);
 
-     YAML::Node node = nodeGet(namePre, logWarnings);
-     if (!node)
+     YAML::Node node = getNode(namePre);
+     if (!node || node.IsNull())
          return false;
 
     node.remove(nameKey);
@@ -195,55 +196,51 @@ bool YamlConfig::remove(const std::string& name, bool logWarnings)
     return true;
 }
 
-YAML::Node YamlConfig::getNode(const std::string& name, bool logWarnings) const
+YAML::Node YamlConfig::getNode(const std::string& name) const
 {
-    return nodeGet(name, logWarnings);
+    return getNode(_root, name);
 }
 
-YAML::Node YamlConfig::nodeGet(const std::string& name, bool logWarnings) const
+YAML::Node YamlConfig::getNode(const YAML::Node& baseNode,
+                               const std::string& name) const
 {
     std::vector<std::string> parts = utl::split(name, '.');
     if (parts.empty())
         return YAML::Node();
 
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+
     typedef std::function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
-    NodeFunc getNode = [&](const YAML::Node& node, size_t i)
+    NodeFunc get_node = [&](const YAML::Node& node, size_t i)
     {
+        if (!node.IsDefined() || node.IsNull())
+            return YAML::Node();
+
         if (i == parts.size())
             return node;
 
-        if (!node.IsDefined())
-            return YAML::Node();
-
-        if (i < (parts.size() - 1) && !node.IsMap())
+        if (!node.IsMap())
             return YAML::Node();
 
         YAMLCONFIG_TRY
         std::string s = parts[i];
         YAML::Node n = node[s];
-        if (!n.IsDefined())
-            return YAML::Node();
-        return getNode(n, ++i);
+        return get_node(n, ++i);
         YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(YAML::Node()))
     };
-    return getNode(_root, 0);
+    return get_node(baseNode, 0);
 }
 
-bool YamlConfig::nodeGet(const std::string& name,
-                         YAML::Node& node, bool logWarnings) const
+YAML::Node YamlConfig::nodeGet(const YAML::Node& baseNode,
+                               const std::string& name, bool logWarnings) const
 {
-    node = nodeGet(name, logWarnings);
-    if (!node)
-        return false;
-
-    if (node.IsNull())
+    YAML::Node node = getNode(baseNode, name);
+    if (node.IsNull() && logWarnings)
     {
-        if (logWarnings)
-            log_warn_m << "Parameter '" << name << "' is undefined"
-                       << ". Config file: " << _filePath;
-        return false;
+        log_warn_m << "Parameter '" << (_nameNodeFunc + name) << "' is undefined"
+                   << ". Config file: " << _filePath;
     }
-    return true;
+    return node;
 }
 
 YAML::Node YamlConfig::nodeSet(const std::string& name)
@@ -251,30 +248,39 @@ YAML::Node YamlConfig::nodeSet(const std::string& name)
     std::vector<std::string> parts = utl::split(name, '.');
 
     typedef std::function<YAML::Node (YAML::Node&, size_t)> NodeFunc;
-    NodeFunc getNode = [&](YAML::Node& node, size_t i)
+    NodeFunc get_node = [&](YAML::Node& node, size_t i)
     {
         if (i == parts.size())
             return node;
+
         YAMLCONFIG_TRY
         std::string s = parts[i];
         YAML::Node n = node[s];
-        return getNode(n, ++i);
+        if (n.IsDefined() && !n.IsMap() && i < (parts.size() - 1))
+        {
+            node.remove(s);
+            n = node[s];
+        }
+        return get_node(n, ++i);
         YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(YAML::Node()))
     };
-    return getNode(_root, 0);
+    return get_node(_root, 0);
 }
 
 bool YamlConfig::getValue(const std::string& name,
                           Func func, bool logWarnings) const
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node;
-    if (!nodeGet(name, node, logWarnings))
-            return false;
+    YAML::Node node = nodeGet(_root, name, logWarnings);
+    if (!node || node.IsNull())
+        return false;
 
     YAMLCONFIG_TRY
-    return func(node, logWarnings);
+    _nameNodeFunc = name + ".";
+    bool res = func(const_cast<YamlConfig*>(this), node, logWarnings);
+    _nameNodeFunc.clear();
+    return res;
     YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
 }
 
@@ -282,12 +288,26 @@ bool YamlConfig::setValue(const std::string& name, Func func)
 {
     YAMLCONFIG_CHECK_READONLY
 
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
-    return func(node, false);
+    _nameNodeFunc = name + ".";
+    bool res = func(this, node, false);
+    _nameNodeFunc.clear();
+    return res;
     YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
+}
+
+YamlConfigLock::YamlConfigLock(const YamlConfig& yc)
+{
+    _configLock = &yc._configLock;
+    _configLock->lock();
+}
+
+YamlConfigLock::~YamlConfigLock()
+{
+    _configLock->unlock();
 }
 
 #undef YAMLCONFIG_CATCH_2

@@ -41,7 +41,6 @@
 #include <exception>
 #include <string>
 #include <vector>
-#include <map>
 #include <functional>
 #if !defined(_MSC_VER)
 #include <cxxabi.h>
@@ -56,7 +55,7 @@
 class YamlConfig
 {
 public:
-    typedef std::function<bool (YAML::Node&, bool /*logWarnings*/)> Func;
+    typedef std::function<bool (YamlConfig*, YAML::Node&, bool /*logWarnings*/)> Func;
 
     YamlConfig() = default;
 
@@ -84,7 +83,10 @@ public:
     bool remove(const std::string& name, bool logWarnings = true);
 
     // Возвращает ноду с именем name
-    YAML::Node getNode(const std::string& name, bool logWarnings = true) const;
+    YAML::Node getNode(const std::string& name) const;
+
+    // Возвращает ноду с именем name относительно базовой ноды baseNode
+    YAML::Node getNode(const YAML::Node& baseNode, const std::string& name) const;
 
     // Используется для получения простого значения (скаляр) из ноды
     // с именем name. Имя может быть составным. Составное имя записывается
@@ -95,6 +97,11 @@ public:
     // о причинах.
     template<typename T>
     bool getValue(const std::string& name,
+                  T& value, bool logWarnings = true) const;
+
+    // Возвращает значение относительно базовой ноды baseNode
+    template<typename T>
+    bool getValue(const YAML::Node& baseNode, const std::string& name,
                   T& value, bool logWarnings = true) const;
 
     // Используется для получения списка значений из ноды с именем name.
@@ -116,9 +123,10 @@ public:
 
     // Используется для получения значений для нод сложной конфигурации.
     // В качестве параметра func используется функция или функтор со следующей
-    // сигнатурой function(YAML::Node& node, bool logWarnings), где параметр
-    // node - это нода по имени name, а параметр logWarnings определяет
-    // нужно ли выводить сообщения в лог в случае неудачного считывания данных.
+    // сигнатурой function(YamlConfig* conf, YAML::Node& node, bool logWarnings),
+    // где: conf - указатель на текущий конфигуратор; node - читаемая нода;
+    // logWarnings - определяет нужно ли выводить сообщения в лог в случае
+    // неудачного считывания данных.
     bool getValue(const std::string& name,
                   Func func, bool logWarnings = true) const;
 
@@ -165,8 +173,8 @@ private:
 
     // Возвращает ноду по имени 'name'. Если ноды с заданным именем нет
     // в списке, то будет возвращена пустая нода.
-    YAML::Node nodeGet(const std::string& name, bool logWarnings) const;
-    bool nodeGet(const std::string& name, YAML::Node&, bool logWarnings) const;
+    YAML::Node nodeGet(const YAML::Node& baseNode,
+                       const std::string& name, bool logWarnings) const;
 
     // Используется в функциях setValue(). Строит иерархию нод согласно
     // заданному параметру 'name'.
@@ -185,9 +193,25 @@ private:
     std::atomic_bool _saveDisabled = {false};
     std::string _filePath;
     YAML::Node _root;
-    mutable std::mutex _configLock;
+    mutable std::recursive_mutex _configLock;
 
+    // Вспомогательная переменная, используется для вывода в лог информации
+    // по не найденной ноде
+    mutable std::string _nameNodeFunc;
+
+    friend class YamlConfigLock;
     template<typename T, int> friend T& ::safe_singleton();
+};
+
+class YamlConfigLock
+{
+public:
+    YamlConfigLock(const YamlConfig&);
+    ~YamlConfigLock();
+
+private:
+    YamlConfigLock() = delete;
+    std::recursive_mutex* _configLock;
 };
 
 //---------------------------- Implementation  -------------------------------
@@ -211,9 +235,9 @@ char* YamlConfig::typeName()
     alog::logger().error_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig") \
         << "Yaml error"; \
     if (GETSET == 0) \
-        logLine << ". Failed to get parameter: " << name; \
+        logLine << ". Failed to get parameter: " << (_nameNodeFunc + name); \
     else \
-        logLine << ". Failed to set parameter: " << name; \
+        logLine << ". Failed to set parameter: " << (_nameNodeFunc + name); \
     logLine << ". Detail: " << ERROR \
             << ". File: " << _filePath;
 
@@ -223,12 +247,15 @@ char* YamlConfig::typeName()
 #define YAMLCONFIG_CATCH(GETSET, RETURN) \
     } catch (YAML::Exception& e) { \
         YAMLCONFIG_LOG_ERROR(e.what(), GETSET) \
+        _nameNodeFunc.clear(); \
         return RETURN; \
     } catch (std::exception& e) { \
         YAMLCONFIG_LOG_ERROR(e.what(), GETSET) \
+        _nameNodeFunc.clear(); \
         return RETURN; \
     } catch (...) { \
         YAMLCONFIG_LOG_ERROR("Unknown error", GETSET) \
+        _nameNodeFunc.clear(); \
         return RETURN; \
     }
 
@@ -253,17 +280,24 @@ struct YamlConfig::ProxyStdString<QString>
 template<typename T>
 bool YamlConfig::getValue(const std::string& name, T& value, bool logWarnings) const
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    return getValue(_root, name, value, logWarnings);
+}
 
-    YAML::Node node;
-    if (!nodeGet(name, node, logWarnings))
+template<typename T>
+bool YamlConfig::getValue(const YAML::Node& baseNode,
+                          const std::string& name, T& value, bool logWarnings) const
+{
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+
+    YAML::Node node = nodeGet(baseNode, name, logWarnings);
+    if (!node || node.IsNull())
         return false;
 
     if (!node.IsScalar())
     {
         if (logWarnings)
             alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig")
-                << "Parameter " << name << " is not scalar type";
+                << "Parameter " << (_nameNodeFunc + name) << " is not scalar type";
         return false;
     }
 
@@ -278,8 +312,8 @@ template<typename VectorT>
 bool YamlConfig::getValueVect(const std::string& name,
                               VectorT& value, bool logWarnings) const
 {
-    YAML::Node node;
-    if (!nodeGet(name, node, logWarnings))
+    YAML::Node node = nodeGet(_root, name, logWarnings);
+    if (!node || node.IsNull())
         return false;
 
     if (!node.IsSequence())
@@ -316,7 +350,7 @@ template<typename T>
 bool YamlConfig::getValue(const std::string& name,
                           std::vector<T>& value, bool logWarnings) const
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
     return getValueVect(name, value, logWarnings);
 }
 
@@ -325,7 +359,7 @@ template<typename T>
 bool YamlConfig::getValue(const std::string& name,
                           QVector<T>& value, bool logWarnings) const
 {
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
     return getValueVect(name, value, logWarnings);
 }
 #endif
@@ -335,7 +369,7 @@ bool YamlConfig::setValue(const std::string& name, const T& value)
 {
     YAMLCONFIG_CHECK_READONLY
 
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
@@ -351,7 +385,7 @@ bool YamlConfig::setValueVect(const std::string& name,
 {
     YAMLCONFIG_CHECK_READONLY
 
-    std::lock_guard<std::mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSet(name);
     YAMLCONFIG_TRY
