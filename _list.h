@@ -139,7 +139,6 @@ public:
   virtual const char* what() const NOEXCEPT {return _msg;}
 };
 
-/*DECLSPEC_SELECTANY_LST */
 constexpr const char* ERR_NOCREATEOBJ =
   "Impossible create object of the class. (NO_CONTAINER_CLASS)";
 
@@ -556,7 +555,7 @@ public:
   /// @brief Функции поиска.
   ///
   /// В качестве стратегии поиска используется lambda-функция с сигнатурой
-  /// int [](const List::ValueType* item)
+  /// int [](const CustomList::ValueType* item)
   template<typename CompareL>
   FindResult findL(const CompareL& compare,
                    const FindExtParams& extParams = FindExtParams()) const;
@@ -759,7 +758,6 @@ public:
   /// @param[in] item Добавляемый элемент.
   /// @return Возвращает указатель на добавленный элемент.
   T* add(T* item);
-  //T* add(const T& item, bool /*copy*/);
 
   /// @brief Добавляет копию элемента T в конец списка.
   /// @return Возвращает указатель на добавленный элемент.
@@ -781,7 +779,6 @@ public:
   /// @param[in] index Позиция вставки нового элемента.
   /// @return Возвращает указатель на добавленный элемент.
   T* insert(T* item, int index = 0);
-  //T* insert(T* item, bool /*copy*/, int index = 0);
 
   /// @brief Добавляет копию элемента T в указанную позицию в списке.
   T* insertCopy(const T& item, int index = 0);
@@ -873,9 +870,7 @@ public:
   void move(int curIndex, int newIndex);
 
   /// @brief Очищает список элементов.
-  //void clear() {CustomListType::clear();}
-  void clear(); // {CustomListType::internalClear();}
-
+  void clear();
 
   /// @brief Устанавливает новый размер массива указателей на элементы списка.
   ///
@@ -898,8 +893,8 @@ public:
   ///        (флаг сортировки не сбрасывается).
   ///
   /// Предполагается, что добавление нового элемента не нарушит порядок сортиров-
-  /// ки элементов в отсортированном списке. Для того чтобы порядок сортировки не
-  /// нарушался индекс вставки должен быть корректным.
+  /// ки элементов в отсортированном списке. Для того чтобы порядок сортировки
+  /// не нарушался индекс вставки должен быть корректным.
   /// Корректный индекс можно определить при помощи функции find() и структуры
   /// FindResult.
   /// Если элемент не найден в списке, то в структуре FindResult будет возвращен
@@ -908,13 +903,12 @@ public:
   /// добавлен в конец списка. При частичной сортировке - флаг состояния сортиров-
   /// ки будет сброшен, а элемент будет добавлен в конец списка.
   /// ВНИМАНИЕ: Если поиск производится с флагом bruteForce = TRUE, то при добав-
-  /// лении нового элемента через функцию addInSort() флаг состояния сортировки
-  /// будет сброшен.
+  /// лении нового элемента через функцию addInSort() элемент будет добавлен
+  /// в конец списка, а флаг состояния сортировки будет сброшен.
   /// @param[in] item Добавляемый элемент.
   /// @param[in] fr Позиция вставки нового элемента.
   /// @return Возвращает указатель на добавленный элемент.
   T* addInSort(T* item, const FindResult& fr);
-  //T* addInSort(T* item, const FindResult& fr, bool /*copy*/);
 
   /// @brief Функция добавляет копию элемента в отсортированный список
   ///        (флаг сортировки не сбрасывается).
@@ -974,13 +968,10 @@ private:
   DataType* d_func() {return CustomListType::d_func();}
 
   // Инициализирует основные параметры контейнера, используется в конструкторах.
-  void init(bool container /*, const Allocator &*/);
+  void init(bool container);
 
-  //template<typename CompareU>
-  //void QuickSort(T** sortList, int L, int R,
-  //               CompareU& compare, SortMode sortMode, void *extParam);
   template<typename CompareU>
-  void QSort(T** sortList, int L, int R,
+  void qsort(T** sortList, int L, int R,
              CompareU& compare, SortMode sortMode, void *extParam);
 
   void grow();
@@ -998,8 +989,6 @@ private:
 #define DECL_IMPL_CUSTLIST_CONSTR \
   template<typename T, typename Compare, typename Allocator> \
   CustomList<T, Compare, Allocator>
-
-#define DECL_IMPL_CUSTLIST_DESTR  DECL_IMPL_CUSTLIST_CONSTR
 
 #define DECL_IMPL_CUSTLIST(TYPE) \
   template<typename T, typename Compare, typename Allocator> \
@@ -1229,7 +1218,6 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
 }
 
 #undef DECL_IMPL_CUSTLIST_CONSTR
-#undef DECL_IMPL_CUSTLIST_DESTR
 #undef DECL_IMPL_CUSTLIST
 #undef DECL_IMPL_CUSTLIST_INTERN_TYPE
 #undef DECL_IMPL_CUSTLIST_SUBTMPL1
@@ -1254,8 +1242,6 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
     template<typename SUBT1> \
   TYPE List<T, Compare, Allocator>
 
-#define DECL_LIST_SELFTYPE List<T, Compare, Allocator>
-
 
 DECL_IMPL_LIST_CONSTR::List(bool container)
 {
@@ -1278,7 +1264,7 @@ DECL_IMPL_LIST_DESTR::~List()
   }
 }
 
-DECL_IMPL_LIST(void)::init(bool container/*, const Allocator& allocator*/)
+DECL_IMPL_LIST(void)::init(bool container)
 {
   CustomListType::d = new DataType();
   CustomListType::d->list = 0;
@@ -1286,7 +1272,6 @@ DECL_IMPL_LIST(void)::init(bool container/*, const Allocator& allocator*/)
   CustomListType::d->capacity = 0;
   CustomListType::d->sortState = SortState::Unknown;
   CustomListType::d->container = container;
-  //CustomListType::d->allocator = allocator;
 }
 
 DECL_IMPL_LIST_CONSTR::List(CustomListType&& list)
@@ -1300,18 +1285,6 @@ DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
   CustomListType::d = list.d;
   list.d = 0;
 }
-
-//DECL_IMPL_LIST(DECL_LIST_SELFTYPE &)::operator= (const CustomListType& list)
-//{
-//  assign(list);
-//  return *this;
-//}
-
-//DECL_IMPL_LIST(DECL_LIST_SELFTYPE &)::operator= (const SelfListType& list)
-//{
-//  assign(list);
-//  return *this;
-//}
 
 DECL_IMPL_LIST(T*)::add()
 {
@@ -1508,9 +1481,6 @@ DECL_IMPL_LIST(void)::exchange(int index1, int index2)
 DECL_IMPL_LIST(T*)::addInSort(T* item, const FindResult& fr)
 {
   SortState sortState = this->sortState();
-  //if ((sort_state == NoSorted)
-  //     || (sort_state == CustomUpSorted)
-  //     || (sort_state == CustomDownSorted))
   if ((sortState != SortState::Up) && (sortState != SortState::Down))
     return add(item);
 
@@ -1611,31 +1581,9 @@ DECL_IMPL_LIST(void)::compressList()
 {
   DataType* d = d_func();
 
-  // TODO: Рассмотреть задачу с удалением пустых элементов используя только
-  // один вектор. См: http://forum.pascal.net.ru/index.php?showtopic=26642
+  // Удаление пустых элементов без перераспределения памяти
+  // См: http://forum.pascal.net.ru/index.php?showtopic=26642
 
-//  T** temp_list = new T* [d->capacity];
-//  T** temp_item = temp_list;
-//  T** item_ = CustomListType::listBegin();
-//  T** end_  = CustomListType::listEnd();
-//  int count_ = d->count;
-//  while (item_ != end_)
-//  {
-//    if (*item_ != 0)
-//    {
-//      *temp_item++ = *item_++;
-//    }
-//    else
-//    {
-//      ++item_, --count_;
-//    }
-//  }
-//  delete [] d->list;
-//  d->list = temp_list;
-//  d->count = count_;
-
-  // TODO выполнен
-  //--- Удаление пустых элементов без перераспределения памяти ---
   T** it = this->listBegin();
   T** end = this->listEnd();
   while (true)
@@ -1673,9 +1621,9 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
 
   clear();
 
-  // !!! Так делать нельзя, поэтому выполняем присвоение параметров через функции
-  //*d = *(list.d);
-  // !!!
+  // Так делать нельзя, поэтому выполняем присвоение параметров через функции
+  // *d = *(list.d);
+  //
   setCapacity(list.capacity());
   setCompare(list.compare());
   setAllocator(list.allocator());
@@ -1704,44 +1652,7 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   setSortState(list.sortState());
 }
 
-// --- Код оставлен в качестве примера ---
-//DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::QuickSort(T** sortList,
-//                                                   int L, int R,
-//                                                   CompareU& compare,
-//                                                   SortMode sortMode,
-//                                                   void* extParam)
-//{
-//  register int I, J;
-//  T *P1, *T1;
-//  do
-//  {
-//    I = L; J = R;
-//    P1 = sortList[(L + R) >> 1];
-//    do
-//    {
-//    	switch (sortMode)
-//    	{
-//  	  	case SortUp:
-//          while (compare(sortList[I], P1, extParam) < 0) ++I;
-//          while (compare(sortList[J], P1, extParam) > 0) --J;
-//          break;
-//        default:
-//          while (compare(sortList[I], P1, extParam) > 0) ++I;
-//          while (compare(sortList[J], P1, extParam) < 0) --J;
-//      }
-//      if (I <= J)
-//      {
-//        T1 = sortList[I];
-//        sortList[I++] = sortList[J];
-//        sortList[J--] = T1;
-//      }
-//    } while (I < J);
-//    if (L < J) QuickSort(sortList, L, J, compare, sortMode, extParam);
-//    L = I;
-//  } while (I <= R);
-//}
-
-DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::QSort(T** sortList,
+DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::qsort(T** sortList,
                                                int L, int R,
                                                CompareU& compare,
                                                SortMode sortMode,
@@ -1758,7 +1669,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::QSort(T** sortList,
         while ((compare(sortList[i], x, extParam) < 0) && (i < R)) ++i;
         while ((compare(sortList[j], x, extParam) > 0) && (j > L)) --j;
         break;
-      default: //SortDown
+      default: // SortMode::Down
         while ((compare(sortList[i], x, extParam) > 0) && (i < R)) ++i;
         while ((compare(sortList[j], x, extParam) < 0) && (j > L)) --j;
     }
@@ -1771,8 +1682,8 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::QSort(T** sortList,
     }
   } while (i <= j);
 
-  if (L < j) QSort(sortList, L, j, compare, sortMode, extParam);
-  if (i < R) QSort(sortList, i, R, compare, sortMode, extParam);
+  if (L < j) qsort(sortList, L, j, compare, sortMode, extParam);
+  if (i < R) qsort(sortList, i, R, compare, sortMode, extParam);
 }
 
 DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
@@ -1802,7 +1713,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
       if ((loSortBorder != 0) || (hiSortBorder != d->count))
         setSortState((sortMode == SortMode::Up) ? SortState::CustomUp : SortState::CustomDown);
 
-      QSort<CompareU>(d->list, loSortBorder, hiSortBorder - 1,
+      qsort<CompareU>(d->list, loSortBorder, hiSortBorder - 1,
                       compare, sortMode, extParams.extParam);
     }
     catch (BreakCompare &)
@@ -2027,14 +1938,11 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
 #undef DECL_IMPL_LIST_DESTR
 #undef DECL_IMPL_LIST
 #undef DECL_IMPL_LIST_SUBTMPL1
-#undef DECL_LIST_SELFTYPE
 
 #undef LIST_EXCEPT
 
 #undef CHECK_BORDERS
 #undef CHECK_NOTLESS
 #undef CHECK_INTERNAL_DATA_PTR
-
-#undef DECLSPEC_SELECTANY_LST
 
 } // namespace lst
