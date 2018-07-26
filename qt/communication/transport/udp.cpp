@@ -44,9 +44,11 @@
 #define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportUDP")
 
 namespace {
-// Сигнатура для UDP протокола 'GMA7'
-//const quint32 udpSignature = 0x37414D47;
+#ifdef UDP_LONGSIG
+const quint64 udpSignature = *((quint64*)UDP_SIGNATURE);
+#else
 const quint32 udpSignature = *((quint32*)UDP_SIGNATURE);
+#endif
 }
 
 namespace communication {
@@ -222,11 +224,6 @@ void Socket::run()
                                << ". The message may be lost"
                                << ". Command: " << CommandNameLog(message->command());
 
-                //break_point
-                // Проверить значение udpSignature
-                //quint32 udpSignature__ = qbswap(udpSignature);
-                //quint32 udpSignature__ = udpSignature;
-
                 QByteArray buff;
                 buff.reserve(message->size() + sizeof(udpSignature));
                 {
@@ -321,7 +318,11 @@ void Socket::run()
                 Message::Ptr message;
                 { //Block for QDataStream
                     QDataStream stream {&datagram, QIODevice::ReadOnly | QIODevice::Unbuffered};
+#ifdef UDP_LONGSIG
+                    quint64 udpSign;
+#else
                     quint32 udpSign;
+#endif
                     stream >> udpSign;
                     if (udpSign != udpSignature)
                     {
