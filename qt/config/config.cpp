@@ -33,10 +33,7 @@ namespace config {
 
 QString dir()
 {
-    #ifndef CONFIG_DIR
-    #error "Undefined CONFIG_DIR"
-    #endif
-
+#if defined(CONFIG_DIR)
 #if defined(__MINGW32__)
     QString cfgDir = QDir::homePath() + "/" + CONFIG_DIR;
 #else
@@ -55,6 +52,9 @@ QString dir()
         }
     }
     return cfgDir;
+#else
+    throw std::logic_error("Undefined CONFIG_DIR");
+#endif
 }
 
 QString path(const QString& configFile)
