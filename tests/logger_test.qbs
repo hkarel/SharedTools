@@ -18,7 +18,7 @@ CppApplication {
     ]
 
     files: [
-        "../_list.h",
+        "../list.h",
         "../clife_base.h",
         "../clife_ptr.h",
         "../simple_ptr.h",

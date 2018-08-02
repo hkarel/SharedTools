@@ -17,7 +17,7 @@ CppApplication {
     //]
 
     files: [
-        "../_list.h",
+        "../list.h",
         "list_utest.cpp"
     ]
 }

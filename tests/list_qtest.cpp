@@ -6,7 +6,7 @@
 #include <vector>
 
 #include <QtTest>
-#include "../_list.h"
+#include "../list.h"
 
 class ListTest : public QObject
 {
