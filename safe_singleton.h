@@ -64,3 +64,24 @@ T& safe_singleton()
     return *t;
 }
 
+/**
+  Экспериментальная функция.
+  Возвращает smart-ptr экземпляр
+*/
+template<typename T, int = 0>
+typename T::Ptr& safe_singleton_ptr()
+{
+    static typename T::Ptr t;
+    static std::mutex lock;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+    if (!t)
+#else
+    if (__builtin_expect(!t, 0))
+#endif
+    {
+        std::lock_guard<std::mutex> locker(lock); (void) locker;
+        if (!t)
+            t = typename T::Ptr(new T());
+    }
+    return t;
+}
