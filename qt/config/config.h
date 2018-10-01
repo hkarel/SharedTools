@@ -42,7 +42,13 @@ YamlConfig& base();
 // Сохраняемые настройки приложения
 YamlConfig& state();
 
+// Расширяет правую часть пути до файла полным путем до файла относительно
+// текущего приложения
 QString getFilePath(const QString& partFilePath);
+
+// Расширяет правую часть пути до директории полным путем до директории
+// относительно текущего приложения
+QString getDirPath(const QString& partDirPath);
 
 // Расширяет символ '~' до полного пути к домашней директории
 void homeDirExpansion(QString& filePath);
