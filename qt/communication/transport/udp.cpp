@@ -64,7 +64,7 @@ bool Socket::init(const HostPoint& bindPoint, QUdpSocket::BindMode bindMode)
 {
     if (isRunning())
     {
-        log_error_m << "Impossible execute a initialization because Sender thread is running";
+        log_error_m << "Impossible execute a initialization because Socket thread is running";
         return false;
     }
     _bindPoint = bindPoint;
