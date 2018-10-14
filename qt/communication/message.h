@@ -69,7 +69,7 @@ class Message : public clife_base
 {
     struct Allocator
     {
-        void destroy(Message* x) {if (x)  x->release();}
+        void destroy(Message* x) {if (x) x->release();}
     };
 
 public:
