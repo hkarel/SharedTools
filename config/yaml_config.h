@@ -114,11 +114,23 @@ public:
     bool getValue(const std::string& name,
                   std::vector<T>& value, bool logWarnings = true) const;
 
+    // Используется для получения списка значений относительно базовой
+    // ноды baseNode
+    template<typename T>
+    bool getValue(const YAML::Node& baseNode, const std::string& name,
+                  std::vector<T>& value, bool logWarnings = true) const;
+
 #if defined(QT_CORE_LIB)
     // Перегруженная функция, используется для считывания списка значений
     // в QVector.
     template<typename T>
     bool getValue(const std::string& name,
+                  QVector<T>& value, bool logWarnings = true) const;
+
+    // Используется для получения списка значений относительно базовой
+    // ноды baseNode
+    template<typename T>
+    bool getValue(const YAML::Node& baseNode, const std::string& name,
                   QVector<T>& value, bool logWarnings = true) const;
 #endif
 
@@ -138,10 +150,21 @@ public:
     template<typename T>
     bool setValue(const std::string& name, const T& value);
 
+    // Устанавливает значение относительно базовой ноды baseNode
+    template<typename T>
+    bool setValue(YAML::Node& baseNode,
+                  const std::string& name, const T& value);
+
     // Используется для записи списка значений в ноду с именем name.
     // Возвращает TRUE если список был удачно записан в ноду.
     template<typename T>
     bool setValue(const std::string& name, const std::vector<T>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
+
+    // Используется для записи списка значений относительно базовой ноды baseNode
+    template<typename T>
+    bool setValue(YAML::Node& baseNode,
+                  const std::string& name, const std::vector<T>& value,
                   YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
 
 #if defined(QT_CORE_LIB)
@@ -149,6 +172,12 @@ public:
     // из QVector.
     template<typename T>
     bool setValue(const std::string& name, const QVector<T>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
+
+    // Используется для записи списка значений относительно базовой ноды baseNode
+    template<typename T>
+    bool setValue(YAML::Node& baseNode,
+                  const std::string& name, const QVector<T>& value,
                   YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
 #endif
 
@@ -179,14 +208,14 @@ private:
 
     // Используется в функциях setValue(). Строит иерархию нод согласно
     // заданному параметру 'name'.
-    YAML::Node nodeSet(const std::string& name);
+    YAML::Node nodeSet(YAML::Node& baseNode, const std::string& name);
 
     template<typename VectorT>
-    bool getValueVect(const std::string& name,
+    bool getValueVect(const YAML::Node& baseNode, const std::string& name,
                       VectorT& value, bool logWarnings = true) const;
 
     template<typename VectorT>
-    bool setValueVect(const std::string& name,
+    bool setValueVect(YAML::Node& baseNode, const std::string& name,
                       const VectorT& value, YAML::EmitterStyle::value nodeStyle);
 
 private:
@@ -310,10 +339,10 @@ bool YamlConfig::getValue(const YAML::Node& baseNode,
 }
 
 template<typename VectorT>
-bool YamlConfig::getValueVect(const std::string& name,
+bool YamlConfig::getValueVect(const YAML::Node& baseNode, const std::string& name,
                               VectorT& value, bool logWarnings) const
 {
-    YAML::Node node = nodeGet(_root, name, logWarnings);
+    YAML::Node node = nodeGet(baseNode, name, logWarnings);
     if (!node || node.IsNull())
         return false;
 
@@ -352,7 +381,15 @@ bool YamlConfig::getValue(const std::string& name,
                           std::vector<T>& value, bool logWarnings) const
 {
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
-    return getValueVect(name, value, logWarnings);
+    return getValueVect(_root, name, value, logWarnings);
+}
+
+template<typename T>
+bool YamlConfig::getValue(const YAML::Node& baseNode, const std::string& name,
+                          std::vector<T>& value, bool logWarnings) const
+{
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    return getValueVect(baseNode, name, value, logWarnings);
 }
 
 #if defined(QT_CORE_LIB)
@@ -361,18 +398,33 @@ bool YamlConfig::getValue(const std::string& name,
                           QVector<T>& value, bool logWarnings) const
 {
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
-    return getValueVect(name, value, logWarnings);
+    return getValueVect(_root, name, value, logWarnings);
+}
+
+template<typename T>
+bool YamlConfig::getValue(const YAML::Node& baseNode, const std::string& name,
+                          QVector<T>& value, bool logWarnings) const
+{
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    return getValueVect(baseNode, name, value, logWarnings);
 }
 #endif
 
 template<typename T>
 bool YamlConfig::setValue(const std::string& name, const T& value)
 {
+    return setValue(_root, name, value);
+}
+
+template<typename T>
+bool YamlConfig::setValue(YAML::Node& baseNode,
+                          const std::string& name, const T& value)
+{
     YAMLCONFIG_CHECK_READONLY
 
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node = nodeSet(name);
+    YAML::Node node = nodeSet(baseNode, name);
     YAMLCONFIG_TRY
     node = YAML::Node(ProxyStdString<T>::setter(value));
     YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
@@ -380,15 +432,14 @@ bool YamlConfig::setValue(const std::string& name, const T& value)
 }
 
 template<typename VectorT>
-bool YamlConfig::setValueVect(const std::string& name,
-                              const VectorT& value,
-                              YAML::EmitterStyle::value nodeStyle)
+bool YamlConfig::setValueVect(YAML::Node& baseNode, const std::string& name,
+                              const VectorT& value, YAML::EmitterStyle::value nodeStyle)
 {
     YAMLCONFIG_CHECK_READONLY
 
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node = nodeSet(name);
+    YAML::Node node = nodeSet(baseNode, name);
     YAMLCONFIG_TRY
     node = YAML::Node();
     node.SetStyle(nodeStyle);
@@ -401,19 +452,31 @@ bool YamlConfig::setValueVect(const std::string& name,
 
 template<typename T>
 bool YamlConfig::setValue(const std::string& name,
-                          const std::vector<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
+                          const std::vector<T>& value, YAML::EmitterStyle::value nodeStyle)
 {
-    return setValueVect(name, value, nodeStyle);
+    return setValueVect(_root, name, value, nodeStyle);
+}
+
+template<typename T>
+bool YamlConfig::setValue(YAML::Node& baseNode, const std::string& name,
+                          const std::vector<T>& value, YAML::EmitterStyle::value nodeStyle)
+{
+    return setValueVect(baseNode, name, value, nodeStyle);
 }
 
 #if defined(QT_CORE_LIB)
 template<typename T>
 bool YamlConfig::setValue(const std::string& name,
-                          const QVector<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
+                          const QVector<T>& value, YAML::EmitterStyle::value nodeStyle)
 {
-    return setValueVect(name, value, nodeStyle);
+    return setValueVect(_root, name, value, nodeStyle);
+}
+
+template<typename T>
+bool YamlConfig::setValue(YAML::Node& baseNode, const std::string& name,
+                          const QVector<T>& value, YAML::EmitterStyle::value nodeStyle)
+{
+    return setValueVect(baseNode, name, value, nodeStyle);
 }
 #endif
 

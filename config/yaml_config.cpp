@@ -244,7 +244,7 @@ YAML::Node YamlConfig::nodeGet(const YAML::Node& baseNode,
     return node;
 }
 
-YAML::Node YamlConfig::nodeSet(const std::string& name)
+YAML::Node YamlConfig::nodeSet(YAML::Node& baseNode, const std::string& name)
 {
     std::vector<std::string> parts = utl::split(name, '.');
 
@@ -265,7 +265,8 @@ YAML::Node YamlConfig::nodeSet(const std::string& name)
         return get_node(n, ++i);
         YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(YAML::Node()))
     };
-    return get_node(_root, 0);
+    //return get_node(_root, 0);
+    return get_node(baseNode, 0);
 }
 
 bool YamlConfig::getValue(const std::string& name,
@@ -291,7 +292,7 @@ bool YamlConfig::setValue(const std::string& name, Func func)
 
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node = nodeSet(name);
+    YAML::Node node = nodeSet(_root, name);
     YAMLCONFIG_TRY
     _nameNodeFunc = name + ".";
     bool res = func(this, node, false);
