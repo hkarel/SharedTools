@@ -105,7 +105,8 @@ void YamlConfig::setSaveDisabled(bool val)
     _saveDisabled = val;
 }
 
-bool YamlConfig::save(const std::string& filePath)
+bool YamlConfig::save(const std::string& filePath,
+                      YAML::EmitterStyle::value nodeStyle)
 {
     if (_saveDisabled)
     {
@@ -139,7 +140,7 @@ bool YamlConfig::save(const std::string& filePath)
             return false;
         }
 
-        _root.SetStyle(YAML::EmitterStyle::Block);
+        _root.SetStyle(nodeStyle);
         file << _root;
         file.flush();
         file.close();

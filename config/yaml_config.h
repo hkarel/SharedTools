@@ -74,7 +74,8 @@ public:
     void setSaveDisabled(bool);
 
     // Сохраняет данные в файл
-    bool save(const std::string& filePath = std::string());
+    bool save(const std::string& filePath = std::string(),
+              YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Block);
 
     // Возвращает полное имя файла конфигурации
     std::string filePath() const;
