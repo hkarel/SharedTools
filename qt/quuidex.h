@@ -123,13 +123,13 @@ inline bool operator!= (const QUuid& u1, const QUuidT<N>& u2) noexcept
 }
 
 template<int N>
-inline QDataStream& operator<< (QDataStream &s, const QUuidT<N> &u)
+inline QDataStream& operator<< (QDataStream& s, const QUuidT<N>& u)
 {
     return operator<< (s, static_cast<const QUuid&>(u));
 }
 
 template<int N>
-inline QDataStream& operator>> (QDataStream &s, QUuidT<N> &u)
+inline QDataStream& operator>> (QDataStream& s, QUuidT<N>& u)
 {
     return operator>> (s, static_cast<QUuid&>(u));
 }
