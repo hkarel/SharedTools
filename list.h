@@ -55,33 +55,30 @@ constexpr bool CONTAINER_CLASS = true;
 constexpr bool NO_CONTAINER_CLASS = !CONTAINER_CLASS;
 constexpr bool REFERENCE_CLASS = !CONTAINER_CLASS;
 
-constexpr bool COMPRESS_LIST = true;
-constexpr bool NO_COMPRESS_LIST = !COMPRESS_LIST;
-
-enum class BruteForce {No = 0, Yes = 1};
-
+enum class CompressList {No = 0, Yes = 1};
+enum class BruteForce   {No = 0, Yes = 1};
 
 /// @brief Флаги направления сортировки.
 enum class SortMode
 {
   Down = 0,  /// Сортировать по убыванию
-  Up = 1     /// Сортировать по возрастанию
+  Up   = 1   /// Сортировать по возрастанию
 };
 
 /// @brief Флаги сдвига списка.
 enum class ShiftMode
 {
-  Left = 0,  /// Сдвинуть элементы списка влево
+  Left  = 0, /// Сдвинуть элементы списка влево
   Right = 1  /// Сдвинуть элементы списка вправо
 };
 
 /// @brief Флаги состояний сортировки.
 enum class SortState
 {
-  Unknown = 0,     /// Список находится в не отсортированном состоянии
-  Up = 1,          /// Список отсортирован по возрастанию
-  Down = 2,        /// Список отсортирован по убыванию
-  CustomUp = 3,    /// Список частично отсортирован по возрастанию
+  Unknown    = 0,  /// Список находится в не отсортированном состоянии
+  Up         = 1,  /// Список отсортирован по возрастанию
+  Down       = 2,  /// Список отсортирован по убыванию
+  CustomUp   = 3,  /// Список частично отсортирован по возрастанию
   CustomDown = 4   /// Список частично отсортирован по убыванию
 };
 
@@ -787,10 +784,10 @@ public:
   ///
   /// При удалении элемента из списка происходит его разрушение.
   /// @param[in] index Индекс удаляемого элемента.
-  /// @param[in] compressList Признак сжатия списка. Если compressList = false,
-  ///     то ячейкам в массиве списка присваивается 0. Таким образом получается
-  ///     разряженный список содержащий нуль-значения.
-  void remove(int index, bool compressList = true);
+  /// @param[in] compressList Признак сжатия списка. Если compressList
+  ///     равен CompressList::No, то ячейкам в массиве списка присваивается 0.
+  ///     Таким образом получается разряженный список содержащий null-значения.
+  void remove(int index, CompressList compressList = CompressList::Yes);
 
   /// @brief Удаляет элемент из списка.
   ///
@@ -798,8 +795,8 @@ public:
   /// @param[in] item Элемент удаляемый из списка.
   /// @param[in] compressList Признак сжатия списка.
   /// @return Индекс удаленного элемента, если элемент не присутствовал
-  /// в списке возвращает int(-1).
-  int removeItem(T* item, bool compressList = true);
+  ///         в списке возвращает int(-1).
+  int removeItem(T* item, CompressList compressList = CompressList::Yes);
 
   /// @brief Удаляет последний элемент из списка.
   ///
@@ -813,7 +810,8 @@ public:
   ///            Если condition возвращает TRUE, то элемент удаляется из списка.
   /// @param[in] compressList Признак сжатия списка.
   template<typename Condition>
-  void removeCond(const Condition& condition, bool compressList = true);
+  void removeCond(const Condition& condition,
+                  CompressList compressList = CompressList::Yes);
 
   /// @brief Удаляет элементы из списка.
   ///
@@ -821,7 +819,8 @@ public:
   /// @param[in] index Индекс с которого начнется удаление элементов.
   /// @param[in] count Количество удаляемых элементов.
   /// @param[in] compressList Признак сжатия списка.
-  void removes(int index, int count, bool compressList = true);
+  void removes(int index, int count,
+               CompressList compressList = CompressList::Yes);
 
   /// @brief Заменяет элемент в списке.
   ///
@@ -835,14 +834,14 @@ public:
   /// @param[in] index Индекс удаляемого элемента
   /// @param[in] compressList Признак сжатия списка (см. описание в функции remove()).
   /// @return Возвращает указатель на удаленный из списка элемент.
-  T* release(int index, bool compressList = true);
+  T* release(int index, CompressList compressList = CompressList::Yes);
 
   /// @brief Удаляет элемент из списка, при этом разрушения элемента не происходит.
   ///
   /// @param[in] item Удаляемый элемент.
   /// @param[in] compressList Признак сжатия списка (см. описание в функции remove()).
   /// @return В случае успешного удаления возвращает индекс удаленного элемента.
-  int releaseItem(T* item, bool compressList = true);
+  int releaseItem(T* item, CompressList compressList = CompressList::Yes);
 
   /// @brief Удаляет последний элемент из списка при этом разрушения элемента
   /// не происходит. Если в списке нет элементов будет возвращен 0.
@@ -886,7 +885,7 @@ public:
   ///
   /// Удаляет нулевые ячейки, которые могли образоваться в массиве указателей
   /// на элементы при вызове методов remove() или release() с параметром
-  /// compressList = false.
+  /// compressList = CompressList::No.
   void compressList();
 
   /// @brief Функция добавляет элемент в отсортированный список
@@ -1336,7 +1335,7 @@ DECL_IMPL_LIST(void)::clear()
   d->sortState = SortState::Unknown;
 }
 
-DECL_IMPL_LIST(void)::remove(int index, bool compressList)
+DECL_IMPL_LIST(void)::remove(int index, CompressList compressList)
 {
   DataType* d = d_func();
   CHECK_BORDERS(index)
@@ -1346,7 +1345,7 @@ DECL_IMPL_LIST(void)::remove(int index, bool compressList)
     d->allocator.destroy(item);
 }
 
-DECL_IMPL_LIST(int)::removeItem(T* item, bool compressList)
+DECL_IMPL_LIST(int)::removeItem(T* item, CompressList compressList)
 {
   int index = -1;
   if (CustomListType::indexOf2(item, index))
@@ -1364,7 +1363,7 @@ DECL_IMPL_LIST(void)::removeLast()
 }
 
 DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removeCond(const Condition& condition,
-                                                     bool compressList)
+                                                     CompressList compressList)
 {
   DataType* d = d_func();
   T** it = this->listBegin();
@@ -1379,11 +1378,11 @@ DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removeCond(const Condition& condition,
     }
     ++it;
   }
-  if (compressList)
+  if (compressList == CompressList::Yes)
     this->compressList();
 }
 
-DECL_IMPL_LIST(void)::removes(int index, int count, bool compressList)
+DECL_IMPL_LIST(void)::removes(int index, int count, CompressList compressList)
 {
   DataType* d = d_func();
   CHECK_BORDERS(index)
@@ -1394,11 +1393,11 @@ DECL_IMPL_LIST(void)::removes(int index, int count, bool compressList)
 
   for (int i = index; i < count; ++i)
   {
-    T *item = release(i, NO_COMPRESS_LIST);
+    T *item = release(i, CompressList::No);
     if (d->container && item)
       d->allocator.destroy(item);
   }
-  if (compressList)
+  if (compressList == CompressList::Yes)
       this->compressList();
 }
 
@@ -1418,7 +1417,7 @@ DECL_IMPL_LIST(void)::replace(int index, T* item, bool keepSortState)
     d->allocator.destroy(itemOld);
 }
 
-DECL_IMPL_LIST(T*)::release(int index, bool compressList)
+DECL_IMPL_LIST(T*)::release(int index, CompressList compressList)
 {
   DataType* d = d_func();
   CHECK_BORDERS(index)
@@ -1429,7 +1428,7 @@ DECL_IMPL_LIST(T*)::release(int index, bool compressList)
 
   T** it = this->listBegin() + index;
   T* res = *it;
-  if (compressList)
+  if (compressList == CompressList::Yes)
   {
     // При сжатии списка сдвигаем все элементы оставшиеся справа
     // от точки удаления элемента на одну позицию влево
@@ -1446,7 +1445,7 @@ DECL_IMPL_LIST(T*)::release(int index, bool compressList)
   return res;
 }
 
-DECL_IMPL_LIST(int)::releaseItem(T* item, bool compressList)
+DECL_IMPL_LIST(int)::releaseItem(T* item, CompressList compressList)
 {
   int index = -1;
   if (this->indexOf2(item, index))
