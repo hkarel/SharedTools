@@ -321,7 +321,7 @@ base::Socket::List concatSockets(const base::Listener& listener, const Args&... 
     base::Socket::List sl = concatSockets(args...);
     base::Socket::List ss = listener.sockets();
     for (int i = 0; i < ss.count(); ++i)
-        sl.add(ss.release(i, lst::NO_COMPRESS_LIST));
+        sl.add(ss.release(i, lst::CompressList::No));
 
     return std::move(sl);
 }

@@ -802,7 +802,7 @@ void Logger::run()
                 saverFlush(messages, saverErr.get());
 
             for (int i = 0; i < messages.count(); ++i)
-                messagesBuff.add(messages.release(i, lst::NO_COMPRESS_LIST));
+                messagesBuff.add(messages.release(i, lst::CompressList::No));
             messages.clear();
 
         } //if (messages.count())
