@@ -166,8 +166,7 @@ public:
     // от начала эпохи. Параметр представляет абсолютное значение времени по
     // достижении которого сообщение перестает быть актуальным.
     // Параметр задает тайм-аут для ожидания синхронных сообщений. Так тайм-аут
-    // в 2 мин. можно задать следующим образом:
-    //   setMaxTimeLife(std::time() + 2*60)
+    // в 2 мин. можно задать следующим образом: setMaxTimeLife(std::time() + 2*60)
     quint64 maxTimeLife() const {return _maxTimeLife;}
     void setMaxTimeLife(quint64 val) {_maxTimeLife = val;}
 
@@ -263,8 +262,6 @@ public:
 
     // Вспомогательные функции, используются для формирования сырого потока
     // данных для отправки в сетевой сокет.
-    // Параметр udpSignature используется при передаче сообщения через UDP
-    // сокет.
     BByteArray toByteArray() const;
     void toDataStream(QDataStream&) const;
 
@@ -284,11 +281,11 @@ private:
 
     template<typename T, typename... Args>
     void writeInternal(QDataStream& s, const T& t, const Args&... args);
-    void writeInternal(QDataStream&) {return;}
+    void writeInternal(QDataStream&) {}
 
     template<typename T, typename... Args>
     void readInternal(QDataStream& s, T& t, Args&... args) const;
-    void readInternal(QDataStream&) const {return;}
+    void readInternal(QDataStream&) const {}
 
     void setSocketType(SocketType val) {_socketType = val;}
     void setSourcePoint(const HostPoint& val) {_sourcePoint = val;}
