@@ -335,11 +335,11 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
 
 typedef bserial::ByteArray BByteArray;
 
-#ifndef Q_DATA_STREAM_VERSION
+#ifndef QDATASTREAM_VERSION
 #  if QT_VERSION >= 0x050000
-#    define Q_DATA_STREAM_VERSION QDataStream::Qt_5_5
+#    define QDATASTREAM_VERSION QDataStream::Qt_5_5
 #  else
-#    define Q_DATA_STREAM_VERSION QDataStream::Qt_4_8
+#    define QDATASTREAM_VERSION QDataStream::Qt_4_8
 #  endif
 #endif
 
@@ -395,7 +395,7 @@ typedef bserial::ByteArray BByteArray;
     { bserial::ByteArray to__raw__ba__; \
       to__raw__ba__.reserve(RESERVE); \
       { QDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly);  \
-        STREAM.setVersion(Q_DATA_STREAM_VERSION);
+        STREAM.setVersion(QDATASTREAM_VERSION);
 
 #define B_SERIALIZE_N(STREAM, RESERVE...) \
       } \
@@ -404,7 +404,7 @@ typedef bserial::ByteArray BByteArray;
     { bserial::ByteArray to__raw__ba__; \
       to__raw__ba__.reserve(RESERVE); \
       { QDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly); \
-        STREAM.setVersion(Q_DATA_STREAM_VERSION);
+        STREAM.setVersion(QDATASTREAM_VERSION);
 
 #define B_SERIALIZE_V2(STREAM, RESERVE...) B_SERIALIZE_N(STREAM, RESERVE)
 #define B_SERIALIZE_V3(STREAM, RESERVE...) B_SERIALIZE_N(STREAM, RESERVE)
@@ -422,14 +422,14 @@ typedef bserial::ByteArray BByteArray;
         const bserial::ByteArray& ba__from__raw__ = VECT.at(0); \
         QDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
                             QIODevice::ReadOnly | QIODevice::Unbuffered}; \
-        STREAM.setVersion(Q_DATA_STREAM_VERSION);
+        STREAM.setVersion(QDATASTREAM_VERSION);
 
 #define B_DESERIALIZE_N(N, VECT, STREAM) \
     } if (VECT.count() >= N) { \
         const bserial::ByteArray& ba__from__raw__ = VECT.at(N - 1); \
         QDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
                             QIODevice::ReadOnly | QIODevice::Unbuffered}; \
-        STREAM.setVersion(Q_DATA_STREAM_VERSION);
+        STREAM.setVersion(QDATASTREAM_VERSION);
 
 #define B_DESERIALIZE_V2(VECT, STREAM) B_DESERIALIZE_N(2, VECT, STREAM)
 #define B_DESERIALIZE_V3(VECT, STREAM) B_DESERIALIZE_N(3, VECT, STREAM)
