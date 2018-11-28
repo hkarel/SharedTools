@@ -207,6 +207,8 @@ BByteArray Message::toByteArray() const
     ba.reserve(size());
     {
         QDataStream stream {&ba, QIODevice::WriteOnly};
+        stream.setByteOrder(QDATASTREAM_BYTEORDER);
+        stream.setVersion(QDATASTREAM_VERSION);
         toDataStream(stream);
     }
     return std::move(ba);
@@ -234,6 +236,8 @@ void Message::toDataStream(QDataStream& stream) const
 Message::Ptr Message::fromByteArray(const BByteArray& ba)
 {
     QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+    stream.setByteOrder(QDATASTREAM_BYTEORDER);
+    stream.setVersion(QDATASTREAM_VERSION);
     return std::move(fromDataStream(stream));
 }
 
