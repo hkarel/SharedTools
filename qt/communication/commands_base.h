@@ -133,8 +133,8 @@ struct Data
 */
 struct MessageError
 {
-    int code = {0};       // Код ошибки
-    QString description;  // Описание ошибки
+    qint32  code = {0};   // Код ошибки
+    QString description;  // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
 };
 
@@ -148,8 +148,8 @@ struct MessageError
 */
 struct MessageFailed
 {
-    int code = {0};       // Код неудачи
-    QString description;  // Описание неудачи
+    qint32  code = {0};   // Код неудачи
+    QString description;  // Описание неудачи (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
 };
 
@@ -163,7 +163,8 @@ struct Unknown : Data<&command::Unknown,
     SocketType    socketType;       // Тип сокета для которого было создано
                                     // сообщение.
     quint64       socketDescriptor; // Идентификатор сокета.
-    QString       socketName;       // Наименование локального сокета.
+    QString       socketName;       // Наименование локального сокета,
+                                    // (сериализуется в utf8).
     QHostAddress  address;          // Адрес и порт хоста для которого
     quint16       port;             // команда неизвестна.
     DECLARE_B_SERIALIZE_FUNC
@@ -178,8 +179,8 @@ struct Error : Data<&command::Error,
                      Message::Type::Command>
 {
     QUuidEx commandId;   // Идентификатор команды для которой произошла ошибка
-    int code = {0};      // Код ошибки
-    QString description; // Описание ошибки
+    qint32  code = {0};  // Код ошибки
+    QString description; // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
 };
 
@@ -203,7 +204,9 @@ struct Error : Data<&command::Error,
 struct CloseConnection : Data<&command::CloseConnection,
                                Message::Type::Command>
 {
-    QString description;  // Описание причины закрытия соединения
+    qint32  code = {0};   // Код причины
+    QString description;  // Описание причины закрытия соединения,
+                          // (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
 };
 

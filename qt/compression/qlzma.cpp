@@ -41,11 +41,15 @@
 #define IN_BUF_SIZE (1 << 18)
 #define OUT_BUF_SIZE (1 << 18)
 
-#ifndef Q_DATA_STREAM_VERSION
+#ifndef QDATASTREAM_BYTEORDER
+#  define QDATASTREAM_BYTEORDER QDataStream::BigEndian
+#endif
+
+#ifndef QDATASTREAM_VERSION
 #  if QT_VERSION >= 0x050000
-#    define Q_DATA_STREAM_VERSION QDataStream::Qt_5_5
+#    define QDATASTREAM_VERSION QDataStream::Qt_5_5
 #  else
-#    define Q_DATA_STREAM_VERSION QDataStream::Qt_4_8
+#    define QDATASTREAM_VERSION QDataStream::Qt_4_8
 #  endif
 #endif
 
@@ -199,10 +203,12 @@ int compress(const QByteArray& in, QByteArray& out, int compressionLevel)
     SRes res = SZ_OK;
     { //Block for QDataStream
         QDataStream instream(in);
-        instream.setVersion(Q_DATA_STREAM_VERSION);
+        instream.setByteOrder(QDATASTREAM_BYTEORDER);
+        instream.setVersion(QDATASTREAM_VERSION);
 
         QDataStream outstream(&out, QIODevice::WriteOnly);
-        outstream.setVersion(Q_DATA_STREAM_VERSION);
+        outstream.setByteOrder(QDATASTREAM_BYTEORDER);
+        outstream.setVersion(QDATASTREAM_VERSION);
 
         SeqInStream inStream(&instream);
         SeqOutStream outStream(&outstream);
@@ -255,7 +261,8 @@ int decompress(const QByteArray& in, QByteArray& out)
     SRes res = SZ_OK;
 
     QDataStream inStream(in);
-    inStream.setVersion(Q_DATA_STREAM_VERSION);
+    inStream.setByteOrder(QDATASTREAM_BYTEORDER);
+    inStream.setVersion(QDATASTREAM_VERSION);
 
     quint8 lzmaVersion;
     inStream >> lzmaVersion;
@@ -269,7 +276,8 @@ int decompress(const QByteArray& in, QByteArray& out)
     if (lzmaVersion == 2)
     {
         QDataStream outStream(&out, QIODevice::WriteOnly);
-        outStream.setVersion(Q_DATA_STREAM_VERSION);
+        outStream.setByteOrder(QDATASTREAM_BYTEORDER);
+        outStream.setVersion(QDATASTREAM_VERSION);
 
         quint8 lzmaProp;
         inStream >> lzmaProp;

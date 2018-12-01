@@ -423,6 +423,7 @@ typedef bserial::ByteArray BByteArray;
     return std::move(to__raw__vect__);
 
 #define B_DESERIALIZE_V1(VECT, STREAM) \
+    bserial::ByteArray utf8__to__qstr__; (void) utf8__to__qstr__; \
     if (VECT.count() >= 1) { \
         const bserial::ByteArray& ba__from__raw__ = VECT.at(0); \
         QDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
@@ -444,3 +445,16 @@ typedef bserial::ByteArray BByteArray;
 #define B_DESERIALIZE_V5(VECT, STREAM) B_DESERIALIZE_N(5, VECT, STREAM)
 
 #define B_DESERIALIZE_END }
+
+// Используется для сохранения QString в поток в формате utf8
+#define B_QSTR_TO_UTF8(STREAM, QSTR) \
+    static_assert(std::is_same<decltype(QSTR), QString>::value, "QSTR must have type QString"); \
+    STREAM << QSTR.toUtf8();
+
+// Используется для извлечения из потока строки в формате utf8 с последующим
+// преобразованием ее в QString
+#define B_UTF8_TO_QSTR(STREAM, QSTR) \
+    static_assert(std::is_same<decltype(QSTR), QString>::value, "QSTR must have type QString"); \
+    utf8__to__qstr__.clear(); \
+    STREAM >> utf8__to__qstr__; \
+    QSTR = std::move(QString::fromUtf8(utf8__to__qstr__));

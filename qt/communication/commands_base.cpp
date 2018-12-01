@@ -46,7 +46,8 @@ bserial::RawVector MessageError::toRaw() const
 {
     B_SERIALIZE_V1(stream)
     stream << code;
-    stream << description;
+    /* stream << description */
+    B_QSTR_TO_UTF8(stream, description);
     B_SERIALIZE_RETURN
 }
 
@@ -54,7 +55,8 @@ void MessageError::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
     stream >> code;
-    stream >> description;
+    /* stream >> description */
+    B_UTF8_TO_QSTR(stream, description);
     B_DESERIALIZE_END
 }
 
@@ -62,7 +64,8 @@ bserial::RawVector MessageFailed::toRaw() const
 {
     B_SERIALIZE_V1(stream)
     stream << code;
-    stream << description;
+    /* stream << description */
+    B_QSTR_TO_UTF8(stream, description);
     B_SERIALIZE_RETURN
 }
 
@@ -70,7 +73,8 @@ void MessageFailed::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
     stream >> code;
-    stream >> description;
+    /* stream >> description */
+    B_UTF8_TO_QSTR(stream, description);
     B_DESERIALIZE_END
 }
 
@@ -80,8 +84,34 @@ bserial::RawVector Unknown::toRaw() const
     stream << commandId;
     stream << socketType;
     stream << socketDescriptor;
-    stream << socketName;
-    stream << address;
+    /* stream << socketName */
+    B_QSTR_TO_UTF8(stream, socketName);
+
+    // Отладить: stream << address
+    break_point
+
+    /* stream << address
+       Реализация взята с QHostAddress
+    */
+    qint8 prot = qint8(address.protocol());
+    stream << prot;
+    switch (prot)
+    {
+        case qint8(QAbstractSocket::IPv4Protocol):
+            stream << address.toIPv4Address();
+            break;
+
+        case qint8(QAbstractSocket::IPv6Protocol):
+        {
+            Q_IPV6ADDR ipv6 = address.toIPv6Address();
+            for (int i = 0; i < 16; ++i)
+                stream << ipv6[i];
+
+            //out << address.scopeId();
+            B_QSTR_TO_UTF8(stream, address.scopeId());
+        }
+        break;
+    }
     stream << port;
     B_SERIALIZE_RETURN
 }
@@ -92,8 +122,41 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
     stream >> commandId;
     stream >> socketType;
     stream >> socketDescriptor;
-    stream >> socketName;
-    stream >> address;
+    /* stream >> socketName */
+    B_UTF8_TO_QSTR(stream, socketName);
+
+    // Отладить: stream >> address
+    break_point
+
+    /* stream >> address
+       Реализация взята с QHostAddress
+    */
+    address.clear();
+    qint8 prot;
+    stream >> prot;
+    switch (prot)
+    {
+        case qint8(QAbstractSocket::IPv4Protocol):
+        {
+            quint32 ipv4;
+            stream >> ipv4;
+            address.setAddress(ipv4);
+            break;
+        }
+        case qint8(QAbstractSocket::IPv6Protocol):
+        {
+            Q_IPV6ADDR ipv6;
+            for (int i = 0; i < 16; ++i)
+                stream >> ipv6[i];
+            address.setAddress(ipv6);
+
+            QString scope;
+            //in >> scope;
+            B_UTF8_TO_QSTR(stream, scope);
+            address.setScopeId(scope);
+            break;
+        }
+    }
     stream >> port;
     B_DESERIALIZE_END
 }
@@ -103,7 +166,8 @@ bserial::RawVector Error::toRaw() const
     B_SERIALIZE_V1(stream)
     stream << commandId;
     stream << code;
-    stream << description;
+    /* stream << description */
+    B_QSTR_TO_UTF8(stream, description);
     B_SERIALIZE_RETURN
 }
 
@@ -112,7 +176,8 @@ void Error::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_V1(vect, stream)
     stream >> commandId;
     stream >> code;
-    stream >> description;
+    /* stream >> description */
+    B_UTF8_TO_QSTR(stream, description);
     B_DESERIALIZE_END
 }
 
@@ -135,17 +200,20 @@ void Error::fromRaw(const bserial::RawVector& vect)
 bserial::RawVector CloseConnection::toRaw() const
 {
     B_SERIALIZE_V1(stream)
-    stream << description;
+    stream << code;
+    /* stream << description */
+    B_QSTR_TO_UTF8(stream, description);
     B_SERIALIZE_RETURN
 }
 
 void CloseConnection::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
-    stream >> description;
+    stream >> code;
+    /* stream >> description */
+    B_UTF8_TO_QSTR(stream, description);
     B_DESERIALIZE_END
 }
-
 
 } // namespace data
 } // namespace communication

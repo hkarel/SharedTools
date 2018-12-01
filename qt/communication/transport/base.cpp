@@ -271,17 +271,13 @@ void Socket::run()
             _binaryProtocolStatus = BinaryProtocol::Compatible;
             if (_checkProtocolCompatibility)
             {
-                if (alog::logger().level() >= alog::Level::Debug)
-                {
-                    log_debug_m
-                        << "Checking binary protocol compatibility"
-                        << ". This protocol version: "
-                        << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
-                        << ". Remote protocol version: "
-                        << protocolVersionLow << "-" << protocolVersionHigh;
-                }
-                if (!communication::protocolCompatible(protocolVersionLow,
-                                                       protocolVersionHigh))
+                log_debug_m << "Checking binary protocol compatibility"
+                            << ". This protocol version: "
+                            << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
+                            << ". Remote protocol version: "
+                            << protocolVersionLow << "-" << protocolVersionHigh;
+
+                if (!communication::protocolCompatible(protocolVersionLow, protocolVersionHigh))
                     _binaryProtocolStatus = BinaryProtocol::Incompatible;
             }
 
@@ -317,13 +313,16 @@ void Socket::run()
             else // BinaryProtocol::Incompatible
             {
                 data::CloseConnection closeConnection;
+                closeConnection.code = 0;
                 closeConnection.description = QString(
                     "Binary protocol versions incompatible"
                     ". This protocol version: %1-%2"
                     ". Remote protocol version: %3-%4"
                 )
-                .arg(BPROTOCOL_VERSION_LOW).arg(BPROTOCOL_VERSION_HIGH)
-                .arg(protocolVersionLow).arg(protocolVersionHigh);
+                // Инвертируем версии протокола, иначе на принимающей стороне
+                // будет путаница с восприятием.
+                .arg(protocolVersionLow).arg(protocolVersionHigh)
+                .arg(BPROTOCOL_VERSION_LOW).arg(BPROTOCOL_VERSION_HIGH);
 
                 log_verbose_m << "Send request to close the connection"
                               << ". Detail: " << closeConnection.description;
@@ -386,8 +385,10 @@ void Socket::run()
             if (!_protocolSignatureWrite)
             {
                 QByteArray ba;
-                QDataStream s {&ba, QIODevice::WriteOnly};
-                s << _protocolSignature;
+                QDataStream stream {&ba, QIODevice::WriteOnly};
+                stream.setByteOrder(QDATASTREAM_BYTEORDER);
+                stream.setVersion(QDATASTREAM_VERSION);
+                stream << _protocolSignature;
                 socketWrite(ba.constData(), 16);
                 CHECK_SOCKET_ERROR
                 socketWaitForBytesWritten(delay);
@@ -426,8 +427,10 @@ void Socket::run()
                 }
 
                 QUuidEx protocolSignature;
-                QDataStream s {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
-                s >> protocolSignature;
+                QDataStream stream {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+                stream.setByteOrder(QDATASTREAM_BYTEORDER);
+                stream.setVersion(QDATASTREAM_VERSION);
+                stream >> protocolSignature;
                 if (_protocolSignature != protocolSignature)
                 {
                     log_error_m << "Incompatible protocol signatures";
@@ -673,11 +676,9 @@ void Socket::run()
                             acceptMessages.add(message.detach());
                         }
                         else
-                        {
                             log_error_m
                                 << "Check of compatibility for the binary protocol not performed"
                                 << ". Command " << CommandNameLog(message->command()) << " discarded";
-                        }
                     }
                 }
                 if (loopBreak

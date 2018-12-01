@@ -131,7 +131,7 @@ public:
     // Персональный идентификатор сообщения.
     QUuidEx id() const {return _id;}
 
-    // Идентификатор комманды
+    // Идентификатор команды
     QUuidEx command() const {return _command;}
 
     // Функции возвращают нижнюю и верхнюю границы версий бинарного протокола
@@ -370,9 +370,11 @@ template<typename... Args>
 bool Message::writeContent(const Args&... args)
 {
     _content.clear();
-    QDataStream s(&_content, QIODevice::WriteOnly);
-    writeInternal(s, args...);
-    return (s.status() == QDataStream::Ok);
+    QDataStream stream {&_content, QIODevice::WriteOnly};
+    stream.setByteOrder(QDATASTREAM_BYTEORDER);
+    stream.setVersion(QDATASTREAM_VERSION);
+    writeInternal(stream, args...);
+    return (stream.status() == QDataStream::Ok);
 }
 
 template<typename... Args>
@@ -380,9 +382,11 @@ bool Message::readContent(Args&... args) const
 {
     BByteArray content;
     decompress(content);
-    QDataStream s(content);
-    readInternal(s, args...);
-    return (s.status() == QDataStream::Ok);
+    QDataStream stream {content};
+    stream.setByteOrder(QDATASTREAM_BYTEORDER);
+    stream.setVersion(QDATASTREAM_VERSION);
+    readInternal(stream, args...);
+    return (stream.status() == QDataStream::Ok);
 }
 
 template<typename T, typename... Args>
