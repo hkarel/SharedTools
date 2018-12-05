@@ -399,6 +399,8 @@ void Message::writeInternal(QDataStream& s, const T& t, const Args&... args)
 template<typename T, typename... Args>
 void Message::readInternal(QDataStream& s, T& t, Args&... args) const
 {
+    // Не делаем здесь проверку условия s.atEnd() == TRUE, эта проверка
+    // выполняется внутри потокового оператора для типа Т
     if (s.status() != QDataStream::Ok)
         return;
     s >> t;
