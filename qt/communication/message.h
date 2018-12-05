@@ -371,8 +371,7 @@ bool Message::writeContent(const Args&... args)
 {
     _content.clear();
     QDataStream stream {&_content, QIODevice::WriteOnly};
-    stream.setByteOrder(QDATASTREAM_BYTEORDER);
-    stream.setVersion(QDATASTREAM_VERSION);
+    STREAM_INIT(stream);
     writeInternal(stream, args...);
     return (stream.status() == QDataStream::Ok);
 }
@@ -383,8 +382,7 @@ bool Message::readContent(Args&... args) const
     BByteArray content;
     decompress(content);
     QDataStream stream {content};
-    stream.setByteOrder(QDATASTREAM_BYTEORDER);
-    stream.setVersion(QDATASTREAM_VERSION);
+    STREAM_INIT(stream);
     readInternal(stream, args...);
     return (stream.status() == QDataStream::Ok);
 }

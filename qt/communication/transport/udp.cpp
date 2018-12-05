@@ -228,8 +228,7 @@ void Socket::run()
                 buff.reserve(message->size() + sizeof(udpSignature));
                 {
                     QDataStream stream {&buff, QIODevice::WriteOnly};
-                    stream.setByteOrder(QDATASTREAM_BYTEORDER);
-                    stream.setVersion(QDATASTREAM_VERSION);
+                    STREAM_INIT(stream);
                     stream << udpSignature;
                     message->toDataStream(stream);
                 }
@@ -320,8 +319,7 @@ void Socket::run()
                 Message::Ptr message;
                 { //Block for QDataStream
                     QDataStream stream {&datagram, QIODevice::ReadOnly | QIODevice::Unbuffered};
-                    stream.setByteOrder(QDATASTREAM_BYTEORDER);
-                    stream.setVersion(QDATASTREAM_VERSION);
+                    STREAM_INIT(stream);
 #ifdef UDP_LONGSIG
                     quint64 udpSign;
 #else

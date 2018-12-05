@@ -36,12 +36,14 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "break_point.h"
+#include "stream_init.h"
 
 #include <QByteArray>
 #include <QDataStream>
 #include <QVector>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace bserial /*binary serialization*/ {
 
@@ -97,7 +99,7 @@ QDataStream& getFromStream(QDataStream& s, T& t,
     {
         ByteArray ba;
         s >> ba;
-        rv[i] = ba;
+        rv[i] = std::move(ba);
     }
     t.fromRaw(rv);
     return s;
@@ -332,20 +334,8 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     inline QDataStream& operator<< (QDataStream& s, const lst::List<T, Compare, Allocator>& p) \
         {return bserial::putToStream<T, Compare, Allocator>(s, p);}
 
-
 typedef bserial::ByteArray BByteArray;
 
-#ifndef QDATASTREAM_BYTEORDER
-#  define QDATASTREAM_BYTEORDER QDataStream::BigEndian
-#endif
-
-#ifndef QDATASTREAM_VERSION
-#  if QT_VERSION >= 0x050000
-#    define QDATASTREAM_VERSION QDataStream::Qt_5_5
-#  else
-#    define QDATASTREAM_VERSION QDataStream::Qt_4_8
-#  endif
-#endif
 
 /**
   Макросы для работы с функциями сериализации toRaw(), fromRaw()

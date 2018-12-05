@@ -386,8 +386,7 @@ void Socket::run()
             {
                 QByteArray ba;
                 QDataStream stream {&ba, QIODevice::WriteOnly};
-                stream.setByteOrder(QDATASTREAM_BYTEORDER);
-                stream.setVersion(QDATASTREAM_VERSION);
+                STREAM_INIT(stream);
                 stream << _protocolSignature;
                 socketWrite(ba.constData(), 16);
                 CHECK_SOCKET_ERROR
@@ -428,8 +427,7 @@ void Socket::run()
 
                 QUuidEx protocolSignature;
                 QDataStream stream {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
-                stream.setByteOrder(QDATASTREAM_BYTEORDER);
-                stream.setVersion(QDATASTREAM_VERSION);
+                STREAM_INIT(stream);
                 stream >> protocolSignature;
                 if (_protocolSignature != protocolSignature)
                 {

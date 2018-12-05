@@ -27,24 +27,13 @@
 #include "p7zip/C/Alloc.h"
 #include "p7zip/C/Ppmd7.h"
 #include "simple_ptr.h"
+#include "qt/stream_init.h"
 
 #include <QDataStream>
 #include <stdexcept>
 
 #define IN_BUF_SIZE (1 << 18)
 #define OUT_BUF_SIZE (1 << 18)
-
-#ifndef QDATASTREAM_BYTEORDER
-#  define QDATASTREAM_BYTEORDER QDataStream::BigEndian
-#endif
-
-#ifndef QDATASTREAM_VERSION
-#  if QT_VERSION >= 0x050000
-#    define QDATASTREAM_VERSION QDataStream::Qt_5_5
-#  else
-#    define QDATASTREAM_VERSION QDataStream::Qt_4_8
-#  endif
-#endif
 
 namespace {
 
@@ -288,12 +277,10 @@ int compress(const QByteArray& in, QByteArray& out, int compressionLevel)
 
     { //Block for QDataStream
         QDataStream instream(in);
-        instream.setByteOrder(QDATASTREAM_BYTEORDER);
-        instream.setVersion(QDATASTREAM_VERSION);
+        STREAM_INIT(instream);
 
         QDataStream outstream(&out, QIODevice::WriteOnly);
-        outstream.setByteOrder(QDATASTREAM_BYTEORDER);
-        outstream.setVersion(QDATASTREAM_VERSION);
+        STREAM_INIT(outstream);
 
         EncProps encProps;
         encProps.Normalize(compressionLevel);
@@ -349,8 +336,7 @@ int compress(const QByteArray& in, QByteArray& out, int compressionLevel)
 int decompress(const QByteArray& in, QByteArray& out)
 {
     QDataStream instream(in);
-    instream.setByteOrder(QDATASTREAM_BYTEORDER);
-    instream.setVersion(QDATASTREAM_VERSION);
+    STREAM_INIT(instream);
 
     quint8 ppmdVersion;
     instream >> ppmdVersion;
@@ -374,8 +360,7 @@ int decompress(const QByteArray& in, QByteArray& out)
     SRes res = SZ_OK;
     { //Block for QDataStream
         QDataStream outstream(&out, QIODevice::WriteOnly);
-        outstream.setByteOrder(QDATASTREAM_BYTEORDER);
-        outstream.setVersion(QDATASTREAM_VERSION);
+        STREAM_INIT(outstream);
 
         Byte order = props[0];
         UInt32 memSize = GetUi32(props + 1);
