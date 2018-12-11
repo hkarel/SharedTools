@@ -418,7 +418,7 @@ void Socket::run()
 
                 QByteArray ba;
                 ba.resize(16);
-                if (socketRead((char*)ba.data(), 16) != 16)
+                if (socketRead((char*)ba.constData(), 16) != 16)
                 {
                     log_error_m << "Failed read protocol signature";
                     loopBreak = true;
