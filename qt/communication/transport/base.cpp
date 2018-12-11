@@ -195,7 +195,7 @@ void Socket::socketDisconnected()
     _protocolSignatureWrite = false;
 
     emit disconnected(_initSocketDescriptor);
-    _initSocketDescriptor = -1;
+    _initSocketDescriptor = {-1};
 }
 
 void Socket::waitConnection(int time)
@@ -224,7 +224,7 @@ void Socket::run()
 
     if (!socketInit())
     {
-        _initSocketDescriptor = -1;
+        _initSocketDescriptor = {-1};
         return;
     }
     _initSocketDescriptor = socketDescriptorInternal();
@@ -771,7 +771,7 @@ void Socket::run()
         SpinLocker locker(_socketLock); (void) locker;
         socketClose();
     }
-    _initSocketDescriptor = -1;
+    _initSocketDescriptor = {-1};
 
     #undef CHECK_SOCKET_ERROR
 }
