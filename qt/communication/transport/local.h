@@ -79,7 +79,7 @@ private:
     bool   socketWaitForBytesWritten(int msecs) override;
     void   socketClose() override;
 
-    Message::Ptr messageFromByteArray(const BByteArray&) override;
+    void messageInit(Message::Ptr&) override;
     void fillUnknownMessage(const Message::Ptr&, data::Unknown&) override;
 
 private:

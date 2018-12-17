@@ -79,7 +79,7 @@ protected:
 };
 
 /**
-  Класс содержит общие функции и поля для всех сокетов.
+  Класс содержит общие функции и поля для всех сокетов
 */
 class SocketCommon : public QThreadEx
 {
@@ -96,7 +96,7 @@ public:
     }
 
     // Удаляет из очереди сообщений на отправку сообщения с заданным
-    // идентификатором команды
+    // идентификатором команды.
     void remove(const QUuidEx& command);
 
     // Возвращает количество сообщений в очереди команд на отправку в сокет.
@@ -131,21 +131,18 @@ class Socket : public SocketCommon,
                public clife_base,
                public Properties
 {
-    struct Allocator
-    {
-        void destroy(Socket* x) {if (x) x->release();}
-    };
+    struct Allocator {void destroy(Socket* x) {if (x) x->release();}};
 
 public:
     typedef clife_ptr<Socket> Ptr;
     typedef lst::List<Socket, lst::CompareItemDummy, Allocator> List;
 
     // Статус совместимости версий бинарного протокола
-    enum class BinaryProtocol {Compatible, Incompatible, Undefined};
+    enum class ProtocolCompatible {Yes, No, Undefined};
 
     // Возвращает статус подключения с учетом, того что было выполнено
     // подключение к сокету и была выполнена проверка на совместимость
-    // версий бинарного протокола
+    // версий протокола
     bool isConnected() const;
 
     // Возвращает TRUE в случае существования работоспособного сокет-соединения
@@ -155,8 +152,8 @@ public:
     // по localhost.
     bool isLocal() const;
 
-    // Возвращает статус проверки совместимости версий бинарного протокола
-    BinaryProtocol binaryProtocolStatus() const;
+    // Возвращает статус проверки совместимости версий протокола
+    ProtocolCompatible protocolCompatible() const;
 
     // Возвращает тип сокета
     SocketType type() const {return _type;}
@@ -171,15 +168,23 @@ public:
     // Разрывает соединение с удаленным сокетом
     void disconnect(unsigned long time = ULONG_MAX);
 
-    // Ожидает (в секундах) подключения к удаленному хосту.
+    // Ожидает (в секундах) подключения к удаленному хосту
     void waitConnection(int time = 0);
+
+    // Возвращает формат сериализации сообщения. Формат сериализации возможно
+    // задать только для клиентского сокета. На стороне сервера формат сериа-
+    // лизации задается автоматически в зависимости от формата подключившегося
+    // клиентского сокета. Формат сериализации должен быть задан до момента
+    // установки TCP/Local соединения
+    SerializationFormat messageFormat() const {return _messageFormat;}
+    void setMessageFormat(SerializationFormat val);
 
 signals:
     // Сигнал эмитируется при получении сообщения
     void message(const communication::Message::Ptr&);
 
     // Сигнал эмитируется после установки TCP-соединения и после
-    // проверки совместимости версий бинарного протокола.
+    // проверки совместимости версий бинарного протокола
     void connected(communication::SocketDescriptor);
 
     // Сигнал эмитируется после разрыва TCP-соединения
@@ -212,8 +217,13 @@ protected:
     virtual bool   socketWaitForBytesWritten(int msecs) = 0;
     virtual void   socketClose() = 0;
 
-    virtual Message::Ptr messageFromByteArray(const BByteArray&) = 0;
+    virtual void messageInit(Message::Ptr&) = 0;
     virtual void fillUnknownMessage(const Message::Ptr&, data::Unknown&) = 0;
+
+    // Признак того, что сокет был создан  на стороне  listenr-а. Признак
+    // используется для определения порядка обмена сигнатурами протоколов.
+    bool isListenerSide() const {return _isListenerSide;}
+    void setListenerSide(bool val) {_isListenerSide = val;}
 
     // Используется для связывания сокета созданного в Listener.
     SocketDescriptor initSocketDescriptor() const {return _initSocketDescriptor;}
@@ -221,15 +231,18 @@ protected:
 
 private:
     Q_OBJECT
-    DISABLE_DEFAULT_COPY(Socket)
+    DISABLE_DEFAULT_FUNC(Socket)
 
     const SocketType _type;
-    volatile BinaryProtocol _binaryProtocolStatus = {BinaryProtocol::Undefined};
+    volatile ProtocolCompatible _protocolCompatible = {ProtocolCompatible::Undefined};
 
-    static const QUuidEx _protocolSignature;
-    bool _protocolSignatureRead = {false};
-    bool _protocolSignatureWrite = {false};
+    SerializationFormat _messageFormat = {SerializationFormat::BProto};
+    QVector<QPair<SerializationFormat, QUuidEx /*сигнатура формата*/>> _protocolMap;
 
+    bool _serializationSignatureRead = {false};
+    bool _serializationSignatureWrite = {false};
+
+    bool _isListenerSide = {false};
     SocketDescriptor _initSocketDescriptor = {-1};
     mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
 

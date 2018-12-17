@@ -23,14 +23,22 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "break_point.h"
+#include "qt/communication/message.h"
 #ifdef LZMA_COMPRESSION
 #include "qt/compression/qlzma.h"
 #endif
 #ifdef PPMD_COMPRESSION
 #include "qt/compression/qppmd.h"
 #endif
-#include "qt/communication/message.h"
+
+#ifdef JSON_SERIALIZATION
+#include "qt/communication/serialization/json.h"
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#endif
+
+#include "break_point.h"
 #include <stdexcept>
 
 namespace communication {
@@ -52,6 +60,7 @@ Message::Ptr Message::create(const QUuidEx& command)
     m->_flag.execStatus = static_cast<quint32>(ExecStatus::Unknown);
     m->_flag.priority = static_cast<quint32>(Priority::Normal);
     m->_flag.compression = static_cast<quint32>(Compression::None);
+    m->_flag.contentFormat = static_cast<quint32>(SerializationFormat::BProto);
 
     return std::move(m);
 }
@@ -201,7 +210,15 @@ int Message::size() const
     return sz;
 }
 
-BByteArray Message::toByteArray() const
+void Message::initEmptyTraits() const
+{
+    _flag.flags2IsEmpty      = (_flags2 == 0);
+    _flag.tagIsEmpty         = (_tag == 0);
+    _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
+    _flag.contentIsEmpty     = (_content.isEmpty());
+}
+
+BByteArray Message::toBProto() const
 {
     BByteArray ba;
     ba.reserve(size());
@@ -213,12 +230,16 @@ BByteArray Message::toByteArray() const
     return std::move(ba);
 }
 
+Message::Ptr Message::fromBProto(const BByteArray& ba)
+{
+    QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+    STREAM_INIT(stream);
+    return std::move(fromDataStream(stream));
+}
+
 void Message::toDataStream(QDataStream& stream) const
 {
-    _flag.flags2IsEmpty      = (_flags2 == 0);
-    _flag.tagIsEmpty         = (_tag == 0);
-    _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
-    _flag.contentIsEmpty     = _content.isEmpty();
+    initEmptyTraits();
 
     stream << _id;
     stream << _command;
@@ -230,13 +251,6 @@ void Message::toDataStream(QDataStream& stream) const
     if (!_flag.tagIsEmpty)         stream << _tag;
     if (!_flag.maxTimeLifeIsEmpty) stream << _maxTimeLife;
     if (!_flag.contentIsEmpty)     stream << _content;
-}
-
-Message::Ptr Message::fromByteArray(const BByteArray& ba)
-{
-    QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
-    STREAM_INIT(stream);
-    return std::move(fromDataStream(stream));
 }
 
 Message::Ptr Message::fromDataStream(QDataStream& stream)
@@ -256,6 +270,124 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     return std::move(m);
 }
+
+#ifdef JSON_SERIALIZATION
+BByteArray Message::toJson() const
+{
+    initEmptyTraits();
+
+    using namespace rapidjson;
+    StringBuffer buff;
+    Writer<StringBuffer> writer(buff);
+
+    writer.StartObject();
+
+    // stream << _id;
+    writer.Key("id");
+    QByteArray id = _id.toByteArray();
+    writer.String(id.constData(), SizeType(id.length()));
+
+    // stream << _command;
+    writer.Key("command");
+    QByteArray command = _command.toByteArray();
+    writer.String(command.constData(), SizeType(command.length()));
+
+    // stream << _protocolVersionLow;
+    writer.Key("protocolVersionLow");
+    writer.Uint(_protocolVersionLow);
+
+    // stream << _protocolVersionHigh;
+    writer.Key("protocolVersionHigh");
+    writer.Uint(_protocolVersionHigh);
+
+    // stream << _flags;
+    writer.Key("flags");
+    writer.Uint(_flags);
+
+    if (!_flag.flags2IsEmpty)
+    {
+        //stream << _flags2;
+        writer.Key("flags2");
+        writer.Uint(_flags2);
+    }
+    if (!_flag.tagIsEmpty)
+    {
+        //stream << _tag;
+        writer.Key("tag");
+        writer.Uint64(_tag);
+    }
+    if (!_flag.maxTimeLifeIsEmpty)
+    {
+        //stream << _maxTimeLife;
+        writer.Key("maxTimeLife");
+        writer.Uint64(_maxTimeLife);
+    }
+    if (!_flag.contentIsEmpty)
+    {
+        //stream << _content;
+        writer.Key("content");
+        writer.String(_content.constData(), SizeType(_content.length()));
+    }
+    writer.EndObject();
+    return BByteArray(buff.GetString());
+}
+
+Message::Ptr Message::fromJson(const BByteArray& ba)
+{
+    Ptr m {new Message};
+
+    using namespace rapidjson;
+    using namespace serialization::json;
+    Document doc;
+    doc.Parse(ba.constData(), size_t(ba.length()));
+
+    if (!doc.IsObject())
+        return std::move(m);
+
+    for (auto member = doc.MemberBegin(); member != doc.MemberEnd(); ++member)
+    {
+        if (stringEqual("id", member->name) && member->value.IsString())
+        {
+            const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(), 38);
+            m->_id = QUuidEx(ba);
+        }
+        else if (stringEqual("command", member->name) && member->value.IsString())
+        {
+            const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(), 38);
+            m->_command = QUuidEx(ba);
+        }
+        else if (stringEqual("protocolVersionLow", member->name) && member->value.IsUint())
+        {
+            m->_protocolVersionLow = quint16(member->value.GetUint());
+        }
+        else if (stringEqual("protocolVersionHigh", member->name) && member->value.IsUint())
+        {
+            m->_protocolVersionHigh = quint16(member->value.GetUint());
+        }
+        else if (stringEqual("flags", member->name) && member->value.IsUint())
+        {
+            m->_flags = quint32(member->value.GetUint());
+        }
+        else if (stringEqual("flags2", member->name) && member->value.IsUint())
+        {
+            m->_flags2 = quint32(member->value.GetUint());
+        }
+        else if (stringEqual("tag", member->name) && member->value.IsUint64())
+        {
+            m->_tag = quint64(member->value.GetUint64());
+        }
+        else if (stringEqual("maxTimeLife", member->name) && member->value.IsUint64())
+        {
+            m->_maxTimeLife = quint64(member->value.GetUint64());
+        }
+        else if (stringEqual("content", member->name) && member->value.IsString())
+        {
+            m->_content = QByteArray(member->value.GetString());
+        }
+    }
+    return std::move(m);
+}
+#endif
 
 Message::Type Message::type() const
 {
@@ -290,6 +422,16 @@ void Message::setPriority(Priority val)
 Message::Compression Message::compression() const
 {
     return static_cast<Compression>(_flag.compression);
+}
+
+SerializationFormat Message::contentFormat() const
+{
+    return static_cast<SerializationFormat>(_flag.contentFormat);
+}
+
+void Message::setContentFormat(SerializationFormat val)
+{
+    _flag.contentFormat = static_cast<quint32>(val);
 }
 
 } // namespace communication

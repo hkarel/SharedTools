@@ -105,9 +105,9 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
             data.isValid = res;
             return;
         }
-        err  = QString("Message (%1) with type 'Command' cannot write data to struct (%2)."
-                       " Mismatched types.")
-                       .arg((message->command().toString()), typeid(CommandDataT).name());
+        err = QString("Message (%1) with type 'Command' cannot write data to struct (%2). "
+                      "Mismatched types.")
+                      .arg((message->command().toString()), typeid(CommandDataT).name());
     }
     else if (message->type() == Message::Type::Event)
     {
@@ -117,9 +117,9 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
             data.isValid = res;
             return;
         }
-        err  = QString("Message (%1) with type 'Event' cannot write data to struct (%2)."
-                       " Mismatched types.")
-                       .arg((message->command().toString()), typeid(CommandDataT).name());
+        err = QString("Message (%1) with type 'Event' cannot write data to struct (%2). "
+                      "Mismatched types.")
+                      .arg((message->command().toString()), typeid(CommandDataT).name());
     }
     else if (message->type() == Message::Type::Answer)
     {
@@ -131,9 +131,9 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
                 data.isValid = res;
                 return;
             }
-            err  = QString("Message (%1) with type 'Answer' cannot write data to struct (%2)."
-                           " Mismatched types.")
-                           .arg((message->command().toString()), typeid(CommandDataT).name());
+            err = QString("Message (%1) with type 'Answer' cannot write data to struct (%2). "
+                          "Mismatched types.")
+                          .arg((message->command().toString()), typeid(CommandDataT).name());
         }
         else if (message->execStatus() == Message::ExecStatus::Failed
                  && typeid(CommandDataT) != typeid(data::MessageFailed))
@@ -159,7 +159,6 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
 */
 void readFromMessage(const Message::Ptr&, data::MessageError&);
 void readFromMessage(const Message::Ptr&, data::MessageFailed&);
-
 
 /**
   Преобразует структуру CommandDataT в Message-сообщение.
@@ -226,7 +225,6 @@ namespace data {
 QDataStream& operator>> (QDataStream&, timeval&);
 QDataStream& operator<< (QDataStream&, const timeval&);
 } // namespace data
-
 
 /**
   Выполняет проверку пересечения диапазонов версий бинарного протокола.

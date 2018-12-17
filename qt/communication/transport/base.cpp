@@ -33,6 +33,10 @@
 #include "qt/communication/commands_pool.h"
 #include "qt/communication/logger_operators.h"
 
+#ifdef JSON_SERIALIZATION
+#include "qt/communication/serialization/json.h"
+#endif
+
 #include <utility>
 #include <stdexcept>
 
@@ -143,17 +147,20 @@ int SocketCommon::messagesCount() const
 
 //-------------------------------- Socket ------------------------------------
 
-const QUuidEx Socket::_protocolSignature = {"82c40273-4037-4f1b-a823-38123435b22f"};
-
 Socket::Socket(SocketType type) : _type(type)
 {
     registrationQtMetatypes();
+
+    _protocolMap << qMakePair(SerializationFormat::BProto, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
+#ifdef JSON_SERIALIZATION
+    _protocolMap << qMakePair(SerializationFormat::Json,   QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
+#endif
 }
 
 bool Socket::isConnected() const
 {
     return (socketIsConnected()
-            && _binaryProtocolStatus == BinaryProtocol::Compatible);
+            && _protocolCompatible == ProtocolCompatible::Yes);
 }
 
 bool Socket::socketIsConnected() const
@@ -168,9 +175,9 @@ bool Socket::isLocal() const
     return isLocalInternal();
 }
 
-Socket::BinaryProtocol Socket::binaryProtocolStatus() const
+Socket::ProtocolCompatible Socket::protocolCompatible() const
 {
-    return _binaryProtocolStatus;
+    return _protocolCompatible;
 }
 
 SocketDescriptor Socket::socketDescriptor() const
@@ -191,8 +198,8 @@ void Socket::disconnect(unsigned long time)
 
 void Socket::socketDisconnected()
 {
-    _protocolSignatureRead = false;
-    _protocolSignatureWrite = false;
+    _serializationSignatureRead = false;
+    _serializationSignatureWrite = false;
 
     emit disconnected(_initSocketDescriptor);
     _initSocketDescriptor = {-1};
@@ -213,6 +220,14 @@ void Socket::waitConnection(int time)
         if (isConnected())
             break;
     }
+}
+
+void Socket::setMessageFormat(SerializationFormat val)
+{
+    if (socketIsConnected() || isListenerSide())
+        return;
+
+    _messageFormat = val;
 }
 
 void Socket::run()
@@ -236,23 +251,27 @@ void Socket::run()
     bool loopBreak = false;
     const int delay = 50;
 
-    QByteArray readBuff;
+    BByteArray readBuff;
     qint32 readBuffSize = 0;
     char* readBuffCur = 0;
     char* readBuffEnd = 0;
+
+    // Сигнатура формата сериализации
+    QUuidEx serializationSignature;
+    for (const auto& sign : _protocolMap)
+        if (sign.first == _messageFormat)
+        {
+            serializationSignature = sign.second;
+            break;
+        }
 
     // Идентификатор команды CloseConnection, используется для отслеживания
     // ответа на запрос о разрыве соединения.
     QUuidEx commandCloseConnectionId;
 
-    _binaryProtocolStatus = BinaryProtocol::Undefined;
-
-    // Добавляем самое первое сообщение с информацией о совместимости
+    _protocolCompatible = ProtocolCompatible::Undefined;
     {
-        //data::ProtocolCompatible protocolCompatible;
-        //protocolCompatible.versionLow = BPROTOCOL_VERSION_LOW;
-        //protocolCompatible.versionHigh = BPROTOCOL_VERSION_HIGH;
-        //Message::Ptr message = createMessage(protocolCompatible);
+        // Добавляем самое первое сообщение с информацией о совместимости
         Message::Ptr message = Message::create(command::ProtocolCompatible);
         message->setPriority(Message::Priority::High);
         internalMessages.add(message.detach());
@@ -268,45 +287,20 @@ void Socket::run()
             quint16 protocolVersionLow  = message->protocolVersionLow();
             quint16 protocolVersionHigh = message->protocolVersionHigh();
 
-            _binaryProtocolStatus = BinaryProtocol::Compatible;
+            _protocolCompatible = ProtocolCompatible::Yes;
             if (_checkProtocolCompatibility)
             {
-                log_debug_m << "Checking binary protocol compatibility"
+                log_debug_m << "Checking protocol compatibility"
                             << ". This protocol version: "
                             << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
                             << ". Remote protocol version: "
                             << protocolVersionLow << "-" << protocolVersionHigh;
 
                 if (!communication::protocolCompatible(protocolVersionLow, protocolVersionHigh))
-                    _binaryProtocolStatus = BinaryProtocol::Incompatible;
+                    _protocolCompatible = ProtocolCompatible::No;
             }
 
-            /** Старый код **
-            data::ProtocolCompatible pcompatible;
-            readFromMessage(message, pcompatible);
-            if (pcompatible.isValid)
-            {
-                if (alog::logger().level() >= alog::Level::Debug)
-                {
-                    log_debug_m
-                        << "Checking binary protocol compatibility"
-                        << ". This protocol version: "
-                        << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
-                        << "; Remote protocol version: "
-                        << pcompatible.versionLow << "-" << pcompatible.versionHigh;
-                }
-                if (communication::protocolCompatible(pcompatible.versionLow,
-                                                      pcompatible.versionHigh))
-                    _binaryProtocolStatus = BinaryProtocol::Compatible;
-            }
-            else
-            {
-                log_error_m << "Incorrect data structure for command "
-                            << CommandNameLog(message->command());
-            }
-            */
-
-            if (_binaryProtocolStatus == BinaryProtocol::Compatible)
+            if (_protocolCompatible == ProtocolCompatible::Yes)
             {
                 emit connected(socketDescriptorInternal());
             }
@@ -315,7 +309,7 @@ void Socket::run()
                 data::CloseConnection closeConnection;
                 closeConnection.code = 0;
                 closeConnection.description = QString(
-                    "Binary protocol versions incompatible"
+                    "Protocol versions incompatible"
                     ". This protocol version: %1-%2"
                     ". Remote protocol version: %3-%4"
                 )
@@ -382,32 +376,39 @@ void Socket::run()
                 break;
 
             // Отправка сигнатуры протокола
-            if (!_protocolSignatureWrite)
+            if (!_serializationSignatureWrite && !isListenerSide())
             {
                 QByteArray ba;
                 QDataStream stream {&ba, QIODevice::WriteOnly};
                 STREAM_INIT(stream);
-                stream << _protocolSignature;
+                stream << serializationSignature;
                 socketWrite(ba.constData(), 16);
                 CHECK_SOCKET_ERROR
                 socketWaitForBytesWritten(delay);
                 CHECK_SOCKET_ERROR
-                _protocolSignatureWrite = true;
+
+                alog::Line logLine = log_verbose_m << "Message serialization format: ";
+                if (_messageFormat == SerializationFormat::Json)
+                    logLine << "json";
+                else
+                    logLine << "bproto";
+
+                _serializationSignatureWrite = true;
             }
 
             // Проверка сигнатуры протокола
-            if (!_protocolSignatureRead)
+            if (!_serializationSignatureRead)
             {
                 timer.start();
+                int timeout = (isListenerSide() ? 60 : 120) * delay;
                 while (socketBytesAvailable() < 16)
                 {
                     msleep(10);
                     socketWaitForReadyRead(0);
                     CHECK_SOCKET_ERROR
-                    static const int timeout {40 * delay};
                     if (timer.hasExpired(timeout))
                     {
-                        log_error_m << "The signature of protocol is not "
+                        log_error_m << "The serialization signature of protocol is not "
                                     << "received within " << timeout << " ms";
                         loopBreak = true;
                         break;
@@ -420,22 +421,67 @@ void Socket::run()
                 ba.resize(16);
                 if (socketRead((char*)ba.constData(), 16) != 16)
                 {
-                    log_error_m << "Failed read protocol signature";
+                    log_error_m << "Failed read serialization signature";
                     loopBreak = true;
                     break;
                 }
 
-                QUuidEx protocolSignature;
+                QUuidEx incomingSignature;
                 QDataStream stream {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
                 STREAM_INIT(stream);
-                stream >> protocolSignature;
-                if (_protocolSignature != protocolSignature)
+                stream >> incomingSignature;
+
+                if (isListenerSide())
                 {
-                    log_error_m << "Incompatible protocol signatures";
-                    loopBreak = true;
-                    break;
+                    bool found = false;
+                    for (const auto& sign : _protocolMap)
+                        if (sign.second == incomingSignature)
+                        {
+                            found = true;
+                            _messageFormat = sign.first;
+                            break;
+                        }
+
+                    if (found)
+                    {
+                        alog::Line logLine = log_verbose_m << "Message serialization format: ";
+                        if (_messageFormat == SerializationFormat::Json)
+                            logLine << "json";
+                        else
+                            logLine << "bproto";
+                    }
+                    else
+                        incomingSignature = QUuidEx{};
+
+                    // Отправка сигнатуры протокола
+                    QByteArray ba;
+                    QDataStream stream {&ba, QIODevice::WriteOnly};
+                    STREAM_INIT(stream);
+                    stream << incomingSignature;
+                    socketWrite(ba.constData(), 16);
+                    CHECK_SOCKET_ERROR
+                    socketWaitForBytesWritten(delay);
+                    CHECK_SOCKET_ERROR
+                    _serializationSignatureWrite = true;
+
+                    if (!found)
+                    {
+                        log_error_m << "Incompatible serialization signatures";
+                        msleep(200);
+                        loopBreak = true;
+                        break;
+                    }
                 }
-                _protocolSignatureRead = true;
+                else // !isListenerSide()
+                {
+                    if (serializationSignature != incomingSignature)
+                    {
+                        log_error_m << "Incompatible serialization signatures";
+                        loopBreak = true;
+                        break;
+                    }
+                }
+                _serializationSignatureRead = true;
             }
 
             while (messagesCount() == 0
@@ -483,7 +529,7 @@ void Socket::run()
 
                     if (message.empty()
                         && messagesCount() != 0
-                        && _binaryProtocolStatus == BinaryProtocol::Compatible)
+                        && _protocolCompatible == ProtocolCompatible::Yes)
                     {
                         QMutexLocker locker(&_messagesLock); (void) locker;
 
@@ -525,7 +571,27 @@ void Socket::run()
                                      << "; message id: " << message->id()
                                      << "; command: " << CommandNameLog(message->command());
                     }
-                    QByteArray buff = message->toByteArray();
+
+                    BByteArray buff;
+                    switch (_messageFormat)
+                    {
+                        case SerializationFormat::BProto:
+                            buff = message->toBProto();
+                            break;
+#ifdef JSON_SERIALIZATION
+                        case SerializationFormat::Json:
+                            buff = message->toJson();
+                            if (alog::logger().level() == alog::Level::Debug2)
+                            {
+                                log_debug2_m << "Message json before sending: "
+                                             << (QByteArray)buff;
+                            }
+                            break;
+#endif
+                        default:
+                            throw std::logic_error("communication::transport::base::Socket: "
+                                                   "Unsupported message serialization format");
+                    }
                     qint32 buffSize = buff.size();
 
                     if (!isLocal()
@@ -640,7 +706,27 @@ void Socket::run()
 
                 if (!readBuff.isEmpty())
                 {
-                    Message::Ptr message = messageFromByteArray(readBuff);
+                    Message::Ptr message;
+                    switch (messageFormat())
+                    {
+                        case SerializationFormat::BProto:
+                            message = Message::fromBProto(readBuff);
+                            break;
+#ifdef JSON_SERIALIZATION
+                        case SerializationFormat::Json:
+                            if (alog::logger().level() == alog::Level::Debug2)
+                            {
+                                log_debug2_m << "Message json received: "
+                                             << (QByteArray)readBuff;
+                            }
+                            message = Message::fromJson(readBuff);
+                            break;
+#endif
+                        default:
+                            throw std::logic_error("communication::transport::base::Socket: "
+                                                   "Unsupported message deserialization format");
+                    }
+                    messageInit(message);
                     readBuff.clear();
 
                     if (alog::logger().level() == alog::Level::Debug2)
@@ -649,7 +735,7 @@ void Socket::run()
                                      << "; message id: " << message->id()
                                      << "; command: " << CommandNameLog(message->command());
                     }
-                    if (_binaryProtocolStatus == BinaryProtocol::Undefined
+                    if (_protocolCompatible == ProtocolCompatible::Undefined
                         && message->command() == command::ProtocolCompatible)
                     {
                         processingProtocolCompatibleCommand(message);
@@ -669,7 +755,7 @@ void Socket::run()
                     }
                     else
                     {
-                        if (_binaryProtocolStatus == BinaryProtocol::Compatible)
+                        if (_protocolCompatible == ProtocolCompatible::Yes)
                         {
                             acceptMessages.add(message.detach());
                         }
@@ -690,7 +776,7 @@ void Socket::run()
                 break;
 
             //--- Обработка принятых сообщений ---
-            if (_binaryProtocolStatus == BinaryProtocol::Compatible)
+            if (_protocolCompatible == ProtocolCompatible::Yes)
             {
                 timer.start();
                 while (!acceptMessages.empty())
@@ -899,6 +985,8 @@ void Listener::removeClosedSocketsInternal()
 void Listener::incomingConnectionInternal(Socket::Ptr socket,
                                           SocketDescriptor socketDescriptor)
 {
+    socket->setListenerSide(true);
+    //socket->setserializationFormat(serializationFormat::Unknown);
     socket->setInitSocketDescriptor(socketDescriptor);
     socket->setCompressionLevel(_compressionLevel);
     socket->setCompressionSize(_compressionSize);

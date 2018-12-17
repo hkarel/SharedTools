@@ -31,6 +31,10 @@
 #include "qt/communication/functions.h"
 #include "qt/communication/logger_operators.h"
 
+#ifdef JSON_SERIALIZATION
+#include "qt/communication/serialization/json.h"
+#endif
+
 #include <stdexcept>
 #include <unistd.h>
 
@@ -199,13 +203,11 @@ void Socket::socketClose()
     _socket.reset();
 }
 
-Message::Ptr Socket::messageFromByteArray(const BByteArray& buff)
+void Socket::messageInit(Message::Ptr& message)
 {
-    Message::Ptr m = Message::fromByteArray(buff);
-    m->setSocketType(SocketType::Local);
-    m->setSocketDescriptor(_socket->socketDescriptor());
-    m->setSocketName(_socket->serverName());
-    return m;
+    message->setSocketType(SocketType::Local);
+    message->setSocketDescriptor(_socket->socketDescriptor());
+    message->setSocketName(_socket->serverName());
 }
 
 void Socket::fillUnknownMessage(const Message::Ptr& message, data::Unknown& unknown)

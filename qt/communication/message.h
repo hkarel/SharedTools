@@ -64,13 +64,18 @@ typedef int SocketDescriptor;
 #endif
 typedef QSet<SocketDescriptor> SocketDescriptorSet;
 
+enum class SerializationFormat
+{
+    BProto = 0  // Бинарный протокол
+#ifdef JSON_SERIALIZATION
+   ,Json   = 1
+#endif
+    //LastFormat = 7  Предполагается, что будет не больше 8 форматов
+};
 
 class Message : public clife_base
 {
-    struct Allocator
-    {
-        void destroy(Message* x) {if (x) x->release();}
-    };
+    struct Allocator {void destroy(Message* x) {if (x) x->release();}};
 
 public:
     typedef clife_ptr<Message> Ptr;
@@ -134,8 +139,20 @@ public:
     // Идентификатор команды
     QUuidEx command() const {return _command;}
 
-    // Функции возвращают нижнюю и верхнюю границы версий бинарного протокола
-    quint16 protocolVersionLow() const {return _protocolVersionLow;}
+    // Функции возвращают нижнюю и верхнюю границы версий бинарного протокола.
+    // Причины по которым версии протокола передаются вместе с сообщением:
+    // 1) Изначально бинарный протокол и система сообщений была спроектирована
+    // для распределенной сети. Это означает, что сообщение могло быть трансли-
+    // ровано через узлы имеющие различные версии протокола. В этом случае ко-
+    // ридор версий протокола должен сверяться на каждом узле. Если на коком-то
+    // из узлов сети коридор версий окажется  не совместим с версией сообщения,
+    // то в этом случае сообщение не должно обрабатываться этим узлом, а только
+    // транслироваться к следующим узлам сети;
+    // 2) Теоретически сообщение может быть передано из TCP/Local сокета в UDP
+    // сокет для дальнейшего транслирования.  Для UDP сокета версия  протокола
+    // должна всегда передаваться вместе с сообщением, это единственный способ
+    // проверки совместимости протоколов.
+    quint16 protocolVersionLow()  const {return _protocolVersionLow;}
     quint16 protocolVersionHigh() const {return _protocolVersionHigh;}
 
     // Удаляет контент сообщения
@@ -144,7 +161,7 @@ public:
     // Возвращает TRUE если сообщение не содержит дополнительных данных
     bool contentIsEmpty() const {return _content.isEmpty();}
 
-    // Тип пересылаемой команды.
+    // Тип пересылаемой команды
     Type type() const;
     void setType(Type);
 
@@ -198,8 +215,8 @@ public:
     // с идентификатором socketDescriptor.
     SocketDescriptorSet& destinationSocketDescriptors();
 
-    // Наименование сокета с которого было получено сообщение. Поле имеет
-    // валидное значение только если тип сокета соответствует SocketType::Local.
+    // Наименование сокета с которого было получено сообщение. Поле имеет валид-
+    // ное значение только если тип сокета соответствует SocketType::Local.
     QString socketName() const {return _socketName;}
 
     // Вспомогательный параметр, используется для хранения произвольной инфор-
@@ -231,8 +248,11 @@ public:
     // Запрещает сжатие сообщения на уровне сетевого сокета
     void disableCompress() {compress(-1, Compression::Disable);}
 
-    // Выполняет декомпрессию контента сообщения.
+    // Выполняет декомпрессию контента сообщения
     void decompress();
+
+    // Формат сериализации контента
+    SerializationFormat contentFormat() const;
 
     // Создает сообщение
     static Ptr create(const QUuidEx& command);
@@ -260,13 +280,28 @@ public:
     template<typename... Args>
     bool readContent(Args&... args) const;
 
+#ifdef JSON_SERIALIZATION
+    // Функция записи данных для json формата
+    template<typename T>
+    bool writeJsonContent(const T&);
+
+    // Функция чтения данных для json формата
+    template<typename T>
+    bool readJsonContent(T&) const;
+#endif
+
     // Вспомогательные функции, используются для формирования сырого потока
     // данных для отправки в сетевой сокет.
-    BByteArray toByteArray() const;
-    void toDataStream(QDataStream&) const;
+    BByteArray toBProto() const;
+    static Ptr fromBProto(const BByteArray&);
 
-    static Ptr fromByteArray(const BByteArray&);
+    void toDataStream(QDataStream&) const;
     static Ptr fromDataStream(QDataStream&);
+
+#ifdef JSON_SERIALIZATION
+    BByteArray toJson() const;
+    static Ptr fromJson(const BByteArray&);
+#endif
 
     // Возвращает максимально возможную длину сообщения в сериализованном виде.
     // Данный метод используется для оценки возможности передачи сообщения
@@ -277,6 +312,7 @@ private:
     Message();
     DISABLE_DEFAULT_COPY(Message)
 
+    void initEmptyTraits() const;
     void decompress(BByteArray&) const;
 
     template<typename T, typename... Args>
@@ -292,6 +328,8 @@ private:
     void setSocketDescriptor(SocketDescriptor val) {_socketDescriptor = val;}
     void setSocketName(const QString& val) {_socketName = val;}
 
+    void setContentFormat(SerializationFormat);
+
 private:
     QUuidEx _id;
     QUuidEx _command;
@@ -306,7 +344,7 @@ private:
         quint32 _flags; // Поле содержит значения всех флагов, используется
                         // при сериализации
         struct {
-            //=== Байт 1 ===
+            //--- Байт 1 ---
             // Тип пересылаемого сообщения, соответствует enum Type
             quint32 type: 3;
 
@@ -316,7 +354,7 @@ private:
             // Приоритет сообщения, соответствует enum Priority
             quint32 priority: 2;
 
-            //=== Байт 2 ===
+            //--- Байт 2 ---
             // Признак что контент сообщения находится в сжатом состоянии,
             // так же содержит информацию по алгоритму сжатия, соответствует
             // enum Compression
@@ -328,13 +366,14 @@ private:
             mutable quint32 maxTimeLifeIsEmpty: 1;
             mutable quint32 contentIsEmpty: 1;
 
-            quint32 reserved1: 2;
+            quint32 reserved2: 2;
 
-            //=== Байт 3 ===
-            quint32 reserved2: 8;
+            //--- Байт 3 ---
+            quint32 reserved3: 8;
 
-            //=== Байт 4 ===
-            quint32 reserved3: 7;
+            //--- Байт 4 ---
+            quint32 contentFormat: 3;
+            quint32 reserved4: 4;
             // Признак пустого поля. Признак используется для оптимизации
             // размера сообщения при его сериализации. Данный признак идет
             // последним битом в поле _flags.
@@ -370,6 +409,7 @@ template<typename... Args>
 bool Message::writeContent(const Args&... args)
 {
     _content.clear();
+    setContentFormat(SerializationFormat::BProto);
     QDataStream stream {&_content, QIODevice::WriteOnly};
     STREAM_INIT(stream);
     writeInternal(stream, args...);
@@ -386,6 +426,27 @@ bool Message::readContent(Args&... args) const
     readInternal(stream, args...);
     return (stream.status() == QDataStream::Ok);
 }
+
+#ifdef JSON_SERIALIZATION
+template<typename T>
+bool Message::writeJsonContent(const T& t)
+{
+    BByteArray jsonContent = t.toJson();
+    bool res = writeContent(jsonContent);
+    setContentFormat(SerializationFormat::Json);
+    return res;
+}
+
+template<typename T>
+bool Message::readJsonContent(T& t) const
+{
+    BByteArray jsonContent;
+    bool res = readContent(jsonContent);
+    if (res)
+        res = t.fromJson(jsonContent);
+    return res;
+}
+#endif
 
 template<typename T, typename... Args>
 void Message::writeInternal(QDataStream& s, const T& t, const Args&... args)
