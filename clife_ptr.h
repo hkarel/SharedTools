@@ -107,33 +107,33 @@ public:
     }
 
     template<typename otherT>
-    clife_ptr(const clife_ptr<otherT> & p) {
+    clife_ptr(const clife_ptr<otherT>& p) {
         _ptr = 0;
         assign(p);
     }
     template<typename otherT>
-    self_t& operator= (const clife_ptr<otherT> & p) {
+    self_t& operator= (const clife_ptr<otherT>& p) {
         assign(p);
         return *this;
     }
 
     clife_ptr(self_t&& p) {
         _ptr = 0;
-        assign(p, true);
+        assign_rvalue(p);
     }
     self_t& operator= (self_t&& p) {
-        assign(p, true);
+        assign_rvalue(p);
         return *this;
     }
 
     template<typename otherT>
-    clife_ptr(clife_ptr<otherT> && p) {
+    clife_ptr(clife_ptr<otherT>&& p) {
         _ptr = 0;
-        assign(p, true);
+        assign_rvalue(p);
     }
     template<typename otherT>
-    self_t& operator= (clife_ptr<otherT> && p) {
-        assign(p, true);
+    self_t& operator= (clife_ptr<otherT>&& p) {
+        assign_rvalue(p);
         return *this;
     }
 
@@ -154,7 +154,7 @@ public:
     void release() {if (_ptr) {_ptr->release(); _ptr = 0;}}
     void reset()   {if (_ptr) {_ptr->release(); _ptr = 0;}}
 
-    T*  get() const NOEXCEPT {return _ptr;}
+    T* get() const NOEXCEPT {return _ptr;}
 
     T* operator-> () const NOEXCEPT {return  _ptr;}
     T& operator*  () const NOEXCEPT {return *_ptr;}
@@ -191,7 +191,7 @@ public:
 private:
     // Используется в обычных операторах присваивания и копирования.
     template<typename otherT>
-    void assign(const clife_ptr<otherT> & p) {
+    void assign(const clife_ptr<otherT>& p) {
         if (_ptr)
             _ptr->release();
         // Проверка на корректность преобразования типа. Допускается преобразо-
@@ -203,7 +203,7 @@ private:
 
     // Используется в rvalue-операторах присваивания и копирования.
     template<typename otherT>
-    void assign(clife_ptr<otherT> & p, bool /*rvalue*/) {
+    void assign_rvalue(clife_ptr<otherT>& p) {
         if (_ptr)
             _ptr->release();
         _ptr = p.get();
