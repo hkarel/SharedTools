@@ -195,7 +195,7 @@ int main()
 //        SaverFilePtr saver3(new SaverFile("alogger-test3", "/tmp/alogger-test3.log", Level::Debug2, false));
 //        logger().addSaver(saver3);
 
-        // Тест на утечку памяти (тест проводиться долго, поэтому диск терзать незачем)
+        // Тест на утечку памяти (тест проводится долго, поэтому диск терзать незачем)
         SaverNullPtr saver1(new SaverNull("alogger-test1", Level::Debug2));
         logger().addSaver(saver1);
 

@@ -34,8 +34,8 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "qt/quuidex.h"
-#include "qt/bserialize.h"
 #include "qt/communication/host_point.h"
+#include "qt/communication/serialization/bproto.h"
 
 #include <QtCore>
 #include <atomic>
@@ -141,10 +141,10 @@ public:
 
     // Функции возвращают нижнюю и верхнюю границы версий бинарного протокола.
     // Причины по которым версии протокола передаются вместе с сообщением:
-    // 1) Изначально бинарный протокол и система сообщений была спроектирована
+    // 1) Изначально бинарный протокол и система сообщений была  спроектирована
     // для распределенной сети. Это означает, что сообщение могло быть трансли-
-    // ровано через узлы имеющие различные версии протокола. В этом случае ко-
-    // ридор версий протокола должен сверяться на каждом узле. Если на коком-то
+    // ровано через узлы имеющие различные версии протокола.  В этом случае ко-
+    // ридор версий протокола должен сверяться на каждом узле. Если на каком-то
     // из узлов сети коридор версий окажется  не совместим с версией сообщения,
     // то в этом случае сообщение не должно обрабатываться этим узлом, а только
     // транслироваться к следующим узлам сети;
@@ -431,20 +431,15 @@ bool Message::readContent(Args&... args) const
 template<typename T>
 bool Message::writeJsonContent(const T& t)
 {
-    BByteArray jsonContent = t.toJson();
-    bool res = writeContent(jsonContent);
     setContentFormat(SerializationFormat::Json);
-    return res;
+    _content = const_cast<T&>(t).toJson();
+    return true;
 }
 
 template<typename T>
 bool Message::readJsonContent(T& t) const
 {
-    BByteArray jsonContent;
-    bool res = readContent(jsonContent);
-    if (res)
-        res = t.fromJson(jsonContent);
-    return res;
+    return t.fromJson(_content);
 }
 #endif
 

@@ -40,11 +40,16 @@
 
 #include "qt/quuidex.h"
 #include "qt/communication/message.h"
-#include "qt/communication/communication_bserialize.h"
+#include "qt/communication/bserialize_space.h"
 #include "qt/version/version_number.h"
+
+#ifdef JSON_SERIALIZATION
+#include "qt/communication/serialization/json.h"
+#endif
 
 #include <QtCore>
 #include <QHostAddress>
+#include <stdexcept>
 
 namespace communication {
 
@@ -122,6 +127,17 @@ struct Data
                 || MessageType2 == Message::Type::Event
                 || MessageType3 == Message::Type::Event);
     }
+
+    // Фиктивные функции, необходимые для сборки проекта когда не используется
+    // бинарная сериализация.
+    bserial::RawVector toRaw() const {
+        throw std::logic_error("Data::toRaw(): You must override this function "
+                               "in the inherited structure");
+    }
+    void fromRaw(const bserial::RawVector&) {
+        throw std::logic_error("Data::fromRaw(): You must override this function "
+                               "in the inherited structure");
+    }
 };
 
 /**
@@ -136,6 +152,10 @@ struct MessageError
     qint32  code = {0};   // Код ошибки
     QString description;  // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
+
+#ifdef JSON_SERIALIZATION
+    DECLARE_J_SERIALIZE_FUNC
+#endif
 };
 
 /**
@@ -151,6 +171,10 @@ struct MessageFailed
     qint32  code = {0};   // Код неудачи
     QString description;  // Описание неудачи (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
+
+#ifdef JSON_SERIALIZATION
+    DECLARE_J_SERIALIZE_FUNC
+#endif
 };
 
 /**
@@ -168,6 +192,10 @@ struct Unknown : Data<&command::Unknown,
     QHostAddress  address;          // Адрес и порт хоста для которого
     quint16       port;             // команда неизвестна.
     DECLARE_B_SERIALIZE_FUNC
+
+#ifdef JSON_SERIALIZATION
+    DECLARE_J_SERIALIZE_FUNC
+#endif
 };
 
 /**
@@ -182,21 +210,11 @@ struct Error : Data<&command::Error,
     qint32  code = {0};  // Код ошибки
     QString description; // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
-};
 
-/**
-  Сообщение содержит информацию о совместимости версий бинарного протокола
-  сервера и клиента. Сразу после установки TCP-соединения сервер и клиент
-  обмениваются этой информацией.
-*/
-//struct ProtocolCompatible : Data<&command::ProtocolCompatible,
-//                                  Message::Type::Command,
-//                                  Message::Type::Answer>
-//{
-//    quint16 versionLow;
-//    quint16 versionHigh;
-//    DECLARE_B_SERIALIZE_FUNC
-//};
+#ifdef JSON_SERIALIZATION
+    DECLARE_J_SERIALIZE_FUNC
+#endif
+};
 
 /**
   Структура содержит информацию о причинах закрытия TCP-соединения
@@ -208,7 +226,88 @@ struct CloseConnection : Data<&command::CloseConnection,
     QString description;  // Описание причины закрытия соединения,
                           // (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
+
+#ifdef JSON_SERIALIZATION
+    DECLARE_J_SERIALIZE_FUNC
+#endif
 };
+
+//----------------------- Implementation JSerialize --------------------------
+
+#ifdef JSON_SERIALIZATION
+template <typename Packer>
+Packer& MessageError::jserialize(Packer& p)
+{
+    p.startObject();
+    p.member("code")        & code;
+    p.member("description") & description;
+    return p.endObject();
+}
+
+template <typename Packer>
+Packer& MessageFailed::jserialize(Packer& p)
+{
+    p.startObject();
+    p.member("code")        & code;
+    p.member("description") & description;
+    return p.endObject();
+}
+
+template <typename Packer>
+Packer& Unknown::jserialize(Packer& p)
+{
+    p.startObject();
+    p.member("commandId")        & commandId;
+    p.member("socketType")       & socketType;
+    p.member("socketDescriptor") & socketDescriptor;
+    p.member("socketName")       & socketName;
+
+    QString addressProtocol = "ip4";
+    QString address_;
+    QString addressScopeId;
+
+    if (p.isWriter())
+    {
+        address_ = address.toString();
+        if (address.protocol() == QAbstractSocket::IPv6Protocol)
+        {
+            addressProtocol = "ip6";
+            addressScopeId = address.scopeId();
+        }
+    }
+    p.member("addressProtocol") & addressProtocol;
+    p.member("address")         & address_;
+    p.member("addressScopeId")  & addressScopeId;
+
+    if (p.isReader())
+    {
+        address = QHostAddress(address_);
+        if (addressProtocol == "ip6")
+            address.setScopeId(addressScopeId);
+    }
+    p.member("port") & port;
+    return p.endObject();
+}
+
+template <typename Packer>
+Packer& Error::jserialize(Packer& p)
+{
+    p.startObject();
+    p.member("commandId")   & commandId;
+    p.member("code")        & code;
+    p.member("description") & description;
+    return p.endObject();
+}
+
+template <typename Packer>
+Packer& CloseConnection::jserialize(Packer& p)
+{
+    p.startObject();
+    p.member("code")        & code;
+    p.member("description") & description;
+    return p.endObject();
+}
+#endif // JSON_SERIALIZATION
 
 } // namespace data
 } // namespace communication

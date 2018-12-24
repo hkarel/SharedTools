@@ -93,24 +93,25 @@ bserial::RawVector Unknown::toRaw() const
     /* stream << address
        Реализация взята с QHostAddress
     */
-    qint8 prot = qint8(address.protocol());
-    stream << prot;
-    switch (prot)
+    switch (int(address.protocol()))
     {
-        case qint8(QAbstractSocket::IPv4Protocol):
+        case QAbstractSocket::IPv4Protocol:
+        {
+            stream << quint8(0); // protocol
             stream << address.toIPv4Address();
             break;
-
-        case qint8(QAbstractSocket::IPv6Protocol):
+        }
+        case QAbstractSocket::IPv6Protocol:
         {
+            stream << quint8(1); // protocol
             Q_IPV6ADDR ipv6 = address.toIPv6Address();
             for (int i = 0; i < 16; ++i)
                 stream << ipv6[i];
 
-            //out << address.scopeId();
+            /* stream << address.scopeId() */
             B_QSTR_TO_UTF8(stream, address.scopeId());
+            break;
         }
-        break;
     }
     stream << port;
     B_SERIALIZE_RETURN
@@ -136,14 +137,14 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
     stream >> prot;
     switch (prot)
     {
-        case qint8(QAbstractSocket::IPv4Protocol):
+        case 0: /* QAbstractSocket::IPv4Protocol */
         {
             quint32 ipv4;
             stream >> ipv4;
             address.setAddress(ipv4);
             break;
         }
-        case qint8(QAbstractSocket::IPv6Protocol):
+        case 1: /* QAbstractSocket::IPv6Protocol */
         {
             Q_IPV6ADDR ipv6;
             for (int i = 0; i < 16; ++i)
@@ -151,7 +152,7 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
             address.setAddress(ipv6);
 
             QString scope;
-            //in >> scope;
+            /* stream >> scope */
             B_UTF8_TO_QSTR(stream, scope);
             address.setScopeId(scope);
             break;
@@ -180,22 +181,6 @@ void Error::fromRaw(const bserial::RawVector& vect)
     B_UTF8_TO_QSTR(stream, description);
     B_DESERIALIZE_END
 }
-
-//bserial::RawVector ProtocolCompatible::toRaw() const
-//{
-//    B_SERIALIZE_V1(stream)
-//    stream << versionLow;
-//    stream << versionHigh;
-//    B_SERIALIZE_RETURN
-//}
-
-//void ProtocolCompatible::fromRaw(const bserial::RawVector& vect)
-//{
-//    B_DESERIALIZE_V1(vect, stream)
-//    stream >> versionLow;
-//    stream >> versionHigh;
-//    B_DESERIALIZE_END
-//}
 
 bserial::RawVector CloseConnection::toRaw() const
 {

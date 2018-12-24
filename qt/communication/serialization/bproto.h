@@ -36,7 +36,7 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "break_point.h"
-#include "stream_init.h"
+#include "qt/stream_init.h"
 
 #include <QByteArray>
 #include <QDataStream>
@@ -45,7 +45,9 @@
 #include <type_traits>
 #include <utility>
 
-namespace bserial /*binary serialization*/ {
+namespace communication {
+namespace serialization {
+namespace bproto {
 
 /**
   Структура ByteArray нужна для переопределения потокового оператора '>>'
@@ -214,7 +216,7 @@ QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& lis
 
         typedef lst::List<T, Compare, Allocator> ListType;
         typename ListType::ValueType* value = list.allocator().create();
-        if (value->clife_count == 0)
+        if (value->clife_count() == 0)
             value->add_ref();
         getFromStream(s, *value);
         list.add(value);
@@ -259,7 +261,11 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     return s;
 }
 
-} // namespace bserial
+} // namespace bproto
+} // namespace serialization
+} // namespace communication
+
+namespace bserial = communication::serialization::bproto;
 
 #define DECLARE_B_SERIALIZE_FRIENDS \
     template<typename T> \
@@ -296,17 +302,6 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     DECLARE_B_SERIALIZE_FRIENDS
 
 /**
-  --- Устаревшая реализация ---
-  Определение потоковых операторов учитывающих механизм совместимости по версиям.
-
-#define DEFINE_STREAM_OPERATORS(TYPE_NAME) \
-    inline QDataStream& operator>> (QDataStream& s, TYPE_NAME& p) \
-        {return bserial::getFromStream(s, p);} \
-    inline QDataStream& operator<< (QDataStream& s, const TYPE_NAME& p) \
-        {return bserial::putToStream(s, p);}
-*/
-
-/**
   Определение обобщенных потоковых операторов учитывающих механизм совместимости
   по версиям.
   Примечание: для того чтобы компилятор мог корректно выполнить инстанциирование
@@ -335,7 +330,6 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
         {return bserial::putToStream<T, Compare, Allocator>(s, p);}
 
 typedef bserial::ByteArray BByteArray;
-
 
 /**
   Макросы для работы с функциями сериализации toRaw(), fromRaw()

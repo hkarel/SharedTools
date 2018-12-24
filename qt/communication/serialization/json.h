@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2017 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2018 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -23,25 +23,343 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   ---
 
-  Модуль содержит механизмы сериализации в json формат.
+  В модуле представлены функции и макросы механизма json сериализации данных.
 *****************************************************************************/
 
 #pragma once
 
-#include "qt/communication/message.h"
-#include <QtCore>
-#include <string>
+#include "defmac.h"
+#include "list.h"
+#include "clife_base.h"
+#include "clife_ptr.h"
+#include "break_point.h"
+#include "qt/quuidex.h"
 
-#ifndef JSON_SERIALIZATION
-#error "Is not defined mechanism for json  serialization"
-#endif
 #include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+
+#include <QtGlobal>
+#include <QByteArray>
+#include <QString>
+#include <QVector>
+#include <QUuid>
+#include <stack>
+#include <type_traits>
 
 namespace communication {
 namespace serialization {
 namespace json {
 
 using namespace rapidjson;
+
+class Reader
+{
+public:
+    Reader();
+    ~Reader();
+
+    // Parse json
+    bool parse(const QByteArray& json);
+    bool hasParseError() const {return _error;}
+
+    Reader& member(const char* name);
+    bool hasMember(const char* name) const;
+
+    Reader& startObject();
+    Reader& endObject();
+
+    Reader& startArray(SizeType* size);
+    Reader& endArray();
+
+    Reader& setNull();
+
+    Reader& operator& (bool&);
+    Reader& operator& (qint8&);
+    Reader& operator& (quint8&);
+    Reader& operator& (qint16&);
+    Reader& operator& (quint16&);
+    Reader& operator& (qint32&);
+    Reader& operator& (quint32&);
+    Reader& operator& (qint64&);
+    Reader& operator& (quint64&);
+    Reader& operator& (double&);
+    Reader& operator& (QByteArray&);
+    Reader& operator& (QString&);
+    Reader& operator& (QUuid&);
+    Reader& operator& (QUuidEx&);
+
+    template <typename T> Reader& operator& (T& t);
+    template <typename T> Reader& operator& (QVector<T>&);
+    template <typename T> Reader& operator& (clife_ptr<T>&);
+
+    template<typename T, typename Compare, typename Allocator>
+    Reader& operator& (lst::List<T, Compare, Allocator>&);
+
+    bool isReader() const {return true;}
+    bool isWriter() const {return false;}
+
+private:
+    struct StackItem
+    {
+        enum State
+        {
+            BeforeStart, // An object/array is in the stack but it is not yet called
+                         // by StartObject()/StartArray().
+            Started,     // An object/array is called by StartObject()/StartArray().
+            Closed       // An array is closed after read all element, but before EndArray().
+        };
+
+        StackItem(const Value* value, State state)
+            : value(value), state(state)
+        {}
+
+        const Value* value;
+        State state;
+        SizeType index = {0}; // For array iteration
+    };
+    typedef std::stack<StackItem> Stack;
+
+private:
+    DISABLE_DEFAULT_COPY(Reader)
+    void Next();
+
+    Document _document;
+    Stack _stack;
+    bool _error = {false};
+};
+
+class Writer
+{
+public:
+    Writer();
+    ~Writer();
+
+    // Obtains the serialized JSON string.
+    const char* getString() const;
+
+    Writer& member(const char* name);
+    bool hasMember(const char* name) const;
+
+    Writer& startObject();
+    Writer& endObject();
+
+    Writer& startArray(SizeType* size = 0);
+    Writer& endArray();
+
+    Writer& setNull();
+
+    Writer& operator& (const bool);
+    Writer& operator& (const qint8);
+    Writer& operator& (const quint8);
+    Writer& operator& (const qint16);
+    Writer& operator& (const quint16);
+    Writer& operator& (const qint32);
+    Writer& operator& (const quint32);
+    Writer& operator& (const qint64);
+    Writer& operator& (const quint64);
+    Writer& operator& (const double);
+    Writer& operator& (const QByteArray&);
+    Writer& operator& (const QString&);
+    Writer& operator& (const QUuid&);
+    Writer& operator& (const QUuidEx&);
+
+    template <typename T> Writer& operator& (const T& t);
+    template <typename T> Writer& operator& (const QVector<T>&);
+    template <typename T> Writer& operator& (const clife_ptr<T>&);
+
+    template<typename T, typename Compare, typename Allocator>
+    Writer& operator& (const lst::List<T, Compare, Allocator>&);
+
+    bool isReader() const {return false;}
+    bool isWriter() const {return true;}
+
+private:
+    DISABLE_DEFAULT_COPY(Writer)
+
+    StringBuffer _stream;
+    rapidjson::Writer<StringBuffer> _writer;
+};
+
+
+//---------------------------- Reader, Writer --------------------------------
+
+namespace {
+
+template<typename T>
+struct not_enum_type : std::enable_if<!std::is_enum<T>::value, int> {};
+template<typename T>
+struct is_enum_type : std::enable_if<std::is_enum<T>::value, int> {};
+
+template<typename T>
+struct derived_from_clife_base : std::enable_if<std::is_base_of<clife_base, T>::value, int> {};
+template<typename T>
+struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base, T>::value, int> {};
+
+template <typename Packer, typename T>
+Packer& operatorAmp(Packer& p, T& t, typename not_enum_type<T>::type = 0)
+{
+    t.jserialize(p);
+    return p;
+}
+
+template <typename T>
+Reader& operatorAmp(Reader& r, T& t, typename is_enum_type<T>::type = 0)
+{
+    static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
+                  "Base type of enum must be 'unsigned int'");
+
+    quint32 val;
+    r & val;
+    t = static_cast<T>(val);
+    return r;
+}
+
+template <typename T>
+Writer& operatorAmp(Writer& w, const T t, typename is_enum_type<T>::type = 0)
+{
+    static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
+                  "Base type of enum must be 'unsigned int'");
+
+    quint32 val = static_cast<quint32>(t);
+    w & val;
+    return w;
+}
+
+template<typename T, typename Compare, typename Allocator>
+Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
+                    typename derived_from_clife_base<T>::type = 0)
+{
+    /* Эта функция используется когда T унаследовано от clife_base */
+    list.clear();
+    SizeType count;
+    r.startArray(&count);
+    for (SizeType i = 0; i < count; ++i)
+    {
+        typedef lst::List<T, Compare, Allocator> ListType;
+        typename ListType::ValueType* value = list.allocator().create();
+        if (value->clife_count() == 0)
+            value->add_ref();
+        r & (*value);
+        list.add(value);
+    }
+    return r.endArray();
+}
+
+template<typename T, typename Compare, typename Allocator>
+Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
+                    typename not_derived_from_clife_base<T>::type = 0)
+{
+    /* Эта функция используется когда T НЕ унаследовано от clife_base */
+    list.clear();
+    SizeType count;
+    r.startArray(&count);
+    for (SizeType i = 0; i < count; ++i)
+    {
+        typedef lst::List<T, Compare, Allocator> ListType;
+        typename ListType::ValueType* value = list.allocator().create();
+        r & (*value);
+        list.add(value);
+    }
+    return r.endArray();
+}
+
+} // namespace
+
+template <typename T>
+Reader& Reader::operator& (T& t)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return operatorAmp(r, t);
+}
+
+template <typename T>
+Writer& Writer::operator& (const T& t)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    T& t_ = const_cast<T&>(t);
+    return operatorAmp(w, t_);
+}
+
+template <typename T>
+Reader& Reader::operator& (QVector<T>& v)
+{
+    v.clear();
+    SizeType count;
+    startArray(&count);
+    for (SizeType i = 0; i < count; ++i)
+    {
+        T t;
+        this->operator& (t);
+        v.append(t);
+    }
+    return endArray();
+}
+
+template <typename T>
+Writer& Writer::operator& (const QVector<T>& v)
+{
+    startArray();
+    for (int i = 0; i < v.size(); ++i)
+        this->operator& (v[i]);
+
+    return endArray();
+}
+
+template <typename T>
+Reader& Reader::operator& (clife_ptr<T>& ptr)
+{
+    static_assert(std::is_base_of<clife_base, T>::value,
+                  "Class T must be derived from clife_base");
+
+    if (!_error)
+    {
+        if (_stack.top().value->IsNull())
+        {
+            ptr = clife_ptr<T>();
+            Next();
+        }
+        else if (_stack.top().value->IsObject())
+        {
+            if (ptr.empty())
+                ptr = clife_ptr<T>(new T());
+            this->operator& (*ptr);
+        }
+        else
+            _error = true;
+    }
+    return *this;
+}
+
+template <typename T>
+Writer& Writer::operator& (const clife_ptr<T>& ptr)
+{
+    if (ptr.empty())
+    {
+        setNull();
+        return *this;
+    }
+    return this->operator& (*ptr);
+}
+
+template<typename T, typename Compare, typename Allocator>
+Reader& Reader::operator& (lst::List<T, Compare, Allocator>& list)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return operatorAmp(r, list);
+}
+
+template<typename T, typename Compare, typename Allocator>
+Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& list)
+{
+    startArray();
+    for (int i = 0; i < list.count(); ++i)
+        this->operator& (list[i]);
+
+    return endArray();
+}
+
+//-------------------------------- Functions ---------------------------------
 
 template <typename GenericValueT>
 bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
@@ -60,6 +378,19 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     return (std::memcmp(a, b_, sizeof(typename GenericValueT::Ch) * l1) == 0);
 }
 
+#define DECLARE_J_SERIALIZE_FUNC \
+    QByteArray toJson() { \
+        serialization::json::Writer writer; \
+        jserialize(writer); \
+        return QByteArray(writer.getString()); \
+    } \
+    bool fromJson(const QByteArray& json) { \
+        serialization::json::Reader reader; \
+        if (reader.parse(json)) \
+            jserialize(reader); \
+        return !reader.hasParseError(); \
+    } \
+    template <typename Packer> Packer& jserialize(Packer&);
 
 } // namespace json
 } // namespace serialization

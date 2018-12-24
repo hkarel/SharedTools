@@ -33,10 +33,6 @@
 #include "qt/communication/commands_pool.h"
 #include "qt/communication/logger_operators.h"
 
-#ifdef JSON_SERIALIZATION
-#include "qt/communication/serialization/json.h"
-#endif
-
 #include <utility>
 #include <stdexcept>
 
@@ -304,7 +300,7 @@ void Socket::run()
             {
                 emit connected(socketDescriptorInternal());
             }
-            else // BinaryProtocol::Incompatible
+            else // ProtocolCompatible::No
             {
                 data::CloseConnection closeConnection;
                 closeConnection.code = 0;
@@ -321,7 +317,7 @@ void Socket::run()
                 log_verbose_m << "Send request to close the connection"
                               << ". Detail: " << closeConnection.description;
 
-                Message::Ptr m = createMessage(closeConnection);
+                Message::Ptr m = createMessage(closeConnection, {_messageFormat});
                 m->setPriority(Message::Priority::High);
                 internalMessages.add(m.detach());
             }
@@ -559,6 +555,18 @@ void Socket::run()
                     if (loopBreak || message.empty())
                         break;
 
+#ifdef JSON_SERIALIZATION
+                    if (_messageFormat == SerializationFormat::Json
+                        && !message->contentIsEmpty()
+                        && message->contentFormat() != SerializationFormat::Json)
+                    {
+                        log_error_m << "For json packaging, the message format"
+                                    << " and message content format must match"
+                                    << ". Message will be discarded"
+                                    << "; command: " << CommandNameLog(message->command());
+                        continue;
+                    }
+#endif
                     if (message->command() == command::CloseConnection
                         && message->type() == Message::Type::Command)
                     {

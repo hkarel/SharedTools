@@ -34,10 +34,11 @@ void readFromMessage(const Message::Ptr& message, data::MessageError& data)
     {
         if (message->execStatus() == Message::ExecStatus::Error)
         {
-            message->readContent(data);
+            messageRead(message, data);
             return;
         }
-        err = "Message exec status must be Message::ExecStatus::Error.";
+        else
+            err = "Message exec status must be Message::ExecStatus::Error.";
     }
     else
         err = "Message type must be Message::Type::Responce.";
@@ -53,10 +54,11 @@ void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
     {
         if (message->execStatus() == Message::ExecStatus::Failed)
         {
-            message->readContent(data);
+            messageRead(message, data);
             return;
         }
-        err = "Message exec status must be Message::ExecStatus::Failed.";
+        else
+            err = "Message exec status must be Message::ExecStatus::Failed.";
     }
     else
         err = "Message type must be Message::Type::Responce.";
@@ -65,18 +67,20 @@ void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
     throw std::logic_error(std::string(err.toUtf8().constData()));
 }
 
-bool writeToMessage(const data::MessageError& data, Message::Ptr& message)
+bool writeToMessage(const data::MessageError& data, Message::Ptr& message,
+                    SerializationFormat contentFormat)
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Error);
-    return message->writeContent(data);
+    return messageWrite(data, message, contentFormat);
 }
 
-bool writeToMessage(const data::MessageFailed& data, Message::Ptr& message)
+bool writeToMessage(const data::MessageFailed& data, Message::Ptr& message,
+                    SerializationFormat contentFormat)
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Failed);
-    return message->writeContent(data);
+    return messageWrite(data, message, contentFormat);
 }
 
 QString errorDescription(const Message::Ptr& message)

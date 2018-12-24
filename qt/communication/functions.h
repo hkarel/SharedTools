@@ -38,6 +38,68 @@
 #include <type_traits>
 
 namespace communication {
+namespace {
+
+template<typename CommandDataT>
+bool messageRead(const Message::Ptr& message, CommandDataT& data)
+{
+    bool res;
+    switch (message->contentFormat())
+    {
+        case SerializationFormat::BProto:
+            res = message->readContent(data);
+            break;
+#ifdef JSON_SERIALIZATION
+        case SerializationFormat::Json:
+            res = message->readJsonContent(data);
+            break;
+#endif
+        default:
+            throw std::logic_error("communication::messageRead(): "
+                                   "Unsupported message serialization format");
+    }
+    return res;
+}
+
+template<typename CommandDataT>
+bool messageWrite(const CommandDataT& data, Message::Ptr& message,
+                  SerializationFormat contentFormat)
+{
+    bool res;
+    switch (contentFormat)
+    {
+        case SerializationFormat::BProto:
+            res = message->writeContent(data);
+            break;
+#ifdef JSON_SERIALIZATION
+        case SerializationFormat::Json:
+            res = message->writeJsonContent(data);
+            break;
+#endif
+        default:
+            throw std::logic_error("communication::messageWrite(): "
+                                   "Unsupported message serialization format");
+    }
+    return res;
+}
+
+} // namespace
+
+struct CreateMessageParams
+{
+    const Message::Type type = {Message::Type::Command};
+    const SerializationFormat format = {SerializationFormat::BProto};
+
+    CreateMessageParams() = default;
+    CreateMessageParams(Message::Type type,
+                        SerializationFormat format = SerializationFormat::BProto)
+        : type{type}, format{format}
+    {}
+    CreateMessageParams(SerializationFormat format,
+                        Message::Type type = Message::Type::Command)
+        : type{type}, format{format}
+    {}
+};
 
 /**
   Создает сообщение на основе структуры данных соответствующей определнной
@@ -45,7 +107,7 @@ namespace communication {
 */
 template<typename CommandDataT>
 Message::Ptr createMessage(const CommandDataT& data,
-                           Message::Type type = Message::Type::Command)
+                           const CreateMessageParams& params = CreateMessageParams())
 {
     static_assert(CommandDataT::forCommandMessage()
                   || CommandDataT::forEventMessage(),
@@ -56,12 +118,12 @@ Message::Ptr createMessage(const CommandDataT& data,
     if (CommandDataT::forCommandMessage()
         && CommandDataT::forEventMessage())
     {
-        if (type != Message::Type::Command
-            && type != Message::Type::Event)
+        if (params.type != Message::Type::Command
+            && params.type != Message::Type::Event)
             throw std::logic_error(
                 "Parameter 'type' must be of type 'Message::Type::Command'"
                 " or 'Message::Type::Event' only");
-        m->setType(type);
+        m->setType(params.type);
     }
     else if (CommandDataT::forCommandMessage())
         m->setType(Message::Type::Command);
@@ -69,9 +131,17 @@ Message::Ptr createMessage(const CommandDataT& data,
         m->setType(Message::Type::Event);
 
     m->setExecStatus(Message::ExecStatus::Unknown);
-    m->writeContent(data);
+    messageWrite(data, m, params.format);
     return std::move(m);
 }
+#ifdef JSON_SERIALIZATION
+template<typename CommandDataT>
+Message::Ptr createJsonMessage(const CommandDataT& data,
+                               Message::Type type = Message::Type::Command)
+{
+    return createMessage(data, {type, SerializationFormat::Json});
+}
+#endif
 
 inline Message::Ptr createMessage(const QUuidEx& command)
 {
@@ -101,7 +171,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
     {
         if (data.forCommandMessage())
         {
-            res = message->readContent(data);
+            res = messageRead(message, data);
             data.isValid = res;
             return;
         }
@@ -113,7 +183,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
     {
         if (data.forEventMessage())
         {
-            res = message->readContent(data);
+            res = messageRead(message, data);
             data.isValid = res;
             return;
         }
@@ -127,7 +197,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
         {
             if (data.forAnswerMessage())
             {
-                res = message->readContent(data);
+                res = messageRead(message, data);
                 data.isValid = res;
                 return;
             }
@@ -164,7 +234,8 @@ void readFromMessage(const Message::Ptr&, data::MessageFailed&);
   Преобразует структуру CommandDataT в Message-сообщение.
 */
 template<typename CommandDataT>
-bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
+bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
+                    SerializationFormat contentFormat = SerializationFormat::BProto)
 {
     QString err;
     if (data.command() != message->command())
@@ -178,7 +249,7 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
         if (data.forCommandMessage())
         {
             message->setExecStatus(Message::ExecStatus::Unknown);
-            return message->writeContent(data);
+            return messageWrite(data, message, contentFormat);
         }
         err = "Structure of data cannot be used for 'Request'-message.";
     }
@@ -187,7 +258,7 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
         if (data.forEventMessage())
         {
             message->setExecStatus(Message::ExecStatus::Unknown);
-            return message->writeContent(data);
+            return messageWrite(data, message, contentFormat);
         }
         err = "Structure of data cannot be used for 'Event'-message.";
     }
@@ -196,7 +267,7 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
         if (data.forAnswerMessage())
         {
             message->setExecStatus(Message::ExecStatus::Success);
-            return message->writeContent(data);
+            return messageWrite(data, message, contentFormat);
         }
         err = "Structure of data cannot be used for 'Responce'-message.";
     }
@@ -208,11 +279,20 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message)
   Специализированные функции для записи сообщений MessageError, MessageFailed.
   При записи данных тип сообщения меняется на Message::Type::Responce,
   а Message::ExecStatus на соответствующий структуре данных.
-  Примечание: константный модификатор во втором параметре относится к структуре
-  интеллектуального указателя Message::Ptr, но не к самому Message-сообщению.
 */
-bool writeToMessage(const data::MessageError&,  Message::Ptr&);
-bool writeToMessage(const data::MessageFailed&, Message::Ptr&);
+bool writeToMessage(const data::MessageError&,  Message::Ptr&,
+                    SerializationFormat = SerializationFormat::BProto);
+
+bool writeToMessage(const data::MessageFailed&, Message::Ptr&,
+                    SerializationFormat = SerializationFormat::BProto);
+
+#ifdef JSON_SERIALIZATION
+template<typename CommandDataT>
+bool writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
+{
+    return writeToMessage(data, message, SerializationFormat::Json);
+}
+#endif
 
 /**
   Сервисная функция, возвращает описание ошибки из сообщений содержащих

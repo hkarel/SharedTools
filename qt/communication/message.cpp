@@ -24,6 +24,9 @@
 *****************************************************************************/
 
 #include "qt/communication/message.h"
+#include "logger/logger.h"
+#include "qt/logger/logger_operators.h"
+
 #ifdef LZMA_COMPRESSION
 #include "qt/compression/qlzma.h"
 #endif
@@ -34,12 +37,20 @@
 #ifdef JSON_SERIALIZATION
 #include "qt/communication/serialization/json.h"
 #include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #endif
 
 #include "break_point.h"
 #include <stdexcept>
+
+#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
+#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
+#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
+#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
+#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
+#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
 
 namespace communication {
 
@@ -278,18 +289,18 @@ BByteArray Message::toJson() const
 
     using namespace rapidjson;
     StringBuffer buff;
-    Writer<StringBuffer> writer(buff);
+    rapidjson::Writer<StringBuffer> writer(buff);
 
     writer.StartObject();
 
     // stream << _id;
     writer.Key("id");
-    QByteArray id = _id.toByteArray();
+    const QByteArray& id = _id.toByteArray();
     writer.String(id.constData(), SizeType(id.length()));
 
     // stream << _command;
     writer.Key("command");
-    QByteArray command = _command.toByteArray();
+    const QByteArray& command = _command.toByteArray();
     writer.String(command.constData(), SizeType(command.length()));
 
     // stream << _protocolVersionLow;
@@ -326,7 +337,7 @@ BByteArray Message::toJson() const
     {
         //stream << _content;
         writer.Key("content");
-        writer.String(_content.constData(), SizeType(_content.length()));
+        writer.RawValue(_content.constData(), size_t(_content.length()), kObjectType);
     }
     writer.EndObject();
     return BByteArray(buff.GetString());
@@ -341,19 +352,34 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
     Document doc;
     doc.Parse(ba.constData(), size_t(ba.length()));
 
-    if (!doc.IsObject())
+    if (doc.HasParseError())
+    {
+        ParseErrorCode e = doc.GetParseError();
+        int o = int(doc.GetErrorOffset());
+        log_error_m << "Failed parce json."
+                    << " Error: " << GetParseError_En(e)
+                    << " Detail: " << " at offset " << o << " near '"
+                    << ba.mid(o, 20) << "...'";
         return std::move(m);
+    }
+    if (!doc.IsObject())
+    {
+        log_error_m << "Failed json format";
+        return std::move(m);
+    }
 
     for (auto member = doc.MemberBegin(); member != doc.MemberEnd(); ++member)
     {
         if (stringEqual("id", member->name) && member->value.IsString())
         {
-            const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(), 38);
+            const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(),
+                                                           member->value.GetStringLength());
             m->_id = QUuidEx(ba);
         }
         else if (stringEqual("command", member->name) && member->value.IsString())
         {
-            const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(), 38);
+            const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(),
+                                                           member->value.GetStringLength());
             m->_command = QUuidEx(ba);
         }
         else if (stringEqual("protocolVersionLow", member->name) && member->value.IsUint())
@@ -380,14 +406,17 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
         {
             m->_maxTimeLife = quint64(member->value.GetUint64());
         }
-        else if (stringEqual("content", member->name) && member->value.IsString())
+        else if (stringEqual("content", member->name) && member->value.IsObject())
         {
-            m->_content = QByteArray(member->value.GetString());
+            StringBuffer buff;
+            rapidjson::Writer<StringBuffer> writer(buff);
+            member->value.Accept(writer);
+            m->_content = QByteArray(buff.GetString());
         }
     }
     return std::move(m);
 }
-#endif
+#endif // JSON_SERIALIZATION
 
 Message::Type Message::type() const
 {
@@ -435,3 +464,10 @@ void Message::setContentFormat(SerializationFormat val)
 }
 
 } // namespace communication
+
+#undef log_error_m
+#undef log_warn_m
+#undef log_info_m
+#undef log_verbose_m
+#undef log_debug_m
+#undef log_debug2_m

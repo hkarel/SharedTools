@@ -984,7 +984,7 @@ private:
 };
 
 
-//------------------------ Implementation CustomList ------------------------
+//------------------------ Implementation CustomList -------------------------
 
 #define DECL_IMPL_CUSTLIST_CONSTR \
   template<typename T, typename Compare, typename Allocator> \
@@ -1225,7 +1225,7 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
 
 
 
-//------------------------- Implementation List -----------------------------
+//------------------------- Implementation List ------------------------------
 
 #define DECL_IMPL_LIST_CONSTR \
   template<typename T, typename Compare, typename Allocator> \
@@ -1801,7 +1801,7 @@ DECL_IMPL_LIST(void)::swap(SelfListType& list)
 //}
 
 
-//------------------------ Implementation Functions -------------------------
+//------------------------ Implementation Functions --------------------------
 
 template<typename ListT, typename CompareL>
 FindResult find(const ListT& list, const CompareL& compare)
