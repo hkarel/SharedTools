@@ -268,7 +268,7 @@ struct SortExtParams
   /// loSortBorder, hiSortBorder Границы сортировки, позволяют производить
   /// сортировку по указанному диапазону. При назначении диапазона соблюдаются
   /// следующие требования:
-  /// 1) 0 <= loSortBorder < count(), в противном случае LoSortBorder
+  /// 1) 0 <= loSortBorder < count(), в противном случае loSortBorder
   ///    выставляется в 0.
   /// 2) loSortBorder < hiSortBorder <= count(), в противном случае
   ///    hiSortBorder выставляется в count (количество элементов в списке).
@@ -580,7 +580,8 @@ public:
 
   /// @brief Доступ к элементу списка по индексу.
   ///
-  /// @return Возвращает ссылку на элемент, введена для совместимости с STL.
+  /// @return Возвращает ссылку на элемент. Функция обеспечивает совместимость
+  /// с STL.
   const T& at(int index) const {return *item(index);}
 
   /// @brief Возвращает указатель на адрес первого элемента в линейном массиве
@@ -604,15 +605,14 @@ public:
   /// @brief Возвращает количество элементов в списке.
   int count() const {return d_func()->count;}
 
-  /// @brief Возвращает зарезервированную длинну массива list()
-  /// выделенную для работы списка.
+  /// @brief Возвращает зарезервированную длинну массива list().
   int capacity() const {return d_func()->capacity;}
 
   /// @brief Признак того, что список является контейнером
   ///
-  /// Если container() == true, то при разрушении или очистке списка
-  /// все элементы списка будут автоматически разрушены,
-  /// если container() == false - элементы списка разрушены не будут.
+  /// Если container() == TRUE, то при разрушении или очистке списка все элементы
+  /// списка будут автоматически разрушены, если container() == FALSE, то в этом
+  /// случае элементы списка разрушены не будут.
   bool container() const {return d_func()->container;}
 
   /// @brief Определяет состояние сортировки.
@@ -630,8 +630,8 @@ public:
   /// @brief Возвращает константную ссылку на распределитель памяти.
   const Allocator& allocator() const {return d_func()->allocator;}
 
-  /// @brief Возвращает количество элементов в списке,
-  /// введено для совместимости с STL.
+  /// @brief Возвращает количество элементов в списке. Функция обеспечивает
+  /// совместимость с STL.
   int size() const {return count();}
 
   /// @brief Возвращает true если список пуст.
@@ -762,16 +762,18 @@ public:
 
   /// @brief Добавляет новый элемент T в указанную позицию в списке.
   ///
-  /// Если index больше количества элементов в списке (count()) - элемент будет
-  /// добавлен в конец списка. Класс элемента T должен иметь конструктор по умолчанию.
+  /// Если index больше количества элементов в списке (count()),  то  элемент
+  /// будет добавлен в конец списка. Класс элемента T должен иметь конструктор
+  /// по умолчанию.
   /// @param[in] index Позиция вставки нового элемента.
   /// @return Возвращает указатель на добавленный элемент.
   T* insert(int index = 0);
 
   /// @brief Добавляет существующий элемент T в указанную позицию в списке.
   ///
-  /// Если index больше количества элементов в списке (count()) - элемент будет
-  /// добавлен в конец списка. Класс элемента T должен иметь конструктор по умолчанию.
+  /// Если index больше количества элементов в списке (count()),  то  элемент
+  /// будет добавлен в конец списка. Класс элемента T должен иметь конструктор
+  /// по умолчанию.
   /// @param[in] item Добавляемый элемент.
   /// @param[in] index Позиция вставки нового элемента.
   /// @return Возвращает указатель на добавленный элемент.
@@ -1701,7 +1703,6 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
       int loSortBorder = extParams.loSortBorder;
       int hiSortBorder = extParams.hiSortBorder;
 
-      //setSortState((sortMode == SortUp) ? UpSorted : DownSorted);
       if (!inRange(loSortBorder, 0, d->count))
         loSortBorder = 0;
 
@@ -1714,7 +1715,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
       qsort<CompareU>(d->list, loSortBorder, hiSortBorder - 1,
                       compare, sortMode, extParams.extParam);
     }
-    catch (BreakCompare &)
+    catch (BreakCompare&)
     {
       setSortState(SortState::Unknown);
     }
