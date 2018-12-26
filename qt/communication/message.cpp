@@ -303,13 +303,18 @@ BByteArray Message::toJson() const
     const QByteArray& command = _command.toByteArray();
     writer.String(command.constData(), SizeType(command.length()));
 
-    // stream << _protocolVersionLow;
-    writer.Key("protocolVersionLow");
-    writer.Uint(_protocolVersionLow);
-
-    // stream << _protocolVersionHigh;
-    writer.Key("protocolVersionHigh");
-    writer.Uint(_protocolVersionHigh);
+    if (_protocolVersionLow != 0)
+    {
+        // stream << _protocolVersionLow;
+        writer.Key("protocolVersionLow");
+        writer.Uint(_protocolVersionLow);
+    }
+    if (_protocolVersionHigh != 0)
+    {
+        // stream << _protocolVersionHigh;
+        writer.Key("protocolVersionHigh");
+        writer.Uint(_protocolVersionHigh);
+    }
 
     // stream << _flags;
     writer.Key("flags");
