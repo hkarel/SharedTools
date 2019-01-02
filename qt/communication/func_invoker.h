@@ -115,10 +115,22 @@ public:
         return _functions.findRef(command).success();
     }
 
+    lst::FindResult findCommand(const QUuidEx& command)
+    {
+        checkFunctionsSort();
+        return _functions.findRef(command);
+    }
+
     void call(const Message::Ptr& message)
     {
         checkFunctionsSort();
         if (lst::FindResult fr = _functions.findRef(message->command()))
+            _functions.item(fr.index())->call(message);
+    }
+
+    void call(const Message::Ptr& message, const lst::FindResult& fr)
+    {
+        if (fr.success())
             _functions.item(fr.index())->call(message);
     }
 
