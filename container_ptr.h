@@ -243,7 +243,7 @@ public:
     }
 
     template<typename otherT, template<typename> class otherA>
-    container_ptr(const container_ptr<otherT, otherA> & p) {
+    container_ptr(const container_ptr<otherT, otherA>& p) {
         PRINT_DEBUG("container_ptr(const container_ptr<otherT, otherA> &)", "")
         check_allocators_is_equal(p);
         check_converting_to_self_type(p);
@@ -251,7 +251,7 @@ public:
     }
 
     template<typename otherT, template<typename> class otherA>
-    self_t& operator= (const container_ptr<otherT, otherA> & p) {
+    self_t& operator= (const container_ptr<otherT, otherA>& p) {
         PRINT_DEBUG("operator= (const container_ptr<otherT, otherA> &)", "")
         check_allocators_is_equal(p);
         check_converting_to_self_type(p);
@@ -263,29 +263,29 @@ public:
     // неявно, и их поведение будет отличаться от ожидаемого.
     container_ptr(self_t&& p) {
         PRINT_DEBUG("container_ptr(self_t&&)", "")
-        assign(p, true);
+        assign_rvalue(p);
     }
 
     self_t& operator= (self_t&& p) {
         PRINT_DEBUG("operator= (self_t&&)", "")
-        assign(p, true);
+        assign_rvalue(p);
         return *this;
     }
 
     template<typename otherT, template<typename> class otherA>
-    container_ptr(container_ptr<otherT, otherA> && p) {
+    container_ptr(container_ptr<otherT, otherA>&& p) {
         PRINT_DEBUG("container_ptr(container_ptr<otherT, otherA> &&)", "")
         check_allocators_is_equal(p);
         check_converting_to_self_type(p);
-        assign(p, true);
+        assign_rvalue(p);
     }
 
     template<typename otherT, template<typename> class otherA>
-    self_t& operator= (container_ptr<otherT, otherA> && p) {
+    self_t& operator= (container_ptr<otherT, otherA>&& p) {
         PRINT_DEBUG("operator= (container_ptr<otherT, otherA> &&)", "")
         check_allocators_is_equal(p);
         check_converting_to_self_type(p);
-        assign(p, true);
+        assign_rvalue(p);
         return *this;
     }
 
@@ -378,7 +378,7 @@ private:
         return allocate_counter(ptr);
     }
 
-    static counter_ptr_t* allocate_counter(void *ptr) {
+    static counter_ptr_t* allocate_counter(void* ptr) {
         new (ptr) counter_ptr_t();
         return (counter_ptr_t*) ptr;
     }
@@ -408,7 +408,7 @@ private:
     // Проверяет эквивалентность аллокаторов
     template<typename otherT, template<typename> class otherA>
     static void check_allocators_is_equal(
-                                      const container_ptr<otherT, otherA> &) {
+                                      const container_ptr<otherT, otherA>&) {
         static_assert(allocator_ptr_equal<Allocator, otherA>::Yes,
                       "Allocators must be identical");
     }
@@ -416,7 +416,7 @@ private:
     // Проверяет корректность преобразования типа otherT к типу T.
     template<typename otherT, template<typename> class otherA>
     static void check_converting_to_self_type(
-                                      const container_ptr<otherT, otherA> &) {
+                                      const container_ptr<otherT, otherA>&) {
         static_assert(std::is_base_of<T, otherT>::value,
                       "Type otherT must be derived from T");
     }
@@ -429,7 +429,7 @@ private:
 
     // Для использования в обычных операторах присваивания и копирования.
     template<typename otherT, template<typename> class otherA>
-    void assign(const container_ptr<otherT, otherA> & p) {
+    void assign(const container_ptr<otherT, otherA>& p) {
         release(_counter);
         _counter = p._counter;
         if (_counter)
@@ -439,7 +439,7 @@ private:
 
     // Для использования в rvalue-операторах присваивания и копирования.
     template<typename otherT, template<typename> class otherA>
-    void assign(container_ptr<otherT, otherA> & p, bool /*rvalue*/) {
+    void assign_rvalue(container_ptr<otherT, otherA>& p) {
         release(_counter);
         _counter = p._counter;
         p._counter = 0;
