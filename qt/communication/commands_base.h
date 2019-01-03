@@ -222,7 +222,8 @@ struct Error : Data<&command::Error,
 struct CloseConnection : Data<&command::CloseConnection,
                                Message::Type::Command>
 {
-    qint32  code = {0};   // Код причины
+    qint32  code = {0};   // Код причины. Нулевой код соответствует
+                          // несовместимости версий протоколов.
     QString description;  // Описание причины закрытия соединения,
                           // (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
