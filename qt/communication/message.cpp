@@ -119,7 +119,12 @@ void Message::compress(int level, Compression compression)
         return;
     }
     level = qBound(-1, level, 9);
-    int sz = size() + sizeof(quint32 /*UDP signature*/);
+    int sz = size()
+#ifdef UDP_LONGSIG
+           + sizeof(quint64); // UDP long signature
+#else
+           + sizeof(quint32); // UDP signature
+#endif
 
     // Здесь 508 это минимальный размер UDP пакета передаваемого по сети без
     // фрагментации. Уже при значении 508 сжатие становится мало эффективным,
