@@ -236,8 +236,9 @@ private:
     const SocketType _type;
     volatile ProtocolCompatible _protocolCompatible = {ProtocolCompatible::Undefined};
 
+    typedef QPair<SerializationFormat, QUuidEx /*сигнатура формата*/>  ProtocolSign;
+    QVector<ProtocolSign> _protocolMap;
     SerializationFormat _messageFormat = {SerializationFormat::BProto};
-    QVector<QPair<SerializationFormat, QUuidEx /*сигнатура формата*/>> _protocolMap;
 
     bool _serializationSignatureRead = {false};
     bool _serializationSignatureWrite = {false};

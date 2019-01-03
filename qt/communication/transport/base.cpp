@@ -441,10 +441,14 @@ void Socket::run()
                     if (found)
                     {
                         alog::Line logLine = log_verbose_m << "Message serialization format: ";
-                        if (_messageFormat == SerializationFormat::Json)
-                            logLine << "json";
-                        else
+                        if (_messageFormat == SerializationFormat::BProto)
                             logLine << "bproto";
+#ifdef JSON_SERIALIZATION
+                        else if (_messageFormat == SerializationFormat::Json)
+                            logLine << "json";
+#endif
+                        else
+                            logLine << "unknown";
                     }
                     else
                         incomingSignature = QUuidEx{};
@@ -994,7 +998,6 @@ void Listener::incomingConnectionInternal(Socket::Ptr socket,
                                           SocketDescriptor socketDescriptor)
 {
     socket->setListenerSide(true);
-    //socket->setserializationFormat(serializationFormat::Unknown);
     socket->setInitSocketDescriptor(socketDescriptor);
     socket->setCompressionLevel(_compressionLevel);
     socket->setCompressionSize(_compressionSize);
