@@ -39,6 +39,7 @@
 
 #include <QtCore>
 #include <atomic>
+#include <set>
 #include <utility>
 
 namespace communication {
@@ -62,7 +63,12 @@ typedef qintptr SocketDescriptor;
 #else
 typedef int SocketDescriptor;
 #endif
-typedef QSet<SocketDescriptor> SocketDescriptorSet;
+/**
+  В Qt 4.8 класс QSet некорректно работает с типом uint32_t.
+  Во избежание проблем с типом qintptr заменяем QSet на std::set.
+  typedef QSet<SocketDescriptor> SocketDescriptorSet;
+*/
+typedef std::set<SocketDescriptor> SocketDescriptorSet;
 
 enum class SerializationFormat
 {

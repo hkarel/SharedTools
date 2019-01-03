@@ -918,7 +918,7 @@ void Listener::send(const Message::Ptr& message,
 {
     Socket::List sockets = this->sockets();
     SocketDescriptorSet excludeSockets;
-    excludeSockets << excludeSocket;
+    excludeSockets.insert(excludeSocket);
     communication::transport::send(sockets, message, excludeSockets);
 }
 
@@ -1021,20 +1021,23 @@ void send(const base::Socket::List& sockets,
     if (message->type() == Message::Type::Event)
     {
         for (base::Socket* s : sockets)
-            if (!excludeSockets.contains(s->socketDescriptor()))
+            if (excludeSockets.find(s->socketDescriptor()) == excludeSockets.end())
                 s->send(message);
     }
     else
     {
-        if (!message->destinationSocketDescriptors().isEmpty())
+        if (!message->destinationSocketDescriptors().empty())
         {
             bool messageSended = false;
             for (base::Socket* s : sockets)
-                if (message->destinationSocketDescriptors().contains(s->socketDescriptor()))
+            {
+                const SocketDescriptorSet& destSoc = message->destinationSocketDescriptors();
+                if (destSoc.find(s->socketDescriptor()) != destSoc.end())
                 {
                     s->send(message);
                     messageSended = true;
                 }
+            }
             if (!messageSended)
             {
                 alog::Line logLine =
@@ -1075,7 +1078,7 @@ void send(const base::Socket::List& sockets,
           SocketDescriptor excludeSocket)
 {
     SocketDescriptorSet excludeSockets;
-    excludeSockets << excludeSocket;
+    excludeSockets.insert(excludeSocket);
     send(sockets, message, excludeSockets);
 }
 
