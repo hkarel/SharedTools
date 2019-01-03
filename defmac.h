@@ -105,3 +105,7 @@
                 Qt::ConnectionType(Qt::BlockingQueuedConnection | Qt::UniqueConnection));
 
 #endif //NDEBUG
+
+#if defined(__MINGW64__) || defined(__MINGW32__)
+#define MINGW
+#endif

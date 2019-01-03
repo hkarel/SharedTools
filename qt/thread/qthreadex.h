@@ -82,3 +82,8 @@ private:
     QMutex _startStopLock;
 };
 
+#define CHECK_QTHREADEX_STOP \
+    if (threadStop()) { \
+        log_debug_m << "Thread stop command received"; \
+        break; \
+    }
