@@ -174,7 +174,7 @@ std::string YamlConfig::filePath() const
     return _filePath;
 }
 
-bool YamlConfig::remove(const std::string& name, bool logWarnings)
+bool YamlConfig::remove(const std::string& name, bool logWarn)
 {
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
@@ -233,10 +233,10 @@ YAML::Node YamlConfig::getNode(const YAML::Node& baseNode,
 }
 
 YAML::Node YamlConfig::nodeGet(const YAML::Node& baseNode,
-                               const std::string& name, bool logWarnings) const
+                               const std::string& name, bool logWarn) const
 {
     YAML::Node node = getNode(baseNode, name);
-    if (node.IsNull() && logWarnings)
+    if (node.IsNull() && logWarn)
     {
         log_warn_m << "Parameter '" << (_nameNodeFunc + name) << "' is undefined"
                    << ". Config file: " << _filePath;
@@ -269,18 +269,17 @@ YAML::Node YamlConfig::nodeSet(YAML::Node& baseNode, const std::string& name)
     return get_node(baseNode, 0);
 }
 
-bool YamlConfig::getValue(const std::string& name,
-                          Func func, bool logWarnings) const
+bool YamlConfig::getValue(const std::string& name, Func func, bool logWarn) const
 {
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
-    YAML::Node node = nodeGet(_root, name, logWarnings);
+    YAML::Node node = nodeGet(_root, name, logWarn);
     if (!node || node.IsNull())
         return false;
 
     YAMLCONFIG_TRY
     _nameNodeFunc = name + ".";
-    bool res = func(const_cast<YamlConfig*>(this), node, logWarnings);
+    bool res = func(const_cast<YamlConfig*>(this), node, logWarn);
     _nameNodeFunc.clear();
     return res;
     YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
