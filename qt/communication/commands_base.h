@@ -233,7 +233,7 @@ struct CloseConnection : Data<&command::CloseConnection,
 #endif
 };
 
-//----------------------- Implementation JSerialize --------------------------
+//------------------------ Функции json-сериализации -------------------------
 
 #ifdef JSON_SERIALIZATION
 template <typename Packer>

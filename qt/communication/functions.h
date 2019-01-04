@@ -134,6 +134,12 @@ Message::Ptr createMessage(const CommandDataT& data,
     messageWrite(data, m, params.format);
     return std::move(m);
 }
+
+inline Message::Ptr createMessage(const QUuidEx& command)
+{
+    return Message::create(command);
+}
+
 #ifdef JSON_SERIALIZATION
 template<typename CommandDataT>
 Message::Ptr createJsonMessage(const CommandDataT& data,
@@ -141,12 +147,12 @@ Message::Ptr createJsonMessage(const CommandDataT& data,
 {
     return createMessage(data, {type, SerializationFormat::Json});
 }
-#endif
 
-inline Message::Ptr createMessage(const QUuidEx& command)
+inline Message::Ptr createJsomMessage(const QUuidEx& command)
 {
     return Message::create(command);
 }
+#endif
 
 /**
   Преобразует содержимое Message-сообщения с структуру CommandDataT.
