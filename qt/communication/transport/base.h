@@ -51,24 +51,23 @@ namespace base {
 class Properties
 {
 public:
-    // Определяет уровень сжания потока. Сжатие выполняется перед отправкой
-    // потока данных в TCP-сокет. Сжатие потока выполняется с использованием
-    // zip-алгоритма. Допускаются значения от 0 до 9, что соответствует уровням
-    // сжатия для zip-алгоритма. Так, значение 0 будет означать, что поток
-    // не должен быть сжат, а значение 9 будет соответствовать максимальной
-    // степени сжатия.
-    // Значение -1 соответствует уровню сжатия по умолчанию.
+    // Определяет уровень сжания потока.  Сжатие  выполняется  перед  отправкой
+    // потока данных в TCP/Local сокет. Сжатие потока  выполняется  с использо-
+    // ванием zip-алгоритма. Допускаются значения от 0 до 9,  что соответствует
+    // уровням сжатия для zip-алгоритма.  Так, значение 0 будет  означать,  что
+    // поток не должен быть сжат, а значение 9 будет соответствовать максималь-
+    // ной степени сжатия. Значение -1 соответствует уровню сжатия по умолчанию.
     int compressionLevel() const {return _compressionLevel;}
     void setCompressionLevel(int val);
 
-    // Определяет размер потока данных (в байтах) по достижении которого выпол-
-    // няется сжатие потока перед отправкой в TCP-сокет. Значение по умолчанию
-    // 1024 байт.
+    // Определяет размер потока данных (в байтах)  по достижении которого выпол-
+    // няется сжатие потока перед отправкой в TCP/Local сокет. Значение по умол-
+    // чанию равно 1024 байт.
     int compressionSize() const {return _compressionSize;}
     void setCompressionSize(int val) {_compressionSize = val;}
 
-    // Определяет нужно ли проверять совместимость бинарных протоколов после
-    // создания TCP-соединения
+    // Определяет нужно ли проверять совместимость версий протокола после
+    // создания соединения.
     bool checkProtocolCompatibility() const {return _checkProtocolCompatibility;}
     void setCheckProtocolCompatibility(bool val) {_checkProtocolCompatibility = val;}
 
@@ -183,11 +182,12 @@ signals:
     // Сигнал эмитируется при получении сообщения
     void message(const communication::Message::Ptr&);
 
-    // Сигнал эмитируется после установки TCP-соединения и после
-    // проверки совместимости версий бинарного протокола
+    // Сигнал эмитируется после выполнения двух условий:
+    // 1) Установлено соединение с TCP/Local сокетом;
+    // 2) Проверка совместимости версий протокола выполнена успешно.
     void connected(communication::SocketDescriptor);
 
-    // Сигнал эмитируется после разрыва TCP-соединения
+    // Сигнал эмитируется после разрыва TCP/Local соединения
     void disconnected(communication::SocketDescriptor);
 
 private slots:
@@ -225,7 +225,8 @@ protected:
     bool isListenerSide() const {return _isListenerSide;}
     void setListenerSide(bool val) {_isListenerSide = val;}
 
-    // Используется для связывания сокета созданного в Listener.
+    // Вспомогательная функция, используется для связывания сокета созданного
+    // в Listener.
     SocketDescriptor initSocketDescriptor() const {return _initSocketDescriptor;}
     void setInitSocketDescriptor(SocketDescriptor val) {_initSocketDescriptor = val;}
 
