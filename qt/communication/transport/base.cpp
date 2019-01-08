@@ -298,6 +298,9 @@ void Socket::run()
 
             if (_protocolCompatible == ProtocolCompatible::Yes)
             {
+                if (isListenerSide())
+                    while (!isInsideListener()) {msleep(10);}
+
                 emit connected(socketDescriptorInternal());
             }
             else // ProtocolCompatible::No
@@ -1012,7 +1015,9 @@ void Listener::incomingConnectionInternal(Socket::Ptr socket,
     socket->start();
 
     QMutexLocker locker(&_socketsLock); (void) locker;
-    _sockets.add(socket.detach());
+    socket->add_ref();
+    _sockets.add(socket.get());
+    socket->setInsideListener(true);
 }
 
 } // namespace base

@@ -220,10 +220,15 @@ protected:
     virtual void messageInit(Message::Ptr&) = 0;
     virtual void fillUnknownMessage(const Message::Ptr&, data::Unknown&) = 0;
 
-    // Признак того, что сокет был создан  на стороне  listenr-а. Признак
-    // используется для определения порядка обмена сигнатурами протоколов.
+    // Признак того, что сокет был создан  на стороне listenr-а, используется
+    // для определения порядка обмена сигнатурами протоколов.
     bool isListenerSide() const {return _isListenerSide;}
     void setListenerSide(bool val) {_isListenerSide = val;}
+
+    // Возвращает TRUE когда сокет уже помещен в список listenr-а, используется
+    // для предотвращения преждевременного эмитирования сигнала connected()
+    bool isInsideListener() const {return _isInsideListener;}
+    void setInsideListener(bool val) {_isInsideListener = val;}
 
     // Вспомогательная функция, используется для связывания сокета созданного
     // в Listener.
@@ -245,6 +250,8 @@ private:
     bool _serializationSignatureWrite = {false};
 
     bool _isListenerSide = {false};
+    volatile bool _isInsideListener = {false};
+
     SocketDescriptor _initSocketDescriptor = {-1};
     mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
 
@@ -272,14 +279,6 @@ public:
     void send(const Message::Ptr& message, SocketDescriptor excludeSocket) const;
 
     // Возвращает сокет по его идентификатору.
-    // Потенциальная уязвимость: если эта функция будет вызваться из обработ-
-    // чика сигнала Socket::connected(), то есть вероятность, что на момент
-    // вызова искомый сокет еще не будет добавлен с список Listener::_sockets,
-    // следовательно  функция  вернет отрицательный результат,  хотя на самом
-    // деле сокет уже существует и работает. На практике вероятность подобного
-    // исхода событий достаточно низкая, т.к. до момента испускания сигнала
-    // Socket::connected() выполняется ряд операций, и за это время новый
-    // сокет уже будет добавлен с список Listener::_sockets.
     Socket::Ptr socketByDescriptor(SocketDescriptor) const;
 
     // Добавляет сокет в коллекцию сокетов
