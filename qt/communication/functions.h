@@ -148,7 +148,7 @@ Message::Ptr createJsonMessage(const CommandDataT& data,
     return createMessage(data, {type, SerializationFormat::Json});
 }
 
-inline Message::Ptr createJsomMessage(const QUuidEx& command)
+inline Message::Ptr createJsonMessage(const QUuidEx& command)
 {
     return Message::create(command);
 }
