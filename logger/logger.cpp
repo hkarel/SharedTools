@@ -610,7 +610,7 @@ Line::Line(Logger*     logger,
            const char* func,
            int         line,
            const char* module)
-    : impl(new Impl())
+    : impl(new Impl)
 {
     impl->logger = logger;
     impl->level  = level;
@@ -633,7 +633,7 @@ Line::~Line()
 
     try
     {
-        MessagePtr message(new Message());
+        MessagePtr message {new Message};
         message->level = impl->level;
         message->str = impl->buff.str();
         gettimeofday(&message->timeVal, NULL);

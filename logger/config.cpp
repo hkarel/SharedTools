@@ -171,7 +171,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     FilterPtr filter;
     if (type == "module_name")
     {
-        FilterModulePtr filterMod {new FilterModule()};
+        FilterModulePtr filterMod {new FilterModule};
         filterMod->setFilteringNoNameModules(filteringNonameModules);
 
         for (const string& module : modules)
@@ -181,7 +181,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "log_level")
     {
-        FilterLevelPtr filterLevel {new FilterLevel()};
+        FilterLevelPtr filterLevel {new FilterLevel};
         filterLevel->setFilteringNoNameModules(filteringNonameModules);
         filterLevel->setLevel(levelFromString(logLevel));
 
@@ -192,7 +192,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "func_name")
     {
-        FilterFuncPtr filterFunc {new FilterFunc()};
+        FilterFuncPtr filterFunc {new FilterFunc};
         for (const string& function : functions)
             filterFunc->addFunc(function);
 
@@ -200,7 +200,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "file_name")
     {
-        FilterFilePtr filterFile {new FilterFile()};
+        FilterFilePtr filterFile {new FilterFile};
         for (const string& file : files)
             filterFile->addFile(file);
 
@@ -208,7 +208,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "thread_id")
     {
-        FilterThreadPtr filterThread {new FilterThread()};
+        FilterThreadPtr filterThread {new FilterThread};
         for (long tid : threads)
             filterThread->addThread(tid);
 
