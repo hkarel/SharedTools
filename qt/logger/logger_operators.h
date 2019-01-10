@@ -50,5 +50,7 @@ Line  operator<< (Line&&, const QUuidEx&);
 Line& operator<< (Line&,  const QHostAddress&);
 Line  operator<< (Line&&, const QHostAddress&);
 #endif
+Line& operator<< (Line&,  const QVariant&);
+Line  operator<< (Line&&, const QVariant&);
 
 } // namespace alog

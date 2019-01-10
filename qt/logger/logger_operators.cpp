@@ -107,4 +107,60 @@ Line operator<< (Line&& line, const QHostAddress& h)
 }
 #endif
 
+void QVariantToLog(Line& line, const QVariant& v)
+{
+    switch (v.type())
+    {
+        case QVariant::Bool:
+            line << v.toBool();
+            break;
+
+        case QVariant::ByteArray:
+            line << v.toByteArray();
+            break;
+
+        case QVariant::String:
+            line << v.toString();
+            break;
+
+        case QVariant::Int:
+            line << v.toInt();
+            break;
+
+        case QVariant::UInt:
+            line << v.toUInt();
+            break;
+
+        case QVariant::LongLong:
+            line << v.toLongLong();
+            break;
+
+        case QVariant::ULongLong:
+            line << v.toULongLong();
+            break;
+
+        case QVariant::Double:
+            line << v.toDouble();
+            break;
+
+        default:
+            line << "Unsupported QVariant type for logger"
+                 << "; Type code: " << int(v.type());
+    }
+}
+
+Line& operator<< (Line& line, const QVariant& v)
+{
+    if (line.toLogger())
+        QVariantToLog(line, v);
+    return line;
+}
+
+Line  operator<< (Line&& line, const QVariant& v)
+{
+    if (line.toLogger())
+        QVariantToLog(line, v);
+    return std::move(line);
+}
+
 } // namespace alog
