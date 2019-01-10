@@ -44,7 +44,7 @@ pid_t gettid()
     long tid;
     syscall(SYS_thr_self, &tid);
     return pid_t(tid);
-#elif defined(_MSC_VER) || defined(__MINGW32__)
+#elif defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     return pid_t(GetCurrentThreadId());
 #else
     return pid_t(syscall(SYS_gettid));
@@ -57,7 +57,7 @@ bool thread_exists(pid_t tid)
     long tid_ = long(tid);
     long res = syscall(SYS_thr_kill, tid_, 0);
     return (res != ESRCH);
-#elif defined(_MSC_VER) || defined(__MINGW32__)
+#elif defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     // Отладить проверку существования потока через функцию OpenThread()
     break_point
     DWORD tid_ = DWORD(tid);

@@ -275,7 +275,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
         checkFiedType("file", YAML::NodeType::Scalar);
         file = ysaver["file"].as<string>();
     }
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     if (ysaver["file_win"].IsDefined())
     {
         checkFiedType("file_win", YAML::NodeType::Scalar);
@@ -287,7 +287,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
 
     if (file[0] == '~')
     {
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
         const char* home = getenv("USERPROFILE");
 #else
         const char* home = getenv("HOME");

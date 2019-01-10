@@ -60,7 +60,7 @@ int main ()
 */
 
 #ifndef NDEBUG
-  #if defined(_MSC_VER) || defined(__MINGW32__)
+  #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     #include <intrin.h>
     #define break_point  __debugbreak();
   #elif defined(__arm__)

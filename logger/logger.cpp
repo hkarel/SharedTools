@@ -36,7 +36,7 @@
 #include <algorithm>
 #include <string.h>
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
 #endif
 
@@ -49,7 +49,7 @@ using namespace std;
 // и в файл %TEMP%\\alogger.log для Windows.
 void loggerPanic(const char* saverName, const char* error)
 {
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     char filePath[MAX_PATH + 12 /*alogger.log*/] = {0};
     GetTempPathA(MAX_PATH - 1, filePath);
     strcat(filePath, "alogger.log");

@@ -106,6 +106,6 @@
 
 #endif //NDEBUG
 
-#if defined(__MINGW64__) || defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #define MINGW
 #endif
