@@ -66,28 +66,36 @@ Line operator<< (Line&& line, const QByteArray& b)
 Line& operator<< (Line& line, const QUuid& u)
 {
     if (line.toLogger())
-        line << QStringToUtf8(u.toString());
+    {
+        QByteArray ba {u.toString().toUtf8()};
+        ba.chop(1);
+        line << (ba.constData() + 1);
+    }
     return line;
 }
 
 Line operator<< (Line&& line, const QUuid& u)
 {
     if (line.toLogger())
-        line << QStringToUtf8(u.toString());
+    {
+        QByteArray ba {u.toString().toUtf8()};
+        ba.chop(1);
+        line << (ba.constData() + 1);
+    }
     return std::move(line);
 }
 
 Line& operator<< (Line& line, const QUuidEx& u)
 {
     if (line.toLogger())
-        line << QStringToUtf8(u.toString());
+        line << static_cast<const QUuid&>(u);
     return line;
 }
 
 Line operator<< (Line&& line, const QUuidEx& u)
 {
     if (line.toLogger())
-        line << QStringToUtf8(u.toString());
+        line << static_cast<const QUuid&>(u);
     return std::move(line);
 }
 
