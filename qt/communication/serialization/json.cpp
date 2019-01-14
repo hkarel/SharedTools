@@ -511,7 +511,7 @@ Writer& Writer::operator& (const QString& s)
 Writer& Writer::operator& (const QUuid& uuid)
 {
     const QByteArray& ba = uuid.toByteArray();
-    _writer.String(ba.constData(), SizeType(ba.length()));
+    _writer.String(ba.constData() + 1, SizeType(ba.length() - 2));
     return *this;
 }
 

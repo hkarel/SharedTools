@@ -301,12 +301,12 @@ BByteArray Message::toJson() const
     // stream << _id;
     writer.Key("id");
     const QByteArray& id = _id.toByteArray();
-    writer.String(id.constData(), SizeType(id.length()));
+    writer.String(id.constData() + 1, SizeType(id.length() - 2));
 
     // stream << _command;
     writer.Key("command");
     const QByteArray& command = _command.toByteArray();
-    writer.String(command.constData(), SizeType(command.length()));
+    writer.String(command.constData() + 1, SizeType(command.length() - 2));
 
     if (_protocolVersionLow != 0)
     {
