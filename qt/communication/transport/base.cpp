@@ -75,7 +75,7 @@ bool SocketCommon::send(const Message::Ptr& message)
         bool isUnknown;
         { //Block for SpinLocker
             SpinLocker locker(_unknownCommandsLock); (void) locker;
-            isUnknown = (_unknownCommands.constFind(message->command()) != _unknownCommands.constEnd());
+            isUnknown = _unknownCommands.contains(message->command());
         }
         if (isUnknown)
         {
