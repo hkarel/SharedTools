@@ -99,13 +99,16 @@ bool SocketCommon::send(const Message::Ptr& message)
             default:
                 _messagesNorm.add(message.get());
         }
+
+        if (alog::logger().level() == alog::Level::Debug2)
+        {
+            // Это сообщение нужно добавлять в лог до вызова _messagesCond.wakeAll(),
+            // иначе в логе может возникнуть путаница с порядком следования сообщений
+            log_debug2_m << "Message added to a queue to sending"
+                         << "; message id: " << message->id()
+                         << "; command: " << CommandNameLog(message->command());
+        }
         _messagesCond.wakeAll();
-    }
-    if (alog::logger().level() == alog::Level::Debug2)
-    {
-        log_debug2_m << "Message added to a queue to sending"
-                     << "; message id: " << message->id()
-                     << "; command: " << CommandNameLog(message->command());
     }
     return true;
 }
