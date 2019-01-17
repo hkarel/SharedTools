@@ -28,7 +28,7 @@
 #include "utils.h"
 
 #include <yaml-cpp/yaml.h>
-#include <exception>
+#include <stdexcept>
 
 #define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "LogConfig")
 #define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "LogConfig")
@@ -270,16 +270,25 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
     }
 
     string file;
-    if (ysaver["file"].IsDefined())
-    {
-        checkFiedType("file", YAML::NodeType::Scalar);
-        file = ysaver["file"].as<string>();
-    }
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     if (ysaver["file_win"].IsDefined())
     {
         checkFiedType("file_win", YAML::NodeType::Scalar);
         file = ysaver["file_win"].as<string>();
+    }
+    const char* programData = "ProgramData";
+    if (file.find(programData, 0) == 0)
+    {
+        const char* prdata = getenv("PROGRAMDATA");
+        file.replace(0, strlen(programData), prdata);
+        for (string::value_type& c : file)
+            if (c == '\\') c = '/';
+    }
+#else
+    if (ysaver["file"].IsDefined())
+    {
+        checkFiedType("file", YAML::NodeType::Scalar);
+        file = ysaver["file"].as<string>();
     }
 #endif
     if (file.empty())
