@@ -53,4 +53,9 @@ QString getDirPath(const QString& partDirPath);
 // Расширяет символ '~' до полного пути к домашней директории
 void homeDirExpansion(QString& filePath);
 
+// Выполняет расширение пути для двух случаев:
+// 1) Символ '~' до полного пути к домашней директории (заменяет функцию homeDirExpansion);
+// 2) В Windows кодовое слово 'ProgramData' до директории с программными данными
+void dirExpansion(QString& filePath);
+
 } // namespace config

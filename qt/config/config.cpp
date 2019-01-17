@@ -27,13 +27,15 @@
 #include "qt/config/config.h"
 #include "qt/logger/logger_operators.h"
 
-#include <exception>
+#include <stdexcept>
+#include <stdlib.h>
 
 namespace config {
 
 QString dir()
 {
 #if defined(CONFIG_DIR)
+/*
 #if defined(__MINGW32__)
     QString cfgDir = QDir::homePath() + "/" + CONFIG_DIR;
 #else
@@ -51,6 +53,10 @@ QString dir()
             throw std::logic_error(err.toStdString());
         }
     }
+    return cfgDir;
+*/
+    QString cfgDir {CONFIG_DIR};
+    dirExpansion(cfgDir);
     return cfgDir;
 #else
     throw std::logic_error("Undefined CONFIG_DIR");
@@ -100,6 +106,22 @@ QString getDirPath(const QString& partDirPath)
 void homeDirExpansion(QString& filePath)
 {
     if (!filePath.isEmpty() && (filePath[0] == QChar('~')))
+        filePath.replace(0, 1, QDir::home().path());
+}
+
+void dirExpansion(QString& filePath)
+{
+    if (filePath.isEmpty())
+        return;
+
+    const char* programData = "ProgramData";
+    if (filePath.startsWith(QLatin1String(programData), Qt::CaseSensitive))
+    {
+        const char* prdata = getenv("PROGRAMDATA");
+        filePath.replace(0, strlen(programData), QString(prdata));
+        return;
+    }
+    if (filePath[0] == QChar('~'))
         filePath.replace(0, 1, QDir::home().path());
 }
 
