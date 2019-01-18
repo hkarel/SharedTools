@@ -119,10 +119,14 @@ void dirExpansion(QString& filePath)
     {
         const char* prdata = getenv("PROGRAMDATA");
         filePath.replace(0, strlen(programData), QString(prdata));
+        filePath.replace(QChar('\\'), QChar('/'));
         return;
     }
     if (filePath[0] == QChar('~'))
+    {
         filePath.replace(0, 1, QDir::home().path());
+        filePath.replace(QChar('\\'), QChar('/'));
+    }
 }
 
 } // namespace config
