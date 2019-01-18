@@ -122,7 +122,7 @@ bool SocketCommon::send(const QUuidEx& command)
 void SocketCommon::remove(const QUuidEx& command)
 {
     QMutexLocker locker(&_messagesLock); (void) locker;
-    auto remove_cond = [&command](Message* m) -> bool
+    auto funcCond = [&command](Message* m) -> bool
     {
         bool res = (command == m->command());
         if (res && (alog::logger().level() == alog::Level::Debug2))
@@ -131,9 +131,9 @@ void SocketCommon::remove(const QUuidEx& command)
                          << "; command: " << CommandNameLog(m->command());
         return res;
     };
-    _messagesHigh.removeCond(remove_cond);
-    _messagesNorm.removeCond(remove_cond);
-    _messagesLow.removeCond(remove_cond);
+    _messagesHigh.removeCond(funcCond);
+    _messagesNorm.removeCond(funcCond);
+    _messagesLow .removeCond(funcCond);
 }
 
 int SocketCommon::messagesCount() const
