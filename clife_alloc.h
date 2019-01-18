@@ -22,16 +22,16 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ---
-
-  Вспомогательный класс, используется в контейнере lst::List для создания и
-  разрушения элементов списка унаследованных от clife_base.
 *****************************************************************************/
 
 #pragma once
 #include "clife_base.h"
 #include <type_traits>
 
+/**
+  clife_alloc - вспомогательный класс, используется в контейнере lst::List
+  для создания и разрушения элементов списка унаследованных от clife_base
+*/
 template<typename T> struct clife_alloc
 {
     T* create() {
