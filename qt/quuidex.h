@@ -21,11 +21,15 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ---
+*****************************************************************************/
 
-  В модуле реализован класс QUuidT. Он полностью повторяет функционал QUuid,
-  за исключением переопределенных операторов равенства и неравенства, и добав-
-  ленного оператора сравнения.
+#pragma once
+#include <QUuid>
+
+/**
+  Класс QUuidT. Он полностью повторяет функционал QUuid, за исключением переоп-
+  ределенных операторов равенства и неравенства, и добавленного оператора срав-
+  нения.
   Класс сделан шаблонным для того чтобы можно было "обмануть" макрос
   регистрации Q_DECLARE_METATYPE для типа QVariant.
   Если клас будет нешаблонным, то невозможно будет сделать следующую
@@ -40,11 +44,7 @@
   typedef QUuidT<2> NodeId;
   Q_DECLARE_METATYPE(IndexId)
   Q_DECLARE_METATYPE(NodeId) // ок!
-*****************************************************************************/
-
-#pragma once
-#include <QUuid>
-
+*/
 template<int N> struct QUuidT : public QUuid
 {
 public:
