@@ -85,20 +85,6 @@ Line operator<< (Line&& line, const QUuid& u)
     return std::move(line);
 }
 
-Line& operator<< (Line& line, const QUuidEx& u)
-{
-    if (line.toLogger())
-        line << static_cast<const QUuid&>(u);
-    return line;
-}
-
-Line operator<< (Line&& line, const QUuidEx& u)
-{
-    if (line.toLogger())
-        line << static_cast<const QUuid&>(u);
-    return std::move(line);
-}
-
 #ifdef QT_NETWORK_LIB
 Line& operator<< (Line& line, const QHostAddress& h)
 {

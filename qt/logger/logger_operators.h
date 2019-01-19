@@ -44,13 +44,25 @@ Line& operator<< (Line&,  const QByteArray&);
 Line  operator<< (Line&&, const QByteArray&);
 Line& operator<< (Line&,  const QUuid&);
 Line  operator<< (Line&&, const QUuid&);
-Line& operator<< (Line&,  const QUuidEx&);
-Line  operator<< (Line&&, const QUuidEx&);
 #ifdef QT_NETWORK_LIB
 Line& operator<< (Line&,  const QHostAddress&);
 Line  operator<< (Line&&, const QHostAddress&);
 #endif
 Line& operator<< (Line&,  const QVariant&);
 Line  operator<< (Line&&, const QVariant&);
+
+template<int N>
+Line& operator<< (Line& line, const QUuidT<N>& u)
+{
+    line << static_cast<const QUuid&>(u);
+    return line;
+}
+
+template<int N>
+Line operator<< (Line&& line, const QUuidT<N>& u)
+{
+    line << static_cast<const QUuid&>(u);
+    return std::move(line);
+}
 
 } // namespace alog
