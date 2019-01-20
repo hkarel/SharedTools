@@ -43,6 +43,8 @@
 #include <QByteArray>
 #include <QString>
 #include <QVector>
+#include <QDate>
+#include <QTime>
 #include <QUuid>
 #include <stack>
 #include <type_traits>
@@ -87,11 +89,14 @@ public:
     Reader& operator& (QByteArray&);
     Reader& operator& (QString&);
     Reader& operator& (QUuid&);
-    Reader& operator& (QUuidEx&);
+    Reader& operator& (QDate&);
+    Reader& operator& (QTime&);
+    Reader& operator& (QDateTime&);
 
     template <typename T> Reader& operator& (T& t);
     template <typename T> Reader& operator& (QVector<T>&);
     template <typename T> Reader& operator& (clife_ptr<T>&);
+    template <int N>      Reader& operator& (QUuidT<N>&);
 
     template<typename T, typename Compare, typename Allocator>
     Reader& operator& (lst::List<T, Compare, Allocator>&);
@@ -162,11 +167,14 @@ public:
     Writer& operator& (const QByteArray&);
     Writer& operator& (const QString&);
     Writer& operator& (const QUuid&);
-    Writer& operator& (const QUuidEx&);
+    Writer& operator& (const QDate&);
+    Writer& operator& (const QTime&);
+    Writer& operator& (const QDateTime&);
 
     template <typename T> Writer& operator& (const T& t);
     template <typename T> Writer& operator& (const QVector<T>&);
     template <typename T> Writer& operator& (const clife_ptr<T>&);
+    template <int N>      Writer& operator& (const QUuidT<N>&);
 
     template<typename T, typename Compare, typename Allocator>
     Writer& operator& (const lst::List<T, Compare, Allocator>&);
@@ -340,6 +348,18 @@ Writer& Writer::operator& (const clife_ptr<T>& ptr)
         return *this;
     }
     return this->operator& (*ptr);
+}
+
+template <int N>
+Reader& Reader::operator& (QUuidT<N>& uuid)
+{
+    return this->operator& (static_cast<QUuid&>(uuid));
+}
+
+template <int N>
+Writer& Writer::operator& (const QUuidT<N>& uuid)
+{
+    return this->operator& (static_cast<const QUuid&>(uuid));
 }
 
 template<typename T, typename Compare, typename Allocator>

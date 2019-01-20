@@ -333,6 +333,51 @@ Reader& Reader::operator& (QString& s)
     return *this;
 }
 
+Reader& Reader::operator& (QDate& date)
+{
+    if (!_error)
+    {
+        if (_stack.top().value->IsString())
+        {
+            date = QDate::fromString(_stack.top().value->GetString(), "yyyy-MM-dd");
+            Next();
+        }
+        else
+            _error = true;
+    }
+    return *this;
+}
+
+Reader& Reader::operator& (QTime& time)
+{
+    if (!_error)
+    {
+        if (_stack.top().value->IsString())
+        {
+            time = QTime::fromString(_stack.top().value->GetString(), "hh:mm:ss.zzz");
+            Next();
+        }
+        else
+            _error = true;
+    }
+    return *this;
+}
+
+Reader& Reader::operator& (QDateTime& dtime)
+{
+    if (!_error)
+    {
+        if (_stack.top().value->IsInt64())
+        {
+            dtime = QDateTime::fromMSecsSinceEpoch(_stack.top().value->GetInt64());
+            Next();
+        }
+        else
+            _error = true;
+    }
+    return *this;
+}
+
 Reader& Reader::operator& (QUuid& uuid)
 {
     if (!_error)
@@ -348,11 +393,6 @@ Reader& Reader::operator& (QUuid& uuid)
             _error = true;
     }
     return *this;
-}
-
-Reader& Reader::operator& (QUuidEx& uuid)
-{
-    return this->operator& (static_cast<QUuid&>(uuid));
 }
 
 void Reader::Next()
@@ -511,13 +551,37 @@ Writer& Writer::operator& (const QString& s)
 Writer& Writer::operator& (const QUuid& uuid)
 {
     const QByteArray& ba = uuid.toByteArray();
-    _writer.String(ba.constData() + 1, SizeType(ba.length() - 2));
+    if ((ba[0] == '{') && (ba[ba.length()-1] == '}'))
+    {
+        _writer.String(ba.constData() + 1, SizeType(ba.length() - 2));
+    }
+    else
+    {
+        break_point
+        // Выяснить в каких случаях нет замыкающих фигурных скобок
+        _writer.String(ba.constData(), SizeType(ba.length()));
+    }
     return *this;
 }
 
-Writer& Writer::operator& (const QUuidEx& uuid)
+Writer& Writer::operator& (const QDate& date)
 {
-    return this->operator& (static_cast<const QUuid&>(uuid));
+    const QByteArray& ba = date.toString("yyyy-MM-dd").toUtf8();
+    _writer.String(ba.constData(), SizeType(ba.length()));
+    return *this;
+}
+
+Writer& Writer::operator& (const QTime& time)
+{
+    const QByteArray& ba = time.toString("hh:mm:ss.zzz").toUtf8();
+    _writer.String(ba.constData(), SizeType(ba.length()));
+    return *this;
+}
+
+Writer& Writer::operator& (const QDateTime& dtime)
+{
+    _writer.Int64(dtime.toMSecsSinceEpoch());
+    return *this;
 }
 
 } // namespace json
