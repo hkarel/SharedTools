@@ -90,7 +90,12 @@ public:
         item->command = command;
         item->instance = instance;
         item->func = func;
+
+        if (lst::FindResult fr = _functions.find(item))
+            _functions.remove(fr.index());
+
         _functions.add(item);
+        _functions.sort();
     }
 
     template<typename T>
@@ -101,29 +106,26 @@ public:
         item->command = command;
         item->instance = instance;
         item->func = func;
-        _functions.add(item);
-    }
 
-    void sort()
-    {
-        _functions.sort(lst::SortMode::Up);
+        if (lst::FindResult fr = _functions.find(item))
+            _functions.remove(fr.index());
+
+        _functions.add(item);
+        _functions.sort();
     }
 
     bool containsCommand(const QUuidEx& command)
     {
-        checkFunctionsSort();
         return _functions.findRef(command).success();
     }
 
     lst::FindResult findCommand(const QUuidEx& command)
     {
-        checkFunctionsSort();
         return _functions.findRef(command);
     }
 
     void call(const Message::Ptr& message)
     {
-        checkFunctionsSort();
         if (lst::FindResult fr = _functions.findRef(message->command()))
             _functions.item(fr.index())->call(message);
     }
@@ -135,20 +137,6 @@ public:
     }
 
 private:
-    void checkFunctionsSort()
-    {
-        #ifndef NDEBUG
-        if (_functions.sortState() != lst::SortState::Up)
-        {
-            break_point
-            // --- Напоминание о необходимости сортировать список функций ---
-            // После регистрации всех функций-обработчиков сообщений необходимо
-            // отсортировать список функций-обработчиков. Для этого нужно явно
-            // вызвать метод FunctionInvoker::sort()
-        }
-        #endif
-    }
-
     BaseItem::List _functions;
 };
 
