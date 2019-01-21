@@ -37,13 +37,6 @@ Line& operator<< (Line&  line, const communication::HostPoint& hp)
     return line;
 }
 
-Line  operator<< (Line&& line, const communication::HostPoint& hp)
-{
-    if (line.toLogger())
-        line << hp.address() << ":" << hp.port();
-    return std::move(line);
-}
-
 Line& operator<< (Line& line, const communication::CommandNameLog& cnl)
 {
     if (line.toLogger())
@@ -59,23 +52,6 @@ Line& operator<< (Line& line, const communication::CommandNameLog& cnl)
             line << cnl.command;
     }
     return line;
-}
-
-Line operator<< (Line&& line, const communication::CommandNameLog& cnl)
-{
-    if (line.toLogger())
-    {
-        QByteArray commandName = communication::commandsPool().commandName(cnl.command);
-        if (!commandName.isEmpty())
-        {
-            line << commandName;
-            if (!cnl.onlyCommandName)
-                line << "/";
-        }
-        if (commandName.isEmpty() || !cnl.onlyCommandName)
-            line << cnl.command;
-    }
-    return std::move(line);
 }
 
 } // namespace alog

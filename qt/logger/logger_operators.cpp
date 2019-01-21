@@ -42,25 +42,11 @@ Line& operator<< (Line& line, const QString& s)
     return line;
 }
 
-Line operator<< (Line&& line, const QString& s)
-{
-    if (line.toLogger())
-        line << QStringToUtf8(s);
-    return std::move(line);
-}
-
 Line& operator<< (Line& line, const QByteArray& b)
 {
     if (line.toLogger())
         line << QByteArrayToUtf8(b);
     return line;
-}
-
-Line operator<< (Line&& line, const QByteArray& b)
-{
-    if (line.toLogger())
-        line << QByteArrayToUtf8(b);
-    return std::move(line);
 }
 
 Line& operator<< (Line& line, const QUuid& u)
@@ -74,15 +60,25 @@ Line& operator<< (Line& line, const QUuid& u)
     return line;
 }
 
-Line operator<< (Line&& line, const QUuid& u)
+Line& operator<< (Line& line, const QTime& t)
 {
     if (line.toLogger())
-    {
-        QByteArray ba {u.toString().toUtf8()};
-        ba.chop(1);
-        line << (ba.constData() + 1);
-    }
-    return std::move(line);
+        line << t.toString(Qt::ISODate);
+    return line;
+}
+
+Line& operator<< (Line& line, const QDate& d)
+{
+    if (line.toLogger())
+        line << d.toString(Qt::ISODate);
+    return line;
+}
+
+Line& operator<< (Line& line, const QDateTime& dt)
+{
+    if (line.toLogger())
+        line << dt.toString(Qt::ISODate);
+    return line;
 }
 
 #ifdef QT_NETWORK_LIB
@@ -92,69 +88,89 @@ Line& operator<< (Line& line, const QHostAddress& h)
         line << QStringToUtf8(h.isNull() ? QString("undefined") : h.toString());
     return line;
 }
-
-Line operator<< (Line&& line, const QHostAddress& h)
-{
-    if (line.toLogger())
-        line << QStringToUtf8(h.isNull() ? QString("undefined") : h.toString());
-    return std::move(line);
-}
 #endif
-
-void QVariantToLog(Line& line, const QVariant& v)
-{
-    switch (v.type())
-    {
-        case QVariant::Bool:
-            line << v.toBool();
-            break;
-
-        case QVariant::ByteArray:
-            line << v.toByteArray();
-            break;
-
-        case QVariant::String:
-            line << v.toString();
-            break;
-
-        case QVariant::Int:
-            line << v.toInt();
-            break;
-
-        case QVariant::UInt:
-            line << v.toUInt();
-            break;
-
-        case QVariant::LongLong:
-            line << v.toLongLong();
-            break;
-
-        case QVariant::ULongLong:
-            line << v.toULongLong();
-            break;
-
-        case QVariant::Double:
-            line << v.toDouble();
-            break;
-
-        default:
-            line << "Unsupported QVariant type for logger"
-                 << "; Type code: " << int(v.type());
-    }
-}
 
 Line& operator<< (Line& line, const QVariant& v)
 {
     if (line.toLogger())
-        QVariantToLog(line, v);
-    return line;
-}
+    {
+        switch (v.type())
+        {
+            case QVariant::Bool:
+                line << v.toBool();
+                break;
 
-Line  operator<< (Line&& line, const QVariant& v)
-{
-    if (line.toLogger())
-        QVariantToLog(line, v);
-    return std::move(line);
+            case QVariant::ByteArray:
+                line << v.toByteArray();
+                break;
+
+            case QVariant::String:
+                line << v.toString();
+                break;
+
+            case QVariant::Int:
+                line << v.toInt();
+                break;
+
+            case QVariant::UInt:
+                line << v.toUInt();
+                break;
+
+            case QVariant::LongLong:
+                line << v.toLongLong();
+                break;
+
+            case QVariant::ULongLong:
+                line << v.toULongLong();
+                break;
+
+            case QVariant::Double:
+                line << v.toDouble();
+                break;
+
+            case QVariant::Time:
+            {
+                QTime t = v.toTime();
+                line << t.toString(Qt::ISODate);
+                break;
+            }
+            case QVariant::Date:
+            {
+                QDate d = v.toDate();
+                line << d.toString(Qt::ISODate);
+                break;
+            }
+            case QVariant::DateTime:
+            {
+                QDateTime dt = v.toDateTime();
+                line << dt.toString(Qt::ISODate);
+                break;
+            }
+            case QVariant::UserType:
+            {
+                if (v.canConvert<QUuid>())
+                {
+                    const QUuid& u = v.value<QUuid>();
+                    line << u;
+                }
+                else if (v.canConvert<QUuidEx>())
+                {
+                    const QUuidEx& u = v.value<QUuidEx>();
+                    line << u;
+                }
+                else
+                {
+                    line << "Unsupported QVariant user type for logger"
+                         << "; Type name: " << v.typeName();
+                }
+                break;
+            }
+            default:
+                line << "Unsupported QVariant type for logger"
+                     << "; Type name: " << v.typeName();
+        }
+    }
+    return line;
 }
 
 } // namespace alog

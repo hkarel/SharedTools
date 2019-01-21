@@ -683,18 +683,13 @@ template<typename T>
 Line operator<< (Line&& line, const T& t)
 {
     if (line.toLogger())
-        line.impl->buff << t;
+        operator<< (line, t);
     return std::move(line);
 }
 
-Line& operator<< (Line&,  bool);
-Line  operator<< (Line&&, bool);
-
-Line& operator<< (Line&,  const char*);
-Line  operator<< (Line&&, const char*);
-
-Line& operator<< (Line&,  const timeval&);
-Line  operator<< (Line&&, const timeval&);
+Line& operator<< (Line&, bool);
+Line& operator<< (Line&, const char*);
+Line& operator<< (Line&, const timeval&);
 
 } // namespace alog
 

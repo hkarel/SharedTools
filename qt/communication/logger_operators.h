@@ -49,9 +49,7 @@ struct CommandNameLog
 
 namespace alog {
 
-Line& operator<< (Line&  line, const communication::HostPoint&);
-Line  operator<< (Line&& line, const communication::HostPoint&);
-Line& operator<< (Line&  line, const communication::CommandNameLog&);
-Line  operator<< (Line&& line, const communication::CommandNameLog&);
+Line& operator<< (Line&, const communication::HostPoint&);
+Line& operator<< (Line&, const communication::CommandNameLog&);
 
 } // namespace alog

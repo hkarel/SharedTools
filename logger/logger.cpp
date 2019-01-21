@@ -1027,25 +1027,11 @@ Line& operator<< (Line& line, bool b)
     return line;
 }
 
-Line operator<< (Line&& line, bool b)
-{
-    if (line.toLogger())
-        line.impl->buff << (b ? "true" : "false");
-    return std::move(line);
-}
-
 Line& operator<< (Line& line, const char* c)
 {
     if (line.toLogger())
         line.impl->buff << c;
     return line;
-}
-
-Line operator<< (Line&& line, const char* c)
-{
-    if (line.toLogger())
-        line.impl->buff << c;
-    return std::move(line);
 }
 
 Line& operator<< (Line& line, const timeval& tv)
@@ -1059,19 +1045,6 @@ Line& operator<< (Line& line, const timeval& tv)
         line.impl->buff << tv.tv_sec << buff;
     }
     return line;
-}
-
-Line operator<< (Line&& line, const timeval& tv)
-{
-    if (line.toLogger())
-    {
-        char buff[10] = {0};
-        long tv_usec = long(tv.tv_usec);
-        snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
-        buff[5] = '\0';
-        line.impl->buff << tv.tv_sec << buff;
-    }
-    return std::move(line);
 }
 
 } // namespace alog
