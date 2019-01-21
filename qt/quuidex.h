@@ -24,6 +24,7 @@
 *****************************************************************************/
 
 #pragma once
+#include <QMetaType>
 #include <QUuid>
 
 /**
@@ -137,3 +138,8 @@ inline QDataStream& operator>> (QDataStream& s, QUuidT<N>& u)
 }
 
 typedef QUuidT<0> QUuidEx;
+Q_DECLARE_METATYPE(QUuidEx)
+
+#if QT_VERSION < 0x050000
+Q_DECLARE_METATYPE(QUuid)
+#endif
