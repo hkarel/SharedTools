@@ -166,6 +166,7 @@ bserial::RawVector Error::toRaw() const
 {
     B_SERIALIZE_V1(stream)
     stream << commandId;
+    stream << messageId;
     stream << code;
     /* stream << description */
     B_QSTR_TO_UTF8(stream, description);
@@ -176,6 +177,7 @@ void Error::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
     stream >> commandId;
+    stream >> messageId;
     stream >> code;
     /* stream >> description */
     B_UTF8_TO_QSTR(stream, description);

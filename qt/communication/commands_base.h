@@ -213,7 +213,8 @@ struct Unknown : Data<&command::Unknown,
 struct Error : Data<&command::Error,
                      Message::Type::Command>
 {
-    QUuidEx commandId;   // Идентификатор команды для которой произошла ошибка
+    QUuidEx commandId;   // Идентификатор команды
+    QUuidEx messageId;   // Идентификатор сообщения
     qint32  code = {0};  // Код ошибки
     QString description; // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
@@ -302,6 +303,7 @@ Packer& Error::jserialize(Packer& p)
 {
     p.startObject();
     p.member("commandId")   & commandId;
+    p.member("messageId")   & messageId;
     p.member("code")        & code;
     p.member("description") & description;
     return p.endObject();
