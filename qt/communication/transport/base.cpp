@@ -67,7 +67,7 @@ bool SocketCommon::send(const Message::Ptr& message)
     }
     if (message.empty())
     {
-        log_error_m << "Cannot send a empty message";
+        log_error_m << "Cannot send empty message";
         return false;
     }
     if (_checkUnknownCommands)
@@ -80,7 +80,7 @@ bool SocketCommon::send(const Message::Ptr& message)
         if (isUnknown)
         {
             log_error_m << "Command " << CommandNameLog(message->command())
-                        << " is unknown for the receiving side"
+                        << " is unknown for receiving side"
                         << ". Command will be discarded";
             return false;
         }
@@ -104,7 +104,7 @@ bool SocketCommon::send(const Message::Ptr& message)
         {
             // Это сообщение нужно добавлять в лог до вызова _messagesCond.wakeAll(),
             // иначе в логе может возникнуть путаница с порядком следования сообщений
-            log_debug2_m << "Message added to a queue to sending"
+            log_debug2_m << "Message added to queue to sending"
                          << "; message id: " << message->id()
                          << "; command: " << CommandNameLog(message->command());
         }
@@ -126,7 +126,7 @@ void SocketCommon::remove(const QUuidEx& command)
     {
         bool res = (command == m->command());
         if (res && (alog::logger().level() == alog::Level::Debug2))
-            log_debug2_m << "Message removed from a queue to sending"
+            log_debug2_m << "Message removed from queue to sending"
                          << "; message id: " << m->id()
                          << "; command: " << CommandNameLog(m->command());
         return res;
@@ -320,7 +320,7 @@ void Socket::run()
                 .arg(protocolVersionLow).arg(protocolVersionHigh)
                 .arg(BPROTOCOL_VERSION_LOW).arg(BPROTOCOL_VERSION_HIGH);
 
-                log_verbose_m << "Send request to close the connection"
+                log_verbose_m << "Send request to close connection"
                               << ". Detail: " << closeConnection.description;
 
                 Message::Ptr m = createMessage(closeConnection, {_messageFormat});
@@ -340,7 +340,7 @@ void Socket::run()
             data::CloseConnection closeConnection;
             readFromMessage(message, closeConnection);
             if (closeConnection.isValid)
-                log_verbose_m << "Connection will be closed at the request remote side"
+                log_verbose_m << "Connection will be closed at request remote side"
                               << ". Remote detail: " << closeConnection.description;
             else
                 log_error_m << "Incorrect data structure for command "
@@ -570,7 +570,7 @@ void Socket::run()
                         && !message->contentIsEmpty()
                         && message->contentFormat() != SerializationFormat::Json)
                     {
-                        log_error_m << "For json packaging, the message format"
+                        log_error_m << "For json packaging, message format"
                                     << " and message content format must match"
                                     << ". Message will be discarded"
                                     << "; command: " << CommandNameLog(message->command());
@@ -585,7 +585,7 @@ void Socket::run()
 
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
-                        log_debug2_m << "Message before sending to the socket"
+                        log_debug2_m << "Message before sending to socket"
                                      << "; message id: " << message->id()
                                      << "; command: " << CommandNameLog(message->command());
                     }
@@ -652,7 +652,7 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2
                         && socketBytesToWrite() == 0)
                     {
-                        log_debug2_m << "Message was send to the socket"
+                        log_debug2_m << "Message was send to socket"
                                      << "; message id: " << message->id()
                                      << "; command: " << CommandNameLog(message->command());
                     }
@@ -779,7 +779,7 @@ void Socket::run()
                         }
                         else
                             log_error_m
-                                << "Check of compatibility for the binary protocol not performed"
+                                << "Check of compatibility for binary protocol not performed"
                                 << ". Command " << CommandNameLog(message->command()) << " discarded";
                     }
                 }
@@ -813,7 +813,7 @@ void Socket::run()
                             {
                                 alog::Line logLine = log_error_m
                                     << "Command " << CommandNameLog(unknown.commandId)
-                                    << " is unknown for the remote side"
+                                    << " is unknown for remote side"
                                     << "; socket descriptor: " << unknown.socketDescriptor;
                                 if (unknown.socketType == SocketType::Tcp)
                                     logLine << "; host: " << unknown.address << ":" << unknown.port;
@@ -892,11 +892,11 @@ void Socket::emitMessage(const communication::Message::Ptr& m)
     }
     catch (std::exception& e)
     {
-        log_error_m << "Failed processing a message. Detail: " << e.what();
+        log_error_m << "Failed processing message. Detail: " << e.what();
     }
     catch (...)
     {
-        log_error_m << "Failed processing a message. Unknown error";
+        log_error_m << "Failed processing message. Unknown error";
     }
 }
 
