@@ -390,9 +390,11 @@ void Socket::run()
                 CHECK_SOCKET_ERROR
 
                 alog::Line logLine = log_verbose_m << "Message serialization format: ";
+#ifdef JSON_SERIALIZATION
                 if (_messageFormat == SerializationFormat::Json)
                     logLine << "json";
                 else
+#endif
                     logLine << "bproto";
 
                 _serializationSignatureWrite = true;
