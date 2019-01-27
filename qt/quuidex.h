@@ -76,13 +76,13 @@ public:
         static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
         static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
 #ifdef __x86_64__
-        COMPARE(((quint64 *) &u1)[0], ((quint64 *) &u2)[0])
-        COMPARE(((quint64 *) &u1)[1], ((quint64 *) &u2)[1])
+        COMPARE(((quint64*) &u1)[0], ((quint64*) &u2)[0])
+        COMPARE(((quint64*) &u1)[1], ((quint64*) &u2)[1])
 #else
-        COMPARE(((quint32 *) &u1)[0], ((quint32 *) &u2)[0])
-        COMPARE(((quint32 *) &u1)[1], ((quint32 *) &u2)[1])
-        COMPARE(((quint32 *) &u1)[2], ((quint32 *) &u2)[2])
-        COMPARE(((quint32 *) &u1)[3], ((quint32 *) &u2)[3])
+        COMPARE(((quint32*) &u1)[0], ((quint32*) &u2)[0])
+        COMPARE(((quint32*) &u1)[1], ((quint32*) &u2)[1])
+        COMPARE(((quint32*) &u1)[2], ((quint32*) &u2)[2])
+        COMPARE(((quint32*) &u1)[3], ((quint32*) &u2)[3])
 #endif
         return 0;
     }
