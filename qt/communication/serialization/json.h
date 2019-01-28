@@ -94,6 +94,7 @@ public:
     Reader& operator& (QDateTime&);
 
     template <typename T> Reader& operator& (T& t);
+    template <typename T> Reader& operator& (QList<T>&);
     template <typename T> Reader& operator& (QVector<T>&);
     template <typename T> Reader& operator& (clife_ptr<T>&);
     template <int N>      Reader& operator& (QUuidT<N>&);
@@ -172,6 +173,7 @@ public:
     Writer& operator& (const QDateTime&);
 
     template <typename T> Writer& operator& (const T& t);
+    template <typename T> Writer& operator& (const QList<T>&);
     template <typename T> Writer& operator& (const QVector<T>&);
     template <typename T> Writer& operator& (const clife_ptr<T>&);
     template <int N>      Writer& operator& (const QUuidT<N>&);
@@ -290,28 +292,56 @@ Writer& Writer::operator& (const T& t)
 }
 
 template <typename T>
-Reader& Reader::operator& (QVector<T>& v)
+Reader& readArray(Reader& r, T& arr)
 {
-    v.clear();
+    arr.clear();
     SizeType count;
-    startArray(&count);
+    r.startArray(&count);
     for (SizeType i = 0; i < count; ++i)
     {
-        T t;
-        this->operator& (t);
-        v.append(t);
+        typename T::value_type t;
+        r & t;
+        arr.append(t);
     }
-    return endArray();
+    return r.endArray();
+}
+
+template <typename T>
+Writer& writeArray(Writer& w, const T& arr)
+{
+    w.startArray();
+    for (int i = 0; i < arr.count(); ++i)
+         w & arr.at(i);
+
+    return w.endArray();
+}
+
+template <typename T>
+Reader& Reader::operator& (QList<T>& l)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return readArray(r, l);
+}
+
+template <typename T>
+Writer& Writer::operator& (const QList<T>& l)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    return writeArray(w, l);
+}
+
+template <typename T>
+Reader& Reader::operator& (QVector<T>& v)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return readArray(r, v);
 }
 
 template <typename T>
 Writer& Writer::operator& (const QVector<T>& v)
 {
-    startArray();
-    for (int i = 0; i < v.size(); ++i)
-        this->operator& (v[i]);
-
-    return endArray();
+    Writer& w = const_cast<Writer&>(*this);
+    return writeArray(w, v);
 }
 
 template <typename T>
