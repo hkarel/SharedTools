@@ -835,7 +835,7 @@ void Socket::run()
 
                         // Если команда неизвестна - отправляем об этом уведомление
                         // и переходим к обработке следующей команды.
-                        if (!commandsPool().commandExists(m->command()))
+                        if (!command::pool().commandExists(m->command()))
                         {
                             data::Unknown unknown;
                             fillUnknownMessage(m, unknown);

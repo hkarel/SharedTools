@@ -31,6 +31,7 @@
 #include <QtCore>
 
 namespace communication {
+namespace command {
 
 /**
   Пул идентификаторов команд. Все функции в пуле НЕ потокозащищенные, несмотря
@@ -38,7 +39,7 @@ namespace communication {
   тем, что список идентификаторов заполняется  единожды  при старте программы,
   и потом более не меняется.
 */
-class CommandsPool
+class Pool
 {
 public:
     // Возвращает TRUE в случае если в пуле находятся только уникальные команды.
@@ -87,8 +88,8 @@ public:
     };
 
 private:
-    CommandsPool() = default;
-    DISABLE_DEFAULT_COPY(CommandsPool)
+    Pool() = default;
+    DISABLE_DEFAULT_COPY(Pool)
 
 private:
     // Параметр используется для проверки уникальности идентификаторов команд.
@@ -99,7 +100,9 @@ private:
     template<typename T, int> friend T& ::safe_singleton();
 };
 
-CommandsPool& commandsPool();
-uint qHash(const CommandsPool::CommandTraits&);
+Pool& pool();
+uint qHash(const Pool::CommandTraits&);
+inline bool checkUnique() {return pool().checkUnique();}
 
+} // namespace command
 } // namespace communication

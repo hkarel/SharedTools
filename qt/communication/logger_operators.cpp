@@ -41,7 +41,7 @@ Line& operator<< (Line& line, const communication::CommandNameLog& cnl)
 {
     if (line.toLogger())
     {
-        QByteArray commandName = communication::commandsPool().commandName(cnl.command);
+        QByteArray commandName = communication::command::pool().commandName(cnl.command);
         if (!commandName.isEmpty())
         {
             line << commandName;

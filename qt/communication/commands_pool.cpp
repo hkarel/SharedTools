@@ -30,13 +30,14 @@
 #include "qt/logger/logger_operators.h"
 
 namespace communication {
+namespace command {
 
-CommandsPool& commandsPool()
+Pool& pool()
 {
-    return ::safe_singleton<CommandsPool>();
+    return ::safe_singleton<Pool>();
 }
 
-bool CommandsPool::checkUnique() const
+bool Pool::checkUnique() const
 {
     for (auto it = _map.constBegin(); it != _map.constEnd(); ++it)
         if (it.value().size() != 1)
@@ -51,13 +52,13 @@ bool CommandsPool::checkUnique() const
     return true;
 }
 
-void CommandsPool::add(QUuidEx* command, const char* commandName, bool multiproc)
+void Pool::add(QUuidEx* command, const char* commandName, bool multiproc)
 {
     QSet<CommandTraits>& set = _map[*command];
     set.insert({commandName, multiproc});
 }
 
-QVector<QUuidEx> CommandsPool::commands() const
+QVector<QUuidEx> Pool::commands() const
 {
     QVector<QUuidEx> commands;
     for (auto it = _map.constBegin(); it != _map.constEnd(); ++it)
@@ -65,7 +66,7 @@ QVector<QUuidEx> CommandsPool::commands() const
     return std::move(commands);
 }
 
-const char* CommandsPool::commandName(const QUuidEx& command) const
+const char* Pool::commandName(const QUuidEx& command) const
 {
     const auto it = _map.constFind(command);
     if (it != _map.constEnd())
@@ -76,7 +77,7 @@ const char* CommandsPool::commandName(const QUuidEx& command) const
     return "";
 }
 
-quint32 CommandsPool::commandExists(const QUuidEx& command) const
+quint32 Pool::commandExists(const QUuidEx& command) const
 {
     //return (_map.constFind(command) != _map.constEnd());
 
@@ -88,32 +89,32 @@ quint32 CommandsPool::commandExists(const QUuidEx& command) const
     return (*set.constBegin()).multiproc ? 2 : 1;
 }
 
-bool CommandsPool::commandIsMultiproc(const QUuidEx& command) const
+bool Pool::commandIsMultiproc(const QUuidEx& command) const
 {
     return (commandExists(command) == 2);
 }
 
-CommandsPool::Registry::Registry(const char* uuidStr,
-                                 const char* commandName, bool multiproc)
+Pool::Registry::Registry(const char* uuidStr, const char* commandName, bool multiproc)
     : QUuidEx(uuidStr)
 {
-    commandsPool().add(this, commandName, multiproc);
+    pool().add(this, commandName, multiproc);
 }
 
-CommandsPool::CommandTraits::CommandTraits(const char* commandName, bool multiproc)
+Pool::CommandTraits::CommandTraits(const char* commandName, bool multiproc)
     : commandName(commandName), multiproc(multiproc)
 {}
 
-bool CommandsPool::CommandTraits::operator== (const CommandTraits& ct) const
+bool Pool::CommandTraits::operator== (const CommandTraits& ct) const
 {
     return (strcmp(commandName, ct.commandName) == 0) && (multiproc == ct.multiproc);
 }
 
-uint qHash(const CommandsPool::CommandTraits& ct)
+uint qHash(const Pool::CommandTraits& ct)
 {
     const QByteArray& commandName =
         QByteArray::fromRawData(ct.commandName, strlen(ct.commandName));
     return qHash(commandName) + uint(ct.multiproc);
 }
 
+} // namespace command
 } // namespace communication
