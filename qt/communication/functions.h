@@ -236,12 +236,18 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
 void readFromMessage(const Message::Ptr&, data::MessageError&);
 void readFromMessage(const Message::Ptr&, data::MessageFailed&);
 
+template<typename T>
+struct is_error_data : std::enable_if<std::is_base_of<error::Trait, T>::value, int> {};
+template<typename T>
+struct not_error_data : std::enable_if<!std::is_base_of<error::Trait, T>::value, int> {};
+
 /**
   Преобразует структуру CommandDataT в Message-сообщение.
 */
 template<typename CommandDataT>
 bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                    SerializationFormat contentFormat = SerializationFormat::BProto)
+                    SerializationFormat contentFormat = SerializationFormat::BProto,
+                    typename not_error_data<CommandDataT>::type = 0)
 {
     QString err;
     if (data.command() != message->command())
@@ -291,6 +297,14 @@ bool writeToMessage(const data::MessageError&,  Message::Ptr&,
 
 bool writeToMessage(const data::MessageFailed&, Message::Ptr&,
                     SerializationFormat = SerializationFormat::BProto);
+
+template<typename ErrorT>
+bool writeToMessage(const ErrorT& data, Message::Ptr& message,
+                    SerializationFormat contentFormat = SerializationFormat::BProto,
+                    typename is_error_data<ErrorT>::type = 0)
+{
+    return writeToMessage(data.asError(), message, contentFormat);
+}
 
 #ifdef JSON_SERIALIZATION
 template<typename CommandDataT>

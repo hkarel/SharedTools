@@ -37,6 +37,7 @@
 
 #pragma once
 
+#include "qt/qhashex.h"
 #include "qt/quuidex.h"
 #include "qt/communication/message.h"
 #include "qt/communication/bserialize_space.h"
@@ -84,7 +85,6 @@ extern const QUuidEx ProtocolCompatible;
 extern const QUuidEx CloseConnection;
 
 } // namespace command
-
 
 //------------------------ Список базовых структур ---------------------------
 namespace data {
@@ -320,6 +320,35 @@ Packer& CloseConnection::jserialize(Packer& p)
 #endif // JSON_SERIALIZATION
 
 } // namespace data
+
+//----------------------- Механизм для описания ошибок -----------------------
+namespace error {
+
+/**
+  Пул кодов ошибок, используется для проверки уникальности кодов ошибок
+*/
+QHashEx<int,int>& pool();
+
+/**
+  Проверяет уникальность кодов ошибок
+*/
+bool checkUnique();
+
+/**
+  Trait используется в качестве маркера структуры содержащей описание ошибки
+*/
+struct Trait {};
+
+#define DECL_ERROR_CODE(VAR, CODE, DESCR) \
+    struct VAR##_##CODE : Trait { \
+        VAR##_##CODE () {static bool b {false}; if (!b) {b = true; pool()[CODE]++;}} \
+        operator data::MessageError()  const {return {CODE, DESCR};} \
+        operator data::MessageFailed() const {return {CODE, DESCR};} \
+        data::MessageError  asError()  const {return {CODE, DESCR};} \
+        data::MessageFailed asFailed() const {return {CODE, DESCR};} \
+    } static VAR;
+
+} // namespace error
 } // namespace communication
 
 

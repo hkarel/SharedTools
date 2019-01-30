@@ -26,6 +26,9 @@
 #include "qt/communication/commands_base.h"
 #include "qt/communication/commands_pool.h"
 
+#include "logger/logger.h"
+#include "qt/logger/logger_operators.h"
+
 namespace communication {
 namespace command {
 
@@ -203,4 +206,27 @@ void CloseConnection::fromRaw(const bserial::RawVector& vect)
 }
 
 } // namespace data
+
+namespace error {
+
+QHashEx<int,int>& pool()
+{
+    static QHashEx<int,int> p;
+    return p;
+}
+
+bool checkUnique()
+{
+    const auto& p = pool();
+    for (auto it = p.constBegin(); it != p.constEnd(); ++it)
+        if (it.value() != 1)
+        {
+            log_error << "Not unique error code: " << it.key();
+            return false;
+        }
+
+    pool().clear();
+    return true;
+}
+} // namespace error
 } // namespace communication
