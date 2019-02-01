@@ -51,10 +51,7 @@
 
 namespace lst {
 
-constexpr bool CONTAINER_CLASS = true;
-constexpr bool NO_CONTAINER_CLASS = !CONTAINER_CLASS;
-constexpr bool REFERENCE_CLASS = !CONTAINER_CLASS;
-
+enum class Container    {No = 0, Yes = 1};
 enum class CompressList {No = 0, Yes = 1};
 enum class BruteForce   {No = 0, Yes = 1};
 
@@ -136,8 +133,8 @@ public:
   virtual const char* what() const NOEXCEPT {return _msg;}
 };
 
-constexpr const char* ERR_NOCREATEOBJ =
-  "Impossible create object of the class. (NO_CONTAINER_CLASS)";
+constexpr const char* ERR_NOCREATE_OBJ =
+  "Impossible create object of the class. (Container::No)";
 
 #if defined(_MSC_VER)
 #define LIST_EXCEPT(MSG) ListExcept(MSG, __FUNCTION__)
@@ -688,7 +685,7 @@ private:
     int       count     = {0};
     int       capacity  = {0};
     SortState sortState = {SortState::Unknown};
-    bool      container = {CONTAINER_CLASS};
+    Container container = {Container::Yes};
     Compare   compare;
     Allocator allocator;
   };
@@ -732,8 +729,8 @@ public:
   typedef typename CustomListType::value_type       value_type;
 
 public:
-  explicit List(bool container = CONTAINER_CLASS);
-  explicit List(const Allocator&, bool container = CONTAINER_CLASS);
+  explicit List(Container container = Container::Yes);
+  explicit List(const Allocator&, Container container = Container::Yes);
 
   List(CustomListType&&);
   List(SelfListType&&);
@@ -968,7 +965,7 @@ private:
   DataType* d_func() {return CustomListType::d_func();}
 
   // Инициализирует основные параметры контейнера, используется в конструкторах.
-  void init(bool container);
+  void init(Container container);
 
   template<typename CompareU>
   void qsort(T** sortList, int L, int R,
@@ -1243,12 +1240,12 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
   TYPE List<T, Compare, Allocator>
 
 
-DECL_IMPL_LIST_CONSTR::List(bool container)
+DECL_IMPL_LIST_CONSTR::List(Container container)
 {
   init(container);
 }
 
-DECL_IMPL_LIST_CONSTR::List(const Allocator& allocator, bool container)
+DECL_IMPL_LIST_CONSTR::List(const Allocator& allocator, Container container)
 {
   init(container);
   setAllocator(allocator);
@@ -1264,7 +1261,7 @@ DECL_IMPL_LIST_DESTR::~List()
   }
 }
 
-DECL_IMPL_LIST(void)::init(bool container)
+DECL_IMPL_LIST(void)::init(Container container)
 {
   CustomListType::d = new DataType();
   CustomListType::d->list = 0;
@@ -1289,8 +1286,8 @@ DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
 DECL_IMPL_LIST(T*)::add()
 {
   DataType* d = d_func();
-  if (!d->container)
-    throw LIST_EXCEPT(ERR_NOCREATEOBJ);
+  if (d->container == Container::No)
+    throw LIST_EXCEPT(ERR_NOCREATE_OBJ);
 
   // Функция create() должна вызываться без параметров,
   // см. комментарии в типовом аллокаторе.
@@ -1312,8 +1309,8 @@ DECL_IMPL_LIST(T*)::add(T* item)
 DECL_IMPL_LIST(T*)::addCopy(const T& item)
 {
   DataType* d = d_func();
-  if (!d->container)
-    throw LIST_EXCEPT(ERR_NOCREATEOBJ);
+  if (d->container == Container::No)
+    throw LIST_EXCEPT(ERR_NOCREATE_OBJ);
 
   return add(d->allocator.create(&item));
 }
@@ -1321,7 +1318,7 @@ DECL_IMPL_LIST(T*)::addCopy(const T& item)
 DECL_IMPL_LIST(void)::clear()
 {
   DataType* d = d_func();
-  if (d->container)
+  if (d->container == Container::Yes)
   {
     T** it = this->listBegin();
     T** end = this->listEnd();
@@ -1342,7 +1339,7 @@ DECL_IMPL_LIST(void)::remove(int index, CompressList compressList)
   CHECK_BORDERS(index)
 
   T *item = release(index, compressList);
-  if (d->container && item)
+  if ((d->container == Container::Yes) && item)
     d->allocator.destroy(item);
 }
 
@@ -1359,7 +1356,7 @@ DECL_IMPL_LIST(void)::removeLast()
 {
   DataType* d = d_func();
   T* item = releaseLast();
-  if (d->container && item)
+  if ((d->container == Container::Yes) && item)
     d->allocator.destroy(item);
 }
 
@@ -1373,7 +1370,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removeCond(const Condition& condition,
   {
     if (*it && condition(*it))
     {
-      if (d->container)
+      if (d->container == Container::Yes)
         d->allocator.destroy(*it);
       *it = 0;
     }
@@ -1395,7 +1392,7 @@ DECL_IMPL_LIST(void)::removes(int index, int count, CompressList compressList)
   for (int i = index; i < count; ++i)
   {
     T *item = release(i, CompressList::No);
-    if (d->container && item)
+    if ((d->container == Container::Yes) && item)
       d->allocator.destroy(item);
   }
   if (compressList == CompressList::Yes)
@@ -1414,7 +1411,7 @@ DECL_IMPL_LIST(void)::replace(int index, T* item, bool keepSortState)
   if (!keepSortState)
     setSortState(SortState::Unknown);
 
-  if (d->container && itemOld)
+  if ((d->container == Container::Yes) && itemOld)
     d->allocator.destroy(itemOld);
 }
 
@@ -1494,8 +1491,8 @@ DECL_IMPL_LIST(T*)::addInSort(T* item, const FindResult& fr)
 DECL_IMPL_LIST(T*)::addCopyInSort(const T& item, const FindResult& fr)
 {
     DataType* d = d_func();
-    if (!d->container)
-      throw LIST_EXCEPT(ERR_NOCREATEOBJ);
+    if (d->container == Container::No)
+      throw LIST_EXCEPT(ERR_NOCREATE_OBJ);
 
     return addInSort(d->allocator.create(&item), fr);
 }
@@ -1503,8 +1500,8 @@ DECL_IMPL_LIST(T*)::addCopyInSort(const T& item, const FindResult& fr)
 DECL_IMPL_LIST(T*)::insert(int index)
 {
   DataType* d = d_func();
-  if (!d->container)
-    throw LIST_EXCEPT(ERR_NOCREATEOBJ);
+  if (d->container == Container::No)
+    throw LIST_EXCEPT(ERR_NOCREATE_OBJ);
 
   // Функция create() должна вызываться без параметров,
   // см. комментарии в типовом аллокаторе.
@@ -1536,8 +1533,8 @@ DECL_IMPL_LIST(T*)::insert(T* item, int index)
 DECL_IMPL_LIST(T*)::insertCopy(const T& item, int index)
 {
   DataType* d = d_func();
-  if (!d->container)
-    throw LIST_EXCEPT(ERR_NOCREATEOBJ);
+  if (d->container == Container::No)
+    throw LIST_EXCEPT(ERR_NOCREATE_OBJ);
 
   return insert(d->allocator.create(&item), index);
 }
@@ -1640,7 +1637,8 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   {
     try
     {
-      *dstIt = (d->container) ? d->allocator.create(*srcIt) : *srcIt;
+      *dstIt = (d->container == Container::Yes)
+               ? d->allocator.create(*srcIt) : *srcIt;
       ++dstIt, ++srcIt, ++count;
     }
     catch (...)
