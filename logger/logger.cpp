@@ -553,53 +553,50 @@ void SaverFile::flushImpl(const MessageList& messages)
     if (messages.size() == 0)
         return;
 
-    if (FILE* f = fopen(_filePath.c_str(), "a"))
-    {
-        removeIdsTimeoutThreads();
-
-        vector<char> lineBuff;
-        if (maxLineSize() > 0)
-        {
-            lineBuff.resize(maxLineSize() + 1);
-            lineBuff[maxLineSize()] = '\0';
-        }
-
-        unsigned flushCount = 0;
-        FilterList filters = this->filters();
-
-        for (Message* m : messages)
-        {
-            if (m->level > level())
-                continue;
-
-            if (skipMessage(*m, filters))
-                continue;
-
-            fputs(m->prefix, f);
-            if (level() == Level::Debug2)
-                fputs(m->prefix2, f);
-            fputs(m->prefix3, f);
-
-            if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
-            {
-                strncpy(&lineBuff[0], m->str.c_str(), maxLineSize());
-                fputs(&lineBuff[0], f);
-            }
-            else
-                fputs(m->str.c_str(), f);
-
-            fputs("\n", f);
-
-            if (++flushCount % 500 == 0)
-                fflush(f);
-        }
-        fflush(f);
-        fclose(f);
-    }
-    else
-    {
+    FILE* f = fopen(_filePath.c_str(), "a");
+    if (f == 0)
         throw std::logic_error("Could not open file: " + _filePath);
+
+    removeIdsTimeoutThreads();
+
+    vector<char> lineBuff;
+    if (maxLineSize() > 0)
+    {
+        lineBuff.resize(maxLineSize() + 1);
+        lineBuff[maxLineSize()] = '\0';
     }
+
+    unsigned flushCount = 0;
+    FilterList filters = this->filters();
+
+    for (Message* m : messages)
+    {
+        if (m->level > level())
+            continue;
+
+        if (skipMessage(*m, filters))
+            continue;
+
+        fputs(m->prefix, f);
+        if (level() == Level::Debug2)
+            fputs(m->prefix2, f);
+        fputs(m->prefix3, f);
+
+        if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
+        {
+            strncpy(&lineBuff[0], m->str.c_str(), maxLineSize());
+            fputs(&lineBuff[0], f);
+        }
+        else
+            fputs(m->str.c_str(), f);
+
+        fputs("\n", f);
+
+        if (++flushCount % 500 == 0)
+            fflush(f);
+    }
+    fflush(f);
+    fclose(f);
 }
 
 //--------------------------------- Line -------------------------------------
