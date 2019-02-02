@@ -164,7 +164,10 @@ struct MessageError
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
-    DECLARE_J_SERIALIZE_FUNC
+    J_SERIALIZE_BEGIN
+        J_SERIALIZE_ITEM( code )
+        J_SERIALIZE_ITEM( description )
+    J_SERIALIZE_END
 #endif
 };
 
@@ -183,7 +186,10 @@ struct MessageFailed
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
-    DECLARE_J_SERIALIZE_FUNC
+    J_SERIALIZE_BEGIN
+        J_SERIALIZE_ITEM( code )
+        J_SERIALIZE_ITEM( description )
+    J_SERIALIZE_END
 #endif
 };
 
@@ -223,7 +229,12 @@ struct Error : Data<&command::Error,
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
-    DECLARE_J_SERIALIZE_FUNC
+    J_SERIALIZE_BEGIN
+        J_SERIALIZE_ITEM( commandId   )
+        J_SERIALIZE_ITEM( messageId   )
+        J_SERIALIZE_ITEM( code        )
+        J_SERIALIZE_ITEM( description )
+    J_SERIALIZE_END
 #endif
 };
 
@@ -240,31 +251,16 @@ struct CloseConnection : Data<&command::CloseConnection,
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
-    DECLARE_J_SERIALIZE_FUNC
+    J_SERIALIZE_BEGIN
+        J_SERIALIZE_ITEM( code )
+        J_SERIALIZE_ITEM( description )
+    J_SERIALIZE_END
 #endif
 };
 
 //------------------------ Функции json-сериализации -------------------------
 
 #ifdef JSON_SERIALIZATION
-template <typename Packer>
-Packer& MessageError::jserialize(Packer& p)
-{
-    p.startObject();
-    p.member("code")        & code;
-    p.member("description") & description;
-    return p.endObject();
-}
-
-template <typename Packer>
-Packer& MessageFailed::jserialize(Packer& p)
-{
-    p.startObject();
-    p.member("code")        & code;
-    p.member("description") & description;
-    return p.endObject();
-}
-
 template <typename Packer>
 Packer& Unknown::jserialize(Packer& p)
 {
@@ -298,26 +294,6 @@ Packer& Unknown::jserialize(Packer& p)
             address.setScopeId(addressScopeId);
     }
     p.member("port") & port;
-    return p.endObject();
-}
-
-template <typename Packer>
-Packer& Error::jserialize(Packer& p)
-{
-    p.startObject();
-    p.member("commandId")   & commandId;
-    p.member("messageId")   & messageId;
-    p.member("code")        & code;
-    p.member("description") & description;
-    return p.endObject();
-}
-
-template <typename Packer>
-Packer& CloseConnection::jserialize(Packer& p)
-{
-    p.startObject();
-    p.member("code")        & code;
-    p.member("description") & description;
     return p.endObject();
 }
 #endif // JSON_SERIALIZATION

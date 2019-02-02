@@ -428,7 +428,7 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     return (std::memcmp(a, b_, sizeof(typename GenericValueT::Ch) * l1) == 0);
 }
 
-#define DECLARE_J_SERIALIZE_FUNC \
+#define J_SERIALIZE_FUNC \
     QByteArray toJson() { \
         serialization::json::Writer writer; \
         jserialize(writer); \
@@ -439,8 +439,28 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
         if (reader.parse(json)) \
             jserialize(reader); \
         return !reader.hasParseError(); \
-    } \
+    }
+
+#define DECLARE_J_SERIALIZE_FUNC \
+    J_SERIALIZE_FUNC \
     template <typename Packer> Packer& jserialize(Packer&);
+
+#define J_SERIALIZE_BEGIN \
+    J_SERIALIZE_FUNC \
+    template <typename Packer> Packer& jserialize(Packer& p) { \
+        p.startObject(); \
+
+#define J_SERIALIZE_ITEM(FIELD) \
+        p.member(#FIELD) & FIELD;
+
+#define J_SERIALIZE_END \
+        return p.endObject(); \
+    }
+
+#define J_SERIALIZE_ONE(FIELD) \
+    J_SERIALIZE_BEGIN \
+    J_SERIALIZE_ITEM(FIELD) \
+    J_SERIALIZE_END
 
 } // namespace json
 } // namespace serialization
