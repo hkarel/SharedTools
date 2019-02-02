@@ -840,7 +840,7 @@ void Socket::run()
                         {
                             data::Unknown unknown;
                             fillUnknownMessage(m, unknown);
-                            Message::Ptr mUnknown = createMessage(unknown);
+                            Message::Ptr mUnknown = createMessage(unknown, {_messageFormat});
                             mUnknown->setPriority(Message::Priority::High);
                             internalMessages.add(mUnknown.detach());
 
