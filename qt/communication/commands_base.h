@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include "prog_abort.h"
+#include "logger/logger.h"
 #include "qt/qhashex.h"
 #include "qt/quuidex.h"
 #include "qt/communication/message.h"
@@ -49,8 +51,6 @@
 
 #include <QtCore>
 #include <QHostAddress>
-#include <stdlib.h>
-#include <iostream>
 
 namespace communication {
 
@@ -139,14 +139,14 @@ struct Data
     // Фиктивные функции, необходимые для сборки проекта когда не используется
     // бинарная сериализация
     bserial::RawVector toRaw() const {
-        std::cerr << "Critical error. Data::toRaw(): You must override "
+        log_error << "Critical error. Data::toRaw(): You must override "
                      "this function in the inherited structure";
-        abort();
+        prog_abort();
     }
     void fromRaw(const bserial::RawVector&) {
-        std::cerr << "Critical error. Data::fromRaw(): You must override "
+        log_error << "Critical error. Data::fromRaw(): You must override "
                      "this function in the inherited structure";
-        abort();
+        prog_abort();
     }
 };
 

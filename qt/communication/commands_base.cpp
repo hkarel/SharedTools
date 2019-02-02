@@ -25,8 +25,6 @@
 
 #include "qt/communication/commands_base.h"
 #include "qt/communication/commands_pool.h"
-
-#include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
 
 namespace communication {
