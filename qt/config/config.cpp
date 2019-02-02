@@ -27,39 +27,20 @@
 #include "qt/config/config.h"
 #include "qt/logger/logger_operators.h"
 
-#include <stdexcept>
 #include <stdlib.h>
+#include <iostream>
 
 namespace config {
 
 QString dir()
 {
 #if defined(CONFIG_DIR)
-/*
-#if defined(__MINGW32__)
-    QString cfgDir = QDir::homePath() + "/" + CONFIG_DIR;
-#else
-    QString cfgDir = "/etc/" CONFIG_DIR;
-#endif
-
-    QDir dir;
-    if (!dir.exists(cfgDir))
-    {
-        if (dir.mkpath(cfgDir))
-            log_debug << "Has been created config directory: " << cfgDir;
-        else
-        {
-            QString err = "Failed create config directory: " + cfgDir;
-            throw std::logic_error(err.toStdString());
-        }
-    }
-    return cfgDir;
-*/
     QString cfgDir {CONFIG_DIR};
     dirExpansion(cfgDir);
     return cfgDir;
 #else
-    throw std::logic_error("Undefined CONFIG_DIR");
+    std::cerr << "Undefined CONFIG_DIR";
+    abort();
 #endif
 }
 

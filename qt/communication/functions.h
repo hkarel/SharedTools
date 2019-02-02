@@ -29,6 +29,10 @@
 
 #pragma once
 
+#include "prog_abort.h"
+#include "logger/logger.h"
+#include "qt/logger/logger_operators.h"
+#include "qt/communication/logger_operators.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/message.h"
 
@@ -55,8 +59,8 @@ bool messageRead(const Message::Ptr& message, CommandDataT& data)
             break;
 #endif
         default:
-            throw std::logic_error("communication::messageRead(): "
-                                   "Unsupported message serialization format");
+            log_error << "Unsupported message serialization format";
+            prog_abort();
     }
     return res;
 }
@@ -77,8 +81,10 @@ bool messageWrite(const CommandDataT& data, Message::Ptr& message,
             break;
 #endif
         default:
-            throw std::logic_error("communication::messageWrite(): "
-                                   "Unsupported message serialization format");
+        {
+            log_error << "Unsupported message serialization format";
+            prog_abort();
+        }
     }
     return res;
 }
@@ -120,9 +126,11 @@ Message::Ptr createMessage(const CommandDataT& data,
     {
         if (params.type != Message::Type::Command
             && params.type != Message::Type::Event)
-            throw std::logic_error(
-                "Parameter 'type' must be of type 'Message::Type::Command'"
-                " or 'Message::Type::Event' only");
+        {
+            log_error << "Parameter 'type' must be of type 'Message::Type::Command'"
+                         " or 'Message::Type::Event' only";
+            prog_abort();
+        }
         m->setType(params.type);
     }
     else if (CommandDataT::forCommandMessage())
@@ -164,14 +172,12 @@ template<typename CommandDataT>
 void readFromMessage(const Message::Ptr& message, CommandDataT& data)
 {
     bool res;
-    QString err;
     data.isValid = false;
 
     if (message->command() != data.command())
     {
-        err = QString("Command identifier of message (%1) is not equal "
-                      "a command identifier of data (%2).")
-                      .arg(message->command().toString(), data.command().toString());
+        log_error << "Command of message " << CommandNameLog(message->command())
+                  << " is not equal command of data " << CommandNameLog(data.command());
     }
     else if (message->type() == Message::Type::Command)
     {
@@ -181,9 +187,9 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
             data.isValid = res;
             return;
         }
-        err = QString("Message (%1) with type 'Command' cannot write data to struct (%2). "
-                      "Mismatched types.")
-                      .arg((message->command().toString()), typeid(CommandDataT).name());
+        log_error << "Message " << CommandNameLog(message->command())
+                  << " with type 'Command' cannot write data to struct "
+                  << typeid(CommandDataT).name() << ". Mismatched types";
     }
     else if (message->type() == Message::Type::Event)
     {
@@ -193,9 +199,9 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
             data.isValid = res;
             return;
         }
-        err = QString("Message (%1) with type 'Event' cannot write data to struct (%2). "
-                      "Mismatched types.")
-                      .arg((message->command().toString()), typeid(CommandDataT).name());
+        log_error << "Message " << CommandNameLog(message->command())
+                  << " with type 'Event' cannot write data to struct "
+                  << typeid(CommandDataT).name() << ". Mismatched types";
     }
     else if (message->type() == Message::Type::Answer)
     {
@@ -207,27 +213,26 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
                 data.isValid = res;
                 return;
             }
-            err = QString("Message (%1) with type 'Answer' cannot write data to struct (%2). "
-                          "Mismatched types.")
-                          .arg((message->command().toString()), typeid(CommandDataT).name());
+            log_error << "Message " << CommandNameLog(message->command())
+                      << " with type 'Answer' cannot write data to struct "
+                      << typeid(CommandDataT).name() << ". Mismatched types";
         }
         else if (message->execStatus() == Message::ExecStatus::Failed
                  && typeid(CommandDataT) != typeid(data::MessageFailed))
         {
-            err = "Message is failed. Type of data must be "
-                  "communication::data::MessageFailed.";
+            log_error << "Message is failed. Type of data must be "
+                         "communication::data::MessageFailed";
         }
         else if (message->execStatus() == Message::ExecStatus::Error
                  && typeid(CommandDataT) == typeid(data::MessageError))
         {
-            err = "Message is error. Type of data must be "
-                  "communication::data::MessageError.";
+            log_error << "Message is error. Type of data must be "
+                         "communication::data::MessageError";
         }
         else
-            err = "Message exec status is unknown.";
+            log_error << "Message exec status is unknown";
     }
-    err += " Read the message is imposible";
-    throw std::logic_error(std::string(err.toUtf8().constData()));
+    prog_abort();
 }
 
 /**
@@ -249,12 +254,10 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
                     SerializationFormat contentFormat = SerializationFormat::BProto,
                     typename not_error_data<CommandDataT>::type = 0)
 {
-    QString err;
     if (data.command() != message->command())
     {
-        err = QString("Command identifier of data (%1) is not equal "
-                      "a command identifier of message (%2).")
-                      .arg(data.command().toString(), message->command().toString());
+        log_error << "Command of message " << CommandNameLog(message->command())
+                  << " is not equal command of data " << CommandNameLog(data.command());
     }
     else if (message->type() == Message::Type::Command)
     {
@@ -263,7 +266,8 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Unknown);
             return messageWrite(data, message, contentFormat);
         }
-        err = "Structure of data cannot be used for 'Request'-message.";
+        log_error << "Structure of data " << typeid(CommandDataT).name()
+                  << " cannot be used for 'Command'-message";
     }
     else if (message->type() == Message::Type::Event)
     {
@@ -272,7 +276,8 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Unknown);
             return messageWrite(data, message, contentFormat);
         }
-        err = "Structure of data cannot be used for 'Event'-message.";
+        log_error << "Structure of data " << typeid(CommandDataT).name()
+                  << " cannot be used for 'Event'-message";
     }
     else if (message->type() == Message::Type::Answer)
     {
@@ -281,10 +286,10 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Success);
             return messageWrite(data, message, contentFormat);
         }
-        err = "Structure of data cannot be used for 'Responce'-message.";
+        log_error << "Structure of data " << typeid(CommandDataT).name()
+                  << " cannot be used for 'Answer'-message";
     }
-    err += " Write the data is imposible";
-    throw std::logic_error(std::string(err.toUtf8().constData()));
+    prog_abort();
 }
 
 /**

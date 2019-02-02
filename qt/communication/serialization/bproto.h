@@ -36,12 +36,13 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "break_point.h"
+#include "prog_abort.h"
+#include "logger/logger.h"
 #include "qt/stream_init.h"
 
 #include <QByteArray>
 #include <QDataStream>
 #include <QVector>
-#include <stdexcept>
 #include <type_traits>
 #include <utility>
 
@@ -112,8 +113,10 @@ QDataStream& putToStream(QDataStream& s, const T& t,
 {
     const RawVector rv = t.toRaw();
     if (rv.size() > 255)
-        throw std::logic_error(
-            "Limit exceeded on number of versions for b-serialization (255)");
+    {
+        log_error << "Limit exceeded on number of versions for b-serialization (255)";
+        prog_abort();
+    }
     s << quint8(rv.size());
     for (const ByteArray& ba : rv)
         s << ba;

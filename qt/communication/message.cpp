@@ -24,6 +24,9 @@
 *****************************************************************************/
 
 #include "qt/communication/message.h"
+
+#include "break_point.h"
+#include "prog_abort.h"
 #include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
 
@@ -41,9 +44,6 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #endif
-
-#include "break_point.h"
-#include <stdexcept>
 
 #define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
 #define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Message")
@@ -163,8 +163,8 @@ void Message::compress(int level, Compression compression)
             }
 #endif
             default:
-                throw std::logic_error("communication::Message: "
-                                       "Unsupported compression algorithm");
+                log_error_m << "Unsupported compression algorithm";
+                prog_abort();
         }
     }
 }
@@ -194,8 +194,8 @@ void Message::decompress(BByteArray& content) const
             break;
 #endif
         default:
-            throw std::logic_error("communication::Message: "
-                                   "Unsupported compression algorithm");
+            log_error_m << "Unsupported decompression algorithm";
+            prog_abort();
     }
 }
 

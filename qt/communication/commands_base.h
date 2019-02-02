@@ -49,7 +49,8 @@
 
 #include <QtCore>
 #include <QHostAddress>
-#include <stdexcept>
+#include <stdlib.h>
+#include <iostream>
 
 namespace communication {
 
@@ -138,12 +139,14 @@ struct Data
     // Фиктивные функции, необходимые для сборки проекта когда не используется
     // бинарная сериализация
     bserial::RawVector toRaw() const {
-        throw std::logic_error("Data::toRaw(): You must override this function "
-                               "in the inherited structure");
+        std::cerr << "Critical error. Data::toRaw(): You must override "
+                     "this function in the inherited structure";
+        abort();
     }
     void fromRaw(const bserial::RawVector&) {
-        throw std::logic_error("Data::fromRaw(): You must override this function "
-                               "in the inherited structure");
+        std::cerr << "Critical error. Data::fromRaw(): You must override "
+                     "this function in the inherited structure";
+        abort();
     }
 };
 

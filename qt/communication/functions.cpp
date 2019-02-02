@@ -29,7 +29,6 @@ namespace communication {
 
 void readFromMessage(const Message::Ptr& message, data::MessageError& data)
 {
-    QString err;
     if (message->type() == Message::Type::Answer)
     {
         if (message->execStatus() == Message::ExecStatus::Error)
@@ -38,18 +37,16 @@ void readFromMessage(const Message::Ptr& message, data::MessageError& data)
             return;
         }
         else
-            err = "Message exec status must be Message::ExecStatus::Error.";
+            log_error << "Message exec status must be Message::ExecStatus::Error";
     }
     else
-        err = "Message type must be Message::Type::Responce.";
+        log_error << "Message type must be Message::Type::Responce";
 
-    err += " Read the message is imposible";
-    throw std::logic_error(std::string(err.toUtf8().constData()));
+    prog_abort();
 }
 
 void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
 {
-    QString err;
     if (message->type() == Message::Type::Answer)
     {
         if (message->execStatus() == Message::ExecStatus::Failed)
@@ -58,13 +55,12 @@ void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
             return;
         }
         else
-            err = "Message exec status must be Message::ExecStatus::Failed.";
+            log_error << "Message exec status must be Message::ExecStatus::Failed";
     }
     else
-        err = "Message type must be Message::Type::Responce.";
+        log_error << "Message type must be Message::Type::Responce";
 
-    err += " Read the message is imposible";
-    throw std::logic_error(std::string(err.toUtf8().constData()));
+    prog_abort();
 }
 
 bool writeToMessage(const data::MessageError& data, Message::Ptr& message,

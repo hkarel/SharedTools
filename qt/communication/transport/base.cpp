@@ -26,6 +26,7 @@
 #include "qt/communication/transport/base.h"
 
 #include "break_point.h"
+#include "prog_abort.h"
 #include "spin_locker.h"
 #include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
@@ -609,8 +610,8 @@ void Socket::run()
                             break;
 #endif
                         default:
-                            throw std::logic_error("communication::transport::base::Socket: "
-                                                   "Unsupported message serialization format");
+                            log_error_m << "Unsupported message serialization format";
+                            prog_abort();
                     }
                     qint32 buffSize = buff.size();
 
@@ -743,8 +744,8 @@ void Socket::run()
                             break;
 #endif
                         default:
-                            throw std::logic_error("communication::transport::base::Socket: "
-                                                   "Unsupported message deserialization format");
+                            log_error_m << "Unsupported message deserialization format";
+                            prog_abort();
                     }
                     messageInit(message);
                     readBuff.clear();
