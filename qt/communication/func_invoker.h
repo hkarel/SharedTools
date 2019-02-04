@@ -27,7 +27,10 @@
 
 #include "list.h"
 #include "break_point.h"
+#include "logger/logger.h"
+#include "qt/communication/logger_operators.h"
 #include "qt/communication/message.h"
+#include <exception>
 
 namespace communication {
 
@@ -65,7 +68,20 @@ class FunctionInvoker
         Func func;
         void call(const Message::Ptr& message) const
         {
-            (instance->*func)(message);
+            try
+            {
+                (instance->*func)(message);
+            }
+            catch (std::exception& e)
+            {
+                log_error << "Handler of command " << CommandNameLog(message->command())
+                          << " throw a exception. Detail: " << e.what();
+            }
+            catch (...)
+            {
+                log_error << "Handler of command " << CommandNameLog(message->command())
+                          << " throw a exception. Unknown error";
+            }
         }
     };
 
@@ -77,7 +93,20 @@ class FunctionInvoker
         Func func;
         void call(const Message::Ptr& message) const
         {
-            (instance->*func)(message);
+            try
+            {
+                (instance->*func)(message);
+            }
+            catch (std::exception& e)
+            {
+                log_error << "Handler of command " << CommandNameLog(message->command())
+                          << " throw a exception. Detail: " << e.what();
+            }
+            catch (...)
+            {
+                log_error << "Handler of command " << CommandNameLog(message->command())
+                          << " throw a exception. Unknown error";
+            }
         }
     };
 
