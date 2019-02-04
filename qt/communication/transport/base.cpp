@@ -340,7 +340,7 @@ void Socket::run()
         {
             data::CloseConnection closeConnection;
             readFromMessage(message, closeConnection);
-            if (closeConnection.isValid)
+            if (closeConnection.dataIsValid)
                 log_verbose_m << "Connection will be closed at request remote side"
                               << ". Remote detail: " << closeConnection.description;
             else
@@ -812,7 +812,7 @@ void Socket::run()
                         {
                             data::Unknown unknown;
                             readFromMessage(m, unknown);
-                            if (unknown.isValid)
+                            if (unknown.dataIsValid)
                             {
                                 alog::Line logLine = log_error_m
                                     << "Command " << CommandNameLog(unknown.commandId)

@@ -172,7 +172,7 @@ template<typename CommandDataT>
 void readFromMessage(const Message::Ptr& message, CommandDataT& data)
 {
     bool res;
-    data.isValid = false;
+    data.dataIsValid = false;
 
     if (message->command() != data.command())
     {
@@ -184,7 +184,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
         if (data.forCommandMessage())
         {
             res = messageRead(message, data);
-            data.isValid = res;
+            data.dataIsValid = res;
             return;
         }
         log_error << "Message " << CommandNameLog(message->command())
@@ -196,7 +196,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
         if (data.forEventMessage())
         {
             res = messageRead(message, data);
-            data.isValid = res;
+            data.dataIsValid = res;
             return;
         }
         log_error << "Message " << CommandNameLog(message->command())
@@ -210,7 +210,7 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
             if (data.forAnswerMessage())
             {
                 res = messageRead(message, data);
-                data.isValid = res;
+                data.dataIsValid = res;
                 return;
             }
             log_error << "Message " << CommandNameLog(message->command())
