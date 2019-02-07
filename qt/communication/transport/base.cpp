@@ -405,7 +405,12 @@ void Socket::run()
             if (!_serializationSignatureRead)
             {
                 timer.start();
-                int timeout = (isListenerSide() ? 60 : 120) * delay;
+                int timeout;
+                if (isListenerSide())
+                    timeout = 60  * delay;  // 3 сек
+                else
+                    timeout = 120 * delay;  // 6 сек
+
                 while (socketBytesAvailable() < 16)
                 {
                     msleep(10);
@@ -493,6 +498,9 @@ void Socket::run()
                 _serializationSignatureRead = true;
             }
 
+            quint64 sleepCount = 0;
+            socketWaitForReadyRead(0);
+            CHECK_SOCKET_ERROR
             while (messagesCount() == 0
                    && readBuffSize == 0
                    && acceptMessages.empty()
@@ -506,16 +514,27 @@ void Socket::run()
                 }
                 if (socketBytesToWrite())
                 {
-                    socketWaitForBytesWritten(20);
+                    socketWaitForBytesWritten(5);
                     CHECK_SOCKET_ERROR
+                }
+
+                ++sleepCount;
+                int condDelay = 1;
+
+                // Меньшее значение интервала ожидания дает лучшие  результаты
+                // при синхронной  передаче большого количества маленьких сооб-
+                // щений,  но при этом  может  существенно  возрасти  нагрузка
+                // на процессор в режиме ожидания
+                if      (sleepCount > 400) condDelay = 10; // После 1000 ms
+                else if (sleepCount > 300) condDelay = 5;  // После 500 ms
+                else if (sleepCount > 200) condDelay = 3;  // После 200 ms
+
+                { //Block for QMutexLocker
+                    QMutexLocker locker(&_messagesLock); (void) locker;
+                    _messagesCond.wait(&_messagesLock, condDelay);
                 }
                 socketWaitForReadyRead(0);
                 CHECK_SOCKET_ERROR
-                if (socketBytesAvailable() != 0)
-                    break;
-
-                QMutexLocker locker(&_messagesLock); (void) locker;
-                _messagesCond.wait(&_messagesLock, 20);
             }
             if (loopBreak)
                 break;
@@ -647,7 +666,7 @@ void Socket::run()
 
                     while (socketBytesToWrite())
                     {
-                        socketWaitForBytesWritten(delay);
+                        socketWaitForBytesWritten(5);
                         CHECK_SOCKET_ERROR
                         if (timer.hasExpired(3 * delay))
                             break;
@@ -677,8 +696,7 @@ void Socket::run()
                 {
                     while (socketBytesAvailable() < qint64(sizeof(qint32)))
                     {
-                        msleep(10);
-                        socketWaitForReadyRead(0);
+                        socketWaitForReadyRead(1);
                         CHECK_SOCKET_ERROR
                         if (timer.hasExpired(3 * delay))
                             break;
@@ -700,17 +718,25 @@ void Socket::run()
 
                 while (readBuffCur < readBuffEnd)
                 {
-                    socketWaitForReadyRead(delay);
-                    CHECK_SOCKET_ERROR
-                    qint64 readBytes = qMin(socketBytesAvailable(),
-                                            qint64(readBuffEnd - readBuffCur));
-                    if (socketRead(readBuffCur, readBytes) != readBytes)
+                    qint64 bytesAvailable = socketBytesAvailable();
+                    if (bytesAvailable == 0)
                     {
-                        log_error_m << "Socket error: failed read data from socket";
-                        loopBreak = true;
-                        break;
+                        socketWaitForReadyRead(5);
+                        CHECK_SOCKET_ERROR
+                        bytesAvailable = socketBytesAvailable();
                     }
-                    readBuffCur += readBytes;
+                    qint64 readBytes = qMin(bytesAvailable,
+                                            qint64(readBuffEnd - readBuffCur));
+                    if (readBytes != 0)
+                    {
+                        if (socketRead(readBuffCur, readBytes) != readBytes)
+                        {
+                            log_error_m << "Socket error: failed read data from socket";
+                            loopBreak = true;
+                            break;
+                        }
+                        readBuffCur += readBytes;
+                    }
                     if (timer.hasExpired(3 * delay))
                         break;
                 }
