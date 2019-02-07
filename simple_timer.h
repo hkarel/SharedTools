@@ -22,10 +22,6 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ---
-
-  В модуле реализован простейший механизм для отсчета интервалов времени.
-
 *****************************************************************************/
 
 #pragma once
@@ -34,7 +30,7 @@
 #include <chrono>
 
 /**
-
+  Простейший механизм для отсчета интервалов времени
 */
 struct simple_timer
 {

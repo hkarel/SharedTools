@@ -22,10 +22,6 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ---
-
-  В модуле реализован простейший механизм для точного отсчета интервалов
-  времени.
 *****************************************************************************/
 
 #pragma once
@@ -33,6 +29,9 @@
 #include <ctime>
 #include <chrono>
 
+/**
+  Простейший механизм для точного отсчета интервалов времени
+*/
 struct steady_timer
 {
     typedef std::chrono::steady_clock clock;
