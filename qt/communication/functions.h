@@ -47,7 +47,7 @@ namespace {
 template<typename CommandDataT>
 bool messageRead(const Message::Ptr& message, CommandDataT& data)
 {
-    bool res;
+    bool res = false;
     switch (message->contentFormat())
     {
         case SerializationFormat::BProto:
@@ -69,7 +69,7 @@ template<typename CommandDataT>
 bool messageWrite(const CommandDataT& data, Message::Ptr& message,
                   SerializationFormat contentFormat)
 {
-    bool res;
+    bool res = false;
     switch (contentFormat)
     {
         case SerializationFormat::BProto:
