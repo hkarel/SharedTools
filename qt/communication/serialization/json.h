@@ -461,6 +461,15 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
         return p.endObject(); \
     }
 
+#define J_SERIALIZE_BASE_BEGIN \
+    template <typename Packer> Packer& jserialize(Packer& p) {
+
+#define J_SERIALIZE_BASE_END \
+    }
+
+#define J_SERIALIZE_BASE(CLASS) \
+    CLASS::jserialize(p);
+
 #define J_SERIALIZE_ONE(FIELD) \
     J_SERIALIZE_BEGIN \
     J_SERIALIZE_ITEM(FIELD) \
