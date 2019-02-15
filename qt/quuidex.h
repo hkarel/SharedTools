@@ -59,6 +59,8 @@ public:
     {}
     QUuidT(const char* uuidStr) noexcept : QUuid(QByteArray(uuidStr))
     {}
+    QUuidT(const QString& uuidStr) noexcept : QUuid(uuidStr)
+    {}
     QUuidT(const QByteArray& uuidStr) noexcept : QUuid(uuidStr)
     {}
     QUuidT& operator= (const QUuid &u) noexcept
