@@ -95,8 +95,8 @@ template<typename, typename, typename> class CustomList;
 template<typename, typename, typename> class List;
 
 
-/// @brief Функция проверяет попадает ли значение index в диапазон minVal-maxVal,
-/// значение minVal включается в диапазон проверки, а maxVal - нет.
+/// @brief Функция проверяет попадает ли значение index в диапазон [minVal-maxVal)
+/// (значение minVal включается в диапазон проверки, а maxVal - нет).
 template<typename T>
 inline bool inRange(T index, T minVal, T maxVal)
 {
