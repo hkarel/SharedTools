@@ -57,11 +57,11 @@ public:
                      uchar b5, uchar b6, uchar b7, uchar b8) noexcept
         : QUuid(l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)
     {}
-    QUuidT(const char* uuidStr) noexcept : QUuid(QByteArray(uuidStr))
+    explicit QUuidT(const char* uuidStr) noexcept : QUuid(QByteArray(uuidStr))
     {}
-    QUuidT(const QString& uuidStr) noexcept : QUuid(uuidStr)
+    explicit QUuidT(const QString& uuidStr) noexcept : QUuid(uuidStr)
     {}
-    QUuidT(const QByteArray& uuidStr) noexcept : QUuid(uuidStr)
+    explicit QUuidT(const QByteArray& uuidStr) noexcept : QUuid(uuidStr)
     {}
     QUuidT& operator= (const QUuid &u) noexcept
     {
