@@ -87,7 +87,8 @@ Message::Ptr Message::cloneForAnswer() const
     m->_protocolVersionHigh = _protocolVersionHigh;
     m->_flags = _flags;
     m->_flags2 = _flags2;
-    m->_tag = _tag;
+    //m->_tag = _tag;
+    m->_tags = _tags;
     m->_maxTimeLife = _maxTimeLife;
     m->_socketType = _socketType;
     m->_sourcePoint = _sourcePoint;
@@ -218,10 +219,18 @@ int Message::size() const
              + sizeof(_protocolVersionHigh)
              + sizeof(_flags);
 
-    if (_flags2 != 0)                sz += sizeof(_flags2);
-    if (_tag != 0)                   sz += sizeof(_tag);
-    if (_maxTimeLife != quint64(-1)) sz += sizeof(_maxTimeLife);
-    if (!_content.isEmpty())         sz += _content.size() + sizeof(quint32);
+    if (_flags2 != 0)
+        sz += sizeof(_flags2);
+
+    //if (_tag != 0) sz += sizeof(_tag);
+    if (!_tags.isEmpty())
+        sz += sizeof(quint8) + _tags.count() * sizeof(quint64);
+
+    if (_maxTimeLife != quint64(-1))
+        sz += sizeof(_maxTimeLife);
+
+    if (!_content.isEmpty())
+        sz += _content.size() + sizeof(quint32);
 
     return sz;
 }
@@ -229,7 +238,8 @@ int Message::size() const
 void Message::initEmptyTraits() const
 {
     _flag.flags2IsEmpty      = (_flags2 == 0);
-    _flag.tagIsEmpty         = (_tag == 0);
+    //_flag.tagIsEmpty         = (_tag == 0);
+    _flag.tagsIsEmpty        = (_tags.isEmpty());
     _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
     _flag.contentIsEmpty     = (_content.isEmpty());
 }
@@ -263,10 +273,21 @@ void Message::toDataStream(QDataStream& stream) const
     stream << _protocolVersionHigh;
     stream << _flags;
 
-    if (!_flag.flags2IsEmpty)      stream << _flags2;
-    if (!_flag.tagIsEmpty)         stream << _tag;
-    if (!_flag.maxTimeLifeIsEmpty) stream << _maxTimeLife;
-    if (!_flag.contentIsEmpty)     stream << _content;
+    if (!_flag.flags2IsEmpty)
+        stream << _flags2;
+
+    //if (!_flag.tagIsEmpty)  stream << _tag;
+    if (!_flag.tagsIsEmpty)
+    {
+        stream << quint8(_tags.size());
+        for (quint64 t : _tags)
+            stream << t;
+    }
+    if (!_flag.maxTimeLifeIsEmpty)
+        stream << _maxTimeLife;
+
+    if (!_flag.contentIsEmpty)
+        stream << _content;
 }
 
 Message::Ptr Message::fromDataStream(QDataStream& stream)
@@ -279,10 +300,27 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
     stream >> m->_protocolVersionHigh;
     stream >> m->_flags;
 
-    if (!m->_flag.flags2IsEmpty)      stream >> m->_flags2;
-    if (!m->_flag.tagIsEmpty)         stream >> m->_tag;
-    if (!m->_flag.maxTimeLifeIsEmpty) stream >> m->_maxTimeLife;
-    if (!m->_flag.contentIsEmpty)     stream >> m->_content;
+    if (!m->_flag.flags2IsEmpty)
+        stream >> m->_flags2;
+
+    //if (!m->_flag.tagIsEmpty)  stream >> m->_tag;
+    if (!m->_flag.tagsIsEmpty)
+    {
+        quint8 size;
+        stream >> size;
+        m->_tags.resize(size);
+        for (quint8 i = 0; i < size; ++i)
+        {
+            quint64 t;
+            stream >> t;
+            m->_tags[i] = t;
+        }
+    }
+    if (!m->_flag.maxTimeLifeIsEmpty)
+        stream >> m->_maxTimeLife;
+
+    if (!m->_flag.contentIsEmpty)
+        stream >> m->_content;
 
     return std::move(m);
 }
@@ -331,11 +369,17 @@ BByteArray Message::toJson() const
         writer.Key("flags2");
         writer.Uint(_flags2);
     }
-    if (!_flag.tagIsEmpty)
+    if (!_flag.tagsIsEmpty)
     {
-        //stream << _tag;
-        writer.Key("tag");
-        writer.Uint64(_tag);
+//        //stream << _tag;
+//        writer.Key("tag");
+//        writer.Uint64(_tag);
+
+        writer.Key("tags");
+        writer.StartArray();
+        for (int i = 0; i < _tags.count(); ++i)
+            writer.Uint64(_tags.at(i));
+        writer.EndArray();
     }
     if (!_flag.maxTimeLifeIsEmpty)
     {
@@ -408,9 +452,14 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
         {
             m->_flags2 = quint32(member->value.GetUint());
         }
-        else if (stringEqual("tag", member->name) && member->value.IsUint64())
+        //else if (stringEqual("tag", member->name) && member->value.IsUint64())
+        else if (stringEqual("tags", member->name) && member->value.IsArray())
         {
-            m->_tag = quint64(member->value.GetUint64());
+            //m->_tag = quint64(member->value.GetUint64());
+            int size = int(member->value.Size());
+            m->_tags.resize(size);
+            for (int i = 0; i < size; ++i)
+                m->_tags[i] = member->value[SizeType(i)].GetUint64();
         }
         else if (stringEqual("maxTimeLife", member->name) && member->value.IsUint64())
         {
@@ -456,6 +505,43 @@ Message::Priority Message::priority() const
 void Message::setPriority(Priority val)
 {
     _flag.priority = static_cast<quint32>(val);
+}
+
+quint64 Message::tag(int index) const
+{
+    if (!lst::inRange(index, 0, 255))
+    {
+        log_error_m << "Index value not in range [0..254]";
+        return 0;
+    }
+    if (index >= _tags.count())
+        return 0;
+
+    return _tags[index];
+}
+
+void Message::setTag(quint64 val, int index)
+{
+    if (!lst::inRange(index, 0, 255))
+    {
+        log_error_m << "Index value not in range [0..254]";
+        return;
+    }
+    if (index >= _tags.count())
+        _tags.resize(index + 1);
+
+    _tags[index] = val;
+}
+
+void Message::setTags(const QVector<quint64>& val)
+{
+    _tags = val;
+    if (_tags.count() > 255)
+    {
+        log_error_m << "Size of tags array great then 255"
+                       ". Array will be truncated to 255";
+        _tags.resize(255);
+    }
 }
 
 Message::Compression Message::compression() const

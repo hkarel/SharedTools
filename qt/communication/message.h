@@ -174,11 +174,23 @@ public:
     Priority priority() const;
     void setPriority(Priority);
 
-    // Передает пользовательские данные размером не более 8 байт без сохранения
-    // их в поле content. Это позволяет сократить количество ресурсоемких опера-
-    // ций сериализации/десериализации данных необходимых для поля content
-    quint64 tag() const {return _tag;}
-    void setTag(quint64 val) {_tag = val;}
+//    Устаревшее
+//    // Передает пользовательские данные размером не более 8 байт без сохранения
+//    // их в поле content. Это позволяет сократить количество ресурсоемких опера-
+//    // ций сериализации/десериализации данных необходимых для поля content
+//    quint64 tag() const {return _tag;}
+//    void setTag(quint64 val) {_tag = val;}
+
+    // Используется для передачи списка пользовательских данных размером 8 байт
+    // без сохранения их в поле  content.  Это позволяет  сократить  количество
+    // ресурсоемких  операций  сериализации/десериализации  данных  необходимых
+    // для поля content. Максимальная длина списка составляет 255 элементов
+    QVector<quint64> tags() const {return _tags;}
+    void setTags(const QVector<quint64>& val);
+
+    // Доступ к элементам списка tags
+    quint64 tag(int index = 0) const;
+    void setTag(quint64 val, int index = 0);
 
     // Максимальное время жизни сообщения. Задается в секундах в формате UTC
     // от начала эпохи. Параметр представляет абсолютное значение времени по
@@ -364,7 +376,7 @@ private:
 
             // Признаки пустых полей. Признаки используются для оптимизации
             // размера сообщения при его сериализации
-            mutable quint32 tagIsEmpty: 1;
+            mutable quint32 tagsIsEmpty: 1;
             mutable quint32 maxTimeLifeIsEmpty: 1;
             mutable quint32 contentIsEmpty: 1;
 
@@ -388,7 +400,8 @@ private:
     // Зарезервировано для будущего использования
     quint32 _flags2;
 
-    quint64 _tag = {0};
+    //quint64 _tag = {0};
+    QVector<quint64> _tags;
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
 
