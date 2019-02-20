@@ -98,7 +98,7 @@ QDataStream& getFromStream(QDataStream& s, T& t,
     quint8 size;
     s >> size;
     RawVector rv {int(size)};
-    for(quint8 i = 0; i < size; ++i)
+    for (quint8 i = 0; i < size; ++i)
     {
         ByteArray ba;
         s >> ba;
