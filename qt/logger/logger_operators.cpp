@@ -146,18 +146,29 @@ Line& operator<< (Line& line, const QVariant& v)
                 line << dt.toString(Qt::ISODate);
                 break;
             }
+#if QT_VERSION >= 0x050000
+            case QVariant::Uuid:
+            {
+                const QUuid& u = v.toUuid();
+                line << u;
+                break;
+            }
+#endif
             case QVariant::UserType:
             {
-                if (v.canConvert<QUuid>())
-                {
-                    const QUuid& u = v.value<QUuid>();
-                    line << u;
-                }
-                else if (v.canConvert<QUuidEx>())
+                if (v.canConvert<QUuidEx>())
                 {
                     const QUuidEx& u = v.value<QUuidEx>();
                     line << u;
                 }
+
+#if QT_VERSION < 0x050000
+                else if (v.canConvert<QUuid>())
+                {
+                    const QUuid& u = v.value<QUuid>();
+                    line << u;
+                }
+#endif
                 else
                 {
                     line << "Unsupported QVariant user type for logger"
