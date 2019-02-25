@@ -56,13 +56,16 @@ Reader::~Reader()
 
 bool Reader::parse(const QByteArray& json)
 {
+    //if (json.trimmed().isEmpty())
+    //    break_point
+
     _document.Parse(json.constData());
     if (_document.HasParseError())
     {
         _error = true;
         ParseErrorCode e = _document.GetParseError();
         int o = int(_document.GetErrorOffset());
-        log_error_m << "Failed parce json."
+        log_error_m << "Failed parse json."
                     << " Error: " << GetParseError_En(e)
                     << " Detail: " << " at offset " << o << " near '"
                     << json.mid(o, 20) << "...'";
@@ -77,6 +80,9 @@ bool Reader::parse(const QByteArray& json)
 
 Reader& Reader::member(const char* name)
 {
+    //if (QByteArray("items") == name)
+    //    break_point
+
     if (!_error)
     {
         if (_stack.top().value->IsObject()
@@ -139,6 +145,9 @@ Reader& Reader::endObject()
 
 Reader& Reader::startArray(SizeType* size)
 {
+    if (size)
+        *size = 0;
+
     if (!_error)
     {
         if (_stack.top().value->IsArray()
