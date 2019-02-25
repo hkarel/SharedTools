@@ -83,5 +83,5 @@ int main ()
     #define break_point  {asm volatile("int $3" ::: "cc", "memory");}
   #endif
 #else
-    #define break_point
+  #define break_point {}
 #endif
