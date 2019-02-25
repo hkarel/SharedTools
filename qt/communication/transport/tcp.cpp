@@ -96,9 +96,23 @@ bool Socket::socketInit()
             return false;
         }
     }
-    _peerPoint.setAddress(_socket->peerAddress());
-    _peerPoint.setPort(_socket->peerPort());
-    _printSocketDescriptor = _socket->socketDescriptor();
+
+    try
+    {
+        _peerPoint.setAddress(_socket->peerAddress());
+        _peerPoint.setPort(_socket->peerPort());
+        _printSocketDescriptor = _socket->socketDescriptor();
+    }
+    catch (std::exception& e)
+    {
+        log_error_m << "Failed socket init. Detail: " << e.what();
+        return false;
+    }
+    catch (...)
+    {
+        log_error_m << "Failed socket init. Unknown error";
+        return false;
+    }
 
     log_verbose_m << "Connect " << connectDirection << " host " << _peerPoint
                   << "; socket descriptor: " << _printSocketDescriptor;
