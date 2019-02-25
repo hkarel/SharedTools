@@ -94,7 +94,11 @@ Reader& Reader::member(const char* name)
                 _stack.push(StackItem(&memberItr->value, StackItem::BeforeStart));
             }
             else
+            {
                 _error = true;
+                log_error_m << "Field '" << name << "' not found"
+                            << ". Parsing of json will be aborted";
+            }
         }
         else
             _error = true;
