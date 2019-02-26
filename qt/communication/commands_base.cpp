@@ -57,7 +57,7 @@ void MessageError::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_V1(vect, stream)
     stream >> code;
     /* stream >> description */
-    B_UTF8_TO_QSTR(stream, description);
+    B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
 
@@ -75,7 +75,7 @@ void MessageFailed::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_V1(vect, stream)
     stream >> code;
     /* stream >> description */
-    B_UTF8_TO_QSTR(stream, description);
+    B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
 
@@ -125,7 +125,7 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
     stream >> socketType;
     stream >> socketDescriptor;
     /* stream >> socketName */
-    B_UTF8_TO_QSTR(stream, socketName);
+    B_QSTR_FROM_UTF8(stream, socketName);
 
     // Отладить: stream >> address
     break_point
@@ -154,7 +154,7 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
 
             QString scope;
             /* stream >> scope */
-            B_UTF8_TO_QSTR(stream, scope);
+            B_QSTR_FROM_UTF8(stream, scope);
             address.setScopeId(scope);
             break;
         }
@@ -181,7 +181,7 @@ void Error::fromRaw(const bserial::RawVector& vect)
     stream >> messageId;
     stream >> code;
     /* stream >> description */
-    B_UTF8_TO_QSTR(stream, description);
+    B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
 
@@ -199,7 +199,7 @@ void CloseConnection::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_V1(vect, stream)
     stream >> code;
     /* stream >> description */
-    B_UTF8_TO_QSTR(stream, description);
+    B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
 

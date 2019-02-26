@@ -440,7 +440,7 @@ typedef bserial::ByteArray BByteArray;
 
 // Используется для извлечения из потока строки в формате utf8 с последующим
 // преобразованием ее в QString
-#define B_UTF8_TO_QSTR(STREAM, QSTR) \
+#define B_QSTR_FROM_UTF8(STREAM, QSTR) \
     static_assert(std::is_same<decltype(QSTR), QString>::value, "QSTR must have type QString"); \
     utf8__to__qstr__.clear(); \
     STREAM >> utf8__to__qstr__; \
