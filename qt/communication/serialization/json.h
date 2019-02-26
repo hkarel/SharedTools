@@ -105,8 +105,6 @@ public:
     bool isReader() const {return true;}
     bool isWriter() const {return false;}
 
-    bool error() const {return _error;}
-
 private:
     struct StackItem
     {
@@ -297,19 +295,18 @@ template <typename T>
 Reader& readArray(Reader& r, T& arr)
 {
     arr.clear();
-    if (!r.error())
+    if (r.hasParseError())
+        return r;
+
+    SizeType count;
+    r.startArray(&count);
+    for (SizeType i = 0; i < count; ++i)
     {
-        SizeType count;
-        r.startArray(&count);
-        for (SizeType i = 0; i < count; ++i)
-        {
-            typename T::value_type t;
-            r & t;
-            arr.append(t);
-        }
-        return r.endArray();
+        typename T::value_type t;
+        r & t;
+        arr.append(t);
     }
-    return r;
+    return r.endArray();
 }
 
 template <typename T>

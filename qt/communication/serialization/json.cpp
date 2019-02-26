@@ -397,8 +397,9 @@ Reader& Reader::operator& (QUuid& uuid)
     {
         if (_stack.top().value->IsString())
         {
-            const QByteArray& ba = QByteArray::fromRawData(_stack.top().value->GetString(),
-                                                           _stack.top().value->GetStringLength());
+            const QByteArray& ba = QByteArray::fromRawData(
+                                       _stack.top().value->GetString(),
+                                       _stack.top().value->GetStringLength());
             uuid = QUuid(ba);
             Next();
         }
@@ -410,27 +411,27 @@ Reader& Reader::operator& (QUuid& uuid)
 
 void Reader::Next()
 {
-    if (!_error)
-    {
-        assert(!_stack.empty());
-        _stack.pop();
+    if (_error)
+        return;
 
-        if (!_stack.empty() && _stack.top().value->IsArray())
+    assert(!_stack.empty());
+    _stack.pop();
+
+    if (!_stack.empty() && _stack.top().value->IsArray())
+    {
+        // Otherwise means reading array item pass end
+        if (_stack.top().state == StackItem::Started)
         {
-            // Otherwise means reading array item pass end
-            if (_stack.top().state == StackItem::Started)
+            if (_stack.top().index < (_stack.top().value->Size() - 1))
             {
-                if (_stack.top().index < (_stack.top().value->Size() - 1))
-                {
-                    const Value& value = (*_stack.top().value)[++_stack.top().index];
-                    _stack.push(StackItem(&value, StackItem::BeforeStart));
-                }
-                else
-                    _stack.top().state = StackItem::Closed;
+                const Value& value = (*_stack.top().value)[++_stack.top().index];
+                _stack.push(StackItem(&value, StackItem::BeforeStart));
             }
             else
-                _error = true;
+                _stack.top().state = StackItem::Closed;
         }
+        else
+            _error = true;
     }
 }
 
