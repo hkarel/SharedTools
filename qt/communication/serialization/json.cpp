@@ -323,6 +323,15 @@ Reader& Reader::operator& (double& d)
     return *this;
 }
 
+Reader& Reader::operator& (float& f)
+{
+    double val;
+    this->operator& (val);
+    if (!hasParseError())
+        f = float(val);
+    return *this;
+}
+
 Reader& Reader::operator& (QByteArray& ba)
 {
     // Написать реализацию
@@ -544,6 +553,12 @@ Writer& Writer::operator& (const quint64 u)
 Writer& Writer::operator& (const double d)
 {
     _writer.Double(d);
+    return *this;
+}
+
+Writer& Writer::operator& (const float f)
+{
+    _writer.Double(f);
     return *this;
 }
 

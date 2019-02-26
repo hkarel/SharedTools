@@ -86,6 +86,7 @@ public:
     Reader& operator& (qint64&);
     Reader& operator& (quint64&);
     Reader& operator& (double&);
+    Reader& operator& (float&);
     Reader& operator& (QByteArray&);
     Reader& operator& (QString&);
     Reader& operator& (QUuid&);
@@ -165,6 +166,7 @@ public:
     Writer& operator& (const qint64);
     Writer& operator& (const quint64);
     Writer& operator& (const double);
+    Writer& operator& (const float);
     Writer& operator& (const QByteArray&);
     Writer& operator& (const QString&);
     Writer& operator& (const QUuid&);
