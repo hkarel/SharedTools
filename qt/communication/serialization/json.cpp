@@ -56,9 +56,6 @@ Reader::~Reader()
 
 bool Reader::parse(const QByteArray& json)
 {
-    //if (json.trimmed().isEmpty())
-    //    break_point
-
     _document.Parse(json.constData());
     if (_document.HasParseError())
     {
@@ -80,10 +77,7 @@ bool Reader::parse(const QByteArray& json)
 
 Reader& Reader::member(const char* name)
 {
-    //if (QByteArray("items") == name)
-    //    break_point
-
-    if (!_error)
+    if (_error < 1)
     {
         if (_stack.top().value->IsObject()
             && _stack.top().state == StackItem::Started)
@@ -91,17 +85,27 @@ Reader& Reader::member(const char* name)
             Value::ConstMemberIterator memberItr = _stack.top().value->FindMember(name);
             if (memberItr != _stack.top().value->MemberEnd())
             {
+                _error = false;
                 _stack.push(StackItem(&memberItr->value, StackItem::BeforeStart));
             }
             else
             {
-                _error = true;
-                log_error_m << "Field '" << name << "' not found"
-                            << ". Parsing of json will be aborted";
+                _error = -1;
+                alog::Line logLine = log_error_m << "Field '" << name << "' not found";
+                if (alog::logger().level() == alog::Level::Debug2)
+                {
+                    StringBuffer buff;
+                    rapidjson::Writer<StringBuffer> writer {buff};
+                    _document.Accept(writer);
+                    logLine << ". Context: " << QByteArray(buff.GetString());
+                }
             }
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not object";
+        }
     }
     return *this;
 }

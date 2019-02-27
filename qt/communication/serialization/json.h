@@ -23,7 +23,8 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   ---
 
-  В модуле представлены функции и макросы механизма json сериализации данных.
+  В модуле представлены функции и макросы механизма json сериализации данных
+
 *****************************************************************************/
 
 #pragma once
@@ -133,7 +134,7 @@ private:
 
     Document _document;
     Stack _stack;
-    bool _error = {false};
+    int _error = {0};
 };
 
 class Writer
