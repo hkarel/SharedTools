@@ -56,6 +56,7 @@ namespace serialization {
 namespace json {
 
 using namespace rapidjson;
+template <typename T> Reader& readArray(Reader&, T&);
 
 class Reader
 {
@@ -65,10 +66,10 @@ public:
 
     // Parse json
     bool parse(const QByteArray& json);
-    bool hasParseError() const {return _error;}
+    bool hasParseError() const {return _hasParseError;}
 
     Reader& member(const char* name);
-    bool hasMember(const char* name) const;
+    //bool hasMember(const char* name) const;
 
     Reader& startObject();
     Reader& endObject();
@@ -129,13 +130,20 @@ private:
     };
     typedef std::stack<StackItem> Stack;
 
+    int error() const {return _error;}
+    void setError(int);
+
 private:
     DISABLE_DEFAULT_COPY(Reader)
     void Next();
 
     Document _document;
     Stack _stack;
+
     int _error = {0};
+    bool _hasParseError = {false};
+
+    template <typename T> friend Reader& readArray(Reader&, T&);
 };
 
 class Writer
@@ -299,7 +307,7 @@ template <typename T>
 Reader& readArray(Reader& r, T& arr)
 {
     arr.clear();
-    if (r.hasParseError())
+    if (r.error())
         return r;
 
     SizeType count;
@@ -357,7 +365,7 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
     static_assert(std::is_base_of<clife_base, T>::value,
                   "Class T must be derived from clife_base");
 
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsNull())
         {
@@ -372,7 +380,7 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
         }
         else
         {
-            _error = true;
+            setError(1);
             alog::logger().error_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "JSerialize")
                 << "Stack top is not object";
         }

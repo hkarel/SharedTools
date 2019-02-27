@@ -58,7 +58,7 @@ bool Reader::parse(const QByteArray& json)
     _document.Parse(json.constData());
     if (_document.HasParseError())
     {
-        _error = true;
+        setError(1);
         ParseErrorCode e = _document.GetParseError();
         int o = int(_document.GetErrorOffset());
         log_error_m << "Failed parse json."
@@ -68,15 +68,15 @@ bool Reader::parse(const QByteArray& json)
     }
     else
     {
-        _error = false;
+        setError(0);
         _stack.push({&_document, StackItem::BeforeStart});
     }
-    return !_error;
+    return !error();
 }
 
 Reader& Reader::member(const char* name)
 {
-    if (_error < 1)
+    if (error() < 1)
     {
         if (_stack.top().value->IsObject()
             && _stack.top().state == StackItem::Started)
@@ -84,12 +84,12 @@ Reader& Reader::member(const char* name)
             Value::ConstMemberIterator memberItr = _stack.top().value->FindMember(name);
             if (memberItr != _stack.top().value->MemberEnd())
             {
-                _error = false;
+                setError(0);
                 _stack.push(StackItem(&memberItr->value, StackItem::BeforeStart));
             }
             else
             {
-                _error = -1;
+                setError(-1);
                 alog::Line logLine = log_error_m << "Field '" << name << "' not found";
                 if (alog::logger().level() == alog::Level::Debug2)
                 {
@@ -102,27 +102,34 @@ Reader& Reader::member(const char* name)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not object";
         }
     }
     return *this;
 }
 
-bool Reader::hasMember(const char* name) const
+//bool Reader::hasMember(const char* name) const
+//{
+//    if (!error()
+//        && _stack.top().value->IsObject()
+//        && _stack.top().state == StackItem::Started)
+//    {
+//        return _stack.top().value->HasMember(name);
+//    }
+//    return false;
+//}
+
+void Reader::setError(int val)
 {
-    if (!_error
-        && _stack.top().value->IsObject()
-        && _stack.top().state == StackItem::Started)
-    {
-        return _stack.top().value->HasMember(name);
-    }
-    return false;
+    _error = val;
+    if (_error != 0)
+        _hasParseError = true;
 }
 
 Reader& Reader::startObject()
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsObject()
             && _stack.top().state == StackItem::BeforeStart)
@@ -131,7 +138,7 @@ Reader& Reader::startObject()
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not object";
         }
     }
@@ -140,7 +147,7 @@ Reader& Reader::startObject()
 
 Reader& Reader::endObject()
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsObject()
             && _stack.top().state == StackItem::Started)
@@ -149,7 +156,7 @@ Reader& Reader::endObject()
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not object";
         }
     }
@@ -161,7 +168,7 @@ Reader& Reader::startArray(SizeType* size)
     if (size)
         *size = 0;
 
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsArray()
             && _stack.top().state == StackItem::BeforeStart)
@@ -180,7 +187,7 @@ Reader& Reader::startArray(SizeType* size)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not array";
         }
     }
@@ -189,7 +196,7 @@ Reader& Reader::startArray(SizeType* size)
 
 Reader& Reader::endArray()
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsArray()
             && _stack.top().state == StackItem::Closed)
@@ -198,7 +205,7 @@ Reader& Reader::endArray()
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not array";
         }
     }
@@ -208,13 +215,13 @@ Reader& Reader::endArray()
 Reader& Reader::setNull()
 {
     // This function is for Writer only.
-    _error = true;
+    setError(1);
     return *this;
 }
 
 Reader& Reader::operator& (bool& b)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsBool())
         {
@@ -223,7 +230,7 @@ Reader& Reader::operator& (bool& b)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not bool";
         }
     }
@@ -234,7 +241,7 @@ Reader& Reader::operator& (qint8& i)
 {
     qint32 val;
     this->operator& (val);
-    if (!hasParseError())
+    if (!error())
         i = qint8(val);
     return *this;
 }
@@ -243,7 +250,7 @@ Reader& Reader::operator& (quint8& u)
 {
     quint32 val;
     this->operator& (val);
-    if (!hasParseError())
+    if (!error())
         u = qint8(val);
     return *this;
 }
@@ -252,7 +259,7 @@ Reader& Reader::operator& (qint16& i)
 {
     qint32 val;
     this->operator& (val);
-    if (!hasParseError())
+    if (!error())
         i = qint16(val);
     return *this;
 }
@@ -261,14 +268,14 @@ Reader& Reader::operator& (quint16& u)
 {
     quint32 val;
     this->operator& (val);
-    if (!hasParseError())
+    if (!error())
         u = quint16(val);
     return *this;
 }
 
 Reader& Reader::operator& (qint32& i)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsInt())
         {
@@ -277,7 +284,7 @@ Reader& Reader::operator& (qint32& i)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not int";
         }
     }
@@ -286,7 +293,7 @@ Reader& Reader::operator& (qint32& i)
 
 Reader& Reader::operator& (quint32& u)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsUint())
         {
@@ -295,7 +302,7 @@ Reader& Reader::operator& (quint32& u)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not uint";
         }
     }
@@ -304,7 +311,7 @@ Reader& Reader::operator& (quint32& u)
 
 Reader& Reader::operator& (qint64& i)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsInt64())
         {
@@ -313,7 +320,7 @@ Reader& Reader::operator& (qint64& i)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not int64";
         }
     }
@@ -322,7 +329,7 @@ Reader& Reader::operator& (qint64& i)
 
 Reader& Reader::operator& (quint64& u)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsUint64())
         {
@@ -331,7 +338,7 @@ Reader& Reader::operator& (quint64& u)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not uint64";
         }
     }
@@ -340,7 +347,7 @@ Reader& Reader::operator& (quint64& u)
 
 Reader& Reader::operator& (double& d)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsNumber())
         {
@@ -349,7 +356,7 @@ Reader& Reader::operator& (double& d)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not number";
         }
     }
@@ -360,7 +367,7 @@ Reader& Reader::operator& (float& f)
 {
     double val;
     this->operator& (val);
-    if (!hasParseError())
+    if (!error())
         f = float(val);
     return *this;
 }
@@ -375,7 +382,7 @@ Reader& Reader::operator& (QByteArray& ba)
 
 Reader& Reader::operator& (QString& s)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsString())
         {
@@ -384,7 +391,7 @@ Reader& Reader::operator& (QString& s)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not string";
         }
     }
@@ -393,7 +400,7 @@ Reader& Reader::operator& (QString& s)
 
 Reader& Reader::operator& (QDate& date)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsString())
         {
@@ -402,7 +409,7 @@ Reader& Reader::operator& (QDate& date)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not string";
         }
     }
@@ -411,7 +418,7 @@ Reader& Reader::operator& (QDate& date)
 
 Reader& Reader::operator& (QTime& time)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsString())
         {
@@ -420,7 +427,7 @@ Reader& Reader::operator& (QTime& time)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not string";
         }
     }
@@ -429,7 +436,7 @@ Reader& Reader::operator& (QTime& time)
 
 Reader& Reader::operator& (QDateTime& dtime)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsInt64())
         {
@@ -438,7 +445,7 @@ Reader& Reader::operator& (QDateTime& dtime)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not int64";
         }
     }
@@ -447,7 +454,7 @@ Reader& Reader::operator& (QDateTime& dtime)
 
 Reader& Reader::operator& (QUuid& uuid)
 {
-    if (!_error)
+    if (!error())
     {
         if (_stack.top().value->IsString())
         {
@@ -459,7 +466,7 @@ Reader& Reader::operator& (QUuid& uuid)
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top is not string";
         }
     }
@@ -468,7 +475,7 @@ Reader& Reader::operator& (QUuid& uuid)
 
 void Reader::Next()
 {
-    if (_error)
+    if (error())
         return;
 
     assert(!_stack.empty());
@@ -489,7 +496,7 @@ void Reader::Next()
         }
         else
         {
-            _error = true;
+            setError(1);
             log_error_m << "Stack top state is not 'started'";
         }
     }
