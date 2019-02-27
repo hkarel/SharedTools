@@ -599,21 +599,37 @@ Writer& Writer::operator& (const QUuid& uuid)
 
 Writer& Writer::operator& (const QDate& date)
 {
-    const QByteArray& ba = date.toString("yyyy-MM-dd").toUtf8();
-    _writer.String(ba.constData(), SizeType(ba.length()));
+    if (date.isValid())
+    {
+        const QByteArray& ba = date.toString("yyyy-MM-dd").toUtf8();
+        _writer.String(ba.constData(), SizeType(ba.length()));
+    }
+    else
+        setNull();
+
     return *this;
 }
 
 Writer& Writer::operator& (const QTime& time)
 {
-    const QByteArray& ba = time.toString("hh:mm:ss.zzz").toUtf8();
-    _writer.String(ba.constData(), SizeType(ba.length()));
+    if (time.isValid())
+    {
+        const QByteArray& ba = time.toString("hh:mm:ss.zzz").toUtf8();
+        _writer.String(ba.constData(), SizeType(ba.length()));
+    }
+    else
+        setNull();
+
     return *this;
 }
 
 Writer& Writer::operator& (const QDateTime& dtime)
 {
-    _writer.Int64(dtime.toMSecsSinceEpoch());
+    if (dtime.isValid())
+        _writer.Int64(dtime.toMSecsSinceEpoch());
+    else
+        setNull();
+
     return *this;
 }
 
