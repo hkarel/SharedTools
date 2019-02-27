@@ -24,7 +24,6 @@
 *****************************************************************************/
 
 #include "qt/communication/serialization/json.h"
-#include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
 #include "rapidjson/error/en.h"
 
@@ -131,7 +130,10 @@ Reader& Reader::startObject()
             _stack.top().state = StackItem::Started;
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not object";
+        }
     }
     return *this;
 }
@@ -146,7 +148,10 @@ Reader& Reader::endObject()
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not object";
+        }
     }
     return *this;
 }
@@ -174,7 +179,10 @@ Reader& Reader::startArray(SizeType* size)
                 _stack.top().state = StackItem::Closed;
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not array";
+        }
     }
     return *this;
 }
@@ -189,7 +197,10 @@ Reader& Reader::endArray()
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not array";
+        }
     }
     return *this;
 }
@@ -211,7 +222,10 @@ Reader& Reader::operator& (bool& b)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not bool";
+        }
     }
     return *this;
 }
@@ -262,7 +276,10 @@ Reader& Reader::operator& (qint32& i)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not int";
+        }
     }
     return *this;
 }
@@ -277,7 +294,10 @@ Reader& Reader::operator& (quint32& u)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not uint";
+        }
     }
     return *this;
 }
@@ -292,7 +312,10 @@ Reader& Reader::operator& (qint64& i)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not int64";
+        }
     }
     return *this;
 }
@@ -307,7 +330,10 @@ Reader& Reader::operator& (quint64& u)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not uint64";
+        }
     }
     return *this;
 }
@@ -322,7 +348,10 @@ Reader& Reader::operator& (double& d)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not number";
+        }
     }
     return *this;
 }
@@ -354,7 +383,10 @@ Reader& Reader::operator& (QString& s)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not string";
+        }
     }
     return *this;
 }
@@ -369,7 +401,10 @@ Reader& Reader::operator& (QDate& date)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not string";
+        }
     }
     return *this;
 }
@@ -384,7 +419,10 @@ Reader& Reader::operator& (QTime& time)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not string";
+        }
     }
     return *this;
 }
@@ -399,7 +437,10 @@ Reader& Reader::operator& (QDateTime& dtime)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not int64";
+        }
     }
     return *this;
 }
@@ -417,7 +458,10 @@ Reader& Reader::operator& (QUuid& uuid)
             Next();
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top is not string";
+        }
     }
     return *this;
 }
@@ -444,7 +488,10 @@ void Reader::Next()
                 _stack.top().state = StackItem::Closed;
         }
         else
+        {
             _error = true;
+            log_error_m << "Stack top state is not 'started'";
+        }
     }
 }
 

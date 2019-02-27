@@ -34,6 +34,7 @@
 #include "clife_base.h"
 #include "clife_ptr.h"
 #include "break_point.h"
+#include "logger/logger.h"
 #include "qt/quuidex.h"
 
 #include "rapidjson/document.h"
@@ -370,7 +371,11 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
             this->operator& (*ptr);
         }
         else
+        {
             _error = true;
+            alog::logger().error_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "JSerialize")
+                << "Stack top is not object";
+        }
     }
     return *this;
 }
