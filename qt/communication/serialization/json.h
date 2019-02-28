@@ -291,6 +291,9 @@ Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
 template <typename T>
 Reader& Reader::operator& (T& t)
 {
+    if (error())
+        return *this;
+
     Reader& r = const_cast<Reader&>(*this);
     return operatorAmp(r, t);
 }
