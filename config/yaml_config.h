@@ -22,10 +22,6 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ---
-
-  В модуле реализован механизм чтения и записи конфигурационных
-  файлов в YAML-нотации.
 *****************************************************************************/
 
 #pragma once
@@ -51,7 +47,9 @@
 #include <QVector>
 #endif
 
-
+/**
+  Механизм чтения и записи конфигурационных файлов в YAML-нотации
+*/
 class YamlConfig
 {
 public:
