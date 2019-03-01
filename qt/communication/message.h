@@ -37,6 +37,7 @@
 #include "qt/quuidex.h"
 #include "qt/communication/host_point.h"
 #include "qt/communication/serialization/bproto.h"
+#include "qt/communication/serialization/sresult.h"
 
 #include <QtCore>
 #include <atomic>
@@ -287,20 +288,20 @@ public:
 
     // Функция записи данных
     template<typename... Args>
-    bool writeContent(const Args&... args);
+    SResult writeContent(const Args&... args);
 
     // Функция чтения данных
     template<typename... Args>
-    bool readContent(Args&... args) const;
+    SResult readContent(Args&... args) const;
 
 #ifdef JSON_SERIALIZATION
     // Функция записи данных для json формата
     template<typename T>
-    bool writeJsonContent(const T&);
+    SResult writeJsonContent(const T&);
 
     // Функция чтения данных для json формата
     template<typename T>
-    bool readJsonContent(T&) const;
+    SResult readJsonContent(T&) const;
 #endif
 
     // Вспомогательные функции, используются для формирования сырого потока
@@ -423,38 +424,38 @@ private:
 //------------------------- Implementation Message ---------------------------
 
 template<typename... Args>
-bool Message::writeContent(const Args&... args)
+SResult Message::writeContent(const Args&... args)
 {
     _content.clear();
     setContentFormat(SerializationFormat::BProto);
     QDataStream stream {&_content, QIODevice::WriteOnly};
     STREAM_INIT(stream);
     writeInternal(stream, args...);
-    return (stream.status() == QDataStream::Ok);
+    return SResult(stream.status() == QDataStream::Ok);
 }
 
 template<typename... Args>
-bool Message::readContent(Args&... args) const
+SResult Message::readContent(Args&... args) const
 {
     BByteArray content;
     decompress(content);
     QDataStream stream {content};
     STREAM_INIT(stream);
     readInternal(stream, args...);
-    return (stream.status() == QDataStream::Ok);
+    return SResult(stream.status() == QDataStream::Ok);
 }
 
 #ifdef JSON_SERIALIZATION
 template<typename T>
-bool Message::writeJsonContent(const T& t)
+SResult Message::writeJsonContent(const T& t)
 {
     setContentFormat(SerializationFormat::Json);
     _content = const_cast<T&>(t).toJson();
-    return true;
+    return SResult(true);
 }
 
 template<typename T>
-bool Message::readJsonContent(T& t) const
+SResult Message::readJsonContent(T& t) const
 {
     return t.fromJson(_content);
 }

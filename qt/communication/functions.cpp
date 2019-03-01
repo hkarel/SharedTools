@@ -27,14 +27,14 @@
 
 namespace communication {
 
-void readFromMessage(const Message::Ptr& message, data::MessageError& data)
+SResult readFromMessage(const Message::Ptr& message, data::MessageError& data)
 {
     if (message->type() == Message::Type::Answer)
     {
         if (message->execStatus() == Message::ExecStatus::Error)
         {
-            messageRead(message, data);
-            return;
+            SResult res = messageRead(message, data);
+            return res;
         }
         else
             log_error << "Message exec status must be Message::ExecStatus::Error";
@@ -43,16 +43,19 @@ void readFromMessage(const Message::Ptr& message, data::MessageError& data)
         log_error << "Message type must be Message::Type::Responce";
 
     prog_abort();
+
+    /* Фикс варнинга -Wreturn-type */
+    return SResult();
 }
 
-void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
+SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
 {
     if (message->type() == Message::Type::Answer)
     {
         if (message->execStatus() == Message::ExecStatus::Failed)
         {
-            messageRead(message, data);
-            return;
+            SResult res = messageRead(message, data);
+            return res;
         }
         else
             log_error << "Message exec status must be Message::ExecStatus::Failed";
@@ -61,18 +64,21 @@ void readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
         log_error << "Message type must be Message::Type::Responce";
 
     prog_abort();
+
+    /* Фикс варнинга -Wreturn-type */
+    return SResult();
 }
 
-bool writeToMessage(const data::MessageError& data, Message::Ptr& message,
-                    SerializationFormat contentFormat)
+SResult writeToMessage(const data::MessageError& data, Message::Ptr& message,
+                       SerializationFormat contentFormat)
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Error);
     return messageWrite(data, message, contentFormat);
 }
 
-bool writeToMessage(const data::MessageFailed& data, Message::Ptr& message,
-                    SerializationFormat contentFormat)
+SResult writeToMessage(const data::MessageFailed& data, Message::Ptr& message,
+                       SerializationFormat contentFormat)
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Failed);

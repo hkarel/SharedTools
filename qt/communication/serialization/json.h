@@ -36,6 +36,7 @@
 #include "break_point.h"
 #include "logger/logger.h"
 #include "qt/quuidex.h"
+#include "qt/communication/serialization/sresult.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -48,7 +49,7 @@
 #include <QDate>
 #include <QTime>
 #include <QUuid>
-#include <stack>
+#include <QStack>
 #include <type_traits>
 
 namespace communication {
@@ -56,7 +57,7 @@ namespace serialization {
 namespace json {
 
 using namespace rapidjson;
-template <typename T> Reader& readArray(Reader&, T&);
+template <typename T> Reader& readQArray(Reader&, T&);
 
 class Reader
 {
@@ -64,12 +65,15 @@ public:
     Reader();
     ~Reader();
 
+    SResult result() const;
+
     // Parse json
     bool parse(const QByteArray& json);
-    bool hasParseError() const {return _hasParseError;}
+    bool hasParseError_() const {return _hasParseError;}
 
     Reader& member(const char* name);
     //bool hasMember(const char* name) const;
+    quint64 jsonIndex() const {return _jsonIndex;}
 
     Reader& startObject();
     Reader& endObject();
@@ -120,18 +124,22 @@ private:
             Closed       // An array is closed after read all element, but before EndArray().
         };
 
-        StackItem(const Value* value, State state)
-            : value(value), state(state)
+        StackItem() = default;
+        StackItem(const Value* value, State state, const char* name = 0)
+            : value(value), state(state), name(name)
         {}
 
+        QByteArray name;
         const Value* value;
         State state;
         SizeType index = {0}; // For array iteration
     };
-    typedef std::stack<StackItem> Stack;
+    typedef QStack<StackItem> Stack;
 
     int error() const {return _error;}
     void setError(int);
+
+    QByteArray stackFieldName() const;
 
 private:
     DISABLE_DEFAULT_COPY(Reader)
@@ -143,7 +151,11 @@ private:
     int _error = {0};
     bool _hasParseError = {false};
 
-    template <typename T> friend Reader& readArray(Reader&, T&);
+    //SResult _result;
+    quint64 _jsonIndex = {0};
+    QByteArray _jsonContent;
+
+    template <typename T> friend Reader& readQArray(Reader&, T&);
 };
 
 class Writer
@@ -307,12 +319,12 @@ Writer& Writer::operator& (const T& t)
 }
 
 template <typename T>
-Reader& readArray(Reader& r, T& arr)
+Reader& readQArray(Reader& r, T& arr)
 {
-    arr.clear();
     if (r.error())
         return r;
 
+    arr.clear();
     SizeType count;
     r.startArray(&count);
     for (SizeType i = 0; i < count; ++i)
@@ -325,7 +337,7 @@ Reader& readArray(Reader& r, T& arr)
 }
 
 template <typename T>
-Writer& writeArray(Writer& w, const T& arr)
+Writer& writeQArray(Writer& w, const T& arr)
 {
     w.startArray();
     for (int i = 0; i < arr.count(); ++i)
@@ -338,28 +350,28 @@ template <typename T>
 Reader& Reader::operator& (QList<T>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
-    return readArray(r, l);
+    return readQArray(r, l);
 }
 
 template <typename T>
 Writer& Writer::operator& (const QList<T>& l)
 {
     Writer& w = const_cast<Writer&>(*this);
-    return writeArray(w, l);
+    return writeQArray(w, l);
 }
 
 template <typename T>
 Reader& Reader::operator& (QVector<T>& v)
 {
     Reader& r = const_cast<Reader&>(*this);
-    return readArray(r, v);
+    return readQArray(r, v);
 }
 
 template <typename T>
 Writer& Writer::operator& (const QVector<T>& v)
 {
     Writer& w = const_cast<Writer&>(*this);
-    return writeArray(w, v);
+    return writeQArray(w, v);
 }
 
 template <typename T>
@@ -385,7 +397,9 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
         {
             setError(1);
             alog::logger().error_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "JSerialize")
-                << "Stack top is not object";
+                << "Stack top is not object"
+                << ". Field: " << stackFieldName()
+                << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -456,11 +470,11 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
         jserialize(writer); \
         return QByteArray(writer.getString()); \
     } \
-    bool fromJson(const QByteArray& json) { \
+    SResult fromJson(const QByteArray& json) { \
         serialization::json::Reader reader; \
         if (reader.parse(json)) \
             jserialize(reader); \
-        return !reader.hasParseError(); \
+        return reader.result(); \
     }
 
 #define DECLARE_J_SERIALIZE_FUNC \

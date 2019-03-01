@@ -26,6 +26,7 @@
 #include "qt/communication/serialization/json.h"
 #include "qt/logger/logger_operators.h"
 #include "rapidjson/error/en.h"
+#include <atomic>
 
 #define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "JSerialize")
 #define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "JSerialize")
@@ -47,15 +48,36 @@ namespace json {
 
 //------------------------------- Reader ---------------------------------
 
-Reader::Reader()
+static std::atomic<std::uint64_t> jsonIndexReader = {0};
+
+Reader::Reader() : _jsonIndex(jsonIndexReader++)
 {}
 
 Reader::~Reader()
-{}
+{
+    if (_hasParseError)
+    {
+        log_error_m << "Failed parse json"
+                    << ". JIndex: " << _jsonIndex
+                    << ". Content: " << _jsonContent;
+    }
+}
+
+SResult Reader::result() const
+{
+    if (_hasParseError)
+    {
+        QString msg = "Failed parse json. JIndex: %1";
+        SResult res {false, 1, msg.arg(_jsonIndex)};
+        return res;
+    }
+    return SResult(true);
+}
 
 bool Reader::parse(const QByteArray& json)
 {
-    _document.Parse(json.constData());
+    _jsonContent = json;
+    _document.Parse(_jsonContent.constData());
     if (_document.HasParseError())
     {
         setError(1);
@@ -64,7 +86,8 @@ bool Reader::parse(const QByteArray& json)
         log_error_m << "Failed parse json."
                     << " Error: " << GetParseError_En(e)
                     << " Detail: " << " at offset " << o << " near '"
-                    << json.mid(o, 20) << "...'";
+                    << _jsonContent.mid(o, 20) << "...'"
+                    << " JIndex: " << _jsonIndex;
     }
     else
     {
@@ -85,25 +108,18 @@ Reader& Reader::member(const char* name)
             if (memberItr != _stack.top().value->MemberEnd())
             {
                 setError(0);
-                _stack.push(StackItem(&memberItr->value, StackItem::BeforeStart));
+                _stack.push(StackItem{&memberItr->value, StackItem::BeforeStart, name});
             }
             else
             {
                 setError(-1);
-                alog::Line logLine = log_error_m << "Field '" << name << "' not found";
-                if (alog::logger().level() == alog::Level::Debug2)
-                {
-                    StringBuffer buff;
-                    rapidjson::Writer<StringBuffer> writer {buff};
-                    _document.Accept(writer);
-                    logLine << ". Context: " << QByteArray(buff.GetString());
-                }
+                log_error_m << "Field '" << name << "' not found. JIndex: " << _jsonIndex;
             }
         }
         else
         {
             setError(1);
-            log_error_m << "Stack top is not object";
+            log_error_m << "Stack top is not object. JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -127,6 +143,15 @@ void Reader::setError(int val)
         _hasParseError = true;
 }
 
+QByteArray Reader::stackFieldName() const
+{
+    for (int i = _stack.count() - 1; i >= 0; --i)
+        if (!_stack[i].name.isEmpty())
+            return _stack[i].name;
+
+    return QByteArray();
+}
+
 Reader& Reader::startObject()
 {
     if (!error())
@@ -139,7 +164,9 @@ Reader& Reader::startObject()
         else
         {
             setError(1);
-            log_error_m << "Stack top is not object";
+            log_error_m << "Stack top is not object"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -157,7 +184,9 @@ Reader& Reader::endObject()
         else
         {
             setError(1);
-            log_error_m << "Stack top is not object";
+            log_error_m << "Stack top is not object"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -188,7 +217,9 @@ Reader& Reader::startArray(SizeType* size)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not array";
+            log_error_m << "Stack top is not array"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -206,7 +237,9 @@ Reader& Reader::endArray()
         else
         {
             setError(1);
-            log_error_m << "Stack top is not array";
+            log_error_m << "Stack top is not array"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -231,7 +264,9 @@ Reader& Reader::operator& (bool& b)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not bool";
+            log_error_m << "Stack top is not bool"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -285,7 +320,9 @@ Reader& Reader::operator& (qint32& i)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not int";
+            log_error_m << "Stack top is not int"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -303,7 +340,9 @@ Reader& Reader::operator& (quint32& u)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not uint";
+            log_error_m << "Stack top is not uint"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -321,7 +360,9 @@ Reader& Reader::operator& (qint64& i)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not int64";
+            log_error_m << "Stack top is not int64"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -339,7 +380,9 @@ Reader& Reader::operator& (quint64& u)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not uint64";
+            log_error_m << "Stack top is not uint64"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -357,7 +400,9 @@ Reader& Reader::operator& (double& d)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not number";
+            log_error_m << "Stack top is not number"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -392,7 +437,9 @@ Reader& Reader::operator& (QString& s)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string";
+            log_error_m << "Stack top is not string"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -410,7 +457,9 @@ Reader& Reader::operator& (QDate& date)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string";
+            log_error_m << "Stack top is not string"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -428,7 +477,9 @@ Reader& Reader::operator& (QTime& time)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string";
+            log_error_m << "Stack top is not string"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -446,7 +497,9 @@ Reader& Reader::operator& (QDateTime& dtime)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not int64";
+            log_error_m << "Stack top is not int64"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -467,7 +520,9 @@ Reader& Reader::operator& (QUuid& uuid)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string";
+            log_error_m << "Stack top is not string"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
@@ -497,7 +552,8 @@ void Reader::Next()
         else
         {
             setError(1);
-            log_error_m << "Stack top state is not 'started'";
+            log_error_m << "Stack top state is not 'started'"
+                        << ". JIndex: " << _jsonIndex;
         }
     }
 }

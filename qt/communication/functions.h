@@ -35,6 +35,7 @@
 #include "qt/communication/logger_operators.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/message.h"
+#include "qt/communication/serialization/sresult.h"
 
 #include <sys/time.h>
 #include <typeinfo>
@@ -45,9 +46,9 @@ namespace communication {
 namespace {
 
 template<typename CommandDataT>
-bool messageRead(const Message::Ptr& message, CommandDataT& data)
+SResult messageRead(const Message::Ptr& message, CommandDataT& data)
 {
-    bool res = false;
+    SResult res {false};
     switch (message->contentFormat())
     {
         case SerializationFormat::BProto:
@@ -66,10 +67,10 @@ bool messageRead(const Message::Ptr& message, CommandDataT& data)
 }
 
 template<typename CommandDataT>
-bool messageWrite(const CommandDataT& data, Message::Ptr& message,
-                  SerializationFormat contentFormat)
+SResult messageWrite(const CommandDataT& data, Message::Ptr& message,
+                     SerializationFormat contentFormat)
 {
-    bool res = false;
+    SResult res {false};
     switch (contentFormat)
     {
         case SerializationFormat::BProto:
@@ -169,9 +170,9 @@ inline Message::Ptr createJsonMessage(const QUuidEx& command)
   CommandDataT::isValid выставляется в TRUE.
 */
 template<typename CommandDataT>
-void readFromMessage(const Message::Ptr& message, CommandDataT& data)
+SResult readFromMessage(const Message::Ptr& message, CommandDataT& data)
 {
-    bool res;
+    SResult res;
     data.dataIsValid = false;
 
     if (message->command() != data.command())
@@ -184,8 +185,8 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
         if (data.forCommandMessage())
         {
             res = messageRead(message, data);
-            data.dataIsValid = res;
-            return;
+            data.dataIsValid = (bool)res;
+            return res;
         }
         log_error << "Message " << CommandNameLog(message->command())
                   << " with type 'Command' cannot write data to struct "
@@ -196,8 +197,8 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
         if (data.forEventMessage())
         {
             res = messageRead(message, data);
-            data.dataIsValid = res;
-            return;
+            data.dataIsValid = (bool)res;
+            return res;
         }
         log_error << "Message " << CommandNameLog(message->command())
                   << " with type 'Event' cannot write data to struct "
@@ -210,8 +211,8 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
             if (data.forAnswerMessage())
             {
                 res = messageRead(message, data);
-                data.dataIsValid = res;
-                return;
+                data.dataIsValid = (bool)res;
+                return res;
             }
             log_error << "Message " << CommandNameLog(message->command())
                       << " with type 'Answer' cannot write data to struct "
@@ -238,8 +239,8 @@ void readFromMessage(const Message::Ptr& message, CommandDataT& data)
 /**
   Специализированные функции для чтения сообщений MessageError, MessageFailed.
 */
-void readFromMessage(const Message::Ptr&, data::MessageError&);
-void readFromMessage(const Message::Ptr&, data::MessageFailed&);
+SResult readFromMessage(const Message::Ptr&, data::MessageError&);
+SResult readFromMessage(const Message::Ptr&, data::MessageFailed&);
 
 template<typename T>
 struct is_error_data : std::enable_if<std::is_base_of<error::Trait, T>::value, int> {};
@@ -250,9 +251,9 @@ struct not_error_data : std::enable_if<!std::is_base_of<error::Trait, T>::value,
   Преобразует структуру CommandDataT в Message-сообщение.
 */
 template<typename CommandDataT>
-bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                    SerializationFormat contentFormat = SerializationFormat::BProto,
-                    typename not_error_data<CommandDataT>::type = 0)
+SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
+                       SerializationFormat contentFormat = SerializationFormat::BProto,
+                       typename not_error_data<CommandDataT>::type = 0)
 {
     if (data.command() != message->command())
     {
@@ -297,23 +298,23 @@ bool writeToMessage(const CommandDataT& data, Message::Ptr& message,
   При записи данных тип сообщения меняется на Message::Type::Responce,
   а Message::ExecStatus на соответствующий структуре данных.
 */
-bool writeToMessage(const data::MessageError&,  Message::Ptr&,
-                    SerializationFormat = SerializationFormat::BProto);
+SResult writeToMessage(const data::MessageError&,  Message::Ptr&,
+                       SerializationFormat = SerializationFormat::BProto);
 
-bool writeToMessage(const data::MessageFailed&, Message::Ptr&,
-                    SerializationFormat = SerializationFormat::BProto);
+SResult writeToMessage(const data::MessageFailed&, Message::Ptr&,
+                       SerializationFormat = SerializationFormat::BProto);
 
 template<typename ErrorT>
-bool writeToMessage(const ErrorT& data, Message::Ptr& message,
-                    SerializationFormat contentFormat = SerializationFormat::BProto,
-                    typename is_error_data<ErrorT>::type = 0)
+SResult writeToMessage(const ErrorT& data, Message::Ptr& message,
+                       SerializationFormat contentFormat = SerializationFormat::BProto,
+                       typename is_error_data<ErrorT>::type = 0)
 {
     return writeToMessage(data.asError(), message, contentFormat);
 }
 
 #ifdef JSON_SERIALIZATION
 template<typename CommandDataT>
-bool writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
+SResult writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
 {
     return writeToMessage(data, message, SerializationFormat::Json);
 }
