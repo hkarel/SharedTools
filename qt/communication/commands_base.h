@@ -339,9 +339,9 @@ struct Trait {};
 //------------------------- Список глобальных ошибок -------------------------
 
 /**
-  Ошибка парсинга json
+  Ошибка парсинга контента сообщения
 */
-extern const QUuidEx ParseJson;
+extern const QUuidEx MessageContentParse;
 
 
 } // namespace error

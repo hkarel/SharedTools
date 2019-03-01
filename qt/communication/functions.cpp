@@ -27,46 +27,36 @@
 
 namespace communication {
 
-SResult readFromMessage(const Message::Ptr& message, data::MessageError& data)
+SResult readFromMessage(const Message::Ptr& message, data::MessageError& data,
+                        ErrorSenderFunc errorSender)
 {
-    if (message->type() == Message::Type::Answer)
+    if (message->type() != Message::Type::Answer)
     {
-        if (message->execStatus() == Message::ExecStatus::Error)
-        {
-            SResult res = messageRead(message, data);
-            return res;
-        }
-        else
-            log_error << "Message exec status must be Message::ExecStatus::Error";
+        log_error << "Message type must be Message::Type::Answer";
+        prog_abort();
     }
-    else
-        log_error << "Message type must be Message::Type::Responce";
-
-    prog_abort();
-
-    /* Фикс варнинга -Wreturn-type */
-    return SResult();
+    if (message->execStatus() != Message::ExecStatus::Error)
+    {
+        log_error << "Message exec status must be Message::ExecStatus::Error";
+        prog_abort();
+    }
+    return messageRead(message, data, errorSender);
 }
 
-SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data)
+SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
+                        ErrorSenderFunc errorSender)
 {
-    if (message->type() == Message::Type::Answer)
+    if (message->type() != Message::Type::Answer)
     {
-        if (message->execStatus() == Message::ExecStatus::Failed)
-        {
-            SResult res = messageRead(message, data);
-            return res;
-        }
-        else
-            log_error << "Message exec status must be Message::ExecStatus::Failed";
+        log_error << "Message type must be Message::Type::Answer";
+        prog_abort();
     }
-    else
-        log_error << "Message type must be Message::Type::Responce";
-
-    prog_abort();
-
-    /* Фикс варнинга -Wreturn-type */
-    return SResult();
+    if (message->execStatus() != Message::ExecStatus::Failed)
+    {
+        log_error << "Message exec status must be Message::ExecStatus::Failed";
+        prog_abort();
+    }
+    return messageRead(message, data, errorSender);
 }
 
 SResult writeToMessage(const data::MessageError& data, Message::Ptr& message,

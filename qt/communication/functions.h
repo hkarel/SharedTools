@@ -34,6 +34,7 @@
 #include "qt/logger/logger_operators.h"
 #include "qt/communication/logger_operators.h"
 #include "qt/communication/commands_base.h"
+#include "qt/communication/error_sender.h"
 #include "qt/communication/message.h"
 #include "qt/communication/serialization/sresult.h"
 
@@ -43,28 +44,6 @@
 #include <type_traits>
 
 namespace communication {
-namespace {
-
-template<typename CommandDataT>
-SResult messageRead(const Message::Ptr& message, CommandDataT& data)
-{
-    SResult res {false};
-    switch (message->contentFormat())
-    {
-        case SerializationFormat::BProto:
-            res = message->readContent(data);
-            break;
-#ifdef JSON_SERIALIZATION
-        case SerializationFormat::Json:
-            res = message->readJsonContent(data);
-            break;
-#endif
-        default:
-            log_error << "Unsupported message serialization format";
-            prog_abort();
-    }
-    return res;
-}
 
 template<typename CommandDataT>
 SResult messageWrite(const CommandDataT& data, Message::Ptr& message,
@@ -89,8 +68,6 @@ SResult messageWrite(const CommandDataT& data, Message::Ptr& message,
     }
     return res;
 }
-
-} // namespace
 
 struct CreateMessageParams
 {
@@ -163,16 +140,49 @@ inline Message::Ptr createJsonMessage(const QUuidEx& command)
 }
 #endif
 
+template<typename CommandDataT>
+SResult messageRead(const Message::Ptr& message, CommandDataT& data,
+                    ErrorSenderFunc errorSender)
+{
+    SResult res {false};
+    switch (message->contentFormat())
+    {
+        case SerializationFormat::BProto:
+            res = message->readContent(data);
+            break;
+#ifdef JSON_SERIALIZATION
+        case SerializationFormat::Json:
+            res = message->readJsonContent(data);
+            break;
+#endif
+        default:
+            log_error << "Unsupported message serialization format";
+            prog_abort();
+    }
+
+    if (!res && errorSender)
+    {
+        data::Error error;
+        error.commandId   = message->command();
+        error.messageId   = message->id();
+        error.code        = error::MessageContentParse;
+        error.description = res.description();
+        Message::Ptr m = createMessage(error, {message->contentFormat()});
+        errorSender(m);
+    }
+    return res;
+}
+
 /**
   Преобразует содержимое Message-сообщения с структуру CommandDataT.
   Перед преобразованием выполняется ряд проверок, которые должны исключить
   некорректную десериализацию данных. В случае удачной десериализации поле
-  CommandDataT::isValid выставляется в TRUE.
+  CommandDataT::dataIsValid выставляется в TRUE.
 */
 template<typename CommandDataT>
-SResult readFromMessage(const Message::Ptr& message, CommandDataT& data)
+SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
+                        ErrorSenderFunc errorSender = ErrorSenderFunc())
 {
-    SResult res;
     data.dataIsValid = false;
 
     if (message->command() != data.command())
@@ -184,7 +194,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data)
     {
         if (data.forCommandMessage())
         {
-            res = messageRead(message, data);
+            SResult res = messageRead(message, data, errorSender);
             data.dataIsValid = (bool)res;
             return res;
         }
@@ -196,7 +206,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data)
     {
         if (data.forEventMessage())
         {
-            res = messageRead(message, data);
+            SResult res = messageRead(message, data, errorSender);
             data.dataIsValid = (bool)res;
             return res;
         }
@@ -210,7 +220,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data)
         {
             if (data.forAnswerMessage())
             {
-                res = messageRead(message, data);
+                SResult res = messageRead(message, data, errorSender);
                 data.dataIsValid = (bool)res;
                 return res;
             }
@@ -234,13 +244,19 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data)
             log_error << "Message exec status is unknown";
     }
     prog_abort();
+
+    /* Фикс варнинга -Wreturn-type */
+    return SResult();
 }
 
 /**
   Специализированные функции для чтения сообщений MessageError, MessageFailed.
 */
-SResult readFromMessage(const Message::Ptr&, data::MessageError&);
-SResult readFromMessage(const Message::Ptr&, data::MessageFailed&);
+SResult readFromMessage(const Message::Ptr&, data::MessageError&,
+                        ErrorSenderFunc errorSender = ErrorSenderFunc());
+
+SResult readFromMessage(const Message::Ptr&, data::MessageFailed&,
+                        ErrorSenderFunc errorSender = ErrorSenderFunc());
 
 template<typename T>
 struct is_error_data : std::enable_if<std::is_base_of<error::Trait, T>::value, int> {};

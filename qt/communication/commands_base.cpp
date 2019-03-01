@@ -230,7 +230,7 @@ bool checkUnique()
 #define REGISTRY_GERROR(COMMAND, UUID) \
     const QUuidEx COMMAND = command::Pool::Registry{UUID, "error_"#COMMAND, true};
 
-REGISTRY_GERROR(ParseJson,    "d603db4a-bf1a-4a55-8df7-ab667684bf3e")
+REGISTRY_GERROR(MessageContentParse,  "d603db4a-bf1a-4a55-8df7-ab667684bf3e")
 
 #undef REGISTRY_GERROR
 
