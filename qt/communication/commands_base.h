@@ -232,7 +232,7 @@ struct Error : Data<&command::Error,
 {
     QUuidEx commandId;   // Идентификатор команды
     QUuidEx messageId;   // Идентификатор сообщения
-    qint32  code = {0};  // Код ошибки
+    QUuidEx code;        // Глобальный код ошибки
     QString description; // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
 
@@ -334,6 +334,15 @@ struct Trait {};
         data::MessageError  asError()  const {return {CODE, DESCR};} \
         data::MessageFailed asFailed() const {return {CODE, DESCR};} \
     } static VAR;
+
+
+//------------------------- Список глобальных ошибок -------------------------
+
+/**
+  Ошибка парсинга json
+*/
+extern const QUuidEx ParseJson;
+
 
 } // namespace error
 } // namespace communication

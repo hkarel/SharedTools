@@ -34,7 +34,7 @@ namespace command {
 
 Pool& pool()
 {
-    return ::safe_singleton<Pool>();
+    return ::safe_singleton<Pool, 0>();
 }
 
 bool Pool::checkUnique() const
@@ -68,7 +68,7 @@ QVector<QUuidEx> Pool::commands() const
 
 const char* Pool::commandName(const QUuidEx& command) const
 {
-    const auto it = _map.constFind(command);
+    auto it = _map.constFind(command);
     if (it != _map.constEnd())
     {
         const QSet<CommandTraits>& set = *it;
@@ -79,8 +79,6 @@ const char* Pool::commandName(const QUuidEx& command) const
 
 quint32 Pool::commandExists(const QUuidEx& command) const
 {
-    //return (_map.constFind(command) != _map.constEnd());
-
     auto it = _map.constFind(command);
     if (it == _map.constEnd())
         return 0;
