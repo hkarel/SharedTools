@@ -40,39 +40,15 @@ Result::operator bool () const
     return _d.empty() ? false : _d->value;
 }
 
-//void SResult::set(bool val)
-//{
-//    emptyCheck();
-//    _d->value = val;
-//}
-
 qint32 Result::code() const
 {
     return _d.empty() ? 0 : _d->code;
 }
 
-//void SResult::setCode(qint32 val)
-//{
-//    emptyCheck();
-//    _d->code = val;
-//}
-
 QString Result::description() const
 {
     return _d.empty() ? QString () : _d->description;
 }
-
-//void SResult::setDescription(const QString& val)
-//{
-//    emptyCheck();
-//    _d-> description = val;
-//}
-
-//void SResult::emptyCheck()
-//{
-//    if (_d.empty())
-//        _d = Data::Ptr(new Data);
-//}
 
 } // namespace serialization
 } // namespace communication

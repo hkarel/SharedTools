@@ -43,22 +43,13 @@ public:
     Result() = default;
     Result(bool, int code = 0, const QString& description = QString());
 
-//    Result(const Result&) = default;
-//    Result& operator = (const Result&) = default;
-
-//    Result(Result&&) = delete;
-//    Result& operator = (Result&&) = delete;
-
     explicit operator bool () const;
-    //void set(bool);
 
     // Код ошибки
     qint32 code() const;
-    //void setCode(qint32);
 
-      // Описание ошибки
+    // Описание ошибки
     QString description() const;
-    //void setDescription(const QString&);
 
 private:
     struct Data
@@ -70,7 +61,6 @@ private:
         QString description;
     };
     Data::Ptr _d = {Data::Ptr::create_join_ptr()};
-    //void emptyCheck();
 };
 
 } // namespace serialization
