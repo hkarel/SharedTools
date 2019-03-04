@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2018 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2019 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -35,19 +35,15 @@ Result::Result(bool val, int code, const QString& description)
     _d->description = description;
 }
 
-Result::operator bool () const
+Result::Result(Result&& r)
 {
-    return _d.empty() ? false : _d->value;
+    _d = r._d;
 }
 
-qint32 Result::code() const
+Result& Result::operator= (Result&& r)
 {
-    return _d.empty() ? 0 : _d->code;
-}
-
-QString Result::description() const
-{
-    return _d.empty() ? QString () : _d->description;
+    _d = r._d;
+    return *this;
 }
 
 } // namespace serialization

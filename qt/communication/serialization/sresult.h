@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2018 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2019 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "defmac.h"
 #include "container_ptr.h"
 #include <QtCore>
 #include <utility>
@@ -43,13 +42,19 @@ public:
     Result() = default;
     Result(bool, int code = 0, const QString& description = QString());
 
-    explicit operator bool () const;
+    Result(const Result&) = default;
+    Result& operator = (const Result&) = default;
+
+    Result(Result&&);
+    Result& operator= (Result&&);
+
+    explicit operator bool () const {return _d->value;}
 
     // Код ошибки
-    qint32 code() const;
+    qint32 code() const {return _d->code;}
 
     // Описание ошибки
-    QString description() const;
+    QString description() const {return _d->description;}
 
 private:
     struct Data
