@@ -69,7 +69,7 @@ public:
 
     // Parse json
     bool parse(const QByteArray& json);
-    bool hasParseError_() const {return _hasParseError;}
+    bool hasParseError() const {return _hasParseError;}
 
     Reader& member(const char* name);
     //bool hasMember(const char* name) const;
