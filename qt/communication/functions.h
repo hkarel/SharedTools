@@ -167,8 +167,9 @@ SResult messageRead(const Message::Ptr& message, CommandDataT& data,
         error.messageId   = message->id();
         error.code        = error::MessageContentParse;
         error.description = res.description();
-        Message::Ptr m = createMessage(error, {message->contentFormat()});
-        errorSender(m);
+        Message::Ptr err = createMessage(error, {message->contentFormat()});
+        err->destinationSocketDescriptors().insert(message->socketDescriptor());
+        errorSender(err);
     }
     return res;
 }
