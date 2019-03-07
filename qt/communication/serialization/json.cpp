@@ -532,6 +532,11 @@ Reader& Reader::operator& (QUuid& uuid)
             uuid = QUuid(ba);
             Next();
         }
+        else if (_stack.top().value->IsNull())
+        {
+            uuid = QUuid();
+            Next();
+        }
         else
         {
             setError(1);
@@ -708,6 +713,12 @@ Writer& Writer::operator& (const QString& s)
 
 Writer& Writer::operator& (const QUuid& uuid)
 {
+    if (uuid.isNull())
+    {
+        setNull();
+        return *this;
+    }
+
     const QByteArray& ba = uuid.toByteArray();
     if ((ba[0] == '{') && (ba[ba.length()-1] == '}'))
     {
