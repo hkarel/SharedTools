@@ -105,9 +105,13 @@ Line& operator<< (Line& line, const QVariant& v)
                 break;
 
             case QVariant::String:
-                line << v.toString();
+            {
+                QString s = v.toString();
+                if (s.isEmpty())
+                    s = "\"\"";
+                line << s;
                 break;
-
+            }
             case QVariant::Int:
                 line << v.toInt();
                 break;
@@ -131,19 +135,28 @@ Line& operator<< (Line& line, const QVariant& v)
             case QVariant::Time:
             {
                 QTime t = v.toTime();
-                line << t.toString(Qt::ISODate);
+                if (t.isValid())
+                    line << t.toString(Qt::ISODate);
+                else
+                    line << "Invalid QTime";
                 break;
             }
             case QVariant::Date:
             {
                 QDate d = v.toDate();
-                line << d.toString(Qt::ISODate);
+                if (d.isValid())
+                    line << d.toString(Qt::ISODate);
+                else
+                    line << "Invalid QDate";
                 break;
             }
             case QVariant::DateTime:
             {
                 QDateTime dt = v.toDateTime();
-                line << dt.toString(Qt::ISODate);
+                if (dt.isValid())
+                    line << dt.toString(Qt::ISODate);
+                else
+                    line << "Invalid QDateTime";
                 break;
             }
 #if QT_VERSION >= 0x050000
