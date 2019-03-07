@@ -27,6 +27,7 @@
 
 #include <QMutex>
 #include <QThread>
+#include <atomic>
 
 /**
   Класс QThredEx расширяет функционал QThred. Основное назначение механизмов
@@ -75,8 +76,8 @@ protected:
 
 private:
     Q_OBJECT
-    volatile bool _threadStop;
-    QAtomicInt _waitThreadStart;
+    volatile bool _threadStop = {true};
+    std::atomic_bool _waitThreadStart = {false};
 
     // Используется для исключения одновременного вызова функций start()/stop()
     QMutex _startStopLock;

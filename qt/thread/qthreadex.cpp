@@ -30,9 +30,6 @@
 
 QThreadEx::QThreadEx(QObject * parent) : QThread(parent)
 {
-    _threadStop = true;
-    _waitThreadStart = false;
-
     chk_connect_d(this, SIGNAL(started()),  this, SLOT(onStarted()))
     chk_connect_d(this, SIGNAL(finished()), this, SLOT(onFinished()))
 }
@@ -56,25 +53,39 @@ void QThreadEx::startImpl(Priority priority)
 {
     QMutexLocker locker(&_startStopLock); (void) locker;
 
-    while (_waitThreadStart) {}
+    //while (_waitThreadStart)
+    //    usleep(100);
 
     if (isRunning())
         return;
 
-    _waitThreadStart = true;
     _threadStop = false;
+    _waitThreadStart = true;
 
     QThread::start(priority);
 
+    // Замечание для Qt 4.8: статус isRunning выставляется в TRUE в самом начале
+    // вызова функции start(). Если на момент выхода из start() статус isRunning
+    // равен FALSE - значит при запуске потока что-то пошло не так и статус был
+    // аннулирован
+    if (!isRunning())
+        _waitThreadStart = false;
+
     // Ждем пока поток запустится
-    while (!isRunning()) {}
+    while (_waitThreadStart)
+    {
+        usleep(100);
+        if (isFinished())
+            _waitThreadStart = false;
+    }
 }
 
 bool QThreadEx::stopImpl(unsigned long time)
 {
     QMutexLocker locker(&_startStopLock); (void) locker;
 
-    while (_waitThreadStart) {}
+    while (_waitThreadStart)
+        usleep(100);
 
     _threadStop = true;
     threadStopEstablished();
