@@ -454,6 +454,11 @@ Reader& Reader::operator& (QDate& date)
             date = QDate::fromString(_stack.top().value->GetString(), "yyyy-MM-dd");
             Next();
         }
+        else if (_stack.top().value->IsNull())
+        {
+            date = QDate();
+            Next();
+        }
         else
         {
             setError(1);
@@ -474,6 +479,11 @@ Reader& Reader::operator& (QTime& time)
             time = QTime::fromString(_stack.top().value->GetString(), "hh:mm:ss.zzz");
             Next();
         }
+        else if (_stack.top().value->IsNull())
+        {
+            time = QTime();
+            Next();
+        }
         else
         {
             setError(1);
@@ -492,6 +502,11 @@ Reader& Reader::operator& (QDateTime& dtime)
         if (_stack.top().value->IsInt64())
         {
             dtime = QDateTime::fromMSecsSinceEpoch(_stack.top().value->GetInt64());
+            Next();
+        }
+        else if (_stack.top().value->IsNull())
+        {
+            dtime = QDateTime();
             Next();
         }
         else
