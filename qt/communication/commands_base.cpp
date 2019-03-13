@@ -46,6 +46,7 @@ namespace data {
 bserial::RawVector MessageError::toRaw() const
 {
     B_SERIALIZE_V1(stream)
+    stream << group;
     stream << code;
     /* stream << description */
     B_QSTR_TO_UTF8(stream, description);
@@ -55,6 +56,7 @@ bserial::RawVector MessageError::toRaw() const
 void MessageError::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
+    stream >> group;
     stream >> code;
     /* stream >> description */
     B_QSTR_FROM_UTF8(stream, description);
@@ -64,6 +66,7 @@ void MessageError::fromRaw(const bserial::RawVector& vect)
 bserial::RawVector MessageFailed::toRaw() const
 {
     B_SERIALIZE_V1(stream)
+    stream << group;
     stream << code;
     /* stream << description */
     B_QSTR_TO_UTF8(stream, description);
@@ -73,6 +76,7 @@ bserial::RawVector MessageFailed::toRaw() const
 void MessageFailed::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
+    stream >> group;
     stream >> code;
     /* stream >> description */
     B_QSTR_FROM_UTF8(stream, description);
@@ -168,6 +172,7 @@ bserial::RawVector Error::toRaw() const
     B_SERIALIZE_V1(stream)
     stream << commandId;
     stream << messageId;
+    stream << group;
     stream << code;
     /* stream << description */
     B_QSTR_TO_UTF8(stream, description);
@@ -179,6 +184,7 @@ void Error::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_V1(vect, stream)
     stream >> commandId;
     stream >> messageId;
+    stream >> group;
     stream >> code;
     /* stream >> description */
     B_QSTR_FROM_UTF8(stream, description);
@@ -207,15 +213,15 @@ void CloseConnection::fromRaw(const bserial::RawVector& vect)
 
 namespace error {
 
-QHashEx<int,int>& pool()
+QHashEx<QUuidEx, int>& pool()
 {
-    static QHashEx<int,int> p;
+    static QHashEx<QUuidEx, int> p;
     return p;
 }
 
 bool checkUnique()
 {
-    const auto& p = pool();
+    auto p = pool();
     for (auto it = p.constBegin(); it != p.constEnd(); ++it)
         if (it.value() != 1)
         {

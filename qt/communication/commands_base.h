@@ -167,13 +167,15 @@ struct Data
 */
 struct MessageError
 {
-    qint32  code = {0};   // Код ошибки
+    qint32  group = {0};  // Используется для группировки сообщений по группам
+    QUuidEx code;         // Глобальный код ошибки
     QString description;  // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
     J_SERIALIZE_BEGIN
-        J_SERIALIZE_ITEM( code )
+        J_SERIALIZE_ITEM( group )
+        J_SERIALIZE_ITEM( code  )
         J_SERIALIZE_ITEM( description )
     J_SERIALIZE_END
 #endif
@@ -189,13 +191,15 @@ struct MessageError
 */
 struct MessageFailed
 {
-    qint32  code = {0};   // Код неудачи
+    qint32  group = {0};  // Используется для группировки сообщений по группам
+    QUuidEx code;         // Глобальный код неудачи
     QString description;  // Описание неудачи (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
     J_SERIALIZE_BEGIN
-        J_SERIALIZE_ITEM( code )
+        J_SERIALIZE_ITEM( group )
+        J_SERIALIZE_ITEM( code  )
         J_SERIALIZE_ITEM( description )
     J_SERIALIZE_END
 #endif
@@ -232,6 +236,7 @@ struct Error : Data<&command::Error,
 {
     QUuidEx commandId;   // Идентификатор команды
     QUuidEx messageId;   // Идентификатор сообщения
+    qint32  group = {0}; // Используется для группировки сообщений по группам
     QUuidEx code;        // Глобальный код ошибки
     QString description; // Описание ошибки (сериализуется в utf8)
     DECLARE_B_SERIALIZE_FUNC
@@ -240,6 +245,7 @@ struct Error : Data<&command::Error,
     J_SERIALIZE_BEGIN
         J_SERIALIZE_ITEM( commandId   )
         J_SERIALIZE_ITEM( messageId   )
+        J_SERIALIZE_ITEM( group       )
         J_SERIALIZE_ITEM( code        )
         J_SERIALIZE_ITEM( description )
     J_SERIALIZE_END
@@ -314,7 +320,7 @@ namespace error {
 /**
   Пул кодов ошибок, используется для проверки уникальности кодов ошибок
 */
-QHashEx<int,int>& pool();
+QHashEx<QUuidEx, int>& pool();
 
 /**
   Проверяет уникальность кодов ошибок
@@ -326,17 +332,18 @@ bool checkUnique();
 */
 struct Trait {};
 
-#define DECL_ERROR_CODE(VAR, CODE, DESCR) \
-    struct VAR##_##CODE : Trait { \
-        VAR##_##CODE () {static bool b {false}; if (!b) {b = true; pool()[CODE]++;}} \
-        operator data::MessageError()  const {return {CODE, DESCR};} \
-        operator data::MessageFailed() const {return {CODE, DESCR};} \
-        data::MessageError  asError()  const {return {CODE, DESCR};} \
-        data::MessageFailed asFailed() const {return {CODE, DESCR};} \
+#define DECL_ERROR_CODE(VAR, GROUP, CODE, DESCR) \
+    struct VAR##__struct : Trait { \
+        QUuidEx code = {QUuidEx(CODE)}; \
+        VAR##__struct () {static bool b {false}; if (!b) {b = true; pool()[code]++;}} \
+        operator data::MessageError()  const {return {GROUP, code, DESCR};} \
+        operator data::MessageFailed() const {return {GROUP, code, DESCR};} \
+        data::MessageError  asError()  const {return {GROUP, code, DESCR};} \
+        data::MessageFailed asFailed() const {return {GROUP, code, DESCR};} \
     } static VAR;
 
 
-//------------------------- Список глобальных ошибок -------------------------
+//--------------- Список глобальных ошибок для сообщения Error ---------------
 
 /**
   Ошибка парсинга контента сообщения
