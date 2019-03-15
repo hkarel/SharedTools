@@ -126,7 +126,7 @@ bool YamlConfig::save(const std::string& filePath,
         return false;
     }
 
-    std::srand(std::time(0));
+    std::srand(std::time(nullptr));
     std::string fileTmp = _filePath + ".tmp" + utl::toString(std::rand());
     std::remove(fileTmp.c_str());
 
