@@ -106,8 +106,8 @@ bool SocketCommon::send(const Message::Ptr& message)
             // Это сообщение нужно добавлять в лог до вызова _messagesCond.wakeAll(),
             // иначе в логе может возникнуть путаница с порядком следования сообщений
             log_debug2_m << "Message added to queue to sending"
-                         << "; message id: " << message->id()
-                         << "; command: " << CommandNameLog(message->command());
+                         << ". Message id: " << message->id()
+                         << ". Command: " << CommandNameLog(message->command());
         }
         _messagesCond.wakeAll();
     }
@@ -128,8 +128,8 @@ void SocketCommon::remove(const QUuidEx& command)
         bool res = (command == m->command());
         if (res && (alog::logger().level() == alog::Level::Debug2))
             log_debug2_m << "Message removed from queue to sending"
-                         << "; message id: " << m->id()
-                         << "; command: " << CommandNameLog(m->command());
+                         << ". Message id: " << m->id()
+                         << ". Command: " << CommandNameLog(m->command());
         return res;
     };
     _messagesHigh.removeCond(funcCond);
@@ -390,7 +390,8 @@ void Socket::run()
                 socketWaitForBytesWritten(delay);
                 CHECK_SOCKET_ERROR
 
-                alog::Line logLine = log_verbose_m << "Message serialization format: ";
+                alog::Line logLine =
+                    log_verbose_m << "Message serialization format: ";
 #ifdef JSON_SERIALIZATION
                 if (_messageFormat == SerializationFormat::Json)
                     logLine << "json";
@@ -418,8 +419,8 @@ void Socket::run()
                     CHECK_SOCKET_ERROR
                     if (timer.hasExpired(timeout))
                     {
-                        log_error_m << "The serialization signature of protocol is not "
-                                    << "received within " << timeout << " ms";
+                        log_error_m << "Signature of serialization type for protocol"
+                                    << " is not received within " << timeout << " ms";
                         loopBreak = true;
                         break;
                     }
@@ -454,7 +455,8 @@ void Socket::run()
 
                     if (found)
                     {
-                        alog::Line logLine = log_verbose_m << "Message serialization format: ";
+                        alog::Line logLine =
+                            log_verbose_m << "Message serialization format: ";
                         if (_messageFormat == SerializationFormat::BProto)
                             logLine << "bproto";
 #ifdef JSON_SERIALIZATION
@@ -595,7 +597,7 @@ void Socket::run()
                         log_error_m << "For json packaging, message format"
                                     << " and message content format must match"
                                     << ". Message will be discarded"
-                                    << "; command: " << CommandNameLog(message->command());
+                                    << ". Command: " << CommandNameLog(message->command());
                         continue;
                     }
 #endif
@@ -608,8 +610,8 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
                         log_debug2_m << "Message before sending to socket"
-                                     << "; message id: " << message->id()
-                                     << "; command: " << CommandNameLog(message->command());
+                                     << ". Message id: " << message->id()
+                                     << ". Command: " << CommandNameLog(message->command());
                     }
 
                     BByteArray buff;
@@ -646,9 +648,9 @@ void Socket::run()
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
                             log_debug2_m << "Message was compressed"
-                                         << "; command: " << CommandNameLog(message->command())
-                                         << "; prev size: " << buffSizePrev
-                                         << "; new size: " << buffSize;
+                                         << ". Command: " << CommandNameLog(message->command())
+                                         << " (prev size: " << buffSizePrev
+                                         << "; new size: " << buffSize << ")";
                         }
                         // Передаем признак сжатия потока через знаковый бит
                         // параметра buffSize
@@ -675,8 +677,8 @@ void Socket::run()
                         && socketBytesToWrite() == 0)
                     {
                         log_debug2_m << "Message was send to socket"
-                                     << "; message id: " << message->id()
-                                     << "; command: " << CommandNameLog(message->command());
+                                     << ". Message id: " << message->id()
+                                     << ". Command: " << CommandNameLog(message->command());
                     }
                     if (loopBreak
                         || timer.hasExpired(3 * delay))
@@ -779,8 +781,8 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
                         log_debug2_m << "Message received"
-                                     << "; message id: " << message->id()
-                                     << "; command: " << CommandNameLog(message->command());
+                                     << ". Message id: " << message->id()
+                                     << ". Command: " << CommandNameLog(message->command());
                     }
                     if (_protocolCompatible == ProtocolCompatible::Undefined
                         && message->command() == command::ProtocolCompatible)
@@ -843,13 +845,13 @@ void Socket::run()
                                 alog::Line logLine = log_error_m
                                     << "Command " << CommandNameLog(unknown.commandId)
                                     << " is unknown for remote side"
-                                    << "; socket descriptor: " << unknown.socketDescriptor;
+                                    << ". Socket descriptor: " << unknown.socketDescriptor;
                                 if (unknown.socketType == SocketType::Tcp)
-                                    logLine << "; host: " << unknown.address << ":" << unknown.port;
+                                    logLine << ". Host: " << unknown.address << ":" << unknown.port;
                                 else if (unknown.socketType == SocketType::Local)
-                                    logLine << "; socket name: " << unknown.socketName;
+                                    logLine << ". Socket name: " << unknown.socketName;
                                 else
-                                    logLine << "; unsupported socket type";
+                                    logLine << ". Unsupported socket type";
 
                                 SpinLocker locker(_unknownCommandsLock); (void) locker;
                                 _unknownCommands.insert(unknown.commandId);
@@ -872,13 +874,13 @@ void Socket::run()
 
                             alog::Line logLine = log_error_m
                                 << "Unknown command: " << unknown.commandId
-                                << "; socket descriptor: " << unknown.socketDescriptor;
+                                << ". Socket descriptor: " << unknown.socketDescriptor;
                             if (unknown.socketType == SocketType::Tcp)
-                                logLine << "; host: " << unknown.address << ":" << unknown.port;
+                                logLine << ". Host: " << unknown.address << ":" << unknown.port;
                             else if (unknown.socketType == SocketType::Local)
-                                logLine << "; socket name: " << unknown.socketName;
+                                logLine << ". Socket name: " << unknown.socketName;
                             else
-                                logLine << "; unsupported socket type";
+                                logLine << ". Unsupported socket type";
 
                             continue;
                         }
@@ -915,8 +917,8 @@ void Socket::emitMessage(const communication::Message::Ptr& m)
     {
         if (alog::logger().level() == alog::Level::Debug2)
             log_debug2_m << "Message emit"
-                         << "; message id: " << m->id()
-                         << "; command: " << CommandNameLog(m->command());
+                         << ". Message id: " << m->id()
+                         << ". Command: " << CommandNameLog(m->command());
         emit message(m);
     }
     catch (std::exception& e)

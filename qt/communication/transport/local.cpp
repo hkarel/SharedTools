@@ -98,9 +98,9 @@ bool Socket::socketInit()
 
     alog::Line logLine = log_verbose_m
         << "Connect to socket"
-        << "; socket descriptor: " << _printSocketDescriptor;
+        << ". Socket descriptor: " << _printSocketDescriptor;
     if (!_serverName.isEmpty())
-        logLine << "; socket name: " << _serverName;
+        logLine << ". Socket name: " << _serverName;
 
     return true;
 }
@@ -130,9 +130,9 @@ void Socket::printSocketError(const char* file, const char* func, int line,
         alog::Line logLine =
             alog::logger().verbose_f(file, func, line, "TransportSoc")
                 << _socket->errorString()
-                << "; socket descriptor: " << _printSocketDescriptor;
+                << ". Socket descriptor: " << _printSocketDescriptor;
         if (!_serverName.isEmpty())
-            logLine << "; socket name: " << _serverName;
+            logLine << ". Socket name: " << _serverName;
     }
     else
     {
@@ -180,7 +180,7 @@ void Socket::socketClose()
             && _socket->state() != QLocalSocket::UnconnectedState)
         {
             log_verbose_m << "Disconnected from socket " << _socket->serverName()
-                          << "; socket descriptor: " << _socket->socketDescriptor();
+                          << ". Socket descriptor: " << _socket->socketDescriptor();
 
             _socket->disconnectFromServer();
             if (_socket->state() != QLocalSocket::UnconnectedState)

@@ -115,7 +115,7 @@ bool Socket::socketInit()
     }
 
     log_verbose_m << "Connect " << connectDirection << " host " << _peerPoint
-                  << "; socket descriptor: " << _printSocketDescriptor;
+                  << ". Socket descriptor: " << _printSocketDescriptor;
     return true;
 }
 
@@ -147,8 +147,8 @@ void Socket::printSocketError(const char* file, const char* func, int line,
     {
         alog::logger().verbose_f(file, func, line, "TransportTCP")
             << _socket->errorString()
-            << "; remote host: " << _peerPoint
-            << "; socket descriptor: " << _printSocketDescriptor;
+            << ". Remote host: " << _peerPoint
+            << ". Socket descriptor: " << _printSocketDescriptor;
     }
     else
     {
@@ -197,7 +197,7 @@ void Socket::socketClose()
         {
             log_verbose_m << "Disconnected from host "
                           << _socket->peerAddress() << ":" << _socket->peerPort()
-                          << "; socket descriptor: " << _socket->socketDescriptor();
+                          << ". Socket descriptor: " << _socket->socketDescriptor();
 
             _socket->disconnectFromHost();
             if (_socket->state() != QAbstractSocket::UnconnectedState)
