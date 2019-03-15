@@ -68,7 +68,16 @@ class Saver;
 class Logger;
 
 // Уровни log-сообщений
-enum Level {None, Error, Warning, Info, Verbose, Debug, Debug2};
+enum Level
+{
+    None    = 0,
+    Error   = 1,
+    Warning = 2,
+    Info    = 3,
+    Verbose = 4,
+    Debug   = 5,
+    Debug2  = 6
+};
 
 // Вспомогательная функция, используется для преобразования строкового
 // обозначения уровня логирования в enum Level{}
