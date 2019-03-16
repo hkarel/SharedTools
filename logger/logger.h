@@ -87,7 +87,6 @@ Level levelFromString(const string& level);
 // уровня логирования.
 string levelToString(Level);
 
-
 /**
   Абстрактная структура, используется для передачи произвольных данных от точки
   логгирования до сэйвера
@@ -97,7 +96,6 @@ struct Something
     typedef simple_ptr<Something> Ptr;
     virtual ~Something() {}
 };
-
 
 /**
   Базовое сообщение
@@ -139,7 +137,6 @@ struct Message //: public clife_base
 typedef lst::List<Message, lst::CompareItemDummy> MessageList;
 typedef simple_ptr<Message> MessagePtr;
 
-
 /**
   Аллокатор используется для управления жизнью объектов Filter и Saver.
 */
@@ -158,7 +155,6 @@ struct FindItem
     int operator() (const string* name, const T* item2, void*) const
         {return name->compare(item2->name());}
 };
-
 
 /**
   Базовый класс механизма фильтрации.
@@ -260,7 +256,6 @@ private:
 typedef lst::List<Filter, FindItem<Filter>, AllocatorItem<Filter>> FilterList;
 typedef clife_ptr<Filter> FilterPtr;
 
-
 /**
   Фильтр по именам модулей
 */
@@ -284,7 +279,6 @@ private:
 };
 typedef clife_ptr<FilterModule> FilterModulePtr;
 
-
 /**
   Фильтр по уровню логирования.
 */
@@ -299,7 +293,6 @@ private:
     Level _level = {None};
 };
 typedef clife_ptr<FilterLevel> FilterLevelPtr;
-
 
 /**
   Фильтр по именам файлов
@@ -318,7 +311,6 @@ private:
 };
 typedef clife_ptr<FilterFile> FilterFilePtr;
 
-
 /**
   Фильтр по именам функций
 */
@@ -335,7 +327,6 @@ private:
     set<string> _funcs;
 };
 typedef clife_ptr<FilterFunc> FilterFuncPtr;
-
 
 /**
   Фильтр по идентификаторам потока
@@ -354,7 +345,6 @@ private:
     set<pid_t> _threads;
 };
 typedef clife_ptr<FilterThread> FilterThreadPtr;
-
 
 /**
   Базовый класс механизма сохранения
@@ -441,7 +431,6 @@ private:
 typedef lst::List<Saver, FindItem<Saver>, AllocatorItem<Saver>> SaverList;
 typedef clife_ptr<Saver> SaverPtr;
 
-
 /**
   Вывод в stdout
 */
@@ -460,7 +449,6 @@ protected:
     bool _shortMessages = {false};
 };
 
-
 /**
   Вывод в stderr
 */
@@ -469,7 +457,6 @@ class SaverStdErr : public SaverStdOut
 public:
     SaverStdErr(const char* name, Level level, bool shortMessages);
 };
-
 
 /**
   Вывод в файл
@@ -496,7 +483,6 @@ private:
     bool   _isContinue = {true};
 };
 typedef clife_ptr<SaverFile> SaverFilePtr;
-
 
 /**
   Базовая структура, используется для формирования строки вида:
@@ -542,7 +528,6 @@ struct Line
     simple_ptr<Impl> impl;
 };
 
-
 /**
   Вспомогательная структура, используется для формирования строки вида:
   logger().debug << "test" << 123;
@@ -567,7 +552,6 @@ struct LevelProxy
     int           line;   // Номер строки вызова
     const char*   module; // Наименование модуля
 };
-
 
 /**
   Logger
@@ -687,7 +671,6 @@ private:
     template<typename T, int> friend T& ::safe_singleton();
 };
 Logger& logger();
-
 
 //---------------------------- Line operators --------------------------------
 
