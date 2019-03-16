@@ -635,6 +635,7 @@ Line::~Line()
         message->str = impl->buff.str();
         gettimeofday(&message->timeVal, NULL);
         message->threadId = trd::gettid();
+        message->something = std::move(impl->something);
 
         if (impl->file)
         {

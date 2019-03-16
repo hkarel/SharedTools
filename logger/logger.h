@@ -89,6 +89,17 @@ string levelToString(Level);
 
 
 /**
+  Абстрактная структура, используется для передачи произвольных данных от точки
+  логгирования до сэйвера
+*/
+struct Something
+{
+    typedef simple_ptr<Something> Ptr;
+    virtual ~Something() {}
+};
+
+
+/**
   Базовое сообщение
 */
 struct Message //: public clife_base
@@ -115,6 +126,8 @@ struct Message //: public clife_base
 
     timeval timeVal;
     pid_t   threadId;
+
+    Something::Ptr something;
 
     Message() {}
     Message(Message&&) = default;
@@ -515,13 +528,16 @@ struct Line
 
     struct Impl
     {
-        Logger*       logger;
-        Level         level;
-        const char*   file;   // Наименование файла
-        const char*   func;   // Наименование функции
-        int           line;   // Номер строки вызова
-        const char*   module; // Наименование модуля
-        stringstream  buff;
+        Logger*        logger;
+        Level          level;
+        const char*    file;   // Наименование файла
+        const char*    func;   // Наименование функции
+        int            line;   // Номер строки вызова
+        const char*    module; // Наименование модуля
+        stringstream   buff;
+        Something::Ptr something; // Параметр используется  для  передачи
+                                  // произвольных данных от точки логгиро-
+                                  // вания до сэйвера
     };
     simple_ptr<Impl> impl;
 };
