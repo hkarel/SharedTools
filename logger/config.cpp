@@ -416,21 +416,22 @@ void printSaversInfo()
     log_info_m << "---";
     SaverList savers = alog::logger().savers();
     for (Saver* saver : savers)
-        if (SaverFile* fsaver = dynamic_cast<SaverFile*>(saver))
-        {
-            alog::Line logLine = log_info_m << "Saver : ";
-            logLine << "name: " << fsaver->name() << "; "
-                     << "active: " << fsaver->active() << "; "
-                     << "level: " << levelToString(fsaver->level()) << "; "
-                     << "max_line_size: " << fsaver->maxLineSize() << "; ";
+    {
+        alog::Line logLine = log_info_m << "Saver : ";
+        logLine << "name: " << saver->name() << "; "
+                << "active: " << saver->active() << "; "
+                << "level: " << levelToString(saver->level()) << "; "
+                << "max_line_size: " << saver->maxLineSize() << "; ";
 
-            FilterList filters = fsaver->filters();
-            logLine << "filters: [ ";
-            for (Filter* filter : filters)
-                logLine << (filter->name().empty() ? string("''") : filter->name()) << ", ";
-            logLine << "]; ";
+        FilterList filters = saver->filters();
+        logLine << "filters: [ ";
+        for (Filter* filter : filters)
+            logLine << (filter->name().empty() ? string("''") : filter->name()) << ", ";
+        logLine << "]; ";
+
+        if (SaverFile* fsaver = dynamic_cast<SaverFile*>(saver))
             logLine << "file: " << fsaver->filePath();
-        }
+    }
 
     // Составляем список фильтров
     FilterList filters;
