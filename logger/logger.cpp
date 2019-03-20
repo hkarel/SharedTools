@@ -639,8 +639,8 @@ Line::~Line()
 
         if (impl->file)
         {
-            const char* f = strrchr(impl->file, '/') + 1;
-            message->file = (f) ? f : impl->file;
+            const char* f = strrchr(impl->file, '/');
+            message->file = (f) ? (f + 1) : impl->file;
         }
         if (impl->func)
             message->func = impl->func;
