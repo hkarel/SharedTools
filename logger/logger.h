@@ -95,6 +95,13 @@ struct Something
 {
     typedef simple_ptr<Something> Ptr;
     virtual ~Something() {}
+
+    // Возвращает TRUE если есть необходимость в модификации сообщения
+    // перед тем, как оно будет записано сэйвером
+    virtual bool canModifyMessage() const;
+
+    // Модифицирует сообщение перед тем, как оно будет записано сэйвером
+    virtual string modifyMessage(const string&) const;
 };
 
 /**

@@ -173,7 +173,19 @@ void prefixFormatter3(Message& message)
     memcpy(message.prefix3, buff, sizeof(buff));
 }
 
-//-------------------------------- Filter ------------------------------------
+//-------------------------------- Something ---------------------------------
+
+bool Something::canModifyMessage() const
+{
+    return false;
+}
+
+string Something::modifyMessage(const string&) const
+{
+    return string();
+}
+
+//---------------------------------- Filter ----------------------------------
 
 void Filter::setName(const string& name)
 {
@@ -504,13 +516,21 @@ void SaverStdOut::flushImpl(const MessageList& messages)
                 (*_out) << m->prefix2;
             (*_out) << m->prefix3;
         }
-        if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
+
+        string str;
+        string* pstr = &m->str;
+        if (m->something && m->something->canModifyMessage())
         {
-            strncpy(&lineBuff[0], m->str.c_str(), maxLineSize());
+            str = m->something->modifyMessage(m->str);
+            pstr = &str;
+        }
+        if ((maxLineSize() > 0) && (maxLineSize() < int(pstr->size())))
+        {
+            strncpy(&lineBuff[0], pstr->c_str(), maxLineSize());
             (*_out) << (char*) &lineBuff[0];
         }
         else
-            (*_out) << m->str;
+            (*_out) << *pstr;
 
         (*_out) << "\n";
 
@@ -582,13 +602,20 @@ void SaverFile::flushImpl(const MessageList& messages)
             fputs(m->prefix2, f);
         fputs(m->prefix3, f);
 
-        if ((maxLineSize() > 0) && (maxLineSize() < int(m->str.size())))
+        string str;
+        string* pstr = &m->str;
+        if (m->something && m->something->canModifyMessage())
         {
-            strncpy(&lineBuff[0], m->str.c_str(), maxLineSize());
+            str = m->something->modifyMessage(m->str);
+            pstr = &str;
+        }
+        if ((maxLineSize() > 0) && (maxLineSize() < int(pstr->size())))
+        {
+            strncpy(&lineBuff[0], pstr->c_str(), maxLineSize());
             fputs(&lineBuff[0], f);
         }
         else
-            fputs(m->str.c_str(), f);
+            fputs(pstr->c_str(), f);
 
         fputs("\n", f);
 
