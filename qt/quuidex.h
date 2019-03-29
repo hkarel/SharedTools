@@ -139,6 +139,24 @@ inline QDataStream& operator>> (QDataStream& s, QUuidT<N>& u)
     return operator>> (s, static_cast<QUuid&>(u));
 }
 
+/**
+  Сервисные функции, создают 64-битный хеш из QUuid
+*/
+inline quint64 hash64(const QUuid& u)
+{
+    static_assert(sizeof(u) == 16, "Parameter 'u' should be size 16 byte");
+    //quint64 p1 = ((quint64*) &u)[0];
+    //quint64 p2 = ((quint64*) &u)[1];
+    //return (p1 ^ p2);
+    return (((quint64*) &u)[0] ^ ((quint64*) &u)[1]);
+}
+
+template<int N>
+inline quint64 hash64(const QUuidT<N>& u)
+{
+    return hash64(static_cast<const QUuid&>(u));
+}
+
 typedef QUuidT<0> QUuidEx;
 Q_DECLARE_METATYPE(QUuidEx)
 
