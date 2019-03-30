@@ -41,19 +41,23 @@ public:
     explicit QThreadEx(QObject * parent = 0);
 
     // Возвращает TRUE если была вызвана функция stop(), сбрасывается в FALSE
-    // после вызова start() или после окончания вызова функции обработчика потока.
-    // Эта функция в основном используется в классах наследниках, в методе run(),
-    // для проверки необходимости завершения работы потока.
+    // после вызова функции start().
+    // Функция threadStop() в основном  используется в методе run() в классах
+    // наследниках для проверки необходимости завершения работы потока.
     bool threadStop() const noexcept;
 
 public slots:
     // Запуск потока
     void start(Priority priority = InheritPriority);
 
-    // Выставляет флаг _threadStop в TRUE и ожидает завершения работы потока.
-    // Возвращает FALSE в случае истечения таймаута, в ином случае возвращает
-    // TRUE.
-    bool stop(unsigned long time = ULONG_MAX);
+    // Выставляет флаг threadStop в TRUE и ожидает завершения  работы  потока.
+    // Время ожидания завершения работы  потока  определяет  параметр  timeout
+    // (задается в миллисекундах).
+    // Если поток завершается раньше истечения timeout, то функция вернет TRUE,
+    // в ином случае будет возвращено FALSE.
+    // Если timeout равен 0, то функция не ожидает завершения работы потока, и
+    // возвращает TRUE немедленно.
+    bool stop(unsigned long timeout = ULONG_MAX);
 
 private slots:
     void onStarted();  // Обработчик сигнала QThread::started()
@@ -61,7 +65,7 @@ private slots:
 
 protected:
     virtual void startImpl(Priority priority);
-    virtual bool stopImpl(unsigned long time);
+    virtual bool stopImpl(unsigned long timeout);
 
     // Приостанавливает поток на заданное количество секунд. При этом если будет
     // вызвана функция прерывания работы потока threadStop(), то ожидание немед-
