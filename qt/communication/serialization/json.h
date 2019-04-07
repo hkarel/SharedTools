@@ -43,12 +43,11 @@
 #include "rapidjson/writer.h"
 
 #include <QtGlobal>
+#include <QDateTime>
 #include <QByteArray>
 #include <QString>
+#include <QList>
 #include <QVector>
-#include <QDate>
-#include <QTime>
-#include <QUuid>
 #include <QStack>
 #include <type_traits>
 
