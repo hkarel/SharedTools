@@ -809,9 +809,21 @@ void Socket::run()
                             acceptMessages.add(message.detach());
                         }
                         else
+                        {
+                            const char* proto;
+                            if (_messageFormat == SerializationFormat::BProto)
+                                proto = "binary";
+#ifdef JSON_SERIALIZATION
+                            else if (_messageFormat == SerializationFormat::Json)
+                                proto = "json";
+#endif
+                            else
+                                proto = "unknown";
+
                             log_error_m
-                                << "Check of compatibility for binary protocol not performed"
+                                << "Check of compatibility for " << proto << " protocol not performed"
                                 << ". Command " << CommandNameLog(message->command()) << " discarded";
+                        }
                     }
                 }
                 if (loopBreak
