@@ -261,6 +261,11 @@ Reader& Reader::operator& (bool& b)
             b = _stack.top().value->GetBool();
             Next();
         }
+        else if (_stack.top().value->IsNull())
+        {
+            b = false;
+            Next();
+        }
         else
         {
             setError(1);
@@ -317,6 +322,11 @@ Reader& Reader::operator& (qint32& i)
             i = _stack.top().value->GetInt();
             Next();
         }
+        else if (_stack.top().value->IsNull())
+        {
+            i = 0;
+            Next();
+        }
         else
         {
             setError(1);
@@ -335,6 +345,11 @@ Reader& Reader::operator& (quint32& u)
         if (_stack.top().value->IsUint())
         {
             u = _stack.top().value->GetUint();
+            Next();
+        }
+        else if (_stack.top().value->IsNull())
+        {
+            u = 0;
             Next();
         }
         else
@@ -357,6 +372,11 @@ Reader& Reader::operator& (qint64& i)
             i = _stack.top().value->GetInt64();
             Next();
         }
+        else if (_stack.top().value->IsNull())
+        {
+            i = 0;
+            Next();
+        }
         else
         {
             setError(1);
@@ -377,6 +397,11 @@ Reader& Reader::operator& (quint64& u)
             u = _stack.top().value->GetUint64();
             Next();
         }
+        else if (_stack.top().value->IsNull())
+        {
+            u = 0;
+            Next();
+        }
         else
         {
             setError(1);
@@ -395,6 +420,11 @@ Reader& Reader::operator& (double& d)
         if (_stack.top().value->IsNumber())
         {
             d = _stack.top().value->GetDouble();
+            Next();
+        }
+        else if (_stack.top().value->IsNull())
+        {
+            d = 0;
             Next();
         }
         else
@@ -432,6 +462,11 @@ Reader& Reader::operator& (QString& s)
         if (_stack.top().value->IsString())
         {
             s = QString::fromUtf8(_stack.top().value->GetString());
+            Next();
+        }
+        else if (_stack.top().value->IsNull())
+        {
+            s = QString();
             Next();
         }
         else
