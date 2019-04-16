@@ -98,18 +98,18 @@ public:
         return (compare(u1, u2) == 0);
     }
 
-    template<int NN>
-    bool operator== (const QUuidT<NN>& u) noexcept {return equal(*this, u);}
-    template<int NN>
-    bool operator!= (const QUuidT<NN>& u) noexcept {return !equal(*this, u);}
+    template<int M>
+    bool operator== (const QUuidT<M>& u) noexcept {return equal(*this, u);}
+    template<int M>
+    bool operator!= (const QUuidT<M>& u) noexcept {return !equal(*this, u);}
 
     bool operator== (const QUuid& u) noexcept {return  equal(*this, u);}
     bool operator!= (const QUuid& u) noexcept {return !equal(*this, u);}
 
-    template<int NN>
-    bool operator< (const QUuidT<NN>& u) const noexcept {return (compare(*this, u) < 0);}
-    template<int NN>
-    bool operator> (const QUuidT<NN>& u) const noexcept {return (compare(*this, u) > 0);}
+    template<int M>
+    bool operator< (const QUuidT<M>& u) const noexcept {return (compare(*this, u) < 0);}
+    template<int M>
+    bool operator> (const QUuidT<M>& u) const noexcept {return (compare(*this, u) > 0);}
 
     bool operator< (const QUuid& u) const noexcept {return (compare(*this, u) < 0);}
     bool operator> (const QUuid& u) const noexcept {return (compare(*this, u) > 0);}
