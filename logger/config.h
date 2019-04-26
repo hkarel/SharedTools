@@ -71,7 +71,7 @@ filters:
     mode: exclude
 
     # Определяет будут ли сообщения об ошибках фильтроваться так же,
-    # как и все остальные сообщения. по умолчанию сообщения об ошибках
+    # как и все остальные сообщения. По умолчанию сообщения об ошибках
     # не фильтруются (false).
     filtering_errors: false
 
@@ -117,7 +117,7 @@ savers:
     # не производится. По умолчанию параметр равен 'true'.
     # Примечание: аналогичного эффекта можно добиться если уровень
     # логгирования 'level' выставить в 'none'.
-    # active: true
+    active: true
 
     # Уровень логирования (error, warning, info, verbose, debug, debug2)
     level: debug
@@ -131,7 +131,7 @@ savers:
     filters: [filter1]
 
     # Имя лог-файла.
-    file: ./lbucd2.log1
+    file: ./lbucd2.log.1
 
     # Если параметр равен 'true', то запись данных будет продолжена
     # в существующий лог-файл, в противном случае лог-файл будет очищен
@@ -139,14 +139,16 @@ savers:
     continue: true
 
   - name: saver2
+    active: true
     level: debug
     filters: [filter2]
-    file: ./lbucd2.log2
+    file: ./lbucd2.log.2
 
   - name: saver3
+    active: false
     level: debug2
     filters: [filter2, filter3]
-    file: ./lbucd2.log3
+    file: ./lbucd2.log.3
     ...
 */
 bool loadSavers(const string& confFile, SaverList& savers);
