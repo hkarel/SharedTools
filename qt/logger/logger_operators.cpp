@@ -63,21 +63,21 @@ Line& operator<< (Line& line, const QUuid& u)
 Line& operator<< (Line& line, const QTime& t)
 {
     if (line.toLogger())
-        line << t.toString(Qt::ISODate);
+        line << t.toString("hh:mm:ss.zzz");
     return line;
 }
 
 Line& operator<< (Line& line, const QDate& d)
 {
     if (line.toLogger())
-        line << d.toString(Qt::ISODate);
+        line << d.toString("dd.MM.yyyy");
     return line;
 }
 
 Line& operator<< (Line& line, const QDateTime& dt)
 {
     if (line.toLogger())
-        line << dt.toString(Qt::ISODate);
+        line << dt.toString("dd.MM.yyyy hh:mm:ss.zzz");
     return line;
 }
 
