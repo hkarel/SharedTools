@@ -106,7 +106,7 @@ bool SocketCommon::send(const Message::Ptr& message)
             // Это сообщение нужно добавлять в лог до вызова _messagesCond.wakeAll(),
             // иначе в логе может возникнуть путаница с порядком следования сообщений
             log_debug2_m << "Message added to queue to sending"
-                         << ". Message id: " << message->id()
+                         << ". Id: " << message->id()
                          << ". Command: " << CommandNameLog(message->command());
         }
         _messagesCond.wakeAll();
@@ -128,7 +128,7 @@ void SocketCommon::remove(const QUuidEx& command)
         bool res = (command == m->command());
         if (res && (alog::logger().level() == alog::Level::Debug2))
             log_debug2_m << "Message removed from queue to sending"
-                         << ". Message id: " << m->id()
+                         << ". Id: " << m->id()
                          << ". Command: " << CommandNameLog(m->command());
         return res;
     };
@@ -610,7 +610,7 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
                         log_debug2_m << "Message before sending to socket"
-                                     << ". Message id: " << message->id()
+                                     << ". Id: " << message->id()
                                      << ". Command: " << CommandNameLog(message->command());
                     }
 
@@ -676,8 +676,8 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2
                         && socketBytesToWrite() == 0)
                     {
-                        log_debug2_m << "Message was send to socket"
-                                     << ". Message id: " << message->id()
+                        log_debug2_m << "Message was sent to socket"
+                                     << ". Id: " << message->id()
                                      << ". Command: " << CommandNameLog(message->command());
                     }
                     if (loopBreak
@@ -781,7 +781,7 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
                         log_debug2_m << "Message received"
-                                     << ". Message id: " << message->id()
+                                     << ". Id: " << message->id()
                                      << ". Command: " << CommandNameLog(message->command());
                     }
                     if (_protocolCompatible == ProtocolCompatible::Undefined
@@ -929,7 +929,7 @@ void Socket::emitMessage(const communication::Message::Ptr& m)
     {
         if (alog::logger().level() == alog::Level::Debug2)
             log_debug2_m << "Message emit"
-                         << ". Message id: " << m->id()
+                         << ". Id: " << m->id()
                          << ". Command: " << CommandNameLog(m->command());
         emit message(m);
     }
