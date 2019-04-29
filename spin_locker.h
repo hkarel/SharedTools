@@ -22,10 +22,6 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ---
-
-  В модуле реализован механизм для автоматической блокировкм/разблокировки
-  атомарного локкера.
 *****************************************************************************/
 
 #pragma once
@@ -40,6 +36,10 @@
 
 #include <atomic>
 
+/**
+  Простейший механизм для автоматической блокировки/разблокировки
+  атомарного локкера
+*/
 struct SpinLocker
 {
     explicit SpinLocker(std::atomic_flag& locker) NOEXCEPT : locker(locker) {
@@ -57,7 +57,8 @@ struct SpinLocker
     std::atomic_flag& locker;
 
     SpinLocker() = delete;
+    SpinLocker(SpinLocker&&) = delete;
     SpinLocker(const SpinLocker&) = delete;
+    SpinLocker& operator= (SpinLocker&&) = delete;
     SpinLocker& operator= (const SpinLocker&) = delete;
 };
-
