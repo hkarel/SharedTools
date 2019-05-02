@@ -24,7 +24,6 @@
 *****************************************************************************/
 
 #include "qt/communication/serialization/json.h"
-#include "qt/logger/logger_operators.h"
 #include "rapidjson/error/en.h"
 #include <atomic>
 
