@@ -32,8 +32,8 @@
 #include "utils.h"
 
 #include <ctime>
+#include <functional>
 #include <stdexcept>
-#include <algorithm>
 #include <string.h>
 
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -730,7 +730,7 @@ void Logger::run()
     // Примечание: threadStop() для этой цели использовать нельзя.
     bool loopBreak = false;
 
-    auto saverFlush = [] (const MessageList& messages, Saver* saver)
+    auto saverFlush = [](const MessageList& messages, Saver* saver)
     {
         if (messages.empty())
             return;
@@ -777,7 +777,7 @@ void Logger::run()
 
         if (messages.count())
         {
-            auto prefixFormatterL = [this] (MessageList& messages, int min, int max)
+            auto prefixFormatterL = [this](MessageList& messages, int min, int max)
             {
                 time_t lastTime = 0;
                 char prefixBuff[sizeof(Message::prefix)] = {0};

@@ -677,6 +677,7 @@ private:
     friend struct Line;
     template<typename T, int> friend T& ::safe_singleton();
 };
+
 Logger& logger();
 
 //---------------------------- Line operators --------------------------------
