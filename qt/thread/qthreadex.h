@@ -38,7 +38,8 @@
 class QThreadEx : public QThread
 {
 public:
-    explicit QThreadEx(QObject * parent = 0);
+    QThreadEx();
+    explicit QThreadEx(QObject* parent);
 
     // Возвращает TRUE если была вызвана функция stop(), сбрасывается в FALSE
     // после вызова функции start().

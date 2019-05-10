@@ -28,7 +28,10 @@
 #include "break_point.h"
 #include <QElapsedTimer>
 
-QThreadEx::QThreadEx(QObject * parent) : QThread(parent)
+QThreadEx::QThreadEx() : QThreadEx((QObject*)0)
+{}
+
+QThreadEx::QThreadEx(QObject* parent) : QThread(parent)
 {
     chk_connect_d(this, SIGNAL(started()),  this, SLOT(onStarted()))
     chk_connect_d(this, SIGNAL(finished()), this, SLOT(onFinished()))
