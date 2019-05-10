@@ -239,6 +239,8 @@ void Socket::run()
 
     if (!socketInit())
     {
+        SpinLocker locker(_socketLock); (void) locker;
+        socketClose();
         _initSocketDescriptor = {-1};
         return;
     }
