@@ -80,7 +80,7 @@ bool YamlConfig::read(const std::string& filePath)
     return true;
 }
 
-bool YamlConfig::reRead()
+bool YamlConfig::reread()
 {
     return read(_filePath);
 }

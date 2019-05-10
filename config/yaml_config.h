@@ -61,7 +61,7 @@ public:
     bool read(const std::string& filePath);
 
     // Перечитывает файл конфигурации
-    bool reRead();
+    bool reread();
 
     // Определяет, что параметры конфигурации не могут изменяться
     bool readOnly() const;
