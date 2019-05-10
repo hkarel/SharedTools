@@ -27,6 +27,9 @@
 
 #include "config/yaml_config.h"
 #include <QtCore>
+#ifdef QT_NETWORK_LIB
+#include <QHostAddress>
+#endif
 
 namespace config {
 
@@ -57,5 +60,10 @@ void homeDirExpansion(QString& filePath);
 // 1) Символ '~' до полного пути к домашней директории (заменяет функцию homeDirExpansion);
 // 2) В Windows кодовое слово 'ProgramData' до директории с программными данными
 void dirExpansion(QString& filePath);
+
+#ifdef QT_NETWORK_LIB
+// Возвращает host-адрес из файла конфигурации
+bool readHostAddress(const QString& confHostStr, QHostAddress&);
+#endif
 
 } // namespace config

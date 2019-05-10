@@ -110,4 +110,23 @@ void dirExpansion(QString& filePath)
     }
 }
 
+#ifdef QT_NETWORK_LIB
+bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
+{
+    QString hostAddressStr;
+    if (config::base().getValue(confHostStr.toStdString(), hostAddressStr))
+    {
+        if (hostAddressStr.toLower().trimmed() == "localhost")
+            hostAddress = QHostAddress::LocalHost;
+        else if (hostAddressStr.toLower().trimmed() == "any")
+            hostAddress = QHostAddress::Any;
+        else
+            hostAddress = QHostAddress(hostAddressStr);
+
+        return true;
+    }
+    return false;
+}
+#endif
+
 } // namespace config
