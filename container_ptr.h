@@ -24,7 +24,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   ---
 
-  В модуле реализованы интеллектуальный указатель c внешним счетчиком ссылок.
+  В модуле реализованы интеллектуальный указатель c внешним счетчиком ссылок
   
 *****************************************************************************/
 
@@ -47,8 +47,8 @@
 #include <type_traits>
 
 /**
-  Использование спец-аллокатора памяти для экземпляров counter_ptr_t
-  дает небольшой проигрыш по сравнению с системным распределителем памяти.
+  Использование спец-аллокатора памяти для экземпляров counter_ptr_t дает
+  небольшой проигрыш по сравнению с системным распределителем памяти
 */
 //#define USE_MEMMANAGER_CPTR
 //#ifdef USE_MEMMANAGER_CPTR
@@ -67,9 +67,8 @@
 #define PRINT_DEBUG(PRINT, VALUE)
 #endif
 
-
 /**
-  @brief Структура для подсчета ссылок в container_ptr.
+  Вспомогательная структура, используется для подсчета ссылок в container_ptr
 */
 struct counter_ptr_t
 {
@@ -80,7 +79,7 @@ struct counter_ptr_t
 
     // Флаг fake - определяет состояние ложного счетчика ссылок.
     // Если fake == true, то при уничтожении counter_ptr - объект владения раз-
-    // рушен не будет, таким образом контейнер вырождается в обычный указатель.
+    // рушен не будет, таким образом контейнер вырождается в обычный  указатель
     unsigned int fake : 1;
 
     // Флаг join - признак выделения единого сегмента памяти для counter_ptr_t
@@ -103,21 +102,20 @@ struct counter_ptr_t
     // данной ситуации будет такой: some_func(container_ptr(this, fake_ptr)).
     // С другой стороны смарт-указатели с с флагом join всегда создаются через
     // функцию create_join_ptr(), что в принципе, исключает использование уже
-    // существующего адреса объекта владения.
+    // существующего адреса объекта владения
     unsigned int join : 1;
 
     // Зарезервировано
     unsigned int reserved : 30;
 
-    // Указатель на целевой объект. Используем тип void* чтобы не возникло
+    // Указатель на целевой объект.  Используем тип void*  чтобы не возникло
     // проблем с преобразованием типов.
     // Этот параметр должен идти последним в списке параметров, это позволит
     // экономить 4(8) байта при выделении единого сегмента памяти
-    // (см. описание join).
+    // (см. описание join)
     void* ptr;
 
     void* __ptr() {return (join) ? &ptr : ptr;}
-    //inline void* __ptr() const {if (join) {return (void*)&ptr;} return ptr;}
 
     counter_ptr_t() NOEXCEPT
         : count(1), fake(0), join(0), reserved(0), ptr(0)
@@ -132,15 +130,14 @@ struct counter_ptr_t
     counter_ptr_t& operator= (const counter_ptr_t&) = delete;
 };
 
-
 /**
-  Вспомогательная структура, используется для определения наличия в аллокаторе
-  функции разрушения вида: destroy(T* x, bool join). Эта функция используется
+  Вспомогательная структура, используется для определения  наличия  в аллокаторе
+  функции разрушения вида: destroy(T* x, bool join).  Эта  функция  используется
   для разрушения объектов созданных функцией container_ptr::create_join_ptr().
-  Наличие (или отсутствие) функции destroy(T* x, bool join) определяет возмож-
-  ность создавать объекты с помощью функции container_ptr::create_join_ptr(),
+  Наличие (или отсутствие) функции destroy(T* x, bool join)  определяет  возмож-
+  ность создавать объекты  с помощью  функции  container_ptr::create_join_ptr(),
   а так же определяет политику разрушения объектов. Политика разрушения объектов
-  определяется структурами container_ptr_destroy<bool>.
+  определяется структурами container_ptr_destroy<bool>
 */
 template<typename T, template<typename> class Allocator>
 struct container_ptr_check_join
@@ -149,7 +146,6 @@ struct container_ptr_check_join
     static void* detect(...);
     enum {Yes = (1 == sizeof(detect(&Allocator<T>::destroy)))};
 };
-
 
 /**
   Вспомогательные структуры, определяют политики разрушения объекта в контейнере
@@ -161,7 +157,7 @@ struct container_ptr_check_join
   destroy(T* x, bool join).
   Специализированная политика позволяет разрушать объекты созданные с помощью
   оператора new (или других подобных операторов), но не допускает разрушения
-  объектов созданных с помощью функции container_ptr::create_join_ptr().
+  объектов созданных с помощью функции container_ptr::create_join_ptr()
 */
 template<bool join_enable>
 struct container_ptr_destroy
@@ -176,17 +172,15 @@ struct container_ptr_destroy<false>
     static void destroy(T* ptr, bool /*join*/) {Allocator<T>::destroy(ptr);}
 };
 
-
 /**
-  @brief container_ptr - реализует интеллектуальный указатель с подсчетом
-  ссылок.
+  Класс container_ptr - реализует интеллектуальный указатель с подсчетом ссылок.
 
   Важно: container_ptr не является потокобезопасным классом. Поэтому если допус-
-  кается изменение container_ptr одновременно из нескольких потоков, то необхо-
-  димо выполнять mutex-блокировки или atomic-блокировки при обращении к методам
+  кается изменение container_ptr одновременно из нескольких потоков,  то необхо-
+  димо выполнять mutex-блокировки или atomic-блокировки при обращении  к методам
   container_ptr.
-  Примечание: если сделать все мотоды container_ptr потокобезопасными - это по-
-  низит общую эффективность и быстродействие при использовании container_ptr.
+  Примечание: если сделать все мотоды container_ptr  потокобезопасными - это по-
+  низит общую эффективность и быстродействие при использовании container_ptr
 */
 template<
     typename T,
@@ -202,15 +196,12 @@ public:
     // См. описание counter_ptr_t::fake
     enum {Fake = 1};
 
-    //TODO: решить через container_ptr_traits
-    //enum {IsContainerPtr = 1};
-
 public:
     container_ptr() {
         // Не создаем счетчик для пустого контейнера, при создании большого
-        // числа экземпляров container_ptr такое решение позволит меньше
+        // числа экземпляров container_ptr такое  решение  позволит  меньше
         // фрагментировать память.
-        //_counter = 0;
+        // _counter = 0;
         GET_DEBUG
     }
 
@@ -230,7 +221,7 @@ public:
     }
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
-    // неявно, и их поведение будет отличаться от ожидаемого.
+    // неявно, и их поведение будет отличаться от ожидаемого
     container_ptr(const self_t& p) {
         PRINT_DEBUG("container_ptr(const self_t&)", "")
         assign(p);
@@ -260,7 +251,7 @@ public:
     }
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
-    // неявно, и их поведение будет отличаться от ожидаемого.
+    // неявно, и их поведение будет отличаться от ожидаемого
     container_ptr(self_t&& p) {
         PRINT_DEBUG("container_ptr(self_t&&)", "")
         assign_rvalue(p);
@@ -289,7 +280,7 @@ public:
         return *this;
     }
 
-    // Проверяет возможность динамического преобразования к указанному типу.
+    // Проверяет возможность динамического преобразования к указанному типу
     template<typename other_cptrT>
     bool dynamic_cast_is_possible() const {
         other_cptrT p;
@@ -301,7 +292,7 @@ public:
         return false;
     }
 
-    // Динамическое преобразование типа.
+    // Динамическое преобразование типа
     template<typename other_cptrT>
     other_cptrT dynamic_cast_to() const {
         return (dynamic_cast_is_possible<other_cptrT>())
@@ -319,17 +310,17 @@ public:
     T& operator*  () const NOEXCEPT {return *get();}
     operator T*   () const NOEXCEPT {return  get();}
 
-    // Функция reset() введена вместо функции release(), это сделано
-    // для того, чтобы осуществить однотипное поведение одноименных
-    // функций в классах container_ptr и simple_ptr.
+    // Функция reset() введена вместо функции release(), это сделано для того,
+    // чтобы осуществить однотипное поведение одноименных  функций  в  классах
+    // container_ptr и simple_ptr.
     // Примечание: присваиваться должен self_t() (без параметров), иначе будет
-    //             дополнительный расход ресурсов на создание объекта counter_ptr_t.
+    //             дополнительный расход ресурсов на создание объекта counter_ptr_t
     void reset() {assign(self_t(/*0*/));}
 
     bool empty() const NOEXCEPT {return (get() == 0);}
 
-    explicit operator bool () const NOEXCEPT {return (get() != 0);}
-    bool operator! () const NOEXCEPT {return (get() == 0);}
+    explicit operator bool () const NOEXCEPT {return !empty();}
+    bool operator! () const NOEXCEPT {return empty();}
 
     // Функции совместимости с Qt
     T* data() const NOEXCEPT {return get();}
@@ -342,7 +333,7 @@ public:
     static self_t create_ptr(const T& x) {return self_t(allocator_t::create(&x));}
 
     // Создает объект container_ptr с единым сегментом памяти для целевого
-    // объекта и экземпляра counter_ptr_t.
+    // объекта и экземпляра counter_ptr_t
     template<typename... Args>
     static self_t create_join_ptr(Args&&... args) {
         enum {join_yes = container_ptr_check_join<T, Allocator>::Yes};
@@ -363,7 +354,7 @@ public:
 private:
     // Вспомогательный конструктор, используется в функции dynamic_cast_to().
     // Добавлены два фиктивных параметра, чтобы избежать неоднозначностей
-    // компиляции.
+    // компиляции
     container_ptr(/*const*/ counter_ptr_t* counter, int, int) {
         _counter = counter;
         if (_counter)
@@ -413,7 +404,7 @@ private:
                       "Allocators must be identical");
     }
 
-    // Проверяет корректность преобразования типа otherT к типу T.
+    // Проверяет корректность преобразования типа otherT к типу T
     template<typename otherT, template<typename> class otherA>
     static void check_converting_to_self_type(
                                       const container_ptr<otherT, otherA>&) {
@@ -421,13 +412,13 @@ private:
                       "Type otherT must be derived from T");
     }
 
-    // Потенциальная уязвимость функций assign: если эти функции одновременно
+    // Потенциальная уязвимость функций assign: если  эти  функции  одновременно
     // вызывать из нескольких потоков для одной и той же переменной, а это можно
     // сделать только через оператор присваивания, то результат в _counter может
     // быть неопределенным. Поэтому при присвоении необходимо использовать
     // атомарные блокировки.
 
-    // Для использования в обычных операторах присваивания и копирования.
+    // Для использования в обычных операторах присваивания и копирования
     template<typename otherT, template<typename> class otherA>
     void assign(const container_ptr<otherT, otherA>& p) {
         release(_counter);
@@ -437,7 +428,7 @@ private:
         GET_DEBUG
     }
 
-    // Для использования в rvalue-операторах присваивания и копирования.
+    // Для использования в rvalue-операторах присваивания и копирования
     template<typename otherT, template<typename> class otherA>
     void assign_rvalue(container_ptr<otherT, otherA>& p) {
         release(_counter);
@@ -457,9 +448,6 @@ private:
 
     template<typename, template<typename> class> friend class container_ptr;
 };
-
-//template<typename CPtr> struct container_ptr_traits {enum{Yes = 0;}};
-//template<typename CPtr> struct container_ptr_traits {enum{Yes = 0;}};
 
 #undef GET_DEBUG
 #undef PRINT_DEBUG
