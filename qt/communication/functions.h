@@ -233,16 +233,23 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                  && typeid(CommandDataT) != typeid(data::MessageFailed))
         {
             log_error << "Message is failed. Type of data must be "
-                         "communication::data::MessageFailed";
+                      << "communication::data::MessageFailed"
+                      << ". Command: " << CommandNameLog(message->command())
+                      << ". Struct: "  << typeid(CommandDataT).name();
         }
         else if (message->execStatus() == Message::ExecStatus::Error
-                 && typeid(CommandDataT) == typeid(data::MessageError))
+                 && typeid(CommandDataT) != typeid(data::MessageError))
         {
             log_error << "Message is error. Type of data must be "
-                         "communication::data::MessageError";
+                      << "communication::data::MessageError"
+                      << ". Command: " << CommandNameLog(message->command())
+                      << ". Struct: "  << typeid(CommandDataT).name();
         }
         else
-            log_error << "Message exec status is unknown";
+            log_error << "Message exec status is unknown: "
+                      << static_cast<quint32>(message->execStatus())
+                      << ". Command: " << CommandNameLog(message->command())
+                      << ". Struct: "  << typeid(CommandDataT).name();
     }
     prog_abort();
 
