@@ -96,7 +96,7 @@ bool Reader::parse(const QByteArray& json)
     return !error();
 }
 
-Reader& Reader::member(const char* name)
+Reader& Reader::member(const char* name, bool optional)
 {
     if (error() < 1)
     {
@@ -111,8 +111,10 @@ Reader& Reader::member(const char* name)
             }
             else
             {
-                setError(-1);
-                log_error_m << "Field '" << name << "' not found. JIndex: " << _jsonIndex;
+                setError(-1, optional);
+                if (!optional)
+                    log_error_m << "Field '" << name << "' not found"
+                                << ". JIndex: " << _jsonIndex;
             }
         }
         else
@@ -135,10 +137,10 @@ Reader& Reader::member(const char* name)
 //    return false;
 //}
 
-void Reader::setError(int val)
+void Reader::setError(int val, bool optional)
 {
     _error = val;
-    if (_error != 0)
+    if ((_error != 0) && !optional)
         _hasParseError = true;
 }
 
@@ -625,7 +627,7 @@ const char* Writer::getString() const
     return _stream.GetString();
 }
 
-Writer& Writer::member(const char* name)
+Writer& Writer::member(const char* name, bool)
 {
     _writer.String(name, static_cast<SizeType>(strlen(name)));
     return *this;

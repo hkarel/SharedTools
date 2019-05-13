@@ -71,7 +71,7 @@ public:
     bool parse(const QByteArray& json);
     bool hasParseError() const {return _hasParseError;}
 
-    Reader& member(const char* name);
+    Reader& member(const char* name, bool optional = false);
     //bool hasMember(const char* name) const;
     quint64 jsonIndex() const {return _jsonIndex;}
 
@@ -137,7 +137,7 @@ private:
     typedef QStack<StackItem> Stack;
 
     int error() const {return _error;}
-    void setError(int);
+    void setError(int val, bool optional = false);
 
     QByteArray stackFieldName() const;
 
@@ -167,7 +167,7 @@ public:
     // Obtains the serialized JSON string.
     const char* getString() const;
 
-    Writer& member(const char* name);
+    Writer& member(const char* name, bool /*optional*/ = false);
     bool hasMember(const char* name) const;
 
     Writer& startObject();
@@ -492,6 +492,9 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 
 #define J_SERIALIZE_ITEM(FIELD) \
         p.member(#FIELD) & FIELD;
+
+#define J_SERIALIZE_OPT(FIELD) \
+        p.member(#FIELD, true) & FIELD;
 
 #define J_SERIALIZE_END \
         return p.endObject(); \
