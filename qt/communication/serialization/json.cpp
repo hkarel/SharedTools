@@ -270,7 +270,7 @@ Reader& Reader::operator& (bool& b)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not bool"
+            log_error_m << "Stack top is not 'bool' type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -331,7 +331,7 @@ Reader& Reader::operator& (qint32& i)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not int"
+            log_error_m << "Stack top is not 'int' type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -356,7 +356,7 @@ Reader& Reader::operator& (quint32& u)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not uint"
+            log_error_m << "Stack top is not 'uint' type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -381,7 +381,7 @@ Reader& Reader::operator& (qint64& i)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not int64"
+            log_error_m << "Stack top is not int64 type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -406,7 +406,7 @@ Reader& Reader::operator& (quint64& u)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not uint64"
+            log_error_m << "Stack top is not uint64 type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -473,7 +473,7 @@ Reader& Reader::operator& (QString& s)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string"
+            log_error_m << "Stack top is not 'string' type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -498,7 +498,7 @@ Reader& Reader::operator& (QDate& date)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string"
+            log_error_m << "Stack top is not 'string' type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -523,7 +523,7 @@ Reader& Reader::operator& (QTime& time)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string"
+            log_error_m << "Stack top is not 'string' type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -548,7 +548,7 @@ Reader& Reader::operator& (QDateTime& dtime)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not int64"
+            log_error_m << "Stack top is not int64 type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -576,7 +576,7 @@ Reader& Reader::operator& (QUuid& uuid)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not string"
+            log_error_m << "Stack top is not 'string' type"
                         << ". Field: " << stackFieldName()
                         << ". JIndex: " << _jsonIndex;
         }
@@ -608,7 +608,7 @@ void Reader::Next()
         else
         {
             setError(1);
-            log_error_m << "Stack top state is not 'started'"
+            log_error_m << "Stack top state is not StackItem::Started"
                         << ". JIndex: " << _jsonIndex;
         }
     }
