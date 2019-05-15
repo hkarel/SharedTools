@@ -477,6 +477,9 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
         return reader.result(); \
     }
 
+/**
+  Макросы для работы с функциями сериализации toJson(), fromJson()
+*/
 #define DECLARE_J_SERIALIZE_FUNC \
     J_SERIALIZE_FUNC \
     template <typename Packer> Packer& jserialize(Packer&);
@@ -512,6 +515,11 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 #define J_SERIALIZE_ONE(FIELD) \
     J_SERIALIZE_BEGIN \
     J_SERIALIZE_ITEM(FIELD) \
+    J_SERIALIZE_END
+
+#define J_SERIALIZE_BASE_ONE \
+    J_SERIALIZE_BEGIN \
+    this->jserializeBase(p); \
     J_SERIALIZE_END
 
 } // namespace json

@@ -165,11 +165,12 @@ struct MessageError
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
-    J_SERIALIZE_BEGIN
+    J_SERIALIZE_BASE_BEGIN
         J_SERIALIZE_ITEM( group )
         J_SERIALIZE_ITEM( code  )
         J_SERIALIZE_ITEM( description )
-    J_SERIALIZE_END
+    J_SERIALIZE_BASE_END
+    J_SERIALIZE_BASE_ONE
 #endif
 };
 
@@ -189,11 +190,12 @@ struct MessageFailed
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
-    J_SERIALIZE_BEGIN
+    J_SERIALIZE_BASE_BEGIN
         J_SERIALIZE_ITEM( group )
         J_SERIALIZE_ITEM( code  )
         J_SERIALIZE_ITEM( description )
-    J_SERIALIZE_END
+    J_SERIALIZE_BASE_END
+    J_SERIALIZE_BASE_ONE
 #endif
 };
 
