@@ -72,7 +72,6 @@ public:
     bool hasParseError() const {return _hasParseError;}
 
     Reader& member(const char* name, bool optional = false);
-    //bool hasMember(const char* name) const;
     quint64 jsonIndex() const {return _jsonIndex;}
 
     Reader& startObject();
@@ -151,7 +150,6 @@ private:
     int _error = {0};
     bool _hasParseError = {false};
 
-    //SResult _result;
     quint64 _jsonIndex = {0};
     QByteArray _jsonContent;
 
@@ -168,7 +166,6 @@ public:
     const char* getString() const;
 
     Writer& member(const char* name, bool /*optional*/ = false);
-    bool hasMember(const char* name) const;
 
     Writer& startObject();
     Writer& endObject();

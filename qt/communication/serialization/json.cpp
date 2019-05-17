@@ -126,17 +126,6 @@ Reader& Reader::member(const char* name, bool optional)
     return *this;
 }
 
-//bool Reader::hasMember(const char* name) const
-//{
-//    if (!error()
-//        && _stack.top().value->IsObject()
-//        && _stack.top().state == StackItem::Started)
-//    {
-//        return _stack.top().value->HasMember(name);
-//    }
-//    return false;
-//}
-
 void Reader::setError(int val, bool optional)
 {
     _error = val;
@@ -175,7 +164,7 @@ Reader& Reader::startObject()
 
 Reader& Reader::endObject()
 {
-    if (!error())
+    if (error() < 1)
     {
         if (_stack.top().value->IsObject()
             && _stack.top().state == StackItem::Started)
@@ -586,7 +575,7 @@ Reader& Reader::operator& (QUuid& uuid)
 
 void Reader::Next()
 {
-    if (error())
+    if (error() > 0)
         return;
 
     assert(!_stack.empty());
@@ -631,13 +620,6 @@ Writer& Writer::member(const char* name, bool)
 {
     _writer.String(name, static_cast<SizeType>(strlen(name)));
     return *this;
-}
-
-bool Writer::hasMember(const char*) const
-{
-    // This function is for Reader only.
-    assert(false);
-    return false;
 }
 
 Writer& Writer::startObject()
