@@ -169,7 +169,7 @@ Reader& Reader::endObject()
         if (_stack.top().value->IsObject()
             && _stack.top().state == StackItem::Started)
         {
-            Next();
+            next();
         }
         else
         {
@@ -222,7 +222,7 @@ Reader& Reader::endArray()
         if (_stack.top().value->IsArray()
             && _stack.top().state == StackItem::Closed)
         {
-            Next();
+            next();
         }
         else
         {
@@ -233,6 +233,36 @@ Reader& Reader::endArray()
         }
     }
     return *this;
+}
+
+void Reader::next()
+{
+    if (error() > 0)
+        return;
+
+    assert(!_stack.empty());
+    _stack.pop();
+
+    if (!_stack.empty() && _stack.top().value->IsArray())
+    {
+        // Otherwise means reading array item pass end
+        if (_stack.top().state == StackItem::Started)
+        {
+            if (_stack.top().index < (_stack.top().value->Size() - 1))
+            {
+                const Value& value = (*_stack.top().value)[++_stack.top().index];
+                _stack.push(StackItem(&value, StackItem::BeforeStart));
+            }
+            else
+                _stack.top().state = StackItem::Closed;
+        }
+        else
+        {
+            setError(1);
+            log_error_m << "Stack top state is not StackItem::Started"
+                        << ". JIndex: " << _jsonIndex;
+        }
+    }
 }
 
 Reader& Reader::setNull()
@@ -249,12 +279,12 @@ Reader& Reader::operator& (bool& b)
         if (_stack.top().value->IsBool())
         {
             b = _stack.top().value->GetBool();
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             b = false;
-            Next();
+            next();
         }
         else
         {
@@ -310,12 +340,12 @@ Reader& Reader::operator& (qint32& i)
         if (_stack.top().value->IsInt())
         {
             i = _stack.top().value->GetInt();
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             i = 0;
-            Next();
+            next();
         }
         else
         {
@@ -335,12 +365,12 @@ Reader& Reader::operator& (quint32& u)
         if (_stack.top().value->IsUint())
         {
             u = _stack.top().value->GetUint();
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             u = 0;
-            Next();
+            next();
         }
         else
         {
@@ -360,12 +390,12 @@ Reader& Reader::operator& (qint64& i)
         if (_stack.top().value->IsInt64())
         {
             i = _stack.top().value->GetInt64();
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             i = 0;
-            Next();
+            next();
         }
         else
         {
@@ -385,12 +415,12 @@ Reader& Reader::operator& (quint64& u)
         if (_stack.top().value->IsUint64())
         {
             u = _stack.top().value->GetUint64();
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             u = 0;
-            Next();
+            next();
         }
         else
         {
@@ -410,12 +440,12 @@ Reader& Reader::operator& (double& d)
         if (_stack.top().value->IsNumber())
         {
             d = _stack.top().value->GetDouble();
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             d = 0;
-            Next();
+            next();
         }
         else
         {
@@ -452,12 +482,12 @@ Reader& Reader::operator& (QString& s)
         if (_stack.top().value->IsString())
         {
             s = QString::fromUtf8(_stack.top().value->GetString());
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             s = QString();
-            Next();
+            next();
         }
         else
         {
@@ -477,12 +507,12 @@ Reader& Reader::operator& (QDate& date)
         if (_stack.top().value->IsString())
         {
             date = QDate::fromString(_stack.top().value->GetString(), "yyyy-MM-dd");
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             date = QDate();
-            Next();
+            next();
         }
         else
         {
@@ -502,12 +532,12 @@ Reader& Reader::operator& (QTime& time)
         if (_stack.top().value->IsString())
         {
             time = QTime::fromString(_stack.top().value->GetString(), "hh:mm:ss.zzz");
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             time = QTime();
-            Next();
+            next();
         }
         else
         {
@@ -527,12 +557,12 @@ Reader& Reader::operator& (QDateTime& dtime)
         if (_stack.top().value->IsInt64())
         {
             dtime = QDateTime::fromMSecsSinceEpoch(_stack.top().value->GetInt64());
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             dtime = QDateTime();
-            Next();
+            next();
         }
         else
         {
@@ -555,12 +585,12 @@ Reader& Reader::operator& (QUuid& uuid)
                                        _stack.top().value->GetString(),
                                        _stack.top().value->GetStringLength());
             uuid = QUuid(ba);
-            Next();
+            next();
         }
         else if (_stack.top().value->IsNull())
         {
             uuid = QUuid();
-            Next();
+            next();
         }
         else
         {
@@ -571,36 +601,6 @@ Reader& Reader::operator& (QUuid& uuid)
         }
     }
     return *this;
-}
-
-void Reader::Next()
-{
-    if (error() > 0)
-        return;
-
-    assert(!_stack.empty());
-    _stack.pop();
-
-    if (!_stack.empty() && _stack.top().value->IsArray())
-    {
-        // Otherwise means reading array item pass end
-        if (_stack.top().state == StackItem::Started)
-        {
-            if (_stack.top().index < (_stack.top().value->Size() - 1))
-            {
-                const Value& value = (*_stack.top().value)[++_stack.top().index];
-                _stack.push(StackItem(&value, StackItem::BeforeStart));
-            }
-            else
-                _stack.top().state = StackItem::Closed;
-        }
-        else
-        {
-            setError(1);
-            log_error_m << "Stack top state is not StackItem::Started"
-                        << ". JIndex: " << _jsonIndex;
-        }
-    }
 }
 
 //------------------------------- Writer ---------------------------------

@@ -118,9 +118,10 @@ private:
         enum State
         {
             BeforeStart, // An object/array is in the stack but it is not yet called
-                         // by StartObject()/StartArray().
-            Started,     // An object/array is called by StartObject()/StartArray().
-            Closed       // An array is closed after read all element, but before EndArray().
+                         // by startObject()/startArray().
+            Started,     // An object/array is called by  startObject()/startArray().
+            Closed       // An array is closed after read all  element,  but  before
+                         // call endArray().
         };
 
         StackItem() = default;
@@ -139,10 +140,10 @@ private:
     void setError(int val, bool optional = false);
 
     QByteArray stackFieldName() const;
+    void next();
 
 private:
     DISABLE_DEFAULT_COPY(Reader)
-    void Next();
 
     Document _document;
     Stack _stack;
@@ -382,7 +383,7 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
         if (_stack.top().value->IsNull())
         {
             ptr = clife_ptr<T>();
-            Next();
+            next();
         }
         else if (_stack.top().value->IsObject())
         {
