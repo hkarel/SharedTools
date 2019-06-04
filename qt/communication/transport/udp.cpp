@@ -367,7 +367,7 @@ void Socket::run()
                     {
                         data::Unknown unknown;
                         readFromMessage(m, unknown);
-                        if (unknown.isValid)
+                        if (unknown.dataIsValid)
                         {
                             log_error_m << "Command " << CommandNameLog(unknown.commandId)
                                         << " is unknown for the remote side"
@@ -385,7 +385,7 @@ void Socket::run()
 
                     // Если команда неизвестна - отправляем об этом уведомление
                     // и переходим к обработке следующей команды.
-                    if (!commandsPool().commandExists(m->command()))
+                    if (!command::pool().commandExists(m->command()))
                     {
                         break_point
                         // Отладить
