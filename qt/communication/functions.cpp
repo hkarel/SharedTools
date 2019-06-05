@@ -59,22 +59,6 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
     return messageRead(message, data, errorSender);
 }
 
-SResult writeToMessage(const data::MessageError& data, Message::Ptr& message,
-                       SerializationFormat contentFormat)
-{
-    message->setType(Message::Type::Answer);
-    message->setExecStatus(Message::ExecStatus::Error);
-    return messageWrite(data, message, contentFormat);
-}
-
-SResult writeToMessage(const data::MessageFailed& data, Message::Ptr& message,
-                       SerializationFormat contentFormat)
-{
-    message->setType(Message::Type::Answer);
-    message->setExecStatus(Message::ExecStatus::Failed);
-    return messageWrite(data, message, contentFormat);
-}
-
 QString errorDescription(const Message::Ptr& message)
 {
     QString descr;

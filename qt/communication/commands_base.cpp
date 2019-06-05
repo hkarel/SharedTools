@@ -43,6 +43,14 @@ REGISTRY_COMMAND(CloseConnection,    "e71921fd-e5b3-4f9b-8be7-283e8bb2a531")
 
 namespace data {
 
+MessageError::MessageError(qint32 group, const QUuidEx& code, const QString& description)
+    : group(group), code(code), description(description)
+{}
+
+MessageError::MessageError(qint32 group, const QUuidEx& code, const char* description)
+    : MessageError(group, code, QString::fromUtf8(description))
+{}
+
 bserial::RawVector MessageError::toRaw() const
 {
     B_SERIALIZE_V1(stream)
@@ -62,6 +70,14 @@ void MessageError::fromRaw(const bserial::RawVector& vect)
     B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
+
+MessageFailed::MessageFailed(qint32 group, const QUuidEx& code, const QString& description)
+    : group(group), code(code), description(description)
+{}
+
+MessageFailed::MessageFailed(qint32 group, const QUuidEx& code, const char* description)
+    : MessageFailed(group, code, QString::fromUtf8(description))
+{}
 
 bserial::RawVector MessageFailed::toRaw() const
 {

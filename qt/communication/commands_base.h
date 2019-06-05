@@ -162,6 +162,14 @@ struct MessageError
     qint32  group = {0};  // Используется для группировки сообщений по группам
     QUuidEx code;         // Глобальный код ошибки
     QString description;  // Описание ошибки (сериализуется в utf8)
+
+    MessageError() = default;
+    MessageError(const MessageError&) = default;
+
+    MessageError(qint32 group, const QUuidEx& code, const QString& description);
+    MessageError(qint32 group, const QUuidEx& code, const char* description);
+
+    void assign(const MessageError& msg) {*this = msg;}
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
@@ -187,6 +195,14 @@ struct MessageFailed
     qint32  group = {0};  // Используется для группировки сообщений по группам
     QUuidEx code;         // Глобальный код неудачи
     QString description;  // Описание неудачи (сериализуется в utf8)
+
+    MessageFailed() = default;
+    MessageFailed(const MessageFailed&) = default;
+
+    MessageFailed(qint32 group, const QUuidEx& code, const QString& description);
+    MessageFailed(qint32 group, const QUuidEx& code, const char* description);
+
+    void assign(const MessageFailed& msg) {*this = msg;}
     DECLARE_B_SERIALIZE_FUNC
 
 #ifdef JSON_SERIALIZATION
@@ -327,15 +343,14 @@ bool checkUnique();
 struct Trait {};
 
 #define DECL_ERROR_CODE(VAR, GROUP, CODE, DESCR) \
-    struct VAR##__struct : Trait { \
-        QUuidEx code = {QUuidEx(CODE)}; \
-        VAR##__struct () {static bool b {false}; if (!b) {b = true; pool()[code]++;}} \
-        operator data::MessageError()  const {return {GROUP, code, DESCR};} \
-        operator data::MessageFailed() const {return {GROUP, code, DESCR};} \
-        data::MessageError  asError()  const {return {GROUP, code, DESCR};} \
-        data::MessageFailed asFailed() const {return {GROUP, code, DESCR};} \
-    } static VAR;
-
+    struct VAR##__struct : data::MessageError, Trait { \
+        VAR##__struct () : data::MessageError(GROUP, QUuidEx(CODE), DESCR) { \
+            static bool b {false}; if (!b) {b = true; pool()[code]++;} \
+        } \
+        data::MessageFailed asFailed() const { \
+            return data::MessageFailed(group, code, description); \
+        } \
+    } static const VAR;
 
 //--------------- Список глобальных ошибок для сообщения Error ---------------
 
