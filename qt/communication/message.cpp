@@ -87,7 +87,6 @@ Message::Ptr Message::cloneForAnswer() const
     m->_protocolVersionHigh = _protocolVersionHigh;
     m->_flags = _flags;
     m->_flags2 = _flags2;
-    //m->_tag = _tag;
     m->_tags = _tags;
     m->_maxTimeLife = _maxTimeLife;
     m->_socketType = _socketType;
@@ -222,7 +221,6 @@ int Message::size() const
     if (_flags2 != 0)
         sz += sizeof(_flags2);
 
-    //if (_tag != 0) sz += sizeof(_tag);
     if (!_tags.isEmpty())
         sz += sizeof(quint8) + _tags.count() * sizeof(quint64);
 
@@ -238,7 +236,6 @@ int Message::size() const
 void Message::initEmptyTraits() const
 {
     _flag.flags2IsEmpty      = (_flags2 == 0);
-    //_flag.tagIsEmpty         = (_tag == 0);
     _flag.tagsIsEmpty        = (_tags.isEmpty());
     _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
     _flag.contentIsEmpty     = (_content.isEmpty());
@@ -277,7 +274,6 @@ void Message::toDataStream(QDataStream& stream) const
     if (!_flag.flags2IsEmpty)
         stream << _flags2;
 
-    //if (!_flag.tagIsEmpty)  stream << _tag;
     if (!_flag.tagsIsEmpty)
     {
         stream << quint8(_tags.size());
@@ -304,7 +300,6 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
     if (!m->_flag.flags2IsEmpty)
         stream >> m->_flags2;
 
-    //if (!m->_flag.tagIsEmpty)  stream >> m->_tag;
     if (!m->_flag.tagsIsEmpty)
     {
         quint8 size;
@@ -367,16 +362,12 @@ BByteArray Message::toJson() const
 
     if (!_flag.flags2IsEmpty)
     {
-        //stream << _flags2;
+        // stream << _flags2;
         writer.Key("flags2");
         writer.Uint(_flags2);
     }
     if (!_flag.tagsIsEmpty)
     {
-//        //stream << _tag;
-//        writer.Key("tag");
-//        writer.Uint64(_tag);
-
         writer.Key("tags");
         writer.StartArray();
         for (int i = 0; i < _tags.count(); ++i)
@@ -385,13 +376,13 @@ BByteArray Message::toJson() const
     }
     if (!_flag.maxTimeLifeIsEmpty)
     {
-        //stream << _maxTimeLife;
+        // stream << _maxTimeLife;
         writer.Key("maxTimeLife");
         writer.Uint64(_maxTimeLife);
     }
     if (!_flag.contentIsEmpty)
     {
-        //stream << _content;
+        // stream << _content;
         writer.Key("content");
         writer.RawValue(_content.constData(), size_t(_content.length()), kObjectType);
     }
@@ -454,10 +445,8 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
         {
             m->_flags2 = quint32(member->value.GetUint());
         }
-        //else if (stringEqual("tag", member->name) && member->value.IsUint64())
         else if (stringEqual("tags", member->name) && member->value.IsArray())
         {
-            //m->_tag = quint64(member->value.GetUint64());
             int size = int(member->value.Size());
             m->_tags.resize(size);
             for (int i = 0; i < size; ++i)
