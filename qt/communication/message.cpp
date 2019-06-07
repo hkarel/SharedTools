@@ -244,6 +244,7 @@ void Message::initEmptyTraits() const
     _flag.contentIsEmpty     = (_content.isEmpty());
 }
 
+#ifdef BPROTO_SERIALIZATION
 BByteArray Message::toBProto() const
 {
     BByteArray ba;
@@ -324,6 +325,7 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     return std::move(m);
 }
+#endif // BPROTO_SERIALIZATION
 
 #ifdef JSON_SERIALIZATION
 BByteArray Message::toJson() const

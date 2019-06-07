@@ -151,7 +151,9 @@ Socket::Socket(SocketType type) : _type(type)
 {
     registrationQtMetatypes();
 
+#ifdef BPROTO_SERIALIZATION
     _protocolMap << qMakePair(SerializationFormat::BProto, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
+#endif
 #ifdef JSON_SERIALIZATION
     _protocolMap << qMakePair(SerializationFormat::Json,   QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
 #endif
@@ -266,6 +268,14 @@ void Socket::run()
             serializationSignature = sign.second;
             break;
         }
+
+    if (!isListenerSide() && serializationSignature.isNull())
+    {
+        log_error_m << "Message serialization format signature undefined";
+        SpinLocker locker(_socketLock); (void) locker;
+        socketClose();
+        prog_abort();
+    }
 
     // Идентификатор команды CloseConnection, используется для отслеживания
     // ответа на запрос о разрыве соединения.
@@ -394,13 +404,21 @@ void Socket::run()
 
                 alog::Line logLine =
                     log_verbose_m << "Message serialization format: ";
-#ifdef JSON_SERIALIZATION
-                if (_messageFormat == SerializationFormat::Json)
-                    logLine << "json";
-                else
+                switch (_messageFormat)
+                {
+#ifdef BPROTO_SERIALIZATION
+                    case SerializationFormat::BProto:
+                        logLine << "bproto";
+                        break;
 #endif
-                    logLine << "bproto";
-
+#ifdef JSON_SERIALIZATION
+                    case SerializationFormat::Json:
+                        logLine << "json";
+                        break;
+#endif
+                    default:
+                        logLine << "unknown";
+                }
                 _serializationSignatureWrite = true;
             }
 
@@ -459,14 +477,21 @@ void Socket::run()
                     {
                         alog::Line logLine =
                             log_verbose_m << "Message serialization format: ";
-                        if (_messageFormat == SerializationFormat::BProto)
-                            logLine << "bproto";
-#ifdef JSON_SERIALIZATION
-                        else if (_messageFormat == SerializationFormat::Json)
-                            logLine << "json";
+                        switch (_messageFormat)
+                        {
+#ifdef BPROTO_SERIALIZATION
+                            case SerializationFormat::BProto:
+                                logLine << "bproto";
+                                break;
 #endif
-                        else
-                            logLine << "unknown";
+#ifdef JSON_SERIALIZATION
+                            case SerializationFormat::Json:
+                                logLine << "json";
+                                break;
+#endif
+                            default:
+                                logLine << "unknown";
+                        }
                     }
                     else
                         incomingSignature = QUuidEx{};
@@ -619,9 +644,11 @@ void Socket::run()
                     BByteArray buff;
                     switch (_messageFormat)
                     {
+#ifdef BPROTO_SERIALIZATION
                         case SerializationFormat::BProto:
                             buff = message->toBProto();
                             break;
+#endif
 #ifdef JSON_SERIALIZATION
                         case SerializationFormat::Json:
                             buff = message->toJson();
@@ -758,11 +785,13 @@ void Socket::run()
                 if (!readBuff.isEmpty())
                 {
                     Message::Ptr message;
-                    switch (messageFormat())
+                    switch (_messageFormat)
                     {
+#ifdef BPROTO_SERIALIZATION
                         case SerializationFormat::BProto:
                             message = Message::fromBProto(readBuff);
                             break;
+#endif
 #ifdef JSON_SERIALIZATION
                         case SerializationFormat::Json:
                             if (alog::logger().level() == alog::Level::Debug2)

@@ -136,18 +136,18 @@ struct Data
                 || MessageType3 == Message::Type::Event);
     }
 
-    // Фиктивные функции, необходимые для сборки проекта когда не используется
-    // бинарная сериализация
-    bserial::RawVector toRaw() const {
-        log_error << "Critical error. Data::toRaw(): You must override "
-                     "this function in the inherited structure";
-        prog_abort();
-    }
-    void fromRaw(const bserial::RawVector&) {
-        log_error << "Critical error. Data::fromRaw(): You must override "
-                     "this function in the inherited structure";
-        prog_abort();
-    }
+//    // Фиктивные функции, необходимые для сборки проекта когда не используется
+//    // бинарная сериализация
+//    bserial::RawVector toRaw() const {
+//        log_error << "Critical error. Data::toRaw(): You must override "
+//                     "this function in the inherited structure";
+//        prog_abort();
+//    }
+//    void fromRaw(const bserial::RawVector&) {
+//        log_error << "Critical error. Data::fromRaw(): You must override "
+//                     "this function in the inherited structure";
+//        prog_abort();
+//    }
 };
 
 /**
@@ -170,7 +170,10 @@ struct MessageError
     MessageError(qint32 group, const QUuidEx& code, const char* description);
 
     void assign(const MessageError& msg) {*this = msg;}
+
+#ifdef BPROTO_SERIALIZATION
     DECLARE_B_SERIALIZE_FUNC
+#endif
 
 #ifdef JSON_SERIALIZATION
     J_SERIALIZE_BASE_BEGIN
@@ -203,7 +206,10 @@ struct MessageFailed
     MessageFailed(qint32 group, const QUuidEx& code, const char* description);
 
     void assign(const MessageFailed& msg) {*this = msg;}
+
+#ifdef BPROTO_SERIALIZATION
     DECLARE_B_SERIALIZE_FUNC
+#endif
 
 #ifdef JSON_SERIALIZATION
     J_SERIALIZE_BASE_BEGIN
@@ -229,7 +235,10 @@ struct Unknown : Data<&command::Unknown,
                                     // (сериализуется в utf8).
     QHostAddress  address;          // Адрес и порт хоста для которого
     quint16       port;             // команда неизвестна.
+
+#ifdef BPROTO_SERIALIZATION
     DECLARE_B_SERIALIZE_FUNC
+#endif
 
 #ifdef JSON_SERIALIZATION
     DECLARE_J_SERIALIZE_FUNC
@@ -249,7 +258,10 @@ struct Error : Data<&command::Error,
     qint32  group = {0}; // Используется для группировки сообщений по группам
     QUuidEx code;        // Глобальный код ошибки
     QString description; // Описание ошибки (сериализуется в utf8)
+
+#ifdef BPROTO_SERIALIZATION
     DECLARE_B_SERIALIZE_FUNC
+#endif
 
 #ifdef JSON_SERIALIZATION
     J_SERIALIZE_BEGIN
@@ -272,7 +284,10 @@ struct CloseConnection : Data<&command::CloseConnection,
                           // несовместимости версий протоколов.
     QString description;  // Описание причины закрытия соединения,
                           // (сериализуется в utf8)
+
+#ifdef BPROTO_SERIALIZATION
     DECLARE_B_SERIALIZE_FUNC
+#endif
 
 #ifdef JSON_SERIALIZATION
     J_SERIALIZE_BEGIN

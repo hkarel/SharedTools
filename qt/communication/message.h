@@ -68,11 +68,9 @@ typedef QSetEx<SocketDescriptor> SocketDescriptorSet;
 
 enum class SerializationFormat
 {
-    BProto = 0  // Бинарный формат
-#ifdef JSON_SERIALIZATION
-   ,Json   = 1  // Json формат
-#endif
-    //LastFormat = 7  Предполагается, что будет не больше 8 форматов
+    BProto = 0, // Бинарный формат
+    Json   = 1  // Json формат
+  //LastFormat = 7  Предполагается, что будет не больше 8 форматов
 };
 
 class Message : public clife_base
@@ -286,6 +284,7 @@ public:
     //   - compression = None
     Ptr cloneForAnswer() const;
 
+#ifdef BPROTO_SERIALIZATION
     // Функция записи данных
     template<typename... Args>
     SResult writeContent(const Args&... args);
@@ -293,6 +292,15 @@ public:
     // Функция чтения данных
     template<typename... Args>
     SResult readContent(Args&... args) const;
+
+    // Вспомогательные функции, используются для формирования сырого потока
+    // данных для отправки в сетевой сокет
+    BByteArray toBProto() const;
+    static Ptr fromBProto(const BByteArray&);
+
+    void toDataStream(QDataStream&) const;
+    static Ptr fromDataStream(QDataStream&);
+#endif
 
 #ifdef JSON_SERIALIZATION
     // Функция записи данных для json формата
@@ -302,17 +310,7 @@ public:
     // Функция чтения данных для json формата
     template<typename T>
     SResult readJsonContent(T&) const;
-#endif
 
-    // Вспомогательные функции, используются для формирования сырого потока
-    // данных для отправки в сетевой сокет
-    BByteArray toBProto() const;
-    static Ptr fromBProto(const BByteArray&);
-
-    void toDataStream(QDataStream&) const;
-    static Ptr fromDataStream(QDataStream&);
-
-#ifdef JSON_SERIALIZATION
     BByteArray toJson() const;
     static Ptr fromJson(const BByteArray&);
 #endif
@@ -329,6 +327,7 @@ private:
     void initEmptyTraits() const;
     void decompress(BByteArray&) const;
 
+#ifdef BPROTO_SERIALIZATION
     template<typename T, typename... Args>
     void writeInternal(QDataStream& s, const T& t, const Args&... args);
     void writeInternal(QDataStream&) {}
@@ -336,6 +335,7 @@ private:
     template<typename T, typename... Args>
     void readInternal(QDataStream& s, T& t, Args&... args) const;
     void readInternal(QDataStream&) const {}
+#endif
 
     void setSocketType(SocketType val) {_socketType = val;}
     void setSourcePoint(const HostPoint& val) {_sourcePoint = val;}
@@ -423,6 +423,7 @@ private:
 
 //------------------------- Implementation Message ---------------------------
 
+#ifdef BPROTO_SERIALIZATION
 template<typename... Args>
 SResult Message::writeContent(const Args&... args)
 {
@@ -445,22 +446,6 @@ SResult Message::readContent(Args&... args) const
     return SResult(stream.status() == QDataStream::Ok);
 }
 
-#ifdef JSON_SERIALIZATION
-template<typename T>
-SResult Message::writeJsonContent(const T& t)
-{
-    setContentFormat(SerializationFormat::Json);
-    _content = const_cast<T&>(t).toJson();
-    return SResult(true);
-}
-
-template<typename T>
-SResult Message::readJsonContent(T& t) const
-{
-    return t.fromJson(_content);
-}
-#endif
-
 template<typename T, typename... Args>
 void Message::writeInternal(QDataStream& s, const T& t, const Args&... args)
 {
@@ -480,5 +465,22 @@ void Message::readInternal(QDataStream& s, T& t, Args&... args) const
     s >> t;
     readInternal(s, args...);
 }
+#endif
+
+#ifdef JSON_SERIALIZATION
+template<typename T>
+SResult Message::writeJsonContent(const T& t)
+{
+    setContentFormat(SerializationFormat::Json);
+    _content = const_cast<T&>(t).toJson();
+    return SResult(true);
+}
+
+template<typename T>
+SResult Message::readJsonContent(T& t) const
+{
+    return t.fromJson(_content);
+}
+#endif
 
 } // namespace communication

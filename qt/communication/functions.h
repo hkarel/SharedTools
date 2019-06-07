@@ -53,6 +53,7 @@ template<typename T>
 struct not_error_data : std::enable_if<!std::is_base_of<data::MessageError, T>::value
                                     && !std::is_base_of<data::MessageFailed, T>::value, int> {};
 
+#ifdef BPROTO_SERIALIZATION
 template<typename CommandDataT>
 SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
                            typename is_error_data<CommandDataT>::type = 0)
@@ -93,6 +94,7 @@ SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
 {
     return message->writeContent(data);
 }
+#endif
 
 template<typename CommandDataT>
 SResult messageWrite(const CommandDataT& data, Message::Ptr& message,
@@ -101,9 +103,11 @@ SResult messageWrite(const CommandDataT& data, Message::Ptr& message,
     SResult res {false};
     switch (contentFormat)
     {
+#ifdef BPROTO_SERIALIZATION
         case SerializationFormat::BProto:
             res = messageWriteBProto(data, message);
             break;
+#endif
 #ifdef JSON_SERIALIZATION
         case SerializationFormat::Json:
             res = message->writeJsonContent(data);
@@ -189,6 +193,7 @@ inline Message::Ptr createJsonMessage(const QUuidEx& command)
 }
 #endif
 
+#ifdef BPROTO_SERIALIZATION
 template<typename CommandDataT>
 SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
                           typename is_error_data<CommandDataT>::type = 0)
@@ -221,6 +226,7 @@ SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
 {
   return message->readContent(data);
 }
+#endif
 
 template<typename CommandDataT>
 SResult messageRead(const Message::Ptr& message, CommandDataT& data,
@@ -229,9 +235,11 @@ SResult messageRead(const Message::Ptr& message, CommandDataT& data,
     SResult res {false};
     switch (message->contentFormat())
     {
+#ifdef BPROTO_SERIALIZATION
         case SerializationFormat::BProto:
             res = messageReadBProto(message, data);
             break;
+#endif
 #ifdef JSON_SERIALIZATION
         case SerializationFormat::Json:
             res = message->readJsonContent(data);
