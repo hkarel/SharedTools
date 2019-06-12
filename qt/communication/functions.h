@@ -279,7 +279,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
     if (message->command() != data.command())
     {
         log_error << "Command of message " << CommandNameLog(message->command())
-                  << " is not equal command of data " << CommandNameLog(data.command());
+                  << " is not equivalent command for data " << CommandNameLog(data.command());
     }
     else if (message->type() == Message::Type::Command)
     {
