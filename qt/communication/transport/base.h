@@ -220,7 +220,7 @@ protected:
     virtual void messageInit(Message::Ptr&) = 0;
     virtual void fillUnknownMessage(const Message::Ptr&, data::Unknown&) = 0;
 
-    // Признак того, что сокет был создан  на стороне listenr-а, используется
+    // Признак того, что сокет был создан  на стороне listener-а, используется
     // для определения порядка обмена сигнатурами протоколов.
     bool isListenerSide() const {return _isListenerSide;}
     void setListenerSide(bool val) {_isListenerSide = val;}
