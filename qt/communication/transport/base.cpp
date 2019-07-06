@@ -114,12 +114,6 @@ bool SocketCommon::send(const Message::Ptr& message)
     return true;
 }
 
-bool SocketCommon::send(const QUuidEx& command)
-{
-    Message::Ptr message = Message::create(command);
-    return send(message);
-}
-
 void SocketCommon::remove(const QUuidEx& command)
 {
     QMutexLocker locker(&_messagesLock); (void) locker;
@@ -284,9 +278,9 @@ void Socket::run()
     _protocolCompatible = ProtocolCompatible::Undefined;
     {
         // Добавляем самое первое сообщение с информацией о совместимости
-        Message::Ptr message = Message::create(command::ProtocolCompatible);
-        message->setPriority(Message::Priority::High);
-        internalMessages.add(message.detach());
+        Message::Ptr m = Message::create(command::ProtocolCompatible, _messageFormat);
+        m->setPriority(Message::Priority::High);
+        internalMessages.add(m.detach());
     }
 
     auto processingProtocolCompatibleCommand = [&](Message::Ptr& message) -> void

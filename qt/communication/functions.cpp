@@ -40,7 +40,7 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageError& data,
         log_error << "Message exec status must be Message::ExecStatus::Error";
         prog_abort();
     }
-    return messageRead(message, data, errorSender);
+    return messageReadContent(message, data, errorSender);
 }
 
 SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
@@ -56,7 +56,7 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
         log_error << "Message exec status must be Message::ExecStatus::Failed";
         prog_abort();
     }
-    return messageRead(message, data, errorSender);
+    return messageReadContent(message, data, errorSender);
 }
 
 QString errorDescription(const Message::Ptr& message)

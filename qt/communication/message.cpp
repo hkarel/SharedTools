@@ -61,7 +61,7 @@ Message::Message() : _flags(0), _flags2(0)
     // не именованных union-параметров при их объявлении в классе.
 }
 
-Message::Ptr Message::create(const QUuidEx& command)
+Message::Ptr Message::create(const QUuidEx& command, SerializationFormat contentFormat)
 {
     Ptr m {new Message};
 
@@ -71,7 +71,7 @@ Message::Ptr Message::create(const QUuidEx& command)
     m->_flag.execStatus = static_cast<quint32>(ExecStatus::Unknown);
     m->_flag.priority = static_cast<quint32>(Priority::Normal);
     m->_flag.compression = static_cast<quint32>(Compression::None);
-    m->_flag.contentFormat = static_cast<quint32>(SerializationFormat::BProto);
+    m->_flag.contentFormat = static_cast<quint32>(contentFormat);
 
     return std::move(m);
 }

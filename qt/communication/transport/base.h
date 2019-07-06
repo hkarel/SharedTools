@@ -85,14 +85,6 @@ class SocketCommon : public QThreadEx
 public:
     // Функции отправки сообщений.
     bool send(const Message::Ptr&);
-    bool send(const QUuidEx& command);
-
-    template<typename CommandDataT>
-    bool send(const CommandDataT& data, Message::Type type = Message::Type::Command)
-    {
-        Message::Ptr message = createMessage(data, type);
-        return send(message);
-    }
 
     // Удаляет из очереди сообщений на отправку сообщения с заданным
     // идентификатором команды.
@@ -113,6 +105,7 @@ protected:
     mutable QMutex _messagesLock;
     mutable QWaitCondition _messagesCond;
 
+    // Счетчик для сообщений с нормальным приоритетом
     int _messagesNormCounter = {0};
 
     // Список команд неизвестных на принимающей стороне, позволяет передавать
@@ -244,6 +237,8 @@ private:
 
     typedef QPair<SerializationFormat, QUuidEx /*сигнатура формата*/>  ProtocolSign;
     QVector<ProtocolSign> _protocolMap;
+
+    // Формат сериализации сообщения (не контента)
     SerializationFormat _messageFormat = {SerializationFormat::BProto};
 
     bool _serializationSignatureRead = {false};

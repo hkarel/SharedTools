@@ -97,8 +97,8 @@ SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
 #endif
 
 template<typename CommandDataT>
-SResult messageWrite(const CommandDataT& data, Message::Ptr& message,
-                     SerializationFormat contentFormat)
+SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
+                            SerializationFormat contentFormat)
 {
     SResult res {false};
     switch (contentFormat)
@@ -151,7 +151,7 @@ Message::Ptr createMessage(const CommandDataT& data,
                   "In this function is allow 'Message::Type::Command'"
                   " or 'Message::Type::Event' type of struct only");
 
-    Message::Ptr m = Message::create(data.command());
+    Message::Ptr m = Message::create(data.command(), params.format);
     if (CommandDataT::forCommandMessage()
         && CommandDataT::forEventMessage())
     {
@@ -170,13 +170,13 @@ Message::Ptr createMessage(const CommandDataT& data,
         m->setType(Message::Type::Event);
 
     m->setExecStatus(Message::ExecStatus::Unknown);
-    messageWrite(data, m, params.format);
+    messageWriteContent(data, m, params.format);
     return std::move(m);
 }
 
 inline Message::Ptr createMessage(const QUuidEx& command)
 {
-    return Message::create(command);
+    return Message::create(command, SerializationFormat::BProto);
 }
 
 #ifdef JSON_SERIALIZATION
@@ -189,7 +189,7 @@ Message::Ptr createJsonMessage(const CommandDataT& data,
 
 inline Message::Ptr createJsonMessage(const QUuidEx& command)
 {
-    return Message::create(command);
+    return Message::create(command, SerializationFormat::Json);
 }
 #endif
 
@@ -229,8 +229,8 @@ SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
 #endif
 
 template<typename CommandDataT>
-SResult messageRead(const Message::Ptr& message, CommandDataT& data,
-                    ErrorSenderFunc errorSender)
+SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
+                           ErrorSenderFunc errorSender)
 {
     SResult res {false};
     switch (message->contentFormat())
@@ -285,7 +285,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
     {
         if (data.forCommandMessage())
         {
-            SResult res = messageRead(message, data, errorSender);
+            SResult res = messageReadContent(message, data, errorSender);
             data.dataIsValid = (bool)res;
             return res;
         }
@@ -297,7 +297,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
     {
         if (data.forEventMessage())
         {
-            SResult res = messageRead(message, data, errorSender);
+            SResult res = messageReadContent(message, data, errorSender);
             data.dataIsValid = (bool)res;
             return res;
         }
@@ -311,7 +311,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
         {
             if (data.forAnswerMessage())
             {
-                SResult res = messageRead(message, data, errorSender);
+                SResult res = messageReadContent(message, data, errorSender);
                 data.dataIsValid = (bool)res;
                 return res;
             }
@@ -324,7 +324,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
             if (data.forAnswerMessage()
                 && std::is_base_of<data::MessageFailed, CommandDataT>::value)
             {
-                SResult res = messageRead(message, data, errorSender);
+                SResult res = messageReadContent(message, data, errorSender);
                 data.dataIsValid = (bool)res;
                 return res;
             }
@@ -338,7 +338,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
             if (data.forAnswerMessage()
                 && std::is_base_of<data::MessageError, CommandDataT>::value)
             {
-                SResult res = messageRead(message, data, errorSender);
+                SResult res = messageReadContent(message, data, errorSender);
                 data.dataIsValid = (bool)res;
                 return res;
             }
@@ -386,7 +386,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
         if (data.forCommandMessage())
         {
             message->setExecStatus(Message::ExecStatus::Unknown);
-            return messageWrite(data, message, contentFormat);
+            return messageWriteContent(data, message, contentFormat);
         }
         log_error << "Structure of data " << typeid(CommandDataT).name()
                   << " cannot be used for 'Command'-message";
@@ -396,7 +396,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
         if (data.forEventMessage())
         {
             message->setExecStatus(Message::ExecStatus::Unknown);
-            return messageWrite(data, message, contentFormat);
+            return messageWriteContent(data, message, contentFormat);
         }
         log_error << "Structure of data " << typeid(CommandDataT).name()
                   << " cannot be used for 'Event'-message";
@@ -406,7 +406,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
         if (data.forAnswerMessage())
         {
             message->setExecStatus(Message::ExecStatus::Success);
-            return messageWrite(data, message, contentFormat);
+            return messageWriteContent(data, message, contentFormat);
         }
         log_error << "Structure of data " << typeid(CommandDataT).name()
                   << " cannot be used for 'Answer'-message";
@@ -429,7 +429,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Error);
-    return messageWrite(data, message, contentFormat);
+    return messageWriteContent(data, message, contentFormat);
 }
 
 template<typename CommandDataT /*MessageFailed*/>
@@ -439,7 +439,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Failed);
-    return messageWrite(data, message, contentFormat);
+    return messageWriteContent(data, message, contentFormat);
 }
 
 #ifdef JSON_SERIALIZATION
