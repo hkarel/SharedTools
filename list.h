@@ -143,18 +143,18 @@ constexpr const char* ERR_NOCREATE_OBJ =
 #endif
 
 #ifndef NDEBUG
-#  define CHECK_BORDERS(index) \
-     if ((index < 0) || (index >= d->count)) throw LIST_EXCEPT("Index out of bounds");
+#  define CHECK_BORDERS(INDEX) \
+     if ((INDEX < 0) || (INDEX >= d->count)) throw LIST_EXCEPT("Index out of bounds");
 
-#  define CHECK_NOTLESS(index, less) \
-     if (index < less) throw LIST_EXCEPT("Index must not be less than "#less);
+#  define CHECK_NOTLESS(INDEX, LESS) \
+     if (INDEX < LESS) throw LIST_EXCEPT("Index must not be less than "#LESS);
 
-#  define CHECK_INTERNAL_DATA_PTR(D_) \
-     if (D_ == 0) throw LIST_EXCEPT("Internal data-pointer is null");
+#  define CHECK_INTERNAL_DATA_PTR(DPTR) \
+     if (DPTR == 0) throw LIST_EXCEPT("Internal data-pointer is null");
 #else
-#  define CHECK_BORDERS(index)
-#  define CHECK_NOTLESS(index, less_)
-#  define CHECK_INTERNAL_DATA_PTR(D_)
+#  define CHECK_BORDERS(INDEX)
+#  define CHECK_NOTLESS(INDEX, LESS)
+#  define CHECK_INTERNAL_DATA_PTR(DPTR)
 #endif // NDEBUG
 
 
