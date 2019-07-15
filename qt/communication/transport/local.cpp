@@ -55,7 +55,7 @@ bool Socket::init(const QString& serverName)
 {
     if (isRunning())
     {
-        log_error_m << "Impossible execute a initialization because Sender thread is running.";
+        log_error_m << "Impossible execute a initialization because Sender thread is running";
         return false;
     }
     _serverName = serverName;
