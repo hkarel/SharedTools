@@ -212,6 +212,7 @@ void Socket::waitConnection(int time)
     {
         if (threadStop())
             break;
+
         msleep(100);
         if (isConnected())
             break;

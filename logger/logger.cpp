@@ -847,9 +847,9 @@ void Logger::run()
             _forceFlush = false;
             messagesBuff.clear();
         }
-
         if (loopBreak)
             break;
+
         if (threadStop())
             loopBreak = true;
     } //while (true)
