@@ -154,10 +154,7 @@ savers:
 bool loadSavers(const string& confFile, SaverList& savers);
 bool loadSavers(const string& confFile);
 
-//
+// Выводит в лог информацию об используемых фильтрах и сэйверах
 void printSaversInfo();
-
-
-
 
 } // namespace alog
