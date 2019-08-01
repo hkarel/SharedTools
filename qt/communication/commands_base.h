@@ -42,8 +42,11 @@
 #include "qt/qhashex.h"
 #include "qt/quuidex.h"
 #include "qt/communication/message.h"
-#include "qt/communication/bserialize_space.h"
 #include "qt/version/version_number.h"
+
+#ifdef BPROTO_SERIALIZATION
+#include "qt/communication/bserialize_space.h"
+#endif
 
 #ifdef JSON_SERIALIZATION
 #include "qt/communication/serialization/json.h"

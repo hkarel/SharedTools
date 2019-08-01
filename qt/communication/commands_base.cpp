@@ -227,7 +227,7 @@ void CloseConnection::fromRaw(const bserial::RawVector& vect)
     B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
-#endif
+#endif // BPROTO_SERIALIZATION
 
 } // namespace data
 
