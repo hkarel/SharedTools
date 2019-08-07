@@ -83,7 +83,7 @@ void Socket::waitBinding(int time)
     {
         if (threadStop())
             break;
-        msleep(100);
+        msleep(20);
         if (isBound())
             break;
     }
