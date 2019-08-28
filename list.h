@@ -51,9 +51,16 @@
 
 namespace lst {
 
-enum class Container    {No = 0, Yes = 1};
+/// @brief Определяет является ли список владельцем (контейнером)
+///        для элементов или нет.
+enum class Container {No = 0, Yes = 1};
+
+/// @brief Определяет необходимость сжатия списка после удаления
+///        из него элемента.
 enum class CompressList {No = 0, Yes = 1};
-enum class BruteForce   {No = 0, Yes = 1};
+
+/// @brief Признак поиска простым перебором (метод грубой силы).
+enum class BruteForce {No = 0, Yes = 1};
 
 /// @brief Флаги направления сортировки.
 enum class SortMode
@@ -232,7 +239,7 @@ struct FindExtParams
   /// данные.
   void *extParam = {0};
 
-  /// Определяет поиск простым перебором (метод грубой силы).
+  /// Признак поиска простым перебором (метод грубой силы).
   /// Если bruteForce = Yes поиск будет происходить простым перебором, даже
   /// для отсортированного списка.
   BruteForce bruteForce = {BruteForce::No};
