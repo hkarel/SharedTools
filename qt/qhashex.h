@@ -42,7 +42,7 @@ struct QHashIntegral
     QHashIntegral() = default;
     QHashIntegral(T v) : value(v) {}
     operator T() const {return value;}
-    T value = {T()};
+    T value = T{};
 };
 
 /* QHashEx */
