@@ -1055,10 +1055,7 @@ void Listener::closeSockets()
     Socket::List sockets = this->sockets();
     for (Socket* s : sockets)
         if (s->isRunning())
-        {
             s->stop();
-            s->wait();
-        }
 }
 
 void Listener::removeClosedSocketsInternal()
