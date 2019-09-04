@@ -61,7 +61,7 @@ public:
 
     // Ожидает (в секундах) выполнение привязки UDP-сокета к адресу и порту
     // определенными в методе init().
-    void waitBinding(int time = 0);
+    void waitBinding(int timeout = 0);
 
     // Адрес и порт с которыми связан UDP-сокет
     HostPoint bindPoint() const {return _bindPoint;}

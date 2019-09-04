@@ -72,14 +72,15 @@ bool Socket::init(const HostPoint& bindPoint, QUdpSocket::BindMode bindMode)
     return true;
 }
 
-void Socket::waitBinding(int time)
+void Socket::waitBinding(int timeout)
 {
-    if ((time <= 0) || isBound())
+    if ((timeout <= 0) || isBound())
         return;
 
+    timeout *= 1000;
     QElapsedTimer timer;
     timer.start();
-    while (!timer.hasExpired(time * 1000))
+    while (!timer.hasExpired(timeout))
     {
         if (threadStop())
             break;
