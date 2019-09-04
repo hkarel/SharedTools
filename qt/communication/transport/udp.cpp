@@ -217,8 +217,8 @@ void Socket::run()
                 if (alog::logger().level() == alog::Level::Debug2)
                 {
                     log_debug2_m << "Message before sending to the UDP socket"
-                                 << "; message id: " << message->id()
-                                 << "; command: " << CommandNameLog(message->command());
+                                 << ". Id: " << message->id()
+                                 << ". Command: " << CommandNameLog(message->command());
                 }
                 if (message->size() > 500)
                     log_warn_m << "Too large message to send it through a UDP socket"
@@ -246,8 +246,8 @@ void Socket::run()
                             log_debug2_m << "Message was sent to the next addresses:";
                         for (const HostPoint& dp : message->destinationPoints())
                             logLine << " " << dp;
-                        logLine << "; message id: " << message->id();
-                        logLine << "; command: " << CommandNameLog(message->command());
+                        logLine << ". Id: " << message->id();
+                        logLine << ". Command: " << CommandNameLog(message->command());
                     }
                 }
                 else if (!message->sourcePoint().isNull())
@@ -260,14 +260,14 @@ void Socket::run()
                     {
                         log_debug2_m << "Message was sent to the address"
                                      << ": " << message->sourcePoint()
-                                     << "; message id: " << message->id()
-                                     << "; command: " << CommandNameLog(message->command());
+                                     << ". Id: " << message->id()
+                                     << ". Command: " << CommandNameLog(message->command());
                     }
                 }
                 else
                 {
                     log_error_m << "Impossible send message: " << CommandNameLog(message->command())
-                                << "; message id: " << message->id()
+                                << ". Id: " << message->id()
                                 << ". Destination host point is undefined"
                                 << ". Message will be discarded";
                 }
@@ -341,9 +341,9 @@ void Socket::run()
                 if (alog::logger().level() == alog::Level::Debug2)
                 {
                     log_debug2_m << "Message received"
-                                 << "; message id: " << message->id()
-                                 << "; command: " << CommandNameLog(message->command())
-                                 << "; source: " << addr << ":" << port;
+                                 << ". Id: " << message->id()
+                                 << ". Command: " << CommandNameLog(message->command())
+                                 << ". Source: " << addr << ":" << port;
                 }
                 message->setSocketType(SocketType::Udp);
                 message->setSocketDescriptor(SocketDescriptor(-1));
@@ -372,8 +372,8 @@ void Socket::run()
                         {
                             log_error_m << "Command " << CommandNameLog(unknown.commandId)
                                         << " is unknown for the remote side"
-                                        << "; remote host:" << unknown.address << ":" << unknown.port
-                                        << "; socket descriptor: " << unknown.socketDescriptor;
+                                        << ". Remote host:" << unknown.address << ":" << unknown.port
+                                        << ". Socket descriptor: " << unknown.socketDescriptor;
 
                             SpinLocker locker(_unknownCommandsLock); (void) locker;
                             _unknownCommands.insert(unknown.commandId);
@@ -400,8 +400,8 @@ void Socket::run()
                         mUnknown->setPriority(Message::Priority::High);
                         internalMessages.add(mUnknown.detach());
                         log_error_m << "Unknown command: " << unknown.commandId
-                                    << "; host: " << unknown.address << ":" << unknown.port
-                                    << "; socket descriptor: " << unknown.socketDescriptor;
+                                    << ". Host: " << unknown.address << ":" << unknown.port
+                                    << ". Socket descriptor: " << unknown.socketDescriptor;
                         continue;
                     }
                 }
@@ -411,8 +411,8 @@ void Socket::run()
                     if (alog::logger().level() == alog::Level::Debug2)
                     {
                         log_debug2_m << "Message emit"
-                                     << "; message id: " << m->id()
-                                     << "; command: " << CommandNameLog(m->command());
+                                     << ". Id: " << m->id()
+                                     << ". Command: " << CommandNameLog(m->command());
                     }
                     emit message(m);
                 }
