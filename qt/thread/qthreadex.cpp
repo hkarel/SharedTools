@@ -104,7 +104,7 @@ void QThreadEx::sleep(unsigned long timeout)
     timeout *= 1000;
     QElapsedTimer timer;
     timer.start();
-    while ((timer.elapsed() < qint64(timeout)) && !threadStop())
+    while (!timer.hasExpired(timeout) && !threadStop())
         QThread::msleep(200);
 }
 
