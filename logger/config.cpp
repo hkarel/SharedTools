@@ -26,8 +26,6 @@
 
 #include "config.h"
 #include "utils.h"
-
-#include <yaml-cpp/yaml.h>
 #include <stdexcept>
 
 #define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "LogConfig")
@@ -313,13 +311,13 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
         isContinue = ysaver["continue"].as<bool>();
     }
 
-    list<string> filters_;
+    list<string> filterNames;
     if (ysaver["filters"].IsDefined())
     {
         checkFiedType("filters", YAML::NodeType::Sequence);
         const YAML::Node& yfilters = ysaver["filters"];
         for (const YAML::Node& yfilter : yfilters)
-            filters_.push_back(yfilter.as<string>());
+            filterNames.push_back(yfilter.as<string>());
     }
 
     Level level = levelFromString(logLevel);
@@ -330,11 +328,11 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
     if (maxLineSize >= 0)
         saver->setMaxLineSize(maxLineSize);
 
-    for (const string& filter_ : filters_)
+    for (const string& filterName : filterNames)
     {
         bool found = false;
         for (Filter* filter : filters)
-            if (filter->name() == filter_)
+            if (filter->name() == filterName)
             {
                 saver->addFilter(FilterPtr(filter));
                 found = true;
@@ -344,10 +342,45 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
         if (!found)
             throw std::logic_error(
                 "For a saver-node impossible to assign filter "
-                "with name '" + filter_+ "'. Filter not found.");
+                "with name '" + filterName + "'. Filter not found.");
     }
 
     return std::move(saver);
+}
+
+bool loadFilters(const YAML::Node& filtersNode, FilterList& filters)
+{
+    bool result = false;
+    try
+    {
+        if (!filtersNode.IsDefined() || filtersNode.IsNull())
+            return false;
+
+        if (!filtersNode.IsSequence())
+            throw std::logic_error("Filters-node must have sequence type");
+
+        for (const YAML::Node& yfilter : filtersNode)
+            if (FilterPtr f = createFilter(yfilter))
+                filters.add(f.detach());
+
+        result = true;
+    }
+    catch (YAML::ParserException& e)
+    {
+        filters.clear();
+        log_error_m << "YAML error. Detail: " << e.what();
+    }
+    catch (std::exception& e)
+    {
+        filters.clear();
+        log_error_m << "Configuration error. Detail: " << e.what();
+    }
+    catch (...)
+    {
+        filters.clear();
+        log_error_m << "Unknown error";
+    }
+    return result;
 }
 
 bool loadSavers(const string& confFile, SaverList& savers)
@@ -357,17 +390,9 @@ bool loadSavers(const string& confFile, SaverList& savers)
     {
         YAML::Node conf = YAML::LoadFile(confFile);
 
-        FilterList filters;
         const YAML::Node& yfilters = conf["filters"];
-        if (yfilters.IsDefined())
-        {
-            if (!yfilters.IsSequence())
-                throw std::logic_error("Filters-node must have sequence type");
-
-            for (const YAML::Node& yfilter : yfilters)
-                if (FilterPtr f = createFilter(yfilter))
-                    filters.add(f.detach());
-        }
+        FilterList filters;
+        loadFilters(yfilters, filters);
 
         const YAML::Node& ysavers = conf["savers"];
         if (ysavers.IsDefined())

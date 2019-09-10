@@ -29,7 +29,9 @@
 *****************************************************************************/
 
 #pragma once
+
 #include "logger.h"
+#include <yaml-cpp/yaml.h>
 
 namespace alog {
 
@@ -151,6 +153,11 @@ savers:
     file: ./lbucd2.log.3
     ...
 */
+
+// Получает список фильтров из указанной yaml-ноды
+bool loadFilters(const YAML::Node& filtersNode, FilterList& filters);
+
+// Загрузка сэйверов из отдельного файла конфигурации
 bool loadSavers(const string& confFile, SaverList& savers);
 bool loadSavers(const string& confFile);
 
