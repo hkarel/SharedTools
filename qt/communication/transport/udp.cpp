@@ -269,7 +269,7 @@ void Socket::run()
                     log_error_m << "Impossible send message: " << CommandNameLog(message->command())
                                 << ". Id: " << message->id()
                                 << ". Destination host point is undefined"
-                                << ". Message will be discarded";
+                                << ". Message was discarded";
                 }
                 if (loopBreak
                     || timer.hasExpired(3 * delay))
