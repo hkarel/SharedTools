@@ -430,6 +430,10 @@ void Socket::run()
                 while (socketBytesAvailable() < 16)
                 {
                     msleep(10);
+
+                    // Пояснение к вызову функции socketWaitForReadyRead() с нулевым
+                    // таймаутом: без этого  вызова  функция  socketBytesAvailable()
+                    // всегда будет возвращать нулевое значение
                     socketWaitForReadyRead(0);
                     CHECK_SOCKET_ERROR
                     if (timer.hasExpired(timeout))
