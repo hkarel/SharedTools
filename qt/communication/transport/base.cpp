@@ -61,9 +61,8 @@ bool SocketCommon::send(const Message::Ptr& message)
 {
     if (!isRunning())
     {
-        log_error_m << "Socket is not active"
-                    << ". Command " << CommandNameLog(message->command())
-                    << " was discarded";
+        log_error_m << "Socket is not active. Command "
+                    << CommandNameLog(message->command()) << " discarded";
         return false;
     }
     if (message.empty())
@@ -81,8 +80,7 @@ bool SocketCommon::send(const Message::Ptr& message)
         if (isUnknown)
         {
             log_error_m << "Command " << CommandNameLog(message->command())
-                        << " is unknown for receiving side"
-                        << ". Command was discarded";
+                        << " is unknown for receiving side. Command discarded";
             return false;
         }
     }
@@ -622,7 +620,7 @@ void Socket::run()
                     {
                         log_error_m << "For json packaging, message format"
                                     << " and message content format must match"
-                                    << ". Message was discarded"
+                                    << ". Message discarded"
                                     << ". Command: " << CommandNameLog(message->command());
                         continue;
                     }
@@ -675,7 +673,7 @@ void Socket::run()
 
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
-                            log_debug2_m << "Message was compressed"
+                            log_debug2_m << "Message compressed"
                                          << ". Command: " << CommandNameLog(message->command())
                                          << " (prev size: " << buffSizePrev
                                          << "; new size: " << buffSize << ")";
@@ -1123,7 +1121,7 @@ void send(const base::Socket::List& sockets,
                                 << ". Not found sockets with descriptors:";
                 for (SocketDescriptor sd : message->destinationSocketDescriptors())
                     logLine << " " << sd;
-                logLine << ". Message was discarded";
+                logLine << ". Message discarded";
             }
         }
         else if (message->socketDescriptor() != SocketDescriptor(-1))
@@ -1140,13 +1138,13 @@ void send(const base::Socket::List& sockets,
             if (!messageSended)
                 log_error_m << "Impossible send message: " << CommandNameLog(message->command())
                             << ". Not found socket with descriptor: " << message->socketDescriptor()
-                            << ". Message was discarded";
+                            << ". Message discarded";
         }
         else
         {
             log_error_m << "Impossible send message: " << CommandNameLog(message->command())
                         << ". Destination socket descriptors is undefined"
-                        << ". Message was discarded";
+                        << ". Message discarded";
         }
     }
 }
