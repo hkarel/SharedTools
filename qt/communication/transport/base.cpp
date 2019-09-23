@@ -524,9 +524,10 @@ void Socket::run()
                 _serializationSignatureRead = true;
             }
 
-            quint64 sleepCount = 0;
             socketWaitForReadyRead(0);
             CHECK_SOCKET_ERROR
+
+            quint64 sleepCount = 0;
             while (messagesCount() == 0
                    && readBuffSize == 0
                    && acceptMessages.empty()
