@@ -156,17 +156,32 @@ void Socket::run()
             if (loopBreak)
                 break;
 
-            while (!_socket->hasPendingDatagrams()
-                   && messagesCount() == 0
-                   && acceptMessages.empty())
+            quint64 sleepCount = 0;
+            while (messagesCount() == 0
+                   && acceptMessages.empty()
+                   && !_socket->hasPendingDatagrams())
             {
                 if (threadStop())
                 {
                     loopBreak = true;
                     break;
                 }
-                QMutexLocker locker(&_messagesLock); (void) locker;
-                _messagesCond.wait(&_messagesLock, 20);
+
+                ++sleepCount;
+                int condDelay = 1;
+
+                // Меньшее значение интервала ожидания дает лучшие  результаты
+                // при синхронной  передаче большого количества маленьких сооб-
+                // щений,  но при этом  может  существенно  возрасти  нагрузка
+                // на процессор в режиме ожидания
+                if      (sleepCount > 400) condDelay = 10; // После 1000 ms
+                else if (sleepCount > 300) condDelay = 5;  // После 500 ms
+                else if (sleepCount > 200) condDelay = 3;  // После 200 ms
+
+                { //Block for QMutexLocker
+                    QMutexLocker locker(&_messagesLock); (void) locker;
+                    _messagesCond.wait(&_messagesLock, condDelay);
+                }
             }
             if (loopBreak)
                 break;
@@ -269,7 +284,7 @@ void Socket::run()
                     log_error_m << "Impossible send message: " << CommandNameLog(message->command())
                                 << ". Id: " << message->id()
                                 << ". Destination host point is undefined"
-                                << ". Message was discarded";
+                                << ". Message discarded";
                 }
                 if (loopBreak
                     || timer.hasExpired(3 * delay))
