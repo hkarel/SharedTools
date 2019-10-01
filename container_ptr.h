@@ -348,7 +348,7 @@ public:
         self._counter = allocate_counter(ptr);
         self._counter->join = true;
         new (get(self._counter)) T(std::forward<Args>(args)...);
-        return std::move(self);
+        return self;
     }
 
 private:
