@@ -151,7 +151,7 @@ Message::Ptr createMessage(const CommandDataT& data,
                   "In this function is allow 'Message::Type::Command'"
                   " or 'Message::Type::Event' type of struct only");
 
-    Message::Ptr m = Message::create(data.command(), params.format);
+    Message::Ptr message = Message::create(data.command(), params.format);
     if (CommandDataT::forCommandMessage()
         && CommandDataT::forEventMessage())
     {
@@ -162,16 +162,16 @@ Message::Ptr createMessage(const CommandDataT& data,
                          " or 'Message::Type::Event' only";
             prog_abort();
         }
-        m->setType(params.type);
+        message->setType(params.type);
     }
     else if (CommandDataT::forCommandMessage())
-        m->setType(Message::Type::Command);
+        message->setType(Message::Type::Command);
     else
-        m->setType(Message::Type::Event);
+        message->setType(Message::Type::Event);
 
-    m->setExecStatus(Message::ExecStatus::Unknown);
-    messageWriteContent(data, m, params.format);
-    return std::move(m);
+    message->setExecStatus(Message::ExecStatus::Unknown);
+    messageWriteContent(data, message, params.format);
+    return message;
 }
 
 inline Message::Ptr createMessage(const QUuidEx& command)

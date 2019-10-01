@@ -63,7 +63,7 @@ QVector<QUuidEx> Pool::commands() const
     QVector<QUuidEx> commands;
     for (auto it = _map.constBegin(); it != _map.constEnd(); ++it)
         commands.append(it.key());
-    return std::move(commands);
+    return commands;
 }
 
 const char* Pool::commandName(const QUuidEx& command) const

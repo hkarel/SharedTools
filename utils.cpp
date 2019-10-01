@@ -237,7 +237,7 @@ vector<string> split(const string& str, char delim, bool keepEmptyParts)
         elems.push_back(item);
         item.clear();
     }
-    return std::move(elems);
+    return elems;
 }
 
 double round(double number, int signCount)

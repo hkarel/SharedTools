@@ -985,7 +985,7 @@ Socket::List Listener::sockets() const
             sockets.add(s);
         }
 
-    return std::move(sockets);
+    return sockets;
 }
 
 void Listener::send(const Message::Ptr& message,
@@ -1049,7 +1049,7 @@ Socket::Ptr Listener::releaseSocket(SocketDescriptor descr)
             break;
         }
 
-    return std::move(socket);
+    return socket;
 }
 
 void Listener::closeSockets()

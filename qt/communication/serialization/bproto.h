@@ -407,7 +407,7 @@ typedef bserial::ByteArray BByteArray;
       } \
       to__raw__vect__.append(to__raw__ba__); \
     } \
-    return std::move(to__raw__vect__);
+    return to__raw__vect__;
 
 #define B_DESERIALIZE_V1(VECT, STREAM) \
     bserial::ByteArray utf8__to__qstr__; (void) utf8__to__qstr__; \

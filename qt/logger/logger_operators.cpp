@@ -28,8 +28,8 @@
 namespace alog {
 
 #if QT_VERSION >= 0x050000
-inline std::string QStringToUtf8(const QString& s) {return std::move(s.toStdString());}
-inline std::string QByteArrayToUtf8(const QByteArray& b) {return std::move(b.toStdString());}
+inline std::string QStringToUtf8(const QString& s) {return s.toStdString();}
+inline std::string QByteArrayToUtf8(const QByteArray& b) {return b.toStdString();}
 #else
 inline std::string QStringToUtf8(const QString& s) {return s.toUtf8().constData();}
 inline std::string QByteArrayToUtf8(const QByteArray& b) {return b.constData();}

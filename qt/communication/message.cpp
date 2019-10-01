@@ -73,7 +73,7 @@ Message::Ptr Message::create(const QUuidEx& command, SerializationFormat content
     m->_flag.compression = static_cast<quint32>(Compression::None);
     m->_flag.contentFormat = static_cast<quint32>(contentFormat);
 
-    return std::move(m);
+    return m;
 }
 
 Message::Ptr Message::cloneForAnswer() const
@@ -100,7 +100,7 @@ Message::Ptr Message::cloneForAnswer() const
     m->_flag.execStatus = static_cast<quint32>(ExecStatus::Success);
     m->_flag.compression = static_cast<quint32>(Compression::None);
 
-    return std::move(m);
+    return m;
 }
 
 SocketDescriptorSet& Message::destinationSocketDescriptors()
@@ -251,14 +251,14 @@ BByteArray Message::toBProto() const
         STREAM_INIT(stream);
         toDataStream(stream);
     }
-    return std::move(ba);
+    return ba;
 }
 
 Message::Ptr Message::fromBProto(const BByteArray& ba)
 {
     QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
     STREAM_INIT(stream);
-    return std::move(fromDataStream(stream));
+    return fromDataStream(stream);
 }
 
 void Message::toDataStream(QDataStream& stream) const
@@ -318,7 +318,7 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
     if (!m->_flag.contentIsEmpty)
         stream >> m->_content;
 
-    return std::move(m);
+    return m;
 }
 #endif // BPROTO_SERIALIZATION
 
@@ -407,12 +407,12 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
                     << " Error: " << GetParseError_En(e)
                     << " Detail: " << " at offset " << o << " near '"
                     << ba.mid(o, 20) << "...'";
-        return std::move(m);
+        return m;
     }
     if (!doc.IsObject())
     {
         log_error_m << "Failed json format";
-        return std::move(m);
+        return m;
     }
 
     for (auto member = doc.MemberBegin(); member != doc.MemberEnd(); ++member)
@@ -464,7 +464,7 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
             m->_content = QByteArray(buff.GetString());
         }
     }
-    return std::move(m);
+    return m;
 }
 #endif // JSON_SERIALIZATION
 
