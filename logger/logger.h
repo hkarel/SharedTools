@@ -508,11 +508,11 @@ struct Line
     // и добавление его в коллекцию сообщений логгера
     ~Line();
 
-    Line() = default;
     Line(Line&&) = default;
-    Line& operator= (Line&&) = default;
 
+    Line() = delete;
     Line(const Line&) = delete;
+    Line& operator= (Line&&) = delete;
     Line& operator= (const Line&) = delete;
 
     // Сервисная функция, выполняет проверку уровня логирования и определяет
@@ -548,9 +548,16 @@ struct LevelProxy
                int         line = -1,
                const char* module = 0);
 
+    LevelProxy(LevelProxy&&) = default;
+
+    LevelProxy() = delete;
+    LevelProxy(const LevelProxy&) = delete;
+    LevelProxy& operator= (LevelProxy&&) = delete;
+    LevelProxy& operator= (const LevelProxy&) = delete;
+
     template<typename T>
     Line operator<< (const T& t)
-        {return std::move(Line(logger, level, file, func, line, module) << t);}
+        {return (Line(logger, level, file, func, line, module) << t);}
 
     Logger* const logger;
     Level         level;  // Уровень log-сообщения
@@ -568,12 +575,16 @@ class Logger : public trd::ThreadBase
 public:
     ~Logger();
 
+    /**
+      Устарело, будет удалено
+
     LevelProxy error   = LevelProxy(this, Error);
     LevelProxy warn    = LevelProxy(this, Warning);
     LevelProxy info    = LevelProxy(this, Info);
     LevelProxy verbose = LevelProxy(this, Verbose);
     LevelProxy debug   = LevelProxy(this, Debug);
     LevelProxy debug2  = LevelProxy(this, Debug2);
+    */
 
     LevelProxy error_f  (const char* file, const char* func, int line, const char* module = 0);
     LevelProxy warn_f   (const char* file, const char* func, int line, const char* module = 0);
@@ -698,8 +709,7 @@ Line& operator<< (Line& line, const T& t)
 template<typename T>
 Line operator<< (Line&& line, const T& t)
 {
-    if (line.toLogger())
-        operator<< (line, t);
+    operator<< (line, t);
     return std::move(line);
 }
 

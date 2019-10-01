@@ -414,7 +414,7 @@ FilterList Saver::filters() const
         f->add_ref();
         filters.add(f);
     }
-    return std::move(filters);
+    return filters;
 }
 
 void Saver::addFilter(FilterPtr filter)
@@ -871,38 +871,32 @@ void Logger::waitingFlush()
 
 LevelProxy Logger::error_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, Error, file, func, line, module);
-    return std::move(lp);
+    return LevelProxy(this, Error, file, func, line, module);
 }
 
 LevelProxy Logger::warn_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, Warning, file, func, line, module);
-    return std::move(lp);
+    return LevelProxy(this, Warning, file, func, line, module);
 }
 
 LevelProxy Logger::info_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, Info, file, func, line, module);
-    return std::move(lp);
+    return LevelProxy(this, Info, file, func, line, module);
 }
 
 LevelProxy Logger::verbose_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, Verbose, file, func, line, module);
-    return std::move(lp);
+    return LevelProxy(this, Verbose, file, func, line, module);
 }
 
 LevelProxy Logger::debug_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, Debug, file, func, line, module);
-    return std::move(lp);
+    return LevelProxy(this, Debug, file, func, line, module);
 }
 
 LevelProxy Logger::debug2_f(const char* file, const char* func, int line, const char* module)
 {
-    LevelProxy lp(this, Debug2, file, func, line, module);
-    return std::move(lp);
+    return LevelProxy(this, Debug2, file, func, line, module);
 }
 
 void Logger::addSaverStdOut(Level level, bool shortMessages)
@@ -1011,7 +1005,7 @@ SaverList Logger::savers() const
             savers.add(s);
         }
     }
-    return std::move(savers);
+    return savers;
 }
 
 void Logger::redefineLevel()

@@ -220,7 +220,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     filter->setFilteringErrors(filteringErrors);
     filter->setFollowThreadContext(followThreadContext);
 
-    return std::move(filter);
+    return filter;
 }
 
 SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
@@ -345,7 +345,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
                 "with name '" + filterName + "'. Filter not found.");
     }
 
-    return std::move(saver);
+    return saver;
 }
 
 bool loadFilters(const YAML::Node& filtersNode, FilterList& filters)
