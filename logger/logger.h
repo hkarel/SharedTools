@@ -536,38 +536,6 @@ struct Line
 };
 
 /**
-  Вспомогательная структура, используется для формирования строки вида:
-  logger().debug << "test" << 123;
-*/
-struct LevelProxy
-{
-    LevelProxy(Logger*     logger,
-               Level       level,
-               const char* file = 0,
-               const char* func = 0,
-               int         line = -1,
-               const char* module = 0);
-
-    LevelProxy(LevelProxy&&) = default;
-
-    LevelProxy() = delete;
-    LevelProxy(const LevelProxy&) = delete;
-    LevelProxy& operator= (LevelProxy&&) = delete;
-    LevelProxy& operator= (const LevelProxy&) = delete;
-
-    template<typename T>
-    Line operator<< (const T& t)
-        {return (Line(logger, level, file, func, line, module) << t);}
-
-    Logger* const logger;
-    Level         level;  // Уровень log-сообщения
-    const char*   file;   // Наименование файла
-    const char*   func;   // Наименование функции
-    int           line;   // Номер строки вызова
-    const char*   module; // Наименование модуля
-};
-
-/**
   Logger
 */
 class Logger : public trd::ThreadBase
@@ -575,23 +543,12 @@ class Logger : public trd::ThreadBase
 public:
     ~Logger();
 
-    /**
-      Устарело, будет удалено
-
-    LevelProxy error   = LevelProxy(this, Error);
-    LevelProxy warn    = LevelProxy(this, Warning);
-    LevelProxy info    = LevelProxy(this, Info);
-    LevelProxy verbose = LevelProxy(this, Verbose);
-    LevelProxy debug   = LevelProxy(this, Debug);
-    LevelProxy debug2  = LevelProxy(this, Debug2);
-    */
-
-    LevelProxy error_f  (const char* file, const char* func, int line, const char* module = 0);
-    LevelProxy warn_f   (const char* file, const char* func, int line, const char* module = 0);
-    LevelProxy info_f   (const char* file, const char* func, int line, const char* module = 0);
-    LevelProxy verbose_f(const char* file, const char* func, int line, const char* module = 0);
-    LevelProxy debug_f  (const char* file, const char* func, int line, const char* module = 0);
-    LevelProxy debug2_f (const char* file, const char* func, int line, const char* module = 0);
+    inline Line error_f  (const char* file, const char* func, int line, const char* module = 0);
+    inline Line warn_f   (const char* file, const char* func, int line, const char* module = 0);
+    inline Line info_f   (const char* file, const char* func, int line, const char* module = 0);
+    inline Line verbose_f(const char* file, const char* func, int line, const char* module = 0);
+    inline Line debug_f  (const char* file, const char* func, int line, const char* module = 0);
+    inline Line debug2_f (const char* file, const char* func, int line, const char* module = 0);
 
     // Записывает все сообщения буфера.
     // Параметр pauseDuration позволяет задать время (в миллисекундах) приоста-
@@ -691,6 +648,38 @@ private:
 
 Logger& logger();
 
+//--------------------------------- Logger -----------------------------------
+
+inline Line Logger::error_f(const char* file, const char* func, int line, const char* module)
+{
+    return Line(this, Error, file, func, line, module);
+}
+
+inline Line Logger::warn_f(const char* file, const char* func, int line, const char* module)
+{
+    return Line(this, Warning, file, func, line, module);
+}
+
+inline Line Logger::info_f(const char* file, const char* func, int line, const char* module)
+{
+    return Line(this, Info, file, func, line, module);
+}
+
+inline Line Logger::verbose_f(const char* file, const char* func, int line, const char* module)
+{
+    return Line(this, Verbose, file, func, line, module);
+}
+
+inline Line Logger::debug_f(const char* file, const char* func, int line, const char* module)
+{
+    return Line(this, Debug, file, func, line, module);
+}
+
+inline Line Logger::debug2_f(const char* file, const char* func, int line, const char* module)
+{
+    return Line(this, Debug2, file, func, line, module);
+}
+
 //---------------------------- Line operators --------------------------------
 
 inline bool Line::toLogger() const
@@ -719,7 +708,7 @@ Line& operator<< (Line&, const timeval&);
 
 } // namespace alog
 
-#define LOGGER_FUNC_NAME  __func__
+#define LOGGER_FUNC_NAME __func__
 
 #define log_error   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
 #define log_warn    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)

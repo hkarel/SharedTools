@@ -685,22 +685,6 @@ Line::~Line()
     {}
 }
 
-//------------------------------ LevelProxy ----------------------------------
-
-LevelProxy::LevelProxy(Logger*     logger,
-                       Level       level,
-                       const char* file,
-                       const char* func,
-                       int         line,
-                       const char* module)
-    : logger(logger),
-      level(level),
-      file(file),
-      func(func),
-      line(line),
-      module(module)
-{}
-
 //--------------------------------- Logger -----------------------------------
 
 Logger::Logger()
@@ -867,36 +851,6 @@ void Logger::waitingFlush()
         static chrono::milliseconds sleepThread {20};
         this_thread::sleep_for(sleepThread);
     }
-}
-
-LevelProxy Logger::error_f(const char* file, const char* func, int line, const char* module)
-{
-    return LevelProxy(this, Error, file, func, line, module);
-}
-
-LevelProxy Logger::warn_f(const char* file, const char* func, int line, const char* module)
-{
-    return LevelProxy(this, Warning, file, func, line, module);
-}
-
-LevelProxy Logger::info_f(const char* file, const char* func, int line, const char* module)
-{
-    return LevelProxy(this, Info, file, func, line, module);
-}
-
-LevelProxy Logger::verbose_f(const char* file, const char* func, int line, const char* module)
-{
-    return LevelProxy(this, Verbose, file, func, line, module);
-}
-
-LevelProxy Logger::debug_f(const char* file, const char* func, int line, const char* module)
-{
-    return LevelProxy(this, Debug, file, func, line, module);
-}
-
-LevelProxy Logger::debug2_f(const char* file, const char* func, int line, const char* module)
-{
-    return LevelProxy(this, Debug2, file, func, line, module);
 }
 
 void Logger::addSaverStdOut(Level level, bool shortMessages)
