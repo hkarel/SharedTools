@@ -38,12 +38,12 @@
 #include <stdexcept>
 #include <unistd.h>
 
-#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
-#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TransportTCP")
+#define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "TransportTCP")
+#define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "TransportTCP")
+#define log_info_m    alog::logger().info   (__FILE__, __func__, __LINE__, "TransportTCP")
+#define log_verbose_m alog::logger().verbose(__FILE__, __func__, __LINE__, "TransportTCP")
+#define log_debug_m   alog::logger().debug  (__FILE__, __func__, __LINE__, "TransportTCP")
+#define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "TransportTCP")
 
 namespace communication {
 namespace transport {
@@ -145,14 +145,14 @@ void Socket::printSocketError(const char* file, const char* func, int line,
 {
     if (_socket->error() == QAbstractSocket::RemoteHostClosedError)
     {
-        alog::logger().verbose_f(file, func, line, "TransportTCP")
+        alog::logger().verbose(file, func, line, "TransportTCP")
             << _socket->errorString()
             << ". Remote host: " << _peerPoint
             << ". Socket descriptor: " << _printSocketDescriptor;
     }
     else
     {
-        alog::logger().error_f(file, func, line, module)
+        alog::logger().error(file, func, line, module)
             << "Socket error code: " << int(_socket->error())
             << ". Detail: " << _socket->errorString();
     }

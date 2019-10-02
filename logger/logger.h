@@ -543,12 +543,12 @@ class Logger : public trd::ThreadBase
 public:
     ~Logger();
 
-    inline Line error_f  (const char* file, const char* func, int line, const char* module = 0);
-    inline Line warn_f   (const char* file, const char* func, int line, const char* module = 0);
-    inline Line info_f   (const char* file, const char* func, int line, const char* module = 0);
-    inline Line verbose_f(const char* file, const char* func, int line, const char* module = 0);
-    inline Line debug_f  (const char* file, const char* func, int line, const char* module = 0);
-    inline Line debug2_f (const char* file, const char* func, int line, const char* module = 0);
+    inline Line error  (const char* file, const char* func, int line, const char* module = 0);
+    inline Line warn   (const char* file, const char* func, int line, const char* module = 0);
+    inline Line info   (const char* file, const char* func, int line, const char* module = 0);
+    inline Line verbose(const char* file, const char* func, int line, const char* module = 0);
+    inline Line debug  (const char* file, const char* func, int line, const char* module = 0);
+    inline Line debug2 (const char* file, const char* func, int line, const char* module = 0);
 
     // Записывает все сообщения буфера.
     // Параметр pauseDuration позволяет задать время (в миллисекундах) приоста-
@@ -650,32 +650,32 @@ Logger& logger();
 
 //--------------------------------- Logger -----------------------------------
 
-inline Line Logger::error_f(const char* file, const char* func, int line, const char* module)
+inline Line Logger::error(const char* file, const char* func, int line, const char* module)
 {
     return Line(this, Error, file, func, line, module);
 }
 
-inline Line Logger::warn_f(const char* file, const char* func, int line, const char* module)
+inline Line Logger::warn(const char* file, const char* func, int line, const char* module)
 {
     return Line(this, Warning, file, func, line, module);
 }
 
-inline Line Logger::info_f(const char* file, const char* func, int line, const char* module)
+inline Line Logger::info(const char* file, const char* func, int line, const char* module)
 {
     return Line(this, Info, file, func, line, module);
 }
 
-inline Line Logger::verbose_f(const char* file, const char* func, int line, const char* module)
+inline Line Logger::verbose(const char* file, const char* func, int line, const char* module)
 {
     return Line(this, Verbose, file, func, line, module);
 }
 
-inline Line Logger::debug_f(const char* file, const char* func, int line, const char* module)
+inline Line Logger::debug(const char* file, const char* func, int line, const char* module)
 {
     return Line(this, Debug, file, func, line, module);
 }
 
-inline Line Logger::debug2_f(const char* file, const char* func, int line, const char* module)
+inline Line Logger::debug2(const char* file, const char* func, int line, const char* module)
 {
     return Line(this, Debug2, file, func, line, module);
 }
@@ -708,11 +708,9 @@ Line& operator<< (Line&, const timeval&);
 
 } // namespace alog
 
-#define LOGGER_FUNC_NAME __func__
-
-#define log_error   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_warn    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_info    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_verbose alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_debug   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__)
-#define log_debug2  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__)
+#define log_error   alog::logger().error  (__FILE__, __func__, __LINE__)
+#define log_warn    alog::logger().warn   (__FILE__, __func__, __LINE__)
+#define log_info    alog::logger().info   (__FILE__, __func__, __LINE__)
+#define log_verbose alog::logger().verbose(__FILE__, __func__, __LINE__)
+#define log_debug   alog::logger().debug  (__FILE__, __func__, __LINE__)
+#define log_debug2  alog::logger().debug2 (__FILE__, __func__, __LINE__)

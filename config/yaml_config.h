@@ -257,7 +257,7 @@ char* YamlConfig::typeName()
 
 #define YAMLCONFIG_LOG_ERROR(ERROR, GETSET) \
     alog::Line logLine = \
-    alog::logger().error_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig") \
+    alog::logger().error(__FILE__, __func__, __LINE__, "YamlConfig") \
         << "Yaml error"; \
     if (GETSET == 0) \
         logLine << ". Failed to get parameter: " << (_nameNodeFunc + name); \
@@ -286,7 +286,7 @@ char* YamlConfig::typeName()
 
 #define YAMLCONFIG_CHECK_READONLY \
         if (_readOnly) {\
-            alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig") \
+            alog::logger().warn(__FILE__, __func__, __LINE__, "YamlConfig") \
                 << "Failed to set parameter: " << name \
                 << ". Config data is read only"; \
             return false;  \
@@ -321,7 +321,7 @@ bool YamlConfig::getValue(const YAML::Node& baseNode,
     if (!node.IsScalar())
     {
         if (logWarn)
-            alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig")
+            alog::logger().warn(__FILE__, __func__, __LINE__, "YamlConfig")
                 << "Parameter " << (_nameNodeFunc + name) << " is not scalar type";
         return false;
     }
@@ -344,7 +344,7 @@ bool YamlConfig::getValueVect(const YAML::Node& baseNode, const std::string& nam
     if (!node.IsSequence())
     {
         if (logWarn)
-            alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig")
+            alog::logger().warn(__FILE__, __func__, __LINE__, "YamlConfig")
                 << "Parameter " << name << " is not sequence type";
         return false;
     }
@@ -355,7 +355,7 @@ bool YamlConfig::getValueVect(const YAML::Node& baseNode, const std::string& nam
         if (!n.IsScalar())
         {
             if (logWarn)
-                alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "YamlConfig")
+                alog::logger().warn(__FILE__, __func__, __LINE__, "YamlConfig")
                     << "Parameter " << name
                     << ". The elements of sequence are not a scalar type";
             return false;
