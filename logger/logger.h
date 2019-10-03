@@ -543,12 +543,12 @@ class Logger : public trd::ThreadBase
 public:
     ~Logger();
 
-    inline Line error  (const char* file, const char* func, int line, const char* module = 0);
-    inline Line warn   (const char* file, const char* func, int line, const char* module = 0);
-    inline Line info   (const char* file, const char* func, int line, const char* module = 0);
-    inline Line verbose(const char* file, const char* func, int line, const char* module = 0);
-    inline Line debug  (const char* file, const char* func, int line, const char* module = 0);
-    inline Line debug2 (const char* file, const char* func, int line, const char* module = 0);
+    Line error  (const char* file, const char* func, int line, const char* module = 0);
+    Line warn   (const char* file, const char* func, int line, const char* module = 0);
+    Line info   (const char* file, const char* func, int line, const char* module = 0);
+    Line verbose(const char* file, const char* func, int line, const char* module = 0);
+    Line debug  (const char* file, const char* func, int line, const char* module = 0);
+    Line debug2 (const char* file, const char* func, int line, const char* module = 0);
 
     // Записывает все сообщения буфера.
     // Параметр pauseDuration позволяет задать время (в миллисекундах) приоста-
