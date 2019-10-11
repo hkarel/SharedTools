@@ -509,7 +509,7 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     }
 
 #define J_SERIALIZE_BASE_BEGIN \
-    template <typename Packer> Packer& jserializeBase(Packer& p) {
+    template <typename Packer> void jserializeBase(Packer& p) {
 
 #define J_SERIALIZE_BASE_END \
     }
