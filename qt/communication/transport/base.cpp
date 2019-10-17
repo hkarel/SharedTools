@@ -976,8 +976,8 @@ void Socket::emitMessage(const communication::Message::Ptr& m)
 
 Socket::List Listener::sockets() const
 {
-    Socket::List sockets;
     QMutexLocker locker(&_socketsLock); (void) locker;
+    Socket::List sockets;
     for (Socket* s : _sockets)
         if (s->isRunning())
         {
