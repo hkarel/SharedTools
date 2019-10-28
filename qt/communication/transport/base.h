@@ -56,18 +56,18 @@ public:
     // ванием zip-алгоритма. Допускаются значения от 0 до 9,  что соответствует
     // уровням сжатия для zip-алгоритма.  Так, значение 0 будет  означать,  что
     // поток не должен быть сжат, а значение 9 будет соответствовать максималь-
-    // ной степени сжатия. Значение -1 соответствует уровню сжатия по умолчанию.
+    // ной степени сжатия. Значение -1 соответствует уровню сжатия по умолчанию
     int compressionLevel() const {return _compressionLevel;}
     void setCompressionLevel(int val);
 
     // Определяет размер потока данных (в байтах)  по достижении которого выпол-
     // няется сжатие потока перед отправкой в TCP/Local сокет. Значение по умол-
-    // чанию равно 1024 байт.
+    // чанию равно 1024 байт
     int compressionSize() const {return _compressionSize;}
     void setCompressionSize(int val) {_compressionSize = val;}
 
     // Определяет нужно ли проверять совместимость версий протокола после
-    // создания соединения.
+    // создания соединения
     bool checkProtocolCompatibility() const {return _checkProtocolCompatibility;}
     void setCheckProtocolCompatibility(bool val) {_checkProtocolCompatibility = val;}
 
@@ -83,15 +83,15 @@ protected:
 class SocketCommon : public QThreadEx
 {
 public:
-    // Функции отправки сообщений.
+    // Функции отправки сообщений
     bool send(const Message::Ptr&);
 
     // Удаляет из очереди сообщений на отправку сообщения с заданным
-    // идентификатором команды.
+    // идентификатором команды
     void remove(const QUuidEx& command);
 
     // Возвращает количество сообщений в очереди команд на отправку в сокет.
-    // Используется для оценки загруженности очереди.
+    // Используется для оценки загруженности очереди
     int messagesCount() const;
 
     // Определяет нужно ли проверять, что входящая команда является неизвестной
@@ -109,7 +109,7 @@ protected:
     int _messagesNormCounter = {0};
 
     // Список команд неизвестных на принимающей стороне, позволяет передавать
-    // только известные принимающей стороне команды.
+    // только известные принимающей стороне команды
     QSet<QUuidEx> _unknownCommands;
     mutable std::atomic_flag _unknownCommandsLock = ATOMIC_FLAG_INIT;
     bool _checkUnknownCommands = {true};
@@ -117,7 +117,7 @@ protected:
 
 /**
   Базовый класс для создания соединения и отправки сообщений. Используется как
-  на клиентской, так и на серверной стороне.
+  на клиентской, так и на серверной стороне
 */
 class Socket : public SocketCommon,
                public clife_base,
@@ -141,7 +141,7 @@ public:
     bool socketIsConnected() const;
 
     // Возвращает TRUE для UNIX сокета или для TCP сокета, когда он работает
-    // по localhost.
+    // по localhost
     bool isLocal() const;
 
     // Возвращает статус проверки совместимости версий протокола
@@ -177,7 +177,7 @@ signals:
 
     // Сигнал эмитируется после выполнения двух условий:
     // 1) Установлено соединение с TCP/Local сокетом;
-    // 2) Проверка совместимости версий протокола выполнена успешно.
+    // 2) Проверка совместимости версий протокола выполнена успешно
     void connected(communication::SocketDescriptor);
 
     // Сигнал эмитируется после разрыва TCP/Local соединения
@@ -214,17 +214,17 @@ protected:
     virtual void fillUnknownMessage(const Message::Ptr&, data::Unknown&) = 0;
 
     // Признак того, что сокет был создан  на стороне listener-а, используется
-    // для определения порядка обмена сигнатурами протоколов.
+    // для определения порядка обмена сигнатурами протоколов
     bool isListenerSide() const {return _isListenerSide;}
     void setListenerSide(bool val) {_isListenerSide = val;}
 
-    // Возвращает TRUE когда сокет уже помещен в список listenr-а, используется
+    // Возвращает TRUE когда сокет уже помещен в список listener-а, используется
     // для предотвращения преждевременного эмитирования сигнала connected()
     bool isInsideListener() const {return _isInsideListener;}
     void setInsideListener(bool val) {_isInsideListener = val;}
 
     // Вспомогательная функция, используется для связывания сокета созданного
-    // в Listener.
+    // в Listener
     SocketDescriptor initSocketDescriptor() const {return _initSocketDescriptor;}
     void setInitSocketDescriptor(SocketDescriptor val) {_initSocketDescriptor = val;}
 
@@ -256,7 +256,7 @@ private:
 /**
   Базовый класс для получения запросов на соединения от клиентских частей
   с последующей установкой соединения с ними, так же используется для приема
-  и отправки сообщений.
+  и отправки сообщений
 */
 class Listener : public Properties
 {
@@ -267,13 +267,13 @@ public:
     // Функция отправки сообщений.
     // Параметр excludeSockets используется когда отправляемое сообщение имеет
     // тип Event. На сокеты содержащиеся в excludeSockets сообщение отправлено
-    // не будет.
+    // не будет
     void send(const Message::Ptr& message,
               const SocketDescriptorSet& excludeSockets = SocketDescriptorSet()) const;
 
     void send(const Message::Ptr& message, SocketDescriptor excludeSocket) const;
 
-    // Возвращает сокет по его идентификатору.
+    // Возвращает сокет по его идентификатору
     Socket::Ptr socketByDescriptor(SocketDescriptor) const;
 
     // Добавляет сокет в коллекцию сокетов
@@ -311,7 +311,7 @@ private:
 // Функция отправки сообщений.
 // Параметр excludeSockets используется когда отправляемое сообщение имеет
 // тип Event. На сокеты содержащиеся в excludeSockets сообщение отправлено
-// не будет.
+// не будет
 void send(const base::Socket::List& sockets,
           const Message::Ptr& message,
           const SocketDescriptorSet& excludeSockets = SocketDescriptorSet());
