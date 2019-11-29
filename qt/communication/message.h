@@ -36,8 +36,11 @@
 #include "qt/qhashex.h"
 #include "qt/quuidex.h"
 #include "qt/communication/host_point.h"
-#include "qt/communication/serialization/bproto.h"
 #include "qt/communication/serialization/sresult.h"
+
+#ifdef BPROTO_SERIALIZATION
+#include "qt/communication/serialization/bproto.h"
+#endif
 
 #include <QtCore>
 #include <atomic>
