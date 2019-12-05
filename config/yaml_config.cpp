@@ -44,21 +44,24 @@
 
 #define YAMLCONFIG_CATCH_2 \
     } catch (YAML::Exception& e) { \
-        log_error_m << "YAML error. Detail: " << e.what() \
-                    << ". File: " << _filePath; \
+        alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
+        if (!_filePath.empty()) \
+            logLine << ". File: " << _filePath; \
         return false; \
     } catch (std::exception& e) { \
-        log_error_m << "YAML error. Detail: " << e.what() \
-                    << ". File: " << _filePath; \
+        alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
+        if (!_filePath.empty()) \
+            logLine << ". File: " << _filePath; \
         return false; \
     } catch (...) { \
-        log_error_m << "YAML error. Detail: Unknown error" \
-                    << ". File: " << _filePath; \
+        alog::Line logLine = log_error_m << "YAML error. Detail: Unknown error"; \
+        if (!_filePath.empty()) \
+            logLine << ". File: " << _filePath; \
         return false; \
     }
 
 
-bool YamlConfig::read(const std::string& filePath)
+bool YamlConfig::readFile(const std::string& filePath)
 {
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
@@ -80,9 +83,25 @@ bool YamlConfig::read(const std::string& filePath)
     return true;
 }
 
-bool YamlConfig::reread()
+bool YamlConfig::readString(const std::string& str)
 {
-    return read(_filePath);
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+
+    YAMLCONFIG_TRY
+    _filePath.clear();
+    _root = YAML::Load(str);
+    if (!_root.IsDefined())
+    {
+        log_error_m << "Undefined YAML-structure in input string";
+        return false;
+    }
+    YAMLCONFIG_CATCH_2
+    return true;
+}
+
+bool YamlConfig::rereadFile()
+{
+    return readFile(_filePath);
 }
 
 bool YamlConfig::readOnly() const

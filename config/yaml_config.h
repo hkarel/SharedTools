@@ -57,11 +57,14 @@ public:
 
     YamlConfig() = default;
 
-    // Читает файл конфигурации. filePath - полное имя файла
-    bool read(const std::string& filePath);
+    // Читает yaml-структуру из файла. filePath - полное имя файла
+    bool readFile(const std::string& filePath);
 
-    // Перечитывает файл конфигурации
-    bool reread();
+    // Читает yaml-структуру из строки
+    bool readString(const std::string&);
+
+    // Перечитывает yaml-структуру из файла
+    bool rereadFile();
 
     // Определяет, что параметры конфигурации не могут изменяться
     bool readOnly() const;
