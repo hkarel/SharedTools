@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <stdio.h>
 #include <atomic>
 #include <string>
 #include <cstdarg>

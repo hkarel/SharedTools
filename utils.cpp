@@ -28,7 +28,7 @@
 #include "break_point.h"
 
 #include <cmath>
-#include <cstdio>
+#include <cctype>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
@@ -38,13 +38,19 @@ namespace utl {
 
 string& ltrim(string& s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    // В С++17 не поддерживается std::ptr_fun
+    // s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+
+    s.erase(s.begin(), std::find_if_not(s.begin(), s.end(), [](string::value_type c){return std::isspace(c);}));
     return s;
 }
 
 string& rtrim(string& s)
 {
-    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    // В С++17 не поддерживается std::ptr_fun
+    // s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+
+    s.erase(std::find_if_not(s.rbegin(), s.rend(), [](string::value_type c){return std::isspace(c);}).base(), s.end());
     return s;
 }
 
