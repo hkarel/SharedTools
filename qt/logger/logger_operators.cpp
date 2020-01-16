@@ -94,6 +94,12 @@ Line& operator<< (Line& line, const QVariant& v)
 {
     if (line.toLogger())
     {
+        if (v.type() == QVariant::Type(qMetaTypeId<float>()))
+        {
+            line << v.toFloat();
+            return line;
+        }
+
         switch (v.type())
         {
             case QVariant::Bool:
