@@ -138,30 +138,10 @@ struct Data
                 || MessageType2 == Message::Type::Event
                 || MessageType3 == Message::Type::Event);
     }
-
-#if defined(BPROTO_SERIALIZATION) && defined(BPROTO_SERIALIZATION_DUMMY)
-    // Фиктивные функции, необходимые для сборки проекта когда не используется
-    // бинарная сериализация
-    bserial::RawVector toRaw() const {
-        log_error << "Critical error. Data::toRaw(): You must override "
-                     "this function in the inherited structure";
-        prog_abort();
-    }
-    void fromRaw(const bserial::RawVector&) {
-        log_error << "Critical error. Data::fromRaw(): You must override "
-                     "this function in the inherited structure";
-        prog_abort();
-    }
-#endif
 };
 
-#if defined(BPROTO_SERIALIZATION) && defined(BPROTO_SERIALIZATION_DUMMY)
-#define B_SERIALIZE_RAWFUNC_DUMMY \
-    using Data::toRaw; \
-    using Data::fromRaw;
-#else
+// Пока оставлено для обратной совместимости
 #define B_SERIALIZE_RAWFUNC_DUMMY
-#endif
 
 /**
   Структура содержит информацию об ошибке произошедшей в процессе обработки

@@ -42,20 +42,92 @@
 #include <typeinfo>
 #include <stdexcept>
 #include <type_traits>
+#if !defined(_MSC_VER)
+#include <cxxabi.h>
+#endif
 
 namespace communication {
 
 template<typename T>
-struct is_error_data : std::enable_if<std::is_base_of<data::MessageError, T>::value, int> {};
+struct is_error_data  : std::enable_if<std::is_base_of<data::MessageError, T>::value, int> {};
 template<typename T>
 struct is_failed_data : std::enable_if<std::is_base_of<data::MessageFailed, T>::value, int> {};
 template<typename T>
 struct not_error_data : std::enable_if<!std::is_base_of<data::MessageError, T>::value
                                     && !std::is_base_of<data::MessageFailed, T>::value, int> {};
 
+template <class CommandDataT>
+class CheckSerializeFunc
+{
+    // Источник:
+    // https://stackoverflow.com/questions/257288/is-it-possible-to-write-a-template-to-check-for-a-functions-existence
+
+    // This type won't compile if the second template parameter isn't of type T,
+    // so I can put a function pointer type in the first parameter and the function
+    // itself in the second thus checking that the function has a specific signature.
+    template <typename T, T> struct TypeCheck;
+
+    // A helper struct to hold the declaration of the function pointer.
+    // Change it if the function signature changes.
+    struct FuncToRaw   {typedef bserial::RawVector (CommandDataT::*fptr)() const;};
+    struct FuncFromRaw {typedef void (CommandDataT::*fptr)(const bserial::RawVector&);};
+
+    template <typename T> static char  toRaw(TypeCheck<typename FuncToRaw::fptr, &T::toRaw>*);
+    template <typename T> static void* toRaw(...);
+
+    template <typename T> static char  fromRaw(TypeCheck<typename FuncFromRaw::fptr, &T::fromRaw>*);
+    template <typename T> static void* fromRaw(...);
+
+    struct FuncToJson   {typedef QByteArray (CommandDataT::*fptr)();};
+    struct FuncFromJson {typedef SResult (CommandDataT::*fptr)(const QByteArray&);};
+
+    template <typename T> static char  toJson(TypeCheck<typename FuncToJson::fptr, &T::toJson>*);
+    template <typename T> static void* toJson(...);
+
+    template <typename T> static char  fromJson(TypeCheck<typename FuncFromJson::fptr, &T::fromJson>*);
+    template <typename T> static void* fromJson(...);
+
+public:
+    enum {ToRawExists    = (1 == sizeof(toRaw<CommandDataT>(0)))};
+    enum {FromRawExists  = (1 == sizeof(fromRaw<CommandDataT>(0)))};
+
+    enum {ToJsonExists   = (1 == sizeof(toJson<CommandDataT>(0)))};
+    enum {FromJsonExists = (1 == sizeof(fromJson<CommandDataT>(0)))};
+};
+
+template<typename T>
+struct toraw_exists : std::enable_if<CheckSerializeFunc<T>::ToRawExists, int> {};
+template<typename T>
+struct toraw_not_exists : std::enable_if<!CheckSerializeFunc<T>::ToRawExists, int> {};
+
+template<typename T>
+struct fromraw_exists : std::enable_if<CheckSerializeFunc<T>::FromRawExists, int> {};
+template<typename T>
+struct fromraw_not_exists : std::enable_if<!CheckSerializeFunc<T>::FromRawExists, int> {};
+
+template<typename T>
+struct tojson_exists : std::enable_if<CheckSerializeFunc<T>::ToJsonExists, int> {};
+template<typename T>
+struct tojson_not_exists : std::enable_if<!CheckSerializeFunc<T>::ToJsonExists, int> {};
+
+template<typename T>
+struct fromjson_exists : std::enable_if<CheckSerializeFunc<T>::FromJsonExists, int> {};
+template<typename T>
+struct fromjson_not_exists : std::enable_if<!CheckSerializeFunc<T>::FromJsonExists, int> {};
+
+template<typename T> char* abiTypeName()
+{
+#if defined(_MSC_VER)
+    return typeid(T).name();
+#else
+    return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
+#endif
+}
+
 #ifdef BPROTO_SERIALIZATION
 template<typename CommandDataT>
 SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
+                           typename toraw_exists<CommandDataT>::type = 0,
                            typename is_error_data<CommandDataT>::type = 0)
 {
     if (std::is_same<data::MessageError, CommandDataT>::value)
@@ -77,6 +149,7 @@ SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
 
 template<typename CommandDataT>
 SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
+                           typename toraw_exists<CommandDataT>::type = 0,
                            typename is_failed_data<CommandDataT>::type = 0)
 {
     if (std::is_same<data::MessageFailed, CommandDataT>::value)
@@ -90,11 +163,41 @@ SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
 
 template<typename CommandDataT>
 SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
+                           typename toraw_exists<CommandDataT>::type = 0,
                            typename not_error_data<CommandDataT>::type = 0)
 {
     return message->writeContent(data);
 }
-#endif
+
+template<typename CommandDataT>
+SResult messageWriteBProto(const CommandDataT&, Message::Ptr&,
+                           typename toraw_not_exists<CommandDataT>::type = 0)
+{
+    QString err = "Method %1::toRaw not exists";
+    err = err.arg(abiTypeName<CommandDataT>());
+    log_error << err;
+    return SResult(false, 0, err);
+}
+#endif // BPROTO_SERIALIZATION
+
+#ifdef JSON_SERIALIZATION
+template<typename CommandDataT>
+SResult messageWriteJson(const CommandDataT& data, Message::Ptr& message,
+                         typename tojson_exists<CommandDataT>::type = 0)
+{
+    return message->writeJsonContent(data);
+}
+
+template<typename CommandDataT>
+SResult messageWriteJson(const CommandDataT&, Message::Ptr&,
+                         typename tojson_not_exists<CommandDataT>::type = 0)
+{
+    QString err = "Method %1::toJson not exists";
+    err = err.arg(abiTypeName<CommandDataT>());
+    log_error << err;
+    return SResult(false, 0, err);
+}
+#endif // JSON_SERIALIZATION
 
 template<typename CommandDataT>
 SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
@@ -110,7 +213,7 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
 #endif
 #ifdef JSON_SERIALIZATION
         case SerializationFormat::Json:
-            res = message->writeJsonContent(data);
+            res = messageWriteJson(data, message);
             break;
 #endif
         default:
@@ -196,37 +299,69 @@ inline Message::Ptr createJsonMessage(const QUuidEx& command)
 #ifdef BPROTO_SERIALIZATION
 template<typename CommandDataT>
 SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
+                          typename fromraw_exists<CommandDataT>::type = 0,
                           typename is_error_data<CommandDataT>::type = 0)
 {
-  if (std::is_same<data::MessageError, CommandDataT>::value)
-      return message->readContent(data);
+    if (std::is_same<data::MessageError, CommandDataT>::value)
+        return message->readContent(data);
 
-  // Отладить
-  break_point
+    // Отладить
+    break_point
 
-  return message->readContent(static_cast<data::MessageError&>(data), data);
+    return message->readContent(static_cast<data::MessageError&>(data), data);
 }
 
 template<typename CommandDataT>
 SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
+                          typename fromraw_exists<CommandDataT>::type = 0,
                           typename is_failed_data<CommandDataT>::type = 0)
 {
-  if (std::is_same<data::MessageFailed, CommandDataT>::value)
-      return message->readContent(data);
+    if (std::is_same<data::MessageFailed, CommandDataT>::value)
+        return message->readContent(data);
 
-  // Отладить
-  break_point
+    // Отладить
+    break_point
 
-  return message->readContent(static_cast<data::MessageFailed&>(data), data);
+    return message->readContent(static_cast<data::MessageFailed&>(data), data);
 }
 
 template<typename CommandDataT>
 SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
+                          typename fromraw_exists<CommandDataT>::type = 0,
                           typename not_error_data<CommandDataT>::type = 0)
 {
-  return message->readContent(data);
+    return message->readContent(data);
 }
-#endif
+
+template<typename CommandDataT>
+SResult messageReadBProto(const Message::Ptr&, CommandDataT&,
+                          typename fromraw_not_exists<CommandDataT>::type = 0)
+{
+    QString err = "Method %1::fromRaw not exists";
+    err = err.arg(abiTypeName<CommandDataT>());
+    log_error << err;
+    return SResult(false, 0, err);
+}
+#endif // BPROTO_SERIALIZATION
+
+#ifdef JSON_SERIALIZATION
+template<typename CommandDataT>
+SResult messageReadJson(const Message::Ptr& message, CommandDataT& data,
+                        typename fromjson_exists<CommandDataT>::type = 0)
+{
+    return message->readJsonContent(data);
+}
+
+template<typename CommandDataT>
+SResult messageReadJson(const Message::Ptr&, CommandDataT&,
+                          typename fromjson_not_exists<CommandDataT>::type = 0)
+{
+    QString err = "Method %1::fromJson not exists";
+    err = err.arg(abiTypeName<CommandDataT>());
+    log_error << err;
+    return SResult(false, 0, err);
+}
+#endif // JSON_SERIALIZATION
 
 template<typename CommandDataT>
 SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
@@ -242,7 +377,7 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
 #endif
 #ifdef JSON_SERIALIZATION
         case SerializationFormat::Json:
-            res = message->readJsonContent(data);
+            res = messageReadJson(message, data);
             break;
 #endif
         default:
@@ -291,7 +426,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
         }
         log_error << "Message " << CommandNameLog(message->command())
                   << " with type 'Command' cannot write data to struct "
-                  << typeid(CommandDataT).name() << ". Mismatched types";
+                  << abiTypeName<CommandDataT>() << ". Mismatched types";
     }
     else if (message->type() == Message::Type::Event)
     {
@@ -303,7 +438,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
         }
         log_error << "Message " << CommandNameLog(message->command())
                   << " with type 'Event' cannot write data to struct "
-                  << typeid(CommandDataT).name() << ". Mismatched types";
+                  << abiTypeName<CommandDataT>() << ". Mismatched types";
     }
     else if (message->type() == Message::Type::Answer)
     {
@@ -317,7 +452,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
             }
             log_error << "Message " << CommandNameLog(message->command())
                       << " with type 'Answer' cannot write data to struct "
-                      << typeid(CommandDataT).name() << ". Mismatched types";
+                      << abiTypeName<CommandDataT>() << ". Mismatched types";
         }
         else if (message->execStatus() == Message::ExecStatus::Failed)
         {
@@ -331,7 +466,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
             log_error << "Message is failed. Type of data must be "
                       << "derived from communication::data::MessageFailed"
                       << ". Command: " << CommandNameLog(message->command())
-                      << ". Struct: "  << typeid(CommandDataT).name();
+                      << ". Struct: "  << abiTypeName<CommandDataT>();
         }
         else if (message->execStatus() == Message::ExecStatus::Error)
         {
@@ -345,13 +480,13 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
             log_error << "Message is error. Type of data must be "
                       << "derived from communication::data::MessageError"
                       << ". Command: " << CommandNameLog(message->command())
-                      << ". Struct: "  << typeid(CommandDataT).name();
+                      << ". Struct: "  << abiTypeName<CommandDataT>();
         }
         else
             log_error << "Message exec status is unknown: "
                       << static_cast<quint32>(message->execStatus())
                       << ". Command: " << CommandNameLog(message->command())
-                      << ". Struct: "  << typeid(CommandDataT).name();
+                      << ". Struct: "  << abiTypeName<CommandDataT>();
     }
     prog_abort();
 
@@ -388,7 +523,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Unknown);
             return messageWriteContent(data, message, contentFormat);
         }
-        log_error << "Structure of data " << typeid(CommandDataT).name()
+        log_error << "Structure of data " << abiTypeName<CommandDataT>()
                   << " cannot be used for 'Command'-message";
     }
     else if (message->type() == Message::Type::Event)
@@ -398,7 +533,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Unknown);
             return messageWriteContent(data, message, contentFormat);
         }
-        log_error << "Structure of data " << typeid(CommandDataT).name()
+        log_error << "Structure of data " << abiTypeName<CommandDataT>()
                   << " cannot be used for 'Event'-message";
     }
     else if (message->type() == Message::Type::Answer)
@@ -408,7 +543,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Success);
             return messageWriteContent(data, message, contentFormat);
         }
-        log_error << "Structure of data " << typeid(CommandDataT).name()
+        log_error << "Structure of data " << abiTypeName<CommandDataT>()
                   << " cannot be used for 'Answer'-message";
     }
     prog_abort();
