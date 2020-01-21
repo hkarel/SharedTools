@@ -245,7 +245,7 @@ private:
 //---------------------------- Implementation  -------------------------------
 
 template<typename T>
-char* YamlConfig::typeName()
+inline char* YamlConfig::typeName()
 {
 #if defined(_MSC_VER)
     return typeid(T).name();

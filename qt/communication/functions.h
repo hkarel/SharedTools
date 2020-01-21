@@ -115,7 +115,7 @@ struct fromjson_exists : std::enable_if<CheckSerializeFunc<T>::FromJsonExists, i
 template<typename T>
 struct fromjson_not_exists : std::enable_if<!CheckSerializeFunc<T>::FromJsonExists, int> {};
 
-template<typename T> char* abiTypeName()
+template<typename T> inline char* abiTypeName()
 {
 #if defined(_MSC_VER)
     return typeid(T).name();
