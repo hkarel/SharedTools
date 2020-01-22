@@ -332,7 +332,7 @@ base::Socket::List concatSockets(const base::Listener& listener, const Args&... 
     for (int i = 0; i < ss.count(); ++i)
         sl.add(ss.release(i, lst::CompressList::No));
 
-    return std::move(sl);
+    return sl;
 }
 
 } // namespace transport
