@@ -619,7 +619,7 @@ void Socket::run()
                         && !message->contentIsEmpty()
                         && message->contentFormat() != SerializationFormat::Json)
                     {
-                        log_error_m << "For json packaging - message format"
+                        log_error_m << "For json packaging: message format"
                                     << " and message content format must match"
                                     << ". Message discarded"
                                     << ". Command: " << CommandNameLog(message->command());
