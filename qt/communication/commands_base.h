@@ -37,7 +37,6 @@
 
 #pragma once
 
-#include "prog_abort.h"
 #include "logger/logger.h"
 #include "qt/qhashex.h"
 #include "qt/quuidex.h"
@@ -138,6 +137,20 @@ struct Data
                 || MessageType2 == Message::Type::Event
                 || MessageType3 == Message::Type::Event);
     }
+
+#ifdef BPROTO_SERIALIZATION
+    // Фиктивные функции, необходимы для вывода в лог сообщений об отсутствии
+    // в целевой структуре функции сериализации toRaw(), fromRaw()
+    bserial::RawVector toRawNone() const;
+    void fromRawNone(const bserial::RawVector&);
+#endif
+
+#ifdef JSON_SERIALIZATION
+    // Фиктивные функции, необходимы для вывода в лог сообщений об отсутствии
+    // в целевой структуре функции сериализации toJson(), fromJson()
+    QByteArray toJsonNone();
+    SResult fromJsonNone(const QByteArray&);
+#endif
 };
 
 /**
