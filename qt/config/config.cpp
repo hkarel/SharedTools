@@ -84,12 +84,6 @@ QString getDirPath(const QString& partDirPath)
     return QString();
 }
 
-void homeDirExpansion(QString& filePath)
-{
-    if (!filePath.isEmpty() && (filePath[0] == QChar('~')))
-        filePath.replace(0, 1, QDir::home().path());
-}
-
 void dirExpansion(QString& filePath)
 {
     if (filePath.isEmpty())
