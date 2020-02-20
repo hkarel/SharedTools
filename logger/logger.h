@@ -45,7 +45,7 @@
 #include "simple_ptr.h"
 #include "safe_singleton.h"
 #include "thread/thread_base.h"
-#include "thread/thread_info.h"
+#include "thread/thread_utils.h"
 
 #include <sys/types.h>
 #include <sys/time.h>
