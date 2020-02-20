@@ -24,8 +24,9 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "thread_info.h"
+#include "thread_utils.h"
 #include "break_point.h"
+#include "spin_locker.h"
 
 #ifdef __MINGW32__
 #include <processthreadsapi.h>
@@ -37,6 +38,33 @@
 #include <signal.h>
 
 namespace trd {
+
+bool ThreadIdList::empty() const
+{
+    SpinLocker locker(_tidsLock); (void) locker;
+    return _tids.empty();
+}
+
+void ThreadIdList::lock(std::function<void (std::vector<pid_t>&)> func)
+{
+    SpinLocker locker(_tidsLock); (void) locker;
+    func(_tids);
+}
+
+ThreadIdLock::ThreadIdLock(ThreadIdList* l) : _threadIdList(l)
+{
+    SpinLocker locker(_threadIdList->_tidsLock); (void) locker;
+    _threadIdList->_tids.push_back(trd::gettid());
+}
+
+ThreadIdLock::~ThreadIdLock()
+{
+    SpinLocker locker(_threadIdList->_tidsLock); (void) locker;
+    pid_t tid = trd::gettid();
+    for (auto it = _threadIdList->_tids.begin(); it != _threadIdList->_tids.end(); ++it)
+        if (*it == tid)
+            _threadIdList->_tids.erase(it--);
+}
 
 pid_t gettid()
 {
@@ -51,7 +79,7 @@ pid_t gettid()
 #endif
 }
 
-bool thread_exists(pid_t tid)
+bool threadExists(pid_t tid)
 {
 #if defined(__FreeBSD__)
     long tid_ = long(tid);

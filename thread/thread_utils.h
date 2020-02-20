@@ -35,14 +35,53 @@
 *****************************************************************************/
 
 #pragma once
+
+#include "defmac.h"
 #include <sys/types.h>
+#include <atomic>
+#include <functional>
+#include <vector>
 
 namespace trd {
+
+/**
+  Потоко-безопасный список идентификаторов потоков
+*/
+class ThreadIdList
+{
+public:
+    ThreadIdList() = default;
+
+    // Возвращает TRUE, когда список идентификаторов потоков пуст
+    bool empty() const;
+
+    // Вызывает ламбда-функцию для безопасной работы со списком идентификаторов
+    // потоков
+    void lock(std::function<void (std::vector<pid_t>&)> func);
+
+private:
+    DISABLE_DEFAULT_COPY(ThreadIdList)
+    std::vector<pid_t> _tids;
+    mutable std::atomic_flag _tidsLock = ATOMIC_FLAG_INIT;
+
+    friend class ThreadIdLock;
+};
+
+class ThreadIdLock
+{
+public:
+    ThreadIdLock(ThreadIdList*);
+    ~ThreadIdLock();
+
+private:
+    DISABLE_DEFAULT_FUNC(ThreadIdLock)
+    ThreadIdList* _threadIdList;
+};
 
 // Возвращает идентификатор (TID) потока
 pid_t gettid();
 
 // Возвращает TRUE если поток с указанным идентификатором существует
-bool thread_exists(pid_t tid);
+bool threadExists(pid_t tid);
 
 } // namespace trd
