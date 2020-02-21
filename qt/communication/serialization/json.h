@@ -504,6 +504,12 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 #define J_SERIALIZE_OPT(FIELD) \
         p.member(#FIELD, true) & FIELD;
 
+#define J_SERIALIZE_MAP_ITEM(FIELD_NAME, FIELD) \
+        p.member(FIELD_NAME) & FIELD;
+
+#define J_SERIALIZE_MAP_OPT(FIELD_NAME, FIELD) \
+        p.member(FIELD_NAME, true) & FIELD;
+
 #define J_SERIALIZE_END \
         return p.endObject(); \
     }
