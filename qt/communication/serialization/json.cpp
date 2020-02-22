@@ -39,13 +39,14 @@ namespace serialization {
 namespace json {
 
 #include <cassert>
+#include <cctype>
 
 //#define DOCUMENT reinterpret_cast<Document*>(mDocument)
 //#define STACK (reinterpret_cast<ReaderStack*>(mStack))
 //#define TOP (STACK->top())
 //#define CURRENT (*TOP.value)
 
-//------------------------------- Reader ---------------------------------
+//---------------------------------- Reader ----------------------------------
 
 static std::atomic<std::uint64_t> jsonIndexReader = {0};
 
@@ -469,9 +470,22 @@ Reader& Reader::operator& (float& f)
 
 Reader& Reader::operator& (QByteArray& ba)
 {
-    // Написать реализацию
-    break_point
-
+    if (!error())
+    {
+        if (_stack.top().value->IsNull())
+        {
+            ba = QByteArray();
+            next();
+        }
+        else
+        {
+            StringBuffer buff;
+            rapidjson::Writer<StringBuffer> writer {buff};
+            _stack.top().value->Accept(writer);
+            ba = QByteArray(buff.GetString());
+            next();
+        }
+    }
     return *this;
 }
 
@@ -603,7 +617,7 @@ Reader& Reader::operator& (QUuid& uuid)
     return *this;
 }
 
-//------------------------------- Writer ---------------------------------
+//---------------------------------- Writer ----------------------------------
 
 Writer::Writer() : _writer(_stream)
 {}
@@ -716,14 +730,90 @@ Writer& Writer::operator& (const float f)
 
 Writer& Writer::operator& (const QByteArray& ba)
 {
-    // Написать реализацию
-    break_point
+    if (ba.isEmpty())
+    {
+        setNull();
+        return *this;
+    }
 
+    const char* begin = ba.constData();
+    const char* end = begin + ba.length() - 1;
+
+    // Удаляем пробелы в начале
+    while (std::isspace(static_cast<unsigned char>(*begin)))
+        ++begin;
+
+    // Удаляем пробелы в конце
+    while (std::isspace(static_cast<unsigned char>(*end)))
+        --end;
+
+    int length = end - begin + 1;
+
+    if ((*begin == '{') && (*end == '}'))
+    {
+        _writer.RawValue(begin, size_t(length), kObjectType);
+        return *this;
+    }
+
+    if ((*begin == '[') && (*end == ']'))
+    {
+        _writer.RawValue(begin, size_t(length), kArrayType);
+        return *this;
+    }
+
+    QByteArray br = QByteArray::fromRawData(begin, length);
+    if (br == "true"
+        || br == "True"
+        || br == "TRUE")
+    {
+        _writer.Bool(true);
+        return *this;
+    }
+    if (br == "false"
+        || br == "False"
+        || br == "FALSE")
+    {
+        _writer.Bool(false);
+        return *this;
+    }
+
+    bool ok;
+    qlonglong i64 = br.toLongLong(&ok);
+    if (ok)
+    {
+        _writer.Int64(i64);
+        return *this;
+    }
+
+    qulonglong ui64 = br.toULongLong(&ok);
+    if (ok)
+    {
+        _writer.Uint64(ui64);
+        return *this;
+    }
+
+    double d = br.toDouble(&ok);
+    if (ok)
+    {
+        _writer.Double(d);
+        return *this;
+    }
+
+    QByteArray ba2 = "\"";
+    ba2.append(br);
+    ba2.append("\"");
+    _writer.RawValue(ba2.constData(), size_t(ba2.length()), kStringType);
     return *this;
 }
 
 Writer& Writer::operator& (const QString& s)
 {
+    if (s.isEmpty())
+    {
+        setNull();
+        return *this;
+    }
+
     const QByteArray& ba = s.toUtf8();
     _writer.String(ba.constData(), SizeType(ba.length()));
     return *this;
