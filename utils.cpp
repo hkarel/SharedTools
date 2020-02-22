@@ -41,7 +41,9 @@ string& ltrim(string& s)
     // В С++17 не поддерживается std::ptr_fun
     // s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
 
-    s.erase(s.begin(), std::find_if_not(s.begin(), s.end(), [](string::value_type c){return std::isspace(c);}));
+    // Параметр 'c' должен иметь тип 'unsigned char', см. пояснение к функции std::isspace()
+    // здесь https://en.cppreference.com/w/cpp/string/byte/isspace
+    s.erase(s.begin(), std::find_if_not(s.begin(), s.end(), [](unsigned char c){return std::isspace(c);}));
     return s;
 }
 
@@ -50,7 +52,7 @@ string& rtrim(string& s)
     // В С++17 не поддерживается std::ptr_fun
     // s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
 
-    s.erase(std::find_if_not(s.rbegin(), s.rend(), [](string::value_type c){return std::isspace(c);}).base(), s.end());
+    s.erase(std::find_if_not(s.rbegin(), s.rend(), [](unsigned char c){return std::isspace(c);}).base(), s.end());
     return s;
 }
 
