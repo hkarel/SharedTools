@@ -71,10 +71,15 @@ public:
     bool checkProtocolCompatibility() const {return _checkProtocolCompatibility;}
     void setCheckProtocolCompatibility(bool val) {_checkProtocolCompatibility = val;}
 
+    // Наименование сокета или листенера, используется для вывода лог-сообщений
+    QString name() const {return _name;}
+    void setName(const QString& val) {_name = val;}
+
 protected:
     int _compressionLevel = {-1};
     int _compressionSize  = {1024};
     bool _checkProtocolCompatibility = {true};
+    QString _name;
 };
 
 /**

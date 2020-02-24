@@ -257,10 +257,12 @@ bool Listener::init(const HostPoint& listenPoint)
         usleep(200*1000);
     }
     if (attempt > 10)
-        log_error_m << "Start listener of connection to " << _listenPoint
-                    << " is failed. Detail: " << errorString();
+        log_error_m   << "Start " << name() << " listener is failed"
+                      << ". Connection point " << _listenPoint
+                      << ". Detail: " << errorString();
     else
-        log_verbose_m << "Start listener of connection with params: "
+        log_verbose_m << "Start " << name() << " listener"
+                      << ". Connection point "
                       << serverAddress() << ":" << serverPort();
 
     _removeClosedSockets.start(15*1000);
@@ -271,7 +273,8 @@ void Listener::close()
 {
     closeSockets();
     QTcpServer::close();
-    log_verbose_m << "Stop listener of connection with params: " << _listenPoint;
+    log_verbose_m << "Stop " << name() << " listener"
+                  <<  ". Connection point " << _listenPoint;
 }
 
 void Listener::removeClosedSockets()
