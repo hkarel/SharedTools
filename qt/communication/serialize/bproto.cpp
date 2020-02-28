@@ -23,44 +23,29 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#pragma once
-
 #include "qt/communication/serialize/bproto.h"
-#include <QtCore>
-#include <QHostAddress>
 
 namespace communication {
+namespace serialization {
+namespace bproto {
 
-/**
-  Структура группирует адрес и порт
-*/
-class HostPoint
+QDataStream& operator>> (QDataStream& s, ByteArray& ba)
 {
-public:
-    typedef QSet<HostPoint> Set;
+    ba.clear();
+    quint32 len;
+    s >> len;
+    if (len == 0xffffffff)
+        return s;
 
-    HostPoint() = default;
-    HostPoint(const HostPoint&) = default;
-    HostPoint(const QHostAddress& address, int port);
+    ba.resize(len);
+    if (s.readRawData(ba.data(), len) != int(len))
+    {
+        ba.clear();
+        s.setStatus(QDataStream::ReadPastEnd);
+    }
+    return s;
+}
 
-    HostPoint& operator= (const HostPoint&) = default;
-    bool operator== (const HostPoint&) const;
-    bool isNull() const;
-    void reset();
-
-    QHostAddress address() const {return _address;}
-    void setAddress(const QHostAddress& val){_address = val;}
-
-    quint16 port() const {return _port;}
-    void setPort(int val);
-
-private:
-    QHostAddress _address;
-    quint16 _port = {0};
-
-    // Функции сериализации данных
-    DECLARE_B_SERIALIZE_FUNC
-};
-uint qHash(const HostPoint&);
-
+} // namespace bproto
+} // namespace serialization
 } // namespace communication

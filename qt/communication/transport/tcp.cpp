@@ -28,11 +28,11 @@
 #include "break_point.h"
 #include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
-#include "qt/communication/functions.h"
 #include "qt/communication/logger_operators.h"
+#include "qt/communication/utils.h"
 
 #ifdef JSON_SERIALIZATION
-#include "qt/communication/serialization/json.h"
+#include "qt/communication/serialize/json.h"
 #endif
 
 #include <stdexcept>

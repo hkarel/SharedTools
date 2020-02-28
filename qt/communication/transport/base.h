@@ -35,8 +35,7 @@
 #include "clife_ptr.h"
 #include "qt/thread/qthreadex.h"
 #include "qt/communication/commands_base.h"
-#include "qt/communication/message.h"
-#include "qt/communication/functions.h"
+#include "qt/communication/serialize/functions.h"
 
 #include <QtCore>
 #include <atomic>

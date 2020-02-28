@@ -33,6 +33,7 @@
 #include "qt/version/version_number.h"
 #include "qt/communication/commands_pool.h"
 #include "qt/communication/logger_operators.h"
+#include "qt/communication/utils.h"
 
 #include <utility>
 #include <stdexcept>

@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2019 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2015 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -23,28 +23,53 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/serialization/sresult.h"
+#include "qt/communication/utils.h"
+#include "qt/communication/message.h"
 
 namespace communication {
-namespace serialization {
 
-Result::Result(bool val, int code, const QString& description)
+namespace data {
+QDataStream& operator>> (QDataStream& s, timeval& tv)
 {
-    _d->value = val;
-    _d->code = code;
-    _d->description = description;
+    qint64 sec;
+    qint32 usec;
+    s >> sec;
+    s >> usec;
+    tv.tv_sec = sec;
+    tv.tv_usec = usec;
+    return s;
 }
 
-Result::Result(Result&& r)
+QDataStream& operator<< (QDataStream& s, const timeval& tv)
 {
-    _d = r._d;
+    s << qint64(tv.tv_sec);
+    s << qint32(tv.tv_usec);
+    return s;
+}
+} // namespace data
+
+bool protocolCompatible(quint16 versionLow, quint16 versionHigh)
+{
+    if (versionLow > versionHigh
+        || BPROTOCOL_VERSION_LOW > BPROTOCOL_VERSION_HIGH)
+        return false;
+    quint16 protocolVersionLow = BPROTOCOL_VERSION_LOW;
+    if (versionHigh < protocolVersionLow)
+        return false;
+    if (versionLow > BPROTOCOL_VERSION_HIGH)
+        return false;
+    return true;
 }
 
-Result& Result::operator= (Result&& r)
+void registrationQtMetatypes()
 {
-    _d = r._d;
-    return *this;
+    static bool first {true};
+    if (first)
+    {
+        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
+        qRegisterMetaType<communication::SocketDescriptor>("communication::SocketDescriptor");
+        first = false;
+    }
 }
 
-} // namespace serialization
 } // namespace communication

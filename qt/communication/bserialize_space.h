@@ -24,7 +24,7 @@
 *****************************************************************************/
 
 #pragma once
-#include "qt/communication/serialization/bproto.h"
+#include "qt/communication/serialize/bproto.h"
 
 namespace communication {
 namespace data {

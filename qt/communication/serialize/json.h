@@ -37,7 +37,7 @@
 #include "logger/logger.h"
 #include "qt/quuidex.h"
 #include "qt/logger/logger_operators.h"
-#include "qt/communication/serialization/sresult.h"
+#include "qt/communication/serialize/sresult.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"

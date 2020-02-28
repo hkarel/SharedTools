@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2015 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2020 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -23,7 +23,14 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/functions.h"
+#include "qt/communication/serialize/functions.h"
+
+#define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "Serialize")
+#define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "Serialize")
+#define log_info_m    alog::logger().info   (__FILE__, __func__, __LINE__, "Serialize")
+#define log_verbose_m alog::logger().verbose(__FILE__, __func__, __LINE__, "Serialize")
+#define log_debug_m   alog::logger().debug  (__FILE__, __func__, __LINE__, "Serialize")
+#define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "Serialize")
 
 namespace communication {
 
@@ -32,12 +39,12 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageError& data,
 {
     if (message->type() != Message::Type::Answer)
     {
-        log_error << "Message type must be Message::Type::Answer";
+        log_error_m << "Message type must be Message::Type::Answer";
         prog_abort();
     }
     if (message->execStatus() != Message::ExecStatus::Error)
     {
-        log_error << "Message exec status must be Message::ExecStatus::Error";
+        log_error_m << "Message exec status must be Message::ExecStatus::Error";
         prog_abort();
     }
     return detail::messageReadContent(message, data, errorSender);
@@ -48,12 +55,12 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
 {
     if (message->type() != Message::Type::Answer)
     {
-        log_error << "Message type must be Message::Type::Answer";
+        log_error_m << "Message type must be Message::Type::Answer";
         prog_abort();
     }
     if (message->execStatus() != Message::ExecStatus::Failed)
     {
-        log_error << "Message exec status must be Message::ExecStatus::Failed";
+        log_error_m << "Message exec status must be Message::ExecStatus::Failed";
         prog_abort();
     }
     return detail::messageReadContent(message, data, errorSender);
@@ -80,48 +87,11 @@ QString errorDescription(const Message::Ptr& message)
     return descr;
 }
 
-namespace data {
-QDataStream& operator>> (QDataStream& s, timeval& tv)
-{
-    qint64 sec;
-    qint32 usec;
-    s >> sec;
-    s >> usec;
-    tv.tv_sec = sec;
-    tv.tv_usec = usec;
-    return s;
-}
-
-QDataStream& operator<< (QDataStream& s, const timeval& tv)
-{
-    s << qint64(tv.tv_sec);
-    s << qint32(tv.tv_usec);
-    return s;
-}
-} // namespace data
-
-bool protocolCompatible(quint16 versionLow, quint16 versionHigh)
-{
-    if (versionLow > versionHigh
-        || BPROTOCOL_VERSION_LOW > BPROTOCOL_VERSION_HIGH)
-        return false;
-    quint16 protocolVersionLow = BPROTOCOL_VERSION_LOW;
-    if (versionHigh < protocolVersionLow)
-        return false;
-    if (versionLow > BPROTOCOL_VERSION_HIGH)
-        return false;
-    return true;
-}
-
-void registrationQtMetatypes()
-{
-    static bool first {true};
-    if (first)
-    {
-        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
-        qRegisterMetaType<communication::SocketDescriptor>("communication::SocketDescriptor");
-        first = false;
-    }
-}
-
 } // namespace communication
+
+#undef log_error_m
+#undef log_warn_m
+#undef log_info_m
+#undef log_verbose_m
+#undef log_debug_m
+#undef log_debug2_m

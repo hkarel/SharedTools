@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2015 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2020 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -32,16 +32,22 @@
 #include "type_name.h"
 #include "logger/logger.h"
 #include "qt/logger/logger_operators.h"
-#include "qt/communication/logger_operators.h"
 #include "qt/communication/commands_base.h"
 #include "qt/communication/error_sender.h"
-#include "qt/communication/message.h"
-#include "qt/communication/serialization/sresult.h"
+#include "qt/communication/logger_operators.h"
+#include "qt/communication/serialize/sresult.h"
 
 #include <sys/time.h>
 #include <typeinfo>
 #include <stdexcept>
 #include <type_traits>
+
+#define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "Serialize")
+#define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "Serialize")
+#define log_info_m    alog::logger().info   (__FILE__, __func__, __LINE__, "Serialize")
+#define log_verbose_m alog::logger().verbose(__FILE__, __func__, __LINE__, "Serialize")
+#define log_debug_m   alog::logger().debug  (__FILE__, __func__, __LINE__, "Serialize")
+#define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "Serialize")
 
 namespace communication {
 namespace detail {
@@ -102,7 +108,7 @@ auto messageWriteBProto(const CommandDataT& data, Message::Ptr&, long, long)
 {
     QString err = "Method %1::toRaw not exists";
     err = err.arg(abi_type_name<CommandDataT>());
-    log_error << err;
+    log_error_m << err;
     return SResult(false, 0, err);
 }
 
@@ -128,7 +134,7 @@ auto messageWriteJson(CommandDataT& data, Message::Ptr&, long)
 {
     QString err = "Method %1::toJson not exists";
     err = err.arg(abi_type_name<CommandDataT>());
-    log_error << err;
+    log_error_m << err;
     return SResult(false, 0, err);
 }
 
@@ -158,7 +164,7 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
 #endif
         default:
         {
-            log_error << "Unsupported message serialization format";
+            log_error_m << "Unsupported message serialization format";
             prog_abort();
         }
     }
@@ -202,8 +208,8 @@ Message::Ptr createMessage(const CommandDataT& data,
         if (params.type != Message::Type::Command
             && params.type != Message::Type::Event)
         {
-            log_error << "Parameter 'type' must be of type 'Message::Type::Command'"
-                         " or 'Message::Type::Event' only";
+            log_error_m << "Parameter 'type' must be of type 'Message::Type::Command'"
+                           " or 'Message::Type::Event' only";
             prog_abort();
         }
         message->setType(params.type);
@@ -279,7 +285,7 @@ auto messageReadBProto(const Message::Ptr&, CommandDataT& data, long, long)
 {
     QString err = "Method %1::fromRaw not exists";
     err = err.arg(abi_type_name<CommandDataT>());
-    log_error << err;
+    log_error_m << err;
     return SResult(false, 0, err);
 }
 
@@ -305,7 +311,7 @@ auto  messageReadJson(const Message::Ptr&, CommandDataT& data, long)
 {
     QString err = "Method %1::fromJson not exists";
     err = err.arg(abi_type_name<CommandDataT>());
-    log_error << err;
+    log_error_m << err;
     return SResult(false, 0, err);
 }
 
@@ -334,7 +340,7 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
             break;
 #endif
         default:
-            log_error << "Unsupported message serialization format";
+            log_error_m << "Unsupported message serialization format";
             prog_abort();
     }
 
@@ -367,8 +373,8 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
 
     if (message->command() != data.command())
     {
-        log_error << "Command of message " << CommandNameLog(message->command())
-                  << " is not equivalent command for data " << CommandNameLog(data.command());
+        log_error_m << "Command of message " << CommandNameLog(message->command())
+                    << " is not equivalent command for data " << CommandNameLog(data.command());
     }
     else if (message->type() == Message::Type::Command)
     {
@@ -378,9 +384,9 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
             data.dataIsValid = (bool)res;
             return res;
         }
-        log_error << "Message " << CommandNameLog(message->command())
-                  << " with type 'Command' cannot write data to struct "
-                  << abi_type_name<CommandDataT>() << ". Mismatched types";
+        log_error_m << "Message " << CommandNameLog(message->command())
+                    << " with type 'Command' cannot write data to struct "
+                    << abi_type_name<CommandDataT>() << ". Mismatched types";
     }
     else if (message->type() == Message::Type::Event)
     {
@@ -390,9 +396,9 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
             data.dataIsValid = (bool)res;
             return res;
         }
-        log_error << "Message " << CommandNameLog(message->command())
-                  << " with type 'Event' cannot write data to struct "
-                  << abi_type_name<CommandDataT>() << ". Mismatched types";
+        log_error_m << "Message " << CommandNameLog(message->command())
+                    << " with type 'Event' cannot write data to struct "
+                    << abi_type_name<CommandDataT>() << ". Mismatched types";
     }
     else if (message->type() == Message::Type::Answer)
     {
@@ -404,9 +410,9 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                 data.dataIsValid = (bool)res;
                 return res;
             }
-            log_error << "Message " << CommandNameLog(message->command())
-                      << " with type 'Answer' cannot write data to struct "
-                      << abi_type_name<CommandDataT>() << ". Mismatched types";
+            log_error_m << "Message " << CommandNameLog(message->command())
+                        << " with type 'Answer' cannot write data to struct "
+                        << abi_type_name<CommandDataT>() << ". Mismatched types";
         }
         else if (message->execStatus() == Message::ExecStatus::Failed)
         {
@@ -417,10 +423,10 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                 data.dataIsValid = (bool)res;
                 return res;
             }
-            log_error << "Message is failed. Type of data must be "
-                      << "derived from communication::data::MessageFailed"
-                      << ". Command: " << CommandNameLog(message->command())
-                      << ". Struct: "  << abi_type_name<CommandDataT>();
+            log_error_m << "Message is failed. Type of data must be "
+                        << "derived from communication::data::MessageFailed"
+                        << ". Command: " << CommandNameLog(message->command())
+                        << ". Struct: "  << abi_type_name<CommandDataT>();
         }
         else if (message->execStatus() == Message::ExecStatus::Error)
         {
@@ -431,16 +437,16 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                 data.dataIsValid = (bool)res;
                 return res;
             }
-            log_error << "Message is error. Type of data must be "
-                      << "derived from communication::data::MessageError"
-                      << ". Command: " << CommandNameLog(message->command())
-                      << ". Struct: "  << abi_type_name<CommandDataT>();
+            log_error_m << "Message is error. Type of data must be "
+                        << "derived from communication::data::MessageError"
+                        << ". Command: " << CommandNameLog(message->command())
+                        << ". Struct: "  << abi_type_name<CommandDataT>();
         }
         else
-            log_error << "Message exec status is unknown: "
-                      << static_cast<quint32>(message->execStatus())
-                      << ". Command: " << CommandNameLog(message->command())
-                      << ". Struct: "  << abi_type_name<CommandDataT>();
+            log_error_m << "Message exec status is unknown: "
+                        << static_cast<quint32>(message->execStatus())
+                        << ". Command: " << CommandNameLog(message->command())
+                        << ". Struct: "  << abi_type_name<CommandDataT>();
     }
     prog_abort();
 
@@ -467,8 +473,8 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 {
     if (data.command() != message->command())
     {
-        log_error << "Command of message " << CommandNameLog(message->command())
-                  << " is not equal command of data " << CommandNameLog(data.command());
+        log_error_m << "Command of message " << CommandNameLog(message->command())
+                    << " is not equal command of data " << CommandNameLog(data.command());
     }
     else if (message->type() == Message::Type::Command)
     {
@@ -477,8 +483,8 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Unknown);
             return detail::messageWriteContent(data, message, contentFormat);
         }
-        log_error << "Structure of data " << abi_type_name<CommandDataT>()
-                  << " cannot be used for 'Command'-message";
+        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
+                    << " cannot be used for 'Command'-message";
     }
     else if (message->type() == Message::Type::Event)
     {
@@ -487,8 +493,8 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Unknown);
             return detail::messageWriteContent(data, message, contentFormat);
         }
-        log_error << "Structure of data " << abi_type_name<CommandDataT>()
-                  << " cannot be used for 'Event'-message";
+        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
+                    << " cannot be used for 'Event'-message";
     }
     else if (message->type() == Message::Type::Answer)
     {
@@ -497,8 +503,8 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
             message->setExecStatus(Message::ExecStatus::Success);
             return detail::messageWriteContent(data, message, contentFormat);
         }
-        log_error << "Structure of data " << abi_type_name<CommandDataT>()
-                  << " cannot be used for 'Answer'-message";
+        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
+                    << " cannot be used for 'Answer'-message";
     }
     prog_abort();
 
@@ -546,20 +552,11 @@ SResult writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
 */
 QString errorDescription(const Message::Ptr&);
 
-namespace data {
-QDataStream& operator>> (QDataStream&, timeval&);
-QDataStream& operator<< (QDataStream&, const timeval&);
-} // namespace data
-
-/**
-  Выполняет проверку пересечения диапазонов версий  бинарного  протокола.
-  Если диапазоны не пересекаются, то считаем, что протоколы не совместимы
-*/
-bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
-
-/**
-  Функция регистрации Qt-метатипов для работы с коммуникационными механизмами
-*/
-void registrationQtMetatypes();
-
 } // namespace communication
+
+#undef log_error_m
+#undef log_warn_m
+#undef log_info_m
+#undef log_verbose_m
+#undef log_debug_m
+#undef log_debug2_m

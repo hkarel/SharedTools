@@ -32,6 +32,13 @@
 #include "qt/communication/message.h"
 #include <exception>
 
+#define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "FuncInvok")
+#define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "FuncInvok")
+#define log_info_m    alog::logger().info   (__FILE__, __func__, __LINE__, "FuncInvok")
+#define log_verbose_m alog::logger().verbose(__FILE__, __func__, __LINE__, "FuncInvok")
+#define log_debug_m   alog::logger().debug  (__FILE__, __func__, __LINE__, "FuncInvok")
+#define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "FuncInvok")
+
 namespace communication {
 
 /**
@@ -74,13 +81,13 @@ class FunctionInvoker
             }
             catch (std::exception& e)
             {
-                log_error << "Handler of command " << CommandNameLog(message->command())
-                          << " throw a exception. Detail: " << e.what();
+                log_error_m << "Handler of command " << CommandNameLog(message->command())
+                            << " throw a exception. Detail: " << e.what();
             }
             catch (...)
             {
-                log_error << "Handler of command " << CommandNameLog(message->command())
-                          << " throw a exception. Unknown error";
+                log_error_m << "Handler of command " << CommandNameLog(message->command())
+                            << " throw a exception. Unknown error";
             }
         }
     };
@@ -99,13 +106,13 @@ class FunctionInvoker
             }
             catch (std::exception& e)
             {
-                log_error << "Handler of command " << CommandNameLog(message->command())
-                          << " throw a exception. Detail: " << e.what();
+                log_error_m << "Handler of command " << CommandNameLog(message->command())
+                            << " throw a exception. Detail: " << e.what();
             }
             catch (...)
             {
-                log_error << "Handler of command " << CommandNameLog(message->command())
-                          << " throw a exception. Unknown error";
+                log_error_m << "Handler of command " << CommandNameLog(message->command())
+                            << " throw a exception. Unknown error";
             }
         }
     };
@@ -170,3 +177,10 @@ private:
 };
 
 } // namespace communication
+
+#undef log_error_m
+#undef log_warn_m
+#undef log_info_m
+#undef log_verbose_m
+#undef log_debug_m
+#undef log_debug2_m

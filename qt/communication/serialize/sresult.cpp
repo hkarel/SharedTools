@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2015 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2019 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -23,29 +23,28 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/serialization/bproto.h"
+#include "qt/communication/serialize/sresult.h"
 
 namespace communication {
 namespace serialization {
-namespace bproto {
 
-QDataStream& operator>> (QDataStream& s, ByteArray& ba)
+Result::Result(bool val, int code, const QString& description)
 {
-    ba.clear();
-    quint32 len;
-    s >> len;
-    if (len == 0xffffffff)
-        return s;
-
-    ba.resize(len);
-    if (s.readRawData(ba.data(), len) != int(len))
-    {
-        ba.clear();
-        s.setStatus(QDataStream::ReadPastEnd);
-    }
-    return s;
+    _d->value = val;
+    _d->code = code;
+    _d->description = description;
 }
 
-} // namespace bproto
+Result::Result(Result&& r)
+{
+    _d = r._d;
+}
+
+Result& Result::operator= (Result&& r)
+{
+    _d = r._d;
+    return *this;
+}
+
 } // namespace serialization
 } // namespace communication

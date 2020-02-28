@@ -23,7 +23,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/serialization/json.h"
+#include "qt/communication/serialize/json.h"
 #include "rapidjson/error/en.h"
 #include <atomic>
 

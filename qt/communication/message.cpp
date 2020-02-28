@@ -38,7 +38,7 @@
 #endif
 
 #ifdef JSON_SERIALIZATION
-#include "qt/communication/serialization/json.h"
+#include "qt/communication/serialize/json.h"
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"

@@ -21,46 +21,31 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  ---
+
+  В модуле собраны функции общего назначения для работы с коммуникационными
+  механизмами.
 *****************************************************************************/
 
 #pragma once
-
-#include "qt/communication/serialize/bproto.h"
-#include <QtCore>
-#include <QHostAddress>
+#include <QtCore>>
 
 namespace communication {
 
+namespace data {
+QDataStream& operator>> (QDataStream&, timeval&);
+QDataStream& operator<< (QDataStream&, const timeval&);
+} // namespace data
+
 /**
-  Структура группирует адрес и порт
+  Выполняет проверку пересечения диапазонов версий  бинарного  протокола.
+  Если диапазоны не пересекаются, то считаем, что протоколы не совместимы
 */
-class HostPoint
-{
-public:
-    typedef QSet<HostPoint> Set;
+bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
 
-    HostPoint() = default;
-    HostPoint(const HostPoint&) = default;
-    HostPoint(const QHostAddress& address, int port);
-
-    HostPoint& operator= (const HostPoint&) = default;
-    bool operator== (const HostPoint&) const;
-    bool isNull() const;
-    void reset();
-
-    QHostAddress address() const {return _address;}
-    void setAddress(const QHostAddress& val){_address = val;}
-
-    quint16 port() const {return _port;}
-    void setPort(int val);
-
-private:
-    QHostAddress _address;
-    quint16 _port = {0};
-
-    // Функции сериализации данных
-    DECLARE_B_SERIALIZE_FUNC
-};
-uint qHash(const HostPoint&);
+/**
+  Функция регистрации Qt-метатипов для работы с коммуникационными механизмами
+*/
+void registrationQtMetatypes();
 
 } // namespace communication
