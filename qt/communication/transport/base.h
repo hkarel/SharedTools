@@ -172,8 +172,8 @@ public:
     // лизации задается автоматически в зависимости от формата подключившегося
     // клиентского сокета. Формат сериализации должен быть задан до момента
     // установки TCP/Local соединения
-    SerializationFormat messageFormat() const {return _messageFormat;}
-    void setMessageFormat(SerializationFormat val);
+    SerializeFormat messageFormat() const {return _messageFormat;}
+    void setMessageFormat(SerializeFormat val);
 
 signals:
     // Сигнал эмитируется при получении сообщения
@@ -239,11 +239,11 @@ private:
     const SocketType _type;
     volatile ProtocolCompatible _protocolCompatible = {ProtocolCompatible::Undefined};
 
-    typedef QPair<SerializationFormat, QUuidEx /*сигнатура формата*/>  ProtocolSign;
+    typedef QPair<SerializeFormat, QUuidEx /*сигнатура формата*/>  ProtocolSign;
     QVector<ProtocolSign> _protocolMap;
 
     // Формат сериализации сообщения (не контента)
-    SerializationFormat _messageFormat = {SerializationFormat::BProto};
+    SerializeFormat _messageFormat = {SerializeFormat::BProto};
 
     bool _serializationSignatureRead = {false};
     bool _serializationSignatureWrite = {false};

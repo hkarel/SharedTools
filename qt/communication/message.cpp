@@ -61,7 +61,7 @@ Message::Message() : _flags(0), _flags2(0)
     // не именованных union-параметров при их объявлении в классе.
 }
 
-Message::Ptr Message::create(const QUuidEx& command, SerializationFormat contentFormat)
+Message::Ptr Message::create(const QUuidEx& command, SerializeFormat contentFormat)
 {
     Ptr m {new Message};
 
@@ -540,12 +540,12 @@ Message::Compression Message::compression() const
     return static_cast<Compression>(_flag.compression);
 }
 
-SerializationFormat Message::contentFormat() const
+SerializeFormat Message::contentFormat() const
 {
-    return static_cast<SerializationFormat>(_flag.contentFormat);
+    return static_cast<SerializeFormat>(_flag.contentFormat);
 }
 
-void Message::setContentFormat(SerializationFormat val)
+void Message::setContentFormat(SerializeFormat val)
 {
     _flag.contentFormat = static_cast<quint32>(val);
 }

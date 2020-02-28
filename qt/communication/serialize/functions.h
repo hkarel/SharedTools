@@ -147,18 +147,18 @@ SResult messageWriteJson(const CommandDataT& data, Message::Ptr& message)
 
 template<typename CommandDataT>
 SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
-                            SerializationFormat contentFormat)
+                            SerializeFormat contentFormat)
 {
     SResult res {false};
     switch (contentFormat)
     {
 #ifdef BPROTO_SERIALIZATION
-        case SerializationFormat::BProto:
+        case SerializeFormat::BProto:
             res = messageWriteBProto(data, message);
             break;
 #endif
 #ifdef JSON_SERIALIZATION
-        case SerializationFormat::Json:
+        case SerializeFormat::Json:
             res = messageWriteJson(data, message);
             break;
 #endif
@@ -175,14 +175,14 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
 struct CreateMessageParams
 {
     const Message::Type type = {Message::Type::Command};
-    const SerializationFormat format = {SerializationFormat::BProto};
+    const SerializeFormat format = {SerializeFormat::BProto};
 
     CreateMessageParams() = default;
     CreateMessageParams(Message::Type type,
-                        SerializationFormat format = SerializationFormat::BProto)
+                        SerializeFormat format = SerializeFormat::BProto)
         : type{type}, format{format}
     {}
-    CreateMessageParams(SerializationFormat format,
+    CreateMessageParams(SerializeFormat format,
                         Message::Type type = Message::Type::Command)
         : type{type}, format{format}
     {}
@@ -226,7 +226,7 @@ Message::Ptr createMessage(const CommandDataT& data,
 
 inline Message::Ptr createMessage(const QUuidEx& command)
 {
-    return Message::create(command, SerializationFormat::BProto);
+    return Message::create(command, SerializeFormat::BProto);
 }
 
 #ifdef JSON_SERIALIZATION
@@ -234,12 +234,12 @@ template<typename CommandDataT>
 Message::Ptr createJsonMessage(const CommandDataT& data,
                                Message::Type type = Message::Type::Command)
 {
-    return createMessage(data, {type, SerializationFormat::Json});
+    return createMessage(data, {type, SerializeFormat::Json});
 }
 
 inline Message::Ptr createJsonMessage(const QUuidEx& command)
 {
-    return Message::create(command, SerializationFormat::Json);
+    return Message::create(command, SerializeFormat::Json);
 }
 #endif
 
@@ -330,12 +330,12 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
     switch (message->contentFormat())
     {
 #ifdef BPROTO_SERIALIZATION
-        case SerializationFormat::BProto:
+        case SerializeFormat::BProto:
             res = messageReadBProto(message, data);
             break;
 #endif
 #ifdef JSON_SERIALIZATION
-        case SerializationFormat::Json:
+        case SerializeFormat::Json:
             res = messageReadJson(message, data);
             break;
 #endif
@@ -468,7 +468,7 @@ SResult readFromMessage(const Message::Ptr&, data::MessageFailed&,
 */
 template<typename CommandDataT>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializationFormat contentFormat = SerializationFormat::BProto,
+                       SerializeFormat contentFormat = SerializeFormat::BProto,
                        typename detail::not_error_data<CommandDataT>::type = 0)
 {
     if (data.command() != message->command())
@@ -519,7 +519,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 */
 template<typename CommandDataT /*MessageError*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializationFormat contentFormat = SerializationFormat::BProto,
+                       SerializeFormat contentFormat = SerializeFormat::BProto,
                        typename detail::is_error_data<CommandDataT>::type = 0)
 {
     message->setType(Message::Type::Answer);
@@ -529,7 +529,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 
 template<typename CommandDataT /*MessageFailed*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializationFormat contentFormat = SerializationFormat::BProto,
+                       SerializeFormat contentFormat = SerializeFormat::BProto,
                        typename detail::is_failed_data<CommandDataT>::type = 0)
 {
     message->setType(Message::Type::Answer);
@@ -541,7 +541,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 template<typename CommandDataT>
 SResult writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
 {
-    return writeToMessage(data, message, SerializationFormat::Json);
+    return writeToMessage(data, message, SerializeFormat::Json);
 }
 #endif
 

@@ -145,10 +145,10 @@ Socket::Socket(SocketType type) : _type(type)
     registrationQtMetatypes();
 
 #ifdef BPROTO_SERIALIZATION
-    _protocolMap << qMakePair(SerializationFormat::BProto, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
+    _protocolMap << qMakePair(SerializeFormat::BProto, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
 #endif
 #ifdef JSON_SERIALIZATION
-    _protocolMap << qMakePair(SerializationFormat::Json,   QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
+    _protocolMap << qMakePair(SerializeFormat::Json,   QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
 #endif
 }
 
@@ -218,7 +218,7 @@ void Socket::waitConnection(int time)
     }
 }
 
-void Socket::setMessageFormat(SerializationFormat val)
+void Socket::setMessageFormat(SerializeFormat val)
 {
     if (socketIsConnected() || isListenerSide())
         return;
@@ -401,12 +401,12 @@ void Socket::run()
                 switch (_messageFormat)
                 {
 #ifdef BPROTO_SERIALIZATION
-                    case SerializationFormat::BProto:
+                    case SerializeFormat::BProto:
                         logLine << "bproto";
                         break;
 #endif
 #ifdef JSON_SERIALIZATION
-                    case SerializationFormat::Json:
+                    case SerializeFormat::Json:
                         logLine << "json";
                         break;
 #endif
@@ -478,12 +478,12 @@ void Socket::run()
                         switch (_messageFormat)
                         {
 #ifdef BPROTO_SERIALIZATION
-                            case SerializationFormat::BProto:
+                            case SerializeFormat::BProto:
                                 logLine << "bproto";
                                 break;
 #endif
 #ifdef JSON_SERIALIZATION
-                            case SerializationFormat::Json:
+                            case SerializeFormat::Json:
                                 logLine << "json";
                                 break;
 #endif
@@ -616,9 +616,9 @@ void Socket::run()
                         break;
 
 #ifdef JSON_SERIALIZATION
-                    if (_messageFormat == SerializationFormat::Json
+                    if (_messageFormat == SerializeFormat::Json
                         && !message->contentIsEmpty()
-                        && message->contentFormat() != SerializationFormat::Json)
+                        && message->contentFormat() != SerializeFormat::Json)
                     {
                         log_error_m << "For json packaging: message format"
                                     << " and message content format must match"
@@ -644,12 +644,12 @@ void Socket::run()
                     switch (_messageFormat)
                     {
 #ifdef BPROTO_SERIALIZATION
-                        case SerializationFormat::BProto:
+                        case SerializeFormat::BProto:
                             buff = message->toBProto();
                             break;
 #endif
 #ifdef JSON_SERIALIZATION
-                        case SerializationFormat::Json:
+                        case SerializeFormat::Json:
                             buff = message->toJson();
                             if (alog::logger().level() == alog::Level::Debug2)
                             {
@@ -787,12 +787,12 @@ void Socket::run()
                     switch (_messageFormat)
                     {
 #ifdef BPROTO_SERIALIZATION
-                        case SerializationFormat::BProto:
+                        case SerializeFormat::BProto:
                             message = Message::fromBProto(readBuff);
                             break;
 #endif
 #ifdef JSON_SERIALIZATION
-                        case SerializationFormat::Json:
+                        case SerializeFormat::Json:
                             if (alog::logger().level() == alog::Level::Debug2)
                             {
                                 log_debug2_m << "Message json received: "
@@ -841,10 +841,10 @@ void Socket::run()
                         else
                         {
                             const char* proto;
-                            if (_messageFormat == SerializationFormat::BProto)
+                            if (_messageFormat == SerializeFormat::BProto)
                                 proto = "binary";
 #ifdef JSON_SERIALIZATION
-                            else if (_messageFormat == SerializationFormat::Json)
+                            else if (_messageFormat == SerializeFormat::Json)
                                 proto = "json";
 #endif
                             else

@@ -69,7 +69,7 @@ typedef int SocketDescriptor;
 #endif
 typedef QSetEx<SocketDescriptor> SocketDescriptorSet;
 
-enum class SerializationFormat
+enum class SerializeFormat
 {
     BProto = 0, // Бинарный формат
     Json   = 1  // Json формат
@@ -260,14 +260,14 @@ public:
     void decompress();
 
     // Формат сериализации контента
-    SerializationFormat contentFormat() const;
+    SerializeFormat contentFormat() const;
 
     // Создает сообщение. Формат сериализации контента необходимо устанавливать
     // при создании сообщения. Если этого не делать, то в случае  передачи пус-
     // того сообщения  (без контента)  значение параметра сериализации контента
     // может быть неверно  установлено,  что  приведет  неправильной  обработке
     // ответного сообщения
-    static Ptr create(const QUuidEx& command, SerializationFormat contentFormat);
+    static Ptr create(const QUuidEx& command, SerializeFormat contentFormat);
 
     // Создает отдельную копию сообщения для использования ее в качестве
     // сообщения-ответа. Основная причина введения данной функции заключается
@@ -342,7 +342,7 @@ private:
     void setSocketDescriptor(SocketDescriptor val) {_socketDescriptor = val;}
     void setSocketName(const QString& val) {_socketName = val;}
 
-    void setContentFormat(SerializationFormat);
+    void setContentFormat(SerializeFormat);
 
 private:
     QUuidEx _id;
@@ -427,7 +427,7 @@ template<typename... Args>
 SResult Message::writeContent(const Args&... args)
 {
     _content.clear();
-    setContentFormat(SerializationFormat::BProto);
+    setContentFormat(SerializeFormat::BProto);
     QDataStream stream {&_content, QIODevice::WriteOnly};
     STREAM_INIT(stream);
     writeInternal(stream, args...);
@@ -470,7 +470,7 @@ void Message::readInternal(QDataStream& s, T& t, Args&... args) const
 template<typename T>
 SResult Message::writeJsonContent(const T& t)
 {
-    setContentFormat(SerializationFormat::Json);
+    setContentFormat(SerializeFormat::Json);
     _content = const_cast<T&>(t).toJson();
     return SResult(true);
 }
