@@ -32,11 +32,10 @@
 #include "defmac.h"
 #include "container_ptr.h"
 #include "simple_ptr.h"
-#include "qt/thread/qthreadex.h"
 #include "qt/communication/message.h"
-#include "qt/communication/functions.h"
 #include "qt/communication/host_point.h"
 #include "qt/communication/transport/base.h"
+#include "qt/thread/qthreadex.h"
 
 #include <QtCore>
 #include <QUdpSocket>
