@@ -158,10 +158,13 @@ public:
     quint16 protocolVersionLow()  const {return _protocolVersionLow;}
     quint16 protocolVersionHigh() const {return _protocolVersionHigh;}
 
+    // Возвращает контент в сыром виде
+    QByteArray content() {return _content;}
+
     // Удаляет контент сообщения
     void clearContent() {_content.clear();}
 
-    // Возвращает TRUE если сообщение не содержит дополнительных данных
+    // Возвращает TRUE если сообщение не содержит контент
     bool contentIsEmpty() const {return _content.isEmpty();}
 
     // Тип пересылаемой команды
@@ -404,7 +407,6 @@ private:
     QVector<quint64> _tags;
     quint64 _maxTimeLife = {quint64(-1)};
     BByteArray _content;
-
     SocketType _socketType = {SocketType::Unknown};
     HostPoint _sourcePoint;
     HostPoint::Set _destinationPoints;
