@@ -38,7 +38,7 @@
 #include "qt/communication/host_point.h"
 #include "qt/communication/serialize/sresult.h"
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
 #include "qt/communication/serialize/bproto.h"
 #endif
 
@@ -287,7 +287,7 @@ public:
     //   - compression = None
     Ptr cloneForAnswer() const;
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
     // Функция записи данных
     template<typename... Args>
     SResult writeContent(const Args&... args);
@@ -305,7 +305,7 @@ public:
     static Ptr fromDataStream(QDataStream&);
 #endif
 
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
     // Функция записи данных для json формата
     template<typename T>
     SResult writeJsonContent(const T&);
@@ -330,7 +330,7 @@ private:
     void initEmptyTraits() const;
     void decompress(BByteArray&) const;
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
     template<typename T, typename... Args>
     void writeInternal(QDataStream& s, const T& t, const Args&... args);
     void writeInternal(QDataStream&) {}
@@ -390,7 +390,7 @@ private:
             quint32 reserved3: 8;
 
             //--- Байт 4 ---
-            // Формат сериализации контента, соответствует enum SerializationFormat
+            // Формат сериализации контента, соответствует enum SerializeFormat
             quint32 contentFormat: 3;
             quint32 reserved4: 4;
 
@@ -424,7 +424,7 @@ private:
 
 //------------------------- Implementation Message ---------------------------
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
 template<typename... Args>
 SResult Message::writeContent(const Args&... args)
 {
@@ -468,7 +468,7 @@ void Message::readInternal(QDataStream& s, T& t, Args&... args) const
 }
 #endif
 
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
 template<typename T>
 SResult Message::writeJsonContent(const T& t)
 {

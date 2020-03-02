@@ -245,8 +245,8 @@ private:
     // Формат сериализации сообщения (не контента)
     SerializeFormat _messageFormat = {SerializeFormat::BProto};
 
-    bool _serializationSignatureRead = {false};
-    bool _serializationSignatureWrite = {false};
+    bool _serializeSignatureRead = {false};
+    bool _serializeSignatureWrite = {false};
 
     bool _isListenerSide = {false};
     volatile bool _isInsideListener = {false};

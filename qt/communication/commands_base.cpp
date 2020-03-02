@@ -51,7 +51,7 @@ MessageError::MessageError(qint32 group, const QUuidEx& code, const char* descri
     : MessageError(group, code, QString::fromUtf8(description))
 {}
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
 bserial::RawVector MessageError::toRaw() const
 {
     B_SERIALIZE_V1(stream)
@@ -81,7 +81,7 @@ MessageFailed::MessageFailed(qint32 group, const QUuidEx& code, const char* desc
     : MessageFailed(group, code, QString::fromUtf8(description))
 {}
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
 bserial::RawVector MessageFailed::toRaw() const
 {
     B_SERIALIZE_V1(stream)
@@ -227,7 +227,7 @@ void CloseConnection::fromRaw(const bserial::RawVector& vect)
     B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
-#endif // BPROTO_SERIALIZATION
+#endif // BPROTO_SERIALIZE
 
 } // namespace data
 

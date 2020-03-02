@@ -35,7 +35,7 @@
 #define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "JSerialize")
 
 namespace communication {
-namespace serialization {
+namespace serialize {
 namespace json {
 
 #include <cassert>
@@ -880,7 +880,7 @@ Writer& Writer::operator& (const QDateTime& dtime)
 }
 
 } // namespace json
-} // namespace serialization
+} // namespace serialize
 } // namespace communication
 
 #undef log_error_m

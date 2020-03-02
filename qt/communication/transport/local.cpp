@@ -31,7 +31,7 @@
 #include "qt/communication/logger_operators.h"
 #include "qt/communication/utils.h"
 
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
 #include "qt/communication/serialize/json.h"
 #endif
 

@@ -144,10 +144,10 @@ Socket::Socket(SocketType type) : _type(type)
 {
     registrationQtMetatypes();
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
     _protocolMap << qMakePair(SerializeFormat::BProto, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
 #endif
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
     _protocolMap << qMakePair(SerializeFormat::Json,   QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
 #endif
 }
@@ -193,8 +193,8 @@ void Socket::disconnect(unsigned long time)
 
 void Socket::socketDisconnected()
 {
-    _serializationSignatureRead = false;
-    _serializationSignatureWrite = false;
+    _serializeSignatureRead = false;
+    _serializeSignatureWrite = false;
 
     emit disconnected(_initSocketDescriptor);
     _initSocketDescriptor = {-1};
@@ -255,17 +255,17 @@ void Socket::run()
     char* readBuffEnd = 0;
 
     // Сигнатура формата сериализации
-    QUuidEx serializationSignature;
+    QUuidEx serializeSignature;
     for (const auto& sign : _protocolMap)
         if (sign.first == _messageFormat)
         {
-            serializationSignature = sign.second;
+            serializeSignature = sign.second;
             break;
         }
 
-    if (!isListenerSide() && serializationSignature.isNull())
+    if (!isListenerSide() && serializeSignature.isNull())
     {
-        log_error_m << "Message serialization format signature undefined";
+        log_error_m << "Message serialize format signature undefined";
         SpinLocker locker(_socketLock); (void) locker;
         socketClose();
         prog_abort();
@@ -385,27 +385,27 @@ void Socket::run()
                 break;
 
             // Отправка сигнатуры протокола
-            if (!_serializationSignatureWrite && !isListenerSide())
+            if (!_serializeSignatureWrite && !isListenerSide())
             {
                 QByteArray ba;
                 QDataStream stream {&ba, QIODevice::WriteOnly};
                 STREAM_INIT(stream);
-                stream << serializationSignature;
+                stream << serializeSignature;
                 socketWrite(ba.constData(), 16);
                 CHECK_SOCKET_ERROR
                 socketWaitForBytesWritten(delay);
                 CHECK_SOCKET_ERROR
 
                 alog::Line logLine =
-                    log_verbose_m << "Message serialization format: ";
+                    log_verbose_m << "Message serialize format: ";
                 switch (_messageFormat)
                 {
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
                     case SerializeFormat::BProto:
                         logLine << "bproto";
                         break;
 #endif
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
                     case SerializeFormat::Json:
                         logLine << "json";
                         break;
@@ -413,11 +413,11 @@ void Socket::run()
                     default:
                         logLine << "unknown";
                 }
-                _serializationSignatureWrite = true;
+                _serializeSignatureWrite = true;
             }
 
             // Проверка сигнатуры протокола
-            if (!_serializationSignatureRead)
+            if (!_serializeSignatureRead)
             {
                 timer.start();
                 int timeout;
@@ -437,7 +437,7 @@ void Socket::run()
                     CHECK_SOCKET_ERROR
                     if (timer.hasExpired(timeout))
                     {
-                        log_error_m << "Signature of serialization type for protocol"
+                        log_error_m << "Signature of serialize type for protocol"
                                     << " is not received within " << timeout << " ms";
                         loopBreak = true;
                         break;
@@ -450,7 +450,7 @@ void Socket::run()
                 ba.resize(16);
                 if (socketRead((char*)ba.constData(), 16) != 16)
                 {
-                    log_error_m << "Failed read serialization signature";
+                    log_error_m << "Failed read signature of serialize";
                     loopBreak = true;
                     break;
                 }
@@ -474,15 +474,15 @@ void Socket::run()
                     if (found)
                     {
                         alog::Line logLine =
-                            log_verbose_m << "Message serialization format: ";
+                            log_verbose_m << "Message serialize format: ";
                         switch (_messageFormat)
                         {
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
                             case SerializeFormat::BProto:
                                 logLine << "bproto";
                                 break;
 #endif
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
                             case SerializeFormat::Json:
                                 logLine << "json";
                                 break;
@@ -503,11 +503,11 @@ void Socket::run()
                     CHECK_SOCKET_ERROR
                     socketWaitForBytesWritten(delay);
                     CHECK_SOCKET_ERROR
-                    _serializationSignatureWrite = true;
+                    _serializeSignatureWrite = true;
 
                     if (!found)
                     {
-                        log_error_m << "Incompatible serialization signatures";
+                        log_error_m << "Incompatible serialize signatures";
                         msleep(200);
                         loopBreak = true;
                         break;
@@ -515,14 +515,14 @@ void Socket::run()
                 }
                 else // !isListenerSide()
                 {
-                    if (serializationSignature != incomingSignature)
+                    if (serializeSignature != incomingSignature)
                     {
-                        log_error_m << "Incompatible serialization signatures";
+                        log_error_m << "Incompatible serialize signatures";
                         loopBreak = true;
                         break;
                     }
                 }
-                _serializationSignatureRead = true;
+                _serializeSignatureRead = true;
             }
 
             socketWaitForReadyRead(0);
@@ -615,7 +615,7 @@ void Socket::run()
                     if (loopBreak || message.empty())
                         break;
 
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
                     if (_messageFormat == SerializeFormat::Json
                         && !message->contentIsEmpty()
                         && message->contentFormat() != SerializeFormat::Json)
@@ -643,12 +643,12 @@ void Socket::run()
                     BByteArray buff;
                     switch (_messageFormat)
                     {
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
                         case SerializeFormat::BProto:
                             buff = message->toBProto();
                             break;
 #endif
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
                         case SerializeFormat::Json:
                             buff = message->toJson();
                             if (alog::logger().level() == alog::Level::Debug2)
@@ -659,7 +659,7 @@ void Socket::run()
                             break;
 #endif
                         default:
-                            log_error_m << "Unsupported message serialization format";
+                            log_error_m << "Unsupported message serialize format";
                             prog_abort();
                     }
                     qint32 buffSize = buff.size();
@@ -786,12 +786,12 @@ void Socket::run()
                     Message::Ptr message;
                     switch (_messageFormat)
                     {
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
                         case SerializeFormat::BProto:
                             message = Message::fromBProto(readBuff);
                             break;
 #endif
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
                         case SerializeFormat::Json:
                             if (alog::logger().level() == alog::Level::Debug2)
                             {
@@ -802,7 +802,7 @@ void Socket::run()
                             break;
 #endif
                         default:
-                            log_error_m << "Unsupported message deserialization format";
+                            log_error_m << "Unsupported message deserialize format";
                             prog_abort();
                     }
                     messageInit(message);
@@ -843,7 +843,7 @@ void Socket::run()
                             const char* proto;
                             if (_messageFormat == SerializeFormat::BProto)
                                 proto = "binary";
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
                             else if (_messageFormat == SerializeFormat::Json)
                                 proto = "json";
 #endif

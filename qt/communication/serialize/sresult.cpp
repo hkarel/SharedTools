@@ -26,7 +26,7 @@
 #include "qt/communication/serialize/sresult.h"
 
 namespace communication {
-namespace serialization {
+namespace serialize {
 
 Result::Result(bool val, int code, const QString& description)
 {
@@ -46,5 +46,5 @@ Result& Result::operator= (Result&& r)
     return *this;
 }
 
-} // namespace serialization
+} // namespace serialize
 } // namespace communication

@@ -53,7 +53,7 @@
 #include <type_traits>
 
 namespace communication {
-namespace serialization {
+namespace serialize {
 namespace json {
 
 using namespace rapidjson;
@@ -471,12 +471,12 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 
 #define J_SERIALIZE_FUNC \
     QByteArray toJson() { \
-        serialization::json::Writer writer; \
+        serialize::json::Writer writer; \
         jserialize(writer); \
         return QByteArray(writer.getString()); \
     } \
     SResult fromJson(const QByteArray& json) { \
-        serialization::json::Reader reader; \
+        serialize::json::Reader reader; \
         if (reader.parse(json)) \
             jserialize(reader); \
         return reader.result(); \
@@ -534,5 +534,5 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     J_SERIALIZE_END
 
 } // namespace json
-} // namespace serialization
+} // namespace serialize
 } // namespace communication

@@ -47,7 +47,7 @@
 #include <utility>
 
 namespace communication {
-namespace serialization {
+namespace serialize {
 namespace bproto {
 
 /**
@@ -114,7 +114,7 @@ QDataStream& putToStream(QDataStream& s, const T& t,
     const RawVector rv = t.toRaw();
     if (rv.size() > 255)
     {
-        log_error << "Limit exceeded on number of versions for b-serialization (255)";
+        log_error << "Limit exceeded on number of versions for b-serializeation (255)";
         prog_abort();
     }
     s << quint8(rv.size());
@@ -265,10 +265,10 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
 }
 
 } // namespace bproto
-} // namespace serialization
+} // namespace serialize
 } // namespace communication
 
-namespace bserial = communication::serialization::bproto;
+namespace bserial = communication::serialize::bproto;
 
 #define DECLARE_B_SERIALIZE_FRIENDS \
     template<typename T> \

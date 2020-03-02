@@ -37,7 +37,7 @@
 #include "qt/compression/qppmd.h"
 #endif
 
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
 #include "qt/communication/serialize/json.h"
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -241,7 +241,7 @@ void Message::initEmptyTraits() const
     _flag.contentIsEmpty     = (_content.isEmpty());
 }
 
-#ifdef BPROTO_SERIALIZATION
+#ifdef BPROTO_SERIALIZE
 BByteArray Message::toBProto() const
 {
     BByteArray ba;
@@ -320,9 +320,9 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     return m;
 }
-#endif // BPROTO_SERIALIZATION
+#endif // BPROTO_SERIALIZE
 
-#ifdef JSON_SERIALIZATION
+#ifdef JSON_SERIALIZE
 BByteArray Message::toJson() const
 {
     initEmptyTraits();
@@ -395,7 +395,7 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
     Ptr m {new Message};
 
     using namespace rapidjson;
-    using namespace serialization::json;
+    using namespace serialize::json;
     Document doc;
     doc.Parse(ba.constData(), size_t(ba.length()));
 
@@ -466,7 +466,7 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
     }
     return m;
 }
-#endif // JSON_SERIALIZATION
+#endif // JSON_SERIALIZE
 
 Message::Type Message::type() const
 {

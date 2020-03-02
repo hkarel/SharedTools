@@ -30,7 +30,7 @@
 #include <utility>
 
 namespace communication {
-namespace serialization {
+namespace serialize {
 
 /**
   Структура используется для возвращения результата работы функций
@@ -68,8 +68,8 @@ private:
     Data::Ptr _d = {Data::Ptr::create_join_ptr()};
 };
 
-} // namespace serialization
+} // namespace serialize
 
-using SResult = serialization::Result;
+using SResult = serialize::Result;
 
 } // namespace communication

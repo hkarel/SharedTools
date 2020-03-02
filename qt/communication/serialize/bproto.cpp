@@ -26,7 +26,7 @@
 #include "qt/communication/serialize/bproto.h"
 
 namespace communication {
-namespace serialization {
+namespace serialize {
 namespace bproto {
 
 QDataStream& operator>> (QDataStream& s, ByteArray& ba)
@@ -47,5 +47,5 @@ QDataStream& operator>> (QDataStream& s, ByteArray& ba)
 }
 
 } // namespace bproto
-} // namespace serialization
+} // namespace serialize
 } // namespace communication
