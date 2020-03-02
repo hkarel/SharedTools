@@ -730,7 +730,7 @@ Writer& Writer::operator& (const float f)
 
 Writer& Writer::operator& (const QByteArray& ba)
 {
-    if (ba.isEmpty())
+    if (ba.isNull())
     {
         setNull();
         return *this;
@@ -808,7 +808,7 @@ Writer& Writer::operator& (const QByteArray& ba)
 
 Writer& Writer::operator& (const QString& s)
 {
-    if (s.isEmpty())
+    if (s.isNull())
     {
         setNull();
         return *this;
