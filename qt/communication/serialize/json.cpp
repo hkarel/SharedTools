@@ -808,11 +808,13 @@ Writer& Writer::operator& (const QByteArray& ba)
 
 Writer& Writer::operator& (const QString& s)
 {
+#ifndef AISEXPERT_PROJECT
     if (s.isNull())
     {
         setNull();
         return *this;
     }
+#endif
 
     const QByteArray& ba = s.toUtf8();
     _writer.String(ba.constData(), SizeType(ba.length()));
