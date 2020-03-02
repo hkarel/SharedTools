@@ -437,7 +437,7 @@ void Socket::run()
                     CHECK_SOCKET_ERROR
                     if (timer.hasExpired(timeout))
                     {
-                        log_error_m << "Signature of serialize type for protocol"
+                        log_error_m << "Signature of serialize format for protocol"
                                     << " is not received within " << timeout << " ms";
                         loopBreak = true;
                         break;
@@ -450,7 +450,7 @@ void Socket::run()
                 ba.resize(16);
                 if (socketRead((char*)ba.constData(), 16) != 16)
                 {
-                    log_error_m << "Failed read signature of serialize";
+                    log_error_m << "Failed read signature for serialize format";
                     loopBreak = true;
                     break;
                 }
@@ -620,7 +620,7 @@ void Socket::run()
                         && !message->contentIsEmpty()
                         && message->contentFormat() != SerializeFormat::Json)
                     {
-                        log_error_m << "For json packaging: message format"
+                        log_error_m << "For json packaging a message format"
                                     << " and message content format must match"
                                     << ". Message discarded"
                                     << ". Command: " << CommandNameLog(message->command());
