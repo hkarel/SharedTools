@@ -808,7 +808,7 @@ Writer& Writer::operator& (const QByteArray& ba)
 
 Writer& Writer::operator& (const QString& s)
 {
-#ifndef AISEXPERT_PROJECT
+#ifndef JSON_STRING_NOTNULL
     if (s.isNull())
     {
         setNull();
