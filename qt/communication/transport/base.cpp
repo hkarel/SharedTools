@@ -85,6 +85,7 @@ bool SocketCommon::send(const Message::Ptr& message)
             return false;
         }
     }
+
     message->add_ref();
     { //Block for QMutexLocker
         QMutexLocker locker(&_messagesLock); (void) locker;
