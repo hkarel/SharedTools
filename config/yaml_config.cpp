@@ -224,6 +224,9 @@ YAML::Node YamlConfig::getNode(const std::string& name) const
 YAML::Node YamlConfig::getNode(const YAML::Node& baseNode,
                                const std::string& name) const
 {
+    if (name == ".")
+        return baseNode;
+
     std::vector<std::string> parts = utl::split(name, '.');
     if (parts.empty())
         return YAML::Node();
