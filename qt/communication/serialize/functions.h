@@ -306,8 +306,8 @@ auto messageReadJson(const Message::Ptr& message, CommandDataT& data, int)
 }
 
 template<typename CommandDataT>
-auto  messageReadJson(const Message::Ptr&, CommandDataT& data, long)
-      -> decltype(data.fromJsonNone(QByteArray()), SResult())
+auto messageReadJson(const Message::Ptr&, CommandDataT& data, long)
+     -> decltype(data.fromJsonNone(QByteArray()), SResult())
 {
     QString err = "Method %1::fromJson not exists";
     err = err.arg(abi_type_name<CommandDataT>());
