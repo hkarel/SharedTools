@@ -30,6 +30,7 @@
 #pragma once
 
 #include "logger/logger.h"
+#include "logger/format.h"
 #include "qt/quuidex.h"
 #include <QtCore>
 #ifdef QT_NETWORK_LIB
@@ -54,6 +55,12 @@ Line& operator<< (Line& line, const QUuidT<N>& u)
 {
     line << static_cast<const QUuid&>(u);
     return line;
+}
+
+template<typename... Args>
+inline Format<Args...> format(const QString& descript,  Args&&... args)
+{
+    return Format<Args...>(descript.toUtf8().constData(), std::forward<Args>(args)...);
 }
 
 } // namespace alog
