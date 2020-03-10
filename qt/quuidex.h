@@ -157,6 +157,15 @@ inline quint64 hash64(const QUuidT<N>& u)
     return hash64(static_cast<const QUuid&>(u));
 }
 
+/**
+  Дайжест-функция, возвращает первые 8 символов строкового представления uuid-а
+*/
+template<int N>
+inline QString digest(const QUuidT<N>& u)
+{
+    return u.toString().mid(1, 8);
+}
+
 typedef QUuidT<0> QUuidEx;
 Q_DECLARE_METATYPE(QUuidEx)
 
