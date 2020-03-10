@@ -29,11 +29,10 @@
 
 #pragma once
 
-#include "utils.h"
 #include "logger/logger.h"
-#include "qt/quuidex.h"
 
-#include <string>
+#include <cstdlib>
+#include <cstring>
 #include <tuple>
 #include <vector>
 
@@ -49,11 +48,38 @@ using namespace std;
 template<typename... Args> class Format
 {
 public:
-    Format(const string& descript, Args&&... args)
+    Format(const char* descript, Args&&... args)
         : _args(std::forward<Args>(args)...)
     {
-        _chunks = utl::split(descript, '?', true);
+        _buff = (char*)malloc(strlen(descript) + 1);
+        strcpy(_buff, descript);
+
+        char* begin = _buff;
+        char* item = _buff;
+        while (*item)
+        {
+            if (*item == '?')
+            {
+                *item = '\0';
+                _chunks.push_back(begin);
+                begin = item + 1;
+            }
+            ++item;
+        }
+        if (*begin != '\0')
+            _chunks.push_back(begin);
     }
+    ~Format()
+    {
+        free(_buff);
+    }
+
+    Format(Format&&) = default;
+
+    Format() = delete;
+    Format(const Format&) = delete;
+    Format& operator= (Format&&) = delete;
+    Format& operator= (const Format&) = delete;
 
     void init(Line* line)
     {
@@ -70,9 +96,7 @@ private:
     template<std::size_t... Is>
     void callBuildFunc(const tuple<Args...>& tuple, index_sequence<Is...>)
     {
-        if (!_line)
-            return;
-
+        if (!_line) return;
         buildFunc(std::get<Is>(tuple)...);
     }
 
@@ -83,7 +107,8 @@ private:
         if (!_chunks.empty())
         {
             chunkPrint = true;
-            *_line << _chunks[0];
+            if (*_chunks[0] != '\0')
+                *_line << _chunks[0];
             _chunks.erase(_chunks.begin());
         }
 
@@ -105,23 +130,25 @@ private:
 
 private:
     Line* _line = {0};
-    vector<string> _chunks;
     tuple<Args...> _args;
+
+    char* _buff = {0};
+    vector<char*> _chunks;
 
     template<typename... A>
     friend Line& operator<< (Line&, const Format<A...>&);
 };
 
 template<typename... Args>
-inline Format<Args...> format(const string& descript,  Args&&... args)
+inline Format<Args...> format(const char* descript, Args&&... args)
 {
     return Format<Args...>(descript, std::forward<Args>(args)...);
 }
 
 template<typename... Args>
-inline Format<Args...> format(const char* descript, Args&&... args)
+inline Format<Args...> format(const string& descript, Args&&... args)
 {
-    return format(string(descript), std::forward<Args>(args)...);
+    return format(descript.c_str(), std::forward<Args>(args)...);
 }
 
 template<typename... Args>
