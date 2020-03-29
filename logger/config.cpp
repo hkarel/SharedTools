@@ -84,11 +84,13 @@ FilterPtr createFilter(const YAML::Node& yfilter)
         && type != "log_level"
         && type != "func_name"
         && type != "file_name"
-        && type != "thread_id")
+        && type != "thread_id"
+        && type != "content")
     {
         throw std::logic_error(
             "In a filter-node a field 'type' can take one of the following "
-            "values: module_name, log_level, func_name, file_name, thread_id. "
+            "values: module_name, log_level, func_name, file_name, thread_id, "
+            "content. "
             "Current value: " + type);
     }
 
@@ -166,6 +168,15 @@ FilterPtr createFilter(const YAML::Node& yfilter)
             threads.insert(ythread.as<long>());
     }
 
+    set<string> contents;
+    if (yfilter["contents"].IsDefined())
+    {
+        checkFiedType("contents", YAML::NodeType::Sequence);
+        const YAML::Node& ycontents = yfilter["contents"];
+        for (const YAML::Node& ycont : ycontents)
+            contents.insert(ycont.as<string>());
+    }
+
     FilterPtr filter;
     if (type == "module_name")
     {
@@ -211,6 +222,14 @@ FilterPtr createFilter(const YAML::Node& yfilter)
             filterThread->addThread(tid);
 
         filter = filterThread;
+    }
+    else if (type == "content")
+    {
+        FilterContentPtr filterCont {new FilterContent};
+        for (const string& cont : contents)
+            filterCont->addContent(cont);
+
+        filter = filterCont;
     }
     if (filter.empty())
         return FilterPtr();
@@ -520,6 +539,14 @@ void printSaversInfo()
                     << "; threads: [ ";
             for (pid_t tid : threadFilter->threads())
                 logLine << long(tid) << ", ";
+            logLine << "]; ";
+        }
+        else if (FilterContent* contFilter = dynamic_cast<FilterContent*>(filter))
+        {
+            logLine << "type: content"
+                    << "; contents: [ ";
+            for (const string& cont : contFilter->contents())
+                logLine << cont << ", ";
             logLine << "]; ";
         }
     }

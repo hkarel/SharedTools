@@ -354,6 +354,24 @@ private:
 typedef clife_ptr<FilterThread> FilterThreadPtr;
 
 /**
+  Фильтр по содержимому лог-сообщения
+*/
+class FilterContent : public Filter
+{
+public:
+    const set<string>& contents() const {return _contents;}
+
+    // Добавляет элемент контента на который будет распространяться действие
+    // этого фильтра
+    void addContent(const string& cont);
+
+private:
+    bool checkImpl(const Message&) const override;
+    set<string> _contents;
+};
+typedef clife_ptr<FilterContent> FilterContentPtr;
+
+/**
   Базовый класс механизма сохранения
 */
 class Saver : public clife_base
@@ -644,7 +662,7 @@ private:
 
 Logger& logger();
 
-//--------------------------------- Logger -----------------------------------
+//---------------------------------- Logger ----------------------------------
 
 inline Line Logger::error(const char* file, const char* func, int line, const char* module)
 {
@@ -676,7 +694,7 @@ inline Line Logger::debug2(const char* file, const char* func, int line, const c
     return Line(this, Debug2, file, func, line, module);
 }
 
-//---------------------------- Line operators --------------------------------
+//------------------------------ Line operators ------------------------------
 
 inline bool Line::toLogger() const
 {

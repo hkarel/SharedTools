@@ -284,7 +284,7 @@ void Filter::removeIdsTimeoutThreads()
         _threadContextIds.erase(tid);
 }
 
-//------------------------------ FilterModule --------------------------------
+//------------------------------- FilterModule -------------------------------
 
 void FilterModule::addModule(const string& name)
 {
@@ -307,7 +307,7 @@ bool FilterModule::checkImpl(const Message& m) const
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
-//----------------------------- FilterLevel ----------------------------------
+//------------------------------- FilterLevel --------------------------------
 
 void FilterLevel::setLevel(Level val)
 {
@@ -338,7 +338,7 @@ bool FilterLevel::checkImpl(const Message& m) const
     return (m.level <= _level);
 }
 
-//------------------------------ FilterFile ----------------------------------
+//-------------------------------- FilterFile --------------------------------
 
 void FilterFile::addFile(const string& name)
 {
@@ -352,7 +352,7 @@ bool FilterFile::checkImpl(const Message& m) const
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
-//------------------------------- FilterFunc ---------------------------------
+//-------------------------------- FilterFunc --------------------------------
 
 void FilterFunc::addFunc(const string& name)
 {
@@ -366,7 +366,7 @@ bool FilterFunc::checkImpl(const Message& m) const
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
-//------------------------------ FilterThread --------------------------------
+//------------------------------- FilterThread -------------------------------
 
 bool FilterThread::followThreadContext() const
 {
@@ -385,7 +385,28 @@ bool FilterThread::checkImpl(const Message& m) const
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
-//--------------------------------- Saver ------------------------------------
+//------------------------------ FilterContent -------------------------------
+
+void FilterContent::addContent(const string& cont)
+{
+    if (locked()) return;
+    _contents.insert(cont);
+}
+
+bool FilterContent::checkImpl(const Message& m) const
+{
+    bool res = false;
+    for (const string& c : _contents)
+        if (string::npos != m.str.find(c))
+        {
+            res = true;
+            break;
+        }
+
+    return (mode() == Mode::Exclude) ? !res : res;
+}
+
+//---------------------------------- Saver -----------------------------------
 
 Saver::Saver(const string& name, Level level)
     : _name(name),
@@ -481,7 +502,7 @@ void Saver::removeIdsTimeoutThreads()
         filter->removeIdsTimeoutThreads();
 }
 
-//------------------------------ SaverStdOut ---------------------------------
+//------------------------------- SaverStdOut --------------------------------
 
 SaverStdOut::SaverStdOut(const char* name, Level level, bool shortMessages)
     : Saver(name, level)
@@ -546,7 +567,7 @@ void SaverStdOut::flushImpl(const MessageList& messages)
     _out->flush();
 }
 
-//------------------------------ SaverStdErr ---------------------------------
+//------------------------------- SaverStdErr --------------------------------
 
 SaverStdErr::SaverStdErr(const char* name, Level level, bool shortMessages)
     : SaverStdOut(name, level, shortMessages)
@@ -554,7 +575,7 @@ SaverStdErr::SaverStdErr(const char* name, Level level, bool shortMessages)
     _out = &std::cerr;
 }
 
-//------------------------------ SaverFile -----------------------------------
+//-------------------------------- SaverFile ---------------------------------
 
 SaverFile::SaverFile(const string& name,
                      const string& filePath,
@@ -632,7 +653,7 @@ void SaverFile::flushImpl(const MessageList& messages)
     fclose(f);
 }
 
-//--------------------------------- Line -------------------------------------
+//----------------------------------- Line -----------------------------------
 
 Line::Line(Logger*     logger,
            Level       level,
@@ -691,7 +712,7 @@ Line::~Line()
     {}
 }
 
-//--------------------------------- Logger -----------------------------------
+//---------------------------------- Logger ----------------------------------
 
 Logger::Logger()
 {}
@@ -997,7 +1018,7 @@ Logger& logger()
     return ::safe_singleton<Logger>();
 }
 
-//---------------------------- Line operators --------------------------------
+//------------------------------ Line operators ------------------------------
 
 Line& operator<< (Line& line, bool b)
 {
