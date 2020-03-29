@@ -266,7 +266,7 @@ typedef clife_ptr<Filter> FilterPtr;
 /**
   Фильтр по именам модулей
 */
-class FilterModule : public virtual Filter
+class FilterModule : public Filter
 {
 public:
     const set<string>& modules() const {return _modules;}
@@ -304,7 +304,7 @@ typedef clife_ptr<FilterLevel> FilterLevelPtr;
 /**
   Фильтр по именам файлов
 */
-class FilterFile : public virtual Filter
+class FilterFile : public Filter
 {
 public:
     const set<string>& files() const {return _files;}
@@ -321,7 +321,7 @@ typedef clife_ptr<FilterFile> FilterFilePtr;
 /**
   Фильтр по именам функций
 */
-class FilterFunc : public virtual Filter
+class FilterFunc : public Filter
 {
 public:
     const set<string>& funcs() const {return _funcs;}
@@ -338,7 +338,7 @@ typedef clife_ptr<FilterFunc> FilterFuncPtr;
 /**
   Фильтр по идентификаторам потока
 */
-class FilterThread : public virtual Filter
+class FilterThread : public Filter
 {
 public:
     bool followThreadContext() const override;
