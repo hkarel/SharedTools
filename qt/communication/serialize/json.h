@@ -528,6 +528,11 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     J_SERIALIZE_ITEM(FIELD) \
     J_SERIALIZE_END
 
+#define J_SERIALIZE_MAP_ONE(FIELD_NAME, FIELD) \
+    J_SERIALIZE_BEGIN \
+    J_SERIALIZE_MAP_ITEM(FIELD_NAME, FIELD) \
+    J_SERIALIZE_END
+
 #define J_SERIALIZE_BASE_ONE \
     J_SERIALIZE_BEGIN \
     this->jserializeBase(p); \
