@@ -77,7 +77,7 @@ bool Socket::socketInit()
 
         connectDirection = "to";
         _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
-        if (!_socket->waitForConnected(3 * 1000))
+        if (!_socket->waitForConnected(3*1000 /*3 сек*/))
         {
             log_error_m << "Failed connect to host " << _peerPoint
                         << ". Error code: " << int(_socket->error())
