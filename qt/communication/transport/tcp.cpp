@@ -27,6 +27,7 @@
 
 #include "break_point.h"
 #include "logger/logger.h"
+#include "logger/format.h"
 #include "qt/logger/logger_operators.h"
 #include "qt/communication/logger_operators.h"
 #include "qt/communication/utils.h"
@@ -49,7 +50,15 @@ namespace communication {
 namespace transport {
 namespace tcp {
 
-//-------------------------------- Socket ------------------------------------
+//---------------------------------- Socket ----------------------------------
+
+void printHostInfo(alog::Line& logLine, const QString& name, const HostPoint& peerPoint)
+{
+    if (!name.isEmpty())
+        logLine << log_format(" '?'. Host: ?", name, peerPoint);
+    else
+        logLine << log_format(" host: ?", peerPoint);
+}
 
 bool Socket::init(const HostPoint& peerPoint)
 {
@@ -73,15 +82,19 @@ bool Socket::socketInit()
     const char* connectDirection;
     if (initSocketDescriptor() == -1)
     {
-        log_verbose_m << "Try connect to host " << _peerPoint;
+        { //Block for alog::Line
+            alog::Line logLine = log_verbose_m << "Try connect to";
+            printHostInfo(logLine, name(), _peerPoint);
+        }
 
         connectDirection = "to";
         _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
         if (!_socket->waitForConnected(3*1000 /*3 сек*/))
         {
-            log_error_m << "Failed connect to host " << _peerPoint
-                        << ". Error code: " << int(_socket->error())
-                        << ". Detail: " << _socket->errorString();
+            alog::Line logLine = log_error_m << "Failed connect to";
+            printHostInfo(logLine, name(), _peerPoint);
+            logLine << ". Error code: " << int(_socket->error())
+                    << ". Detail: " << _socket->errorString();
             return false;
         }
     }
@@ -90,9 +103,10 @@ bool Socket::socketInit()
         connectDirection = "from";
         if (!_socket->setSocketDescriptor(initSocketDescriptor()))
         {
-            log_error_m << "Failed set socket descriptor"
-                        << ". Error code: " << int(_socket->error())
-                        << ". Detail: " << _socket->errorString();
+            alog::Line logLine = log_error_m << "Failed set socket descriptor";
+            printHostInfo(logLine, name(), _peerPoint);
+            logLine << ". Error code: " << int(_socket->error())
+                    << ". Detail: " << _socket->errorString();
             return false;
         }
     }
@@ -105,17 +119,24 @@ bool Socket::socketInit()
     }
     catch (std::exception& e)
     {
-        log_error_m << "Failed socket init. Detail: " << e.what();
+        alog::Line logLine = log_error_m << "Failed socket init";
+        printHostInfo(logLine, name(), _peerPoint);
+        logLine << ". Detail: " << e.what();
         return false;
     }
     catch (...)
     {
-        log_error_m << "Failed socket init. Unknown error";
+        alog::Line logLine = log_error_m << "Failed socket init";
+        printHostInfo(logLine, name(), _peerPoint);
+        logLine << ". Unknown error";
         return false;
     }
 
-    log_verbose_m << "Connect " << connectDirection << " host " << _peerPoint
-                  << ". Socket descriptor: " << _printSocketDescriptor;
+    { //Block for alog::Line
+        alog::Line logLine = log_verbose_m << "Connect " << connectDirection;
+        printHostInfo(logLine, name(), _peerPoint);
+        logLine << ". Socket descriptor: " << _printSocketDescriptor;
+    }
     return true;
 }
 
@@ -145,16 +166,26 @@ void Socket::printSocketError(const char* file, const char* func, int line,
 {
     if (_socket->error() == QAbstractSocket::RemoteHostClosedError)
     {
-        alog::logger().verbose(file, func, line, "TransportTCP")
+        alog::Line logLine =
+            alog::logger().verbose(file, func, line, "TransportTCP")
             << _socket->errorString()
-            << ". Remote host: " << _peerPoint
-            << ". Socket descriptor: " << _printSocketDescriptor;
+            << ". Remote host: " << _peerPoint;
+
+        if (!name().isEmpty())
+            logLine << ". Socket name: " << name();
+
+        logLine << ". Socket descriptor: " << _printSocketDescriptor;
     }
     else
     {
-        alog::logger().error(file, func, line, module)
-            << "Socket error code: " << int(_socket->error())
-            << ". Detail: " << _socket->errorString();
+        alog::Line logLine =
+            alog::logger().error(file, func, line, module)
+            << "Socket error code: " << int(_socket->error());
+
+        if (!name().isEmpty())
+            logLine << ". Socket name: " << name();
+
+        logLine << ". Detail: " << _socket->errorString();
     }
 }
 
@@ -195,9 +226,9 @@ void Socket::socketClose()
         if (_socket->isValid()
             && _socket->state() != QAbstractSocket::UnconnectedState)
         {
-            log_verbose_m << "Disconnected from host "
-                          << _socket->peerAddress() << ":" << _socket->peerPort()
-                          << ". Socket descriptor: " << _socket->socketDescriptor();
+            alog::Line logLine = log_verbose_m << "Disconnected from";
+            printHostInfo(logLine, name(), _peerPoint);
+            logLine << ". Socket descriptor: " << _socket->socketDescriptor();
 
             _socket->disconnectFromHost();
             if (_socket->state() != QAbstractSocket::UnconnectedState)
@@ -237,7 +268,7 @@ void Socket::fillUnknownMessage(const Message::Ptr& message, data::Unknown& unkn
     unknown.port = _socket->peerPort();
 }
 
-//------------------------------- Listener -----------------------------------
+//--------------------------------- Listener ---------------------------------
 
 Listener::Listener()
 {
@@ -257,13 +288,22 @@ bool Listener::init(const HostPoint& listenPoint)
         usleep(200*1000);
     }
     if (attempt > 10)
-        log_error_m   << "Start " << name() << " listener is failed"
-                      << ". Connection point " << _listenPoint
-                      << ". Detail: " << errorString();
+    {
+        alog::Line logLine = log_error_m << "Start listener is failed";
+        if (!name().isEmpty())
+            logLine << log_format(". Listener name: '?'", name());
+
+        logLine << ". Connection point: " << _listenPoint
+                << ". Detail: " << errorString();
+    }
     else
-        log_verbose_m << "Start " << name() << " listener"
-                      << ". Connection point "
-                      << serverAddress() << ":" << serverPort();
+    {
+        alog::Line logLine = log_verbose_m << "Start listener";
+        if (!name().isEmpty())
+            logLine << log_format(" '?'", name());
+
+        logLine << ". Connection point: " << serverAddress() << ":" << serverPort();
+    }
 
     _removeClosedSockets.start(15*1000);
     return (attempt <= 10);
@@ -273,8 +313,12 @@ void Listener::close()
 {
     closeSockets();
     QTcpServer::close();
-    log_verbose_m << "Stop " << name() << " listener"
-                  <<  ". Connection point " << _listenPoint;
+
+    alog::Line logLine = log_verbose_m << "Stop listener";
+    if (!name().isEmpty())
+        logLine << log_format(" '?'", name());
+
+    logLine << ". Connection point: " << _listenPoint;
 }
 
 void Listener::removeClosedSockets()

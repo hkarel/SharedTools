@@ -1079,6 +1079,7 @@ void Listener::incomingConnectionInternal(Socket::Ptr socket,
     socket->setCompressionLevel(_compressionLevel);
     socket->setCompressionSize(_compressionSize);
     socket->setCheckProtocolCompatibility(_checkProtocolCompatibility);
+    socket->setName(_name);
     socket->setCheckUnknownCommands(_checkUnknownCommands);
 
     connectSignals(socket.get());
