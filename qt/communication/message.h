@@ -158,15 +158,6 @@ public:
     quint16 protocolVersionLow()  const {return _protocolVersionLow;}
     quint16 protocolVersionHigh() const {return _protocolVersionHigh;}
 
-    // Возвращает контент в сыром виде
-    QByteArray content() {return _content;}
-
-    // Удаляет контент сообщения
-    void clearContent() {_content.clear();}
-
-    // Возвращает TRUE если сообщение не содержит контент
-    bool contentIsEmpty() const {return _content.isEmpty();}
-
     // Тип пересылаемой команды
     Type type() const;
     void setType(Type);
@@ -261,6 +252,15 @@ public:
 
     // Выполняет декомпрессию контента сообщения
     void decompress();
+
+    // Возвращает контент в сыром виде
+    QByteArray content() {return _content;}
+
+    // Удаляет контент сообщения
+    void clearContent() {_content.clear();}
+
+    // Возвращает TRUE если сообщение не содержит контент
+    bool contentIsEmpty() const {return _content.isEmpty();}
 
     // Формат сериализации контента
     SerializeFormat contentFormat() const;
