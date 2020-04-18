@@ -26,7 +26,7 @@
 
 #include "interfaces.h"
 #include "logger/logger.h"
-#include "qt/logger/logger_operators.h"
+#include "qt/logger_operators.h"
 
 #include <QNetworkAddressEntry>
 #include <QNetworkInterface>

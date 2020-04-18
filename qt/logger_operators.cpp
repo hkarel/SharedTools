@@ -23,7 +23,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/logger/logger_operators.h"
+#include "qt/logger_operators.h"
 
 namespace alog {
 

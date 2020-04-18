@@ -23,9 +23,8 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "logger/logger.h"
-#include "qt/config/config.h"
-#include "qt/logger/logger_operators.h"
+#include "qt/config.h"
+#include "qt/logger_operators.h"
 
 #include <stdlib.h>
 #include <iostream>
