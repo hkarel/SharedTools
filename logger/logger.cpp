@@ -126,7 +126,7 @@ void prefixFormatter(Message& message, time_t& lastTime, char buff[sizeof(Messag
 
 #pragma GCC diagnostic push
 #if __GNUC__ > 6
-#pragma GCC diagnostic ignored "-Wformat-truncation="
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
         snprintf(buff, sizeof(Message::prefix) - 1,
                  "%02d.%02d.%04d %02d:%02d:%02d",
