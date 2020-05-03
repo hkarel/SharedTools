@@ -100,8 +100,18 @@ Line& operator<< (Line& line, const QVariant& v)
             return line;
         }
 
+        if (v.isNull())
+        {
+            line << "QVariant is null";
+            return line;
+        }
+
         switch (v.type())
         {
+            case QVariant::Invalid:
+                line << "Invalid QVariant";
+                break;
+
             case QVariant::Bool:
                 line << v.toBool();
                 break;
@@ -190,7 +200,7 @@ Line& operator<< (Line& line, const QVariant& v)
 #endif
                 else
                 {
-                    line << "Unsupported QVariant user type for logger"
+                    line << "Unsupported QVariant user-type for logger"
                          << "; Type name: " << v.typeName();
                 }
                 break;
