@@ -185,14 +185,14 @@ Line& operator<< (Line& line, const QVariant& v)
 #endif
             case QVariant::UserType:
             {
-                if (v.canConvert<QUuidEx>())
+                if (v.userType() == qMetaTypeId<QUuidEx>())
                 {
                     const QUuidEx& u = v.value<QUuidEx>();
                     line << u;
                 }
 
 #if QT_VERSION < 0x050000
-                else if (v.canConvert<QUuid>())
+                else if (v.userType() == qMetaTypeId<QUuid>())
                 {
                     const QUuid& u = v.value<QUuid>();
                     line << u;
