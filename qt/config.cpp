@@ -113,6 +113,10 @@ bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
             hostAddress = QHostAddress::LocalHost;
         else if (hostAddressStr.toLower().trimmed() == "any")
             hostAddress = QHostAddress::Any;
+        else if (hostAddressStr.toLower().trimmed() == "any_ip4")
+            hostAddress = QHostAddress::AnyIPv4;
+        else if (hostAddressStr.toLower().trimmed() == "any_ip6")
+            hostAddress = QHostAddress::AnyIPv6;
         else
             hostAddress = QHostAddress(hostAddressStr);
 
