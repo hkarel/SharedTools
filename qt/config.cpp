@@ -107,22 +107,23 @@ void dirExpansion(QString& filePath)
 bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
 {
     QString hostAddressStr;
-    if (config::base().getValue(confHostStr.toStdString(), hostAddressStr))
-    {
-        if (hostAddressStr.toLower().trimmed() == "localhost")
-            hostAddress = QHostAddress::LocalHost;
-        else if (hostAddressStr.toLower().trimmed() == "any")
-            hostAddress = QHostAddress::Any;
-        else if (hostAddressStr.toLower().trimmed() == "any_ip4")
-            hostAddress = QHostAddress::AnyIPv4;
-        else if (hostAddressStr.toLower().trimmed() == "any_ip6")
-            hostAddress = QHostAddress::AnyIPv6;
-        else
-            hostAddress = QHostAddress(hostAddressStr);
+    if (!config::base().getValue(confHostStr.toStdString(), hostAddressStr))
+        return false;
 
-        return true;
-    }
-    return false;
+    hostAddressStr = hostAddressStr.toLower().trimmed();
+
+    if (hostAddressStr == "localhost")    hostAddress = QHostAddress::LocalHost;
+    else if (hostAddressStr == "any")     hostAddress = QHostAddress::Any;
+#if QT_VERSION >= 0x050000
+    else if (hostAddressStr == "any_ip4") hostAddress = QHostAddress::AnyIPv4;
+    else if (hostAddressStr == "any_ip6") hostAddress = QHostAddress::AnyIPv6;
+#else
+    else if (hostAddressStr == "any_ip4") hostAddress = QHostAddress::Any;
+    else if (hostAddressStr == "any_ip6") hostAddress = QHostAddress::Any;
+#endif
+    else                                  hostAddress = QHostAddress(hostAddressStr);
+
+    return true;
 }
 #endif
 
