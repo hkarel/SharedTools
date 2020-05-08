@@ -24,7 +24,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "config.h"
+#include "logger/config.h"
 #include "utils.h"
 #include <stdexcept>
 

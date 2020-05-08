@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "logger.h"
+#include "logger/logger.h"
 #include <yaml-cpp/yaml.h>
 
 namespace alog {

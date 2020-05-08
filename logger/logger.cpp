@@ -25,7 +25,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "logger.h"
+#include "logger/logger.h"
 #include "break_point.h"
 #include "spin_locker.h"
 #include "steady_timer.h"
