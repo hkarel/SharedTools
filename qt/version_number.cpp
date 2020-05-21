@@ -34,7 +34,6 @@ const VersionNumber& productVersion()
 }
 
 VersionNumber::VersionNumber(quint8 major, quint8 minor, quint8 patch)
-
 {
     ver.major = major;
     ver.minor = minor;
