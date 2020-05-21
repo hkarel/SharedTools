@@ -238,7 +238,7 @@ public:
     ~YamlConfigLock();
 
 private:
-    YamlConfigLock() = delete;
+    DISABLE_DEFAULT_FUNC(YamlConfigLock)
     std::recursive_mutex* _configLock;
 };
 
