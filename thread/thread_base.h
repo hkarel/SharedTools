@@ -46,7 +46,7 @@ namespace trd {
 class ThreadBase
 {
 public:
-    ThreadBase();
+    ThreadBase() = default;
     virtual ~ThreadBase() = default;
 
     // Запускает поток.
@@ -93,17 +93,17 @@ private:
     // типа 'thread'.
     std::thread _thread;
 
-    volatile bool _threadRun;
-    volatile bool _threadStop;
+    volatile bool _threadRun  = {false};
+    volatile bool _threadStop = {true};
 
     // Вспомогательная переменная используется для предотвращения вызова функ-
     // ции stop() сразу после вызова функции start(). В этой ситуации вызов
     // функции stop() может произойти до начала старта потока, как следствие
     // при вызове stop() не произойдет ожидание окончания потока.
-    std::atomic_bool _waitThreadStart;
+    std::atomic_bool _waitThreadStart = {false};
 
     // *** Неудачная попытка завершить работу потока асинхронно ***
-    //atomic_bool _waitThreadStop;
+    //atomic_bool _waitThreadStop = {true};
 
     // Используется для исключения одновременного вызова функций start()/stop()
     std::mutex _startStopLock;

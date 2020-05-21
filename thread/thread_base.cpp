@@ -29,13 +29,13 @@
 
 namespace trd {
 
-ThreadBase::ThreadBase()
-{
-    _threadRun = false;
-    _threadStop = true;
-    _waitThreadStart = false;
-    //_waitThreadStop = true;
-}
+//ThreadBase::ThreadBase()
+//{
+//    _threadRun = false;
+//    _threadStop = true;
+//    _waitThreadStart = false;
+//    //_waitThreadStop = true;
+//}
 
 bool ThreadBase::threadStop() const NOEXCEPT
 {
