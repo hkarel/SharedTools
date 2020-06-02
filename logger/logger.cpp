@@ -686,7 +686,7 @@ Line::~Line()
     {
         MessagePtr message {new Message};
         message->level = impl->level;
-        message->str = impl->buff.str();
+        message->str = std::move(impl->buff);
         gettimeofday(&message->timeVal, NULL);
         message->threadId = trd::gettid();
         message->something = std::move(impl->something);
@@ -1023,14 +1023,35 @@ Logger& logger()
 Line& operator<< (Line& line, bool b)
 {
     if (line.toLogger())
-        line.impl->buff << (b ? "true" : "false");
+        line.impl->buff += (b ? "true" : "false");
+    return line;
+}
+
+Line& operator<< (Line& line, char c)
+{
+    if (line.toLogger())
+        line.impl->buff += c;
+    return line;
+}
+
+Line& operator<< (Line& line, char* c)
+{
+    if (line.toLogger())
+        line.impl->buff += c;
     return line;
 }
 
 Line& operator<< (Line& line, const char* c)
 {
     if (line.toLogger())
-        line.impl->buff << c;
+        line.impl->buff += c;
+    return line;
+}
+
+Line& operator<< (Line& line, const string& s)
+{
+    if (line.toLogger())
+        line.impl->buff += s;
     return line;
 }
 
@@ -1042,7 +1063,8 @@ Line& operator<< (Line& line, const timeval& tv)
         long tv_usec = long(tv.tv_usec);
         snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
         buff[5] = '\0';
-        line.impl->buff << tv.tv_sec << buff;
+        line.impl->buff += to_string(tv.tv_sec);
+        line.impl->buff += buff;
     }
     return line;
 }

@@ -50,7 +50,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <iostream>
-#include <sstream>
 #include <atomic>
 #include <memory>
 #include <vector>
@@ -58,7 +57,7 @@
 #include <cmath>
 #include <set>
 #include <map>
-
+#include <type_traits>
 
 namespace alog /*async logger*/ {
 
@@ -545,7 +544,7 @@ struct Line
         const char*    func;   // Наименование функции
         int            line;   // Номер строки вызова
         const char*    module; // Наименование модуля
-        stringstream   buff;
+        string         buff;
         Something::Ptr something; // Параметр используется  для  передачи
                                   // произвольных данных от точки логгиро-
                                   // вания до сэйвера
@@ -701,12 +700,42 @@ inline bool Line::toLogger() const
     return (impl) ? (impl->level <= impl->logger->level()) : false;
 }
 
+Line& operator<< (Line&, bool);
+Line& operator<< (Line&, char);
+Line& operator<< (Line&, char*);
+Line& operator<< (Line&, const char*);
+Line& operator<< (Line&, const string&);
+Line& operator<< (Line&, const timeval&);
+
+namespace detail {
+
+template<typename T>
+using is_arithmetic = std::enable_if<std::is_arithmetic<T>::value, int>;
+
+template<typename T>
+using not_arithmetic = std::enable_if<!std::is_arithmetic<T>::value, int>;
+
+template<typename T>
+Line& stream_operator(Line& line, const T t, typename is_arithmetic<T>::type = 0)
+{
+    if (line.toLogger())
+        line.impl->buff += std::to_string(t);
+    return line;
+}
+
+template<typename T>
+Line& stream_operator(Line& line, const T, typename not_arithmetic<T>::type = 0)
+{
+    static_assert(!std::is_arithmetic<T>::value, "Unknown type for stream operator");
+    return line;
+}
+
+} // namespace detail
+
 template<typename T>
 Line& operator<< (Line& line, const T& t)
 {
-    if (line.toLogger())
-        line.impl->buff << t;
-    return line;
+    return detail::stream_operator(line, t);
 }
 
 template<typename T>
@@ -716,9 +745,6 @@ Line operator<< (Line&& line, const T& t)
     return std::move(line);
 }
 
-Line& operator<< (Line&, bool);
-Line& operator<< (Line&, const char*);
-Line& operator<< (Line&, const timeval&);
 
 } // namespace alog
 
