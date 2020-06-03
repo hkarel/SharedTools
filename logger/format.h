@@ -1,3 +1,4 @@
+/* clang-format off */
 /*****************************************************************************
   The MIT License
 
@@ -21,10 +22,6 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ---
-
-  В модуле представлен механизм форматированного вывода лог-сообщений.
-
 *****************************************************************************/
 
 #pragma once
@@ -41,9 +38,9 @@ namespace alog {
 using namespace std;
 
 /**
-  Класс реализует механизм форматированного вывода сообщений.
+  Механизм форматированного вывода лог-сообщений.
   Пример использования:
-    log_debug << log_format("Param1: ?. Param2 [?]. Param3 ?", 1, 2, 3);
+    log_debug << log_format("Param1: %?. Param2 [%?]. Param3 %?", 1, 2, 3);
 */
 template<typename... Args> class Format
 {
@@ -56,19 +53,26 @@ public:
 
         char* begin = _buff;
         char* item = _buff;
+
         while (*item)
         {
-            if (*item == '?')
+            if (*item == '%' && *(item + 1) == '?')
             {
                 *item = '\0';
                 _chunks.push_back(begin);
-                begin = item + 1;
+                item += 2;
+                begin = item;
             }
-            ++item;
+            else
+                item += 1;
         }
-        if (*begin != '\0')
-            _chunks.push_back(begin);
+
+        // Последний чанк добавляем всегда, даже если  это  нулевая  строка,
+        // если этого не делать - формирование строки в граничных ситуациях
+        // будет происходить некорректно
+        _chunks.push_back(begin);
     }
+
     ~Format()
     {
         free(_buff);
@@ -107,8 +111,9 @@ private:
         if (!_chunks.empty())
         {
             chunkPrint = true;
-            if (*_chunks[0] != '\0')
-                *_line << _chunks[0];
+            const char* chunk = _chunks[0];
+            if (chunk[0] != '\0')
+                *_line << chunk;
             _chunks.erase(_chunks.begin());
         }
 
@@ -122,9 +127,12 @@ private:
     {
         for (size_t i = 0; i < _chunks.size(); ++i)
         {
-            *_line << _chunks[i];
+            const char* chunk = _chunks[i];
+            if (chunk[0] != '\0')
+                *_line << chunk;
+
             if (i != (_chunks.size() - 1))
-                *_line << "?";
+                *_line << "%?";
         }
     }
 
