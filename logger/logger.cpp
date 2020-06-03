@@ -46,7 +46,7 @@ using namespace std;
 
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.
 // Информация сохраняется в файл /tmp/alogger.log для Linux/Unix,
-// и в файл %TEMP%\\alogger.log для Windows.
+// и в файл %TEMP%\\alogger.log для Windows
 void loggerPanic(const char* saverName, const char* error)
 {
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -92,8 +92,8 @@ static const char* levelToStringImpl(Level level)
 {
     switch (level)
     {
-        // Примечание: пробелы в конце строк удалять нельзя, так как
-        // это скажется на производительности функции prefixFormatter2().
+        // Примечание: пробелы  в конце строк удалять  нельзя, так как
+        // это скажется на производительности функции prefixFormatter2()
         case Level::None:    return "NONE    ";
         case Level::Error:   return "ERROR   ";
         case Level::Warning: return "WARNING ";
@@ -112,7 +112,7 @@ string levelToString(Level level)
 }
 
 // Формирует префикс строки лога. В префикс входит время и дата записи, уровень
-// логирования,  номер потока, наименование функции из которой выполнен вызов.
+// логирования,  номер потока, наименование функции из которой выполнен вызов
 void prefixFormatter(Message& message, time_t& lastTime, char buff[sizeof(Message::prefix)])
 {
     if (lastTime != message.timeVal.tv_sec)
@@ -482,7 +482,7 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
         if (res == Filter::Check::MessError)
         {
             // Прерываем фильтрацию на первом фильтре, который не фильтрует
-            // сообщения об ошибках.
+            // сообщения об ошибках
             return false;
         }
         else if (res == Filter::Check::Fail)
@@ -491,7 +491,7 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
 
     // Если попали в эту точку - значит результат проверки последнего фильтра
     // равен Filter::Check::Success или Filter::Check::NoLock. В обоих случаях
-    // сообщение не должно исключаться из вывода в лог-файл.
+    // сообщение не должно исключаться из вывода в лог-файл
     return false;
 }
 
@@ -736,9 +736,9 @@ void Logger::run()
     steady_timer flushTimer;
     MessageList messagesBuff;
 
-    // Вспомогательный флаг, нужен чтобы дать возможность перед прерываением
+    // Вспомогательный флаг,  нужен чтобы дать возможность  перед  прерыванием
     // потока сделать лишний цикл while (true) и сбросить все буферы в сэйверы.
-    // Примечание: threadStop() для этой цели использовать нельзя.
+    // Примечание: threadStop() для этой цели использовать нельзя
     bool loopBreak = false;
 
     auto saverFlush = [](const MessageList& messages, Saver* saver)
