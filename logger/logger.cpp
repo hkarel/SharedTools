@@ -447,8 +447,7 @@ FilterList Saver::filters() const
 void Saver::addFilter(FilterPtr filter)
 {
     SpinLocker locker(_filtersLock); (void) locker;
-    lst::FindResult fr = _filters.findRef(filter->name(),
-                                          lst::FindExtParams(lst::BruteForce::Yes));
+    lst::FindResult fr = _filters.findRef(filter->name(), {lst::BruteForce::Yes});
     if (fr.success())
         _filters.remove(fr.index());
 
@@ -460,7 +459,7 @@ void Saver::addFilter(FilterPtr filter)
 void Saver::removeFilter(const string& name)
 {
     SpinLocker locker(_filtersLock); (void) locker;
-    lst::FindResult fr = _filters.findRef(name, lst::FindExtParams(lst::BruteForce::Yes));
+    lst::FindResult fr = _filters.findRef(name, {lst::BruteForce::Yes});
     if (fr.success())
         _filters.remove(fr.index());
 }
