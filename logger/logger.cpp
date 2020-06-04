@@ -760,32 +760,30 @@ void Logger::run()
 
     while (true)
     {
-        int messagesCount;
-        { //Блок для SpinLocker
+        bool messagesIsEmpty;
+        { //Block for SpinLocker
             SpinLocker locker(_messagesLock); (void) locker;
-            messagesCount = _messages.count();
+            messagesIsEmpty = _messages.empty();
         }
 
-        if (!threadStop() && (messagesCount == 0))
+        if (!threadStop() && messagesIsEmpty && (_flushLoop == 0))
         {
             static chrono::milliseconds sleepThread {20};
             this_thread::sleep_for(sleepThread);
         }
 
         MessageList messages;
-        { //Блок для SpinLocker
+        { //Block for SpinLocker
             SpinLocker locker(_messagesLock); (void) locker;
             messages.swap(_messages);
         }
-        if (!threadStop()
-            && messages.count() == 0
-            && messagesBuff.count() == 0)
+        if (!threadStop() && messages.empty() && messagesBuff.empty())
         {
-            _forceFlush = false;
+            _flushLoop = 0;
             continue;
         }
 
-        if (messages.count())
+        if (!messages.empty())
         {
             auto prefixFormatterL = [this](MessageList& messages, int min, int max)
             {
@@ -826,7 +824,7 @@ void Logger::run()
             SaverPtr saverOut;
             SaverPtr saverErr;
 
-            { //Блок для SpinLocker
+            { //Block for SpinLocker
                 SpinLocker locker(_saversLock); (void) locker;
                 saverOut = _saverOut;
                 saverErr = _saverErr;
@@ -840,10 +838,10 @@ void Logger::run()
                 messagesBuff.add(messages.release(i, lst::CompressList::No));
             messages.clear();
 
-        } //if (messages.count())
+        } //if (!messages.empty())
 
         if (loopBreak
-            || _forceFlush
+            || _flushLoop > 0
             || flushTimer.elapsed() > _flushTime
             || messagesBuff.count() > _flushSize)
         {
@@ -854,7 +852,9 @@ void Logger::run()
                 for (Saver* saver : savers)
                     saverFlush(messagesBuff, saver);
             }
-            _forceFlush = false;
+            if (_flushLoop > 0)
+                --_flushLoop;
+
             messagesBuff.clear();
         }
         if (loopBreak)
@@ -865,16 +865,16 @@ void Logger::run()
     } //while (true)
 }
 
-void Logger::flush()
+void Logger::flush(int loop)
 {
-    _forceFlush = true;
+    _flushLoop = (loop < 1) ? 1 : loop;
 }
 
 void Logger::waitingFlush()
 {
-    while (_forceFlush && !threadStop())
+    while (_flushLoop && !threadStop())
     {
-        static chrono::milliseconds sleepThread {20};
+        static chrono::milliseconds sleepThread {10};
         this_thread::sleep_for(sleepThread);
     }
 }

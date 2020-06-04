@@ -567,8 +567,12 @@ public:
     Line debug  (const char* file, const char* func, int line, const char* module = 0);
     Line debug2 (const char* file, const char* func, int line, const char* module = 0);
 
-    // Записывает все сообщения буфера
-    void flush();
+    // Записывает все сообщения буфера. Парамет loop определяет сколько циклов
+    // сброса данных нужно сделать чтобы все сообщения очереди были  записаны.
+    // В большинстве случаев достаточно одного цикла,  но когда  лог-сообщения
+    // поступают  очень интенсивно - целесообразно  этот  параметр  установить
+    // в 2 или 3
+    void flush(int loop = 1);
 
     // Заставляет вызывающий поток ждать, пока все сообщения буфера будут
     // записаны в лог-файлы
@@ -652,7 +656,7 @@ private:
 
     int _flushTime = {300};
     int _flushSize = {1000};
-    volatile bool _forceFlush = {false};
+    volatile int _flushLoop = {0};
     volatile bool _on = {true};
 
     friend struct Line;
