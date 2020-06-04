@@ -620,8 +620,8 @@ public:
     // Очищает список сэйверов
     void clearSavers(bool clearStd = true);
 
-    // Возвращает snapshot пользовательских сэйверов
-    SaverList savers() const;
+    // Возвращает snapshot сэйверов
+    SaverList savers(bool withStd = true) const;
 
     // Возвращает максимальный уровень логирования для сэйверов зарегистрированных
     // на данный момент в логгере

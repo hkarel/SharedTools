@@ -848,9 +848,9 @@ void Logger::run()
             || messagesBuff.count() > _flushSize)
         {
             flushTimer.reset();
-            if (messagesBuff.count())
+            if (!messagesBuff.empty())
             {
-                SaverList savers = this->savers();
+                SaverList savers = this->savers(false);
                 for (Saver* saver : savers)
                     saverFlush(messagesBuff, saver);
             }
@@ -953,7 +953,7 @@ void Logger::removeSaver(const string& name)
 
 SaverPtr Logger::findSaver(const string& name)
 {
-    SaverList savers = this->savers();
+    SaverList savers = this->savers(true);
     Saver* saver = savers.findItem(&name, {lst::BruteForce::Yes});
     return SaverPtr(saver);
 }
@@ -974,7 +974,7 @@ void Logger::clearSavers(bool clearStd)
     redefineLevel();
 }
 
-SaverList Logger::savers() const
+SaverList Logger::savers(bool withStd) const
 {
     SaverList savers;
     { //Block for SpinLocker
@@ -984,6 +984,19 @@ SaverList Logger::savers() const
             s->add_ref();
             savers.add(s);
         }
+        if (withStd)
+        {
+            if (_saverOut)
+            {
+                _saverOut->add_ref();
+                savers.add(_saverOut.get());
+            }
+            if (_saverErr)
+            {
+                _saverErr->add_ref();
+                savers.add(_saverErr.get());
+            }
+        }
     }
     return savers;
 }
@@ -991,20 +1004,20 @@ SaverList Logger::savers() const
 void Logger::redefineLevel()
 {
     Level level = None;
-    SaverPtr saverOut;
-    SaverPtr saverErr;
+//    SaverPtr saverOut;
+//    SaverPtr saverErr;
 
-    { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
-        saverOut = _saverOut;
-        saverErr = _saverErr;
-    }
-    if (saverOut && saverOut->active() && (saverOut->level() > level))
-        level = saverOut->level();
-    if (saverErr && saverErr->active() && (saverErr->level() > level))
-        level = saverErr->level();
+//    { //Block for SpinLocker
+//        SpinLocker locker(_saversLock); (void) locker;
+//        saverOut = _saverOut;
+//        saverErr = _saverErr;
+//    }
+//    if (saverOut && saverOut->active() && (saverOut->level() > level))
+//        level = saverOut->level();
+//    if (saverErr && saverErr->active() && (saverErr->level() > level))
+//        level = saverErr->level();
 
-    SaverList savers = this->savers();
+    SaverList savers = this->savers(true);
     for (Saver* saver : savers)
         if (saver->active() && (saver->level() > level))
             level = saver->level();
