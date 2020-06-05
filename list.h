@@ -2,7 +2,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2005-2017 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2005 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
