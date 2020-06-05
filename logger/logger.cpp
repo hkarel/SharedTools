@@ -70,22 +70,14 @@ void loggerPanic(const char* saverName, const char* error)
 
 Level levelFromString(const string& level)
 {
-    if (level == "none")
-        return Level::None;
-    else if (level == "error")
-        return Level::Error;
-    else if (level == "warning")
-        return Level::Warning;
-    else if (level == "info")
-        return Level::Info;
-    else if (level == "verbose")
-        return Level::Verbose;
-    else if (level == "debug")
-        return Level::Debug;
-    else if (level == "debug2")
-        return Level::Debug2;
-
-    return Level::Info;
+    if      (level == "none"   ) return Level::None;
+    else if (level == "error"  ) return Level::Error;
+    else if (level == "warning") return Level::Warning;
+    else if (level == "info"   ) return Level::Info;
+    else if (level == "verbose") return Level::Verbose;
+    else if (level == "debug"  ) return Level::Debug;
+    else if (level == "debug2" ) return Level::Debug2;
+    else                         return Level::Info;
 }
 
 static const char* levelToStringImpl(Level level)
