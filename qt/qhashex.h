@@ -33,8 +33,11 @@
   типами. Классы QHashEx, QSetEx исправляют эту ошибку.
 */
 #if QT_VERSION >= 0x050000
-template<typename Key, typename T> using QHashEx = QHash<Key, T>;
-template<typename T> using QSetEx = QSet<T>;
+// Утилита check_init некорректно обрабатывает директиву using
+// template<typename Key, typename T> using QHashEx = QHash<Key, T>;
+// template<typename T> using QSetEx = QSet<T>;
+template<typename Key, typename T> struct QHashEx : public QHash<Key, T> {};
+template<typename T> struct QSetEx : public QSet<T> {};
 #else
 template<typename T>
 struct QHashIntegral
