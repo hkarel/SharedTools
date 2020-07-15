@@ -30,6 +30,7 @@
 #ifdef QT_NETWORK_LIB
 #include <QHostAddress>
 #endif
+#include <ctime>
 
 namespace config {
 
@@ -62,5 +63,11 @@ void dirExpansion(QString& filePath);
 // Возвращает host-адрес из файла конфигурации
 bool readHostAddress(const QString& confHostStr, QHostAddress&);
 #endif
+
+// Возвращает время модификации базового конфиг-файла
+std::time_t baseModifyTime();
+
+// Возвращает время модификации конфиг-файла для логгера
+std::time_t loggerModifyTime();
 
 } // namespace config

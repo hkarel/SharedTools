@@ -58,7 +58,7 @@ Line& operator<< (Line& line, const QUuidT<N>& u)
 }
 
 template<typename... Args>
-inline Format<Args...> format(const QString& descript,  Args&&... args)
+inline Format<Args...> format(const QString& descript, Args&&... args)
 {
     return Format<Args...>(descript.toUtf8().constData(), std::forward<Args>(args)...);
 }

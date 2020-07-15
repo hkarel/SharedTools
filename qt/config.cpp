@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <sys/stat.h>
 
 namespace config {
 
@@ -126,5 +127,34 @@ bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
     return true;
 }
 #endif
+
+std::time_t baseModifyTime()
+{
+    struct stat st;
+    ::stat(base().filePath().c_str(), &st);
+    return st.st_mtime;
+}
+
+std::time_t loggerModifyTime()
+{
+    QString logConf;
+    std::time_t confTime = 0;
+#ifdef MINGW
+    base().getValue("logger.conf_win", logConf);
+#else
+    base().getValue("logger.conf", logConf);
+#endif
+    if (!logConf.isEmpty())
+    {
+        dirExpansion(logConf);
+        if (QFile::exists(logConf))
+        {
+            struct stat st;
+            ::stat(logConf.toUtf8().constData(), &st);
+            confTime = st.st_mtime;
+        }
+    }
+    return confTime;
+}
 
 } // namespace config
