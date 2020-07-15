@@ -459,22 +459,42 @@ void printSaversInfo()
 {
     log_info_m << "---";
     SaverList savers = alog::logger().savers();
+
+    // Отключаем фильтрацию для default-сэйвера
+    bool defaultFiltersActive = true;
+    if (lst::FindResult fr = savers.findRef(string("default")))
+    {
+        defaultFiltersActive = savers.item(fr.index())->filtersActive();
+        savers.item(fr.index())->setFiltersActive(false);
+    }
+
+    bool nextCommaVal;
+    auto nextComma = [&nextCommaVal]()
+    {
+        if (nextCommaVal)
+            return ", ";
+
+        nextCommaVal = true;
+        return "";
+    };
+
     for (Saver* saver : savers)
     {
         alog::Line logLine = log_info_m << "Saver : ";
-        logLine << "name: " << saver->name() << "; "
-                << "active: " << saver->active() << "; "
-                << "level: " << levelToString(saver->level()) << "; "
-                << "max_line_size: " << saver->maxLineSize() << "; ";
+        logLine << "name: " << saver->name()
+                << "; active: " << saver->active()
+                << "; level: " << levelToString(saver->level())
+                << "; max_line_size: " << saver->maxLineSize();
 
         FilterList filters = saver->filters();
-        logLine << "filters: [ ";
+        logLine << "; filters: [ ";
+        nextCommaVal = false;
         for (Filter* filter : filters)
-            logLine << (filter->name().empty() ? string("''") : filter->name()) << ", ";
-        logLine << "]; ";
+            logLine << nextComma() << (filter->name().empty() ? string("''") : filter->name());
+        logLine << " ]";
 
         if (SaverFile* fsaver = dynamic_cast<SaverFile*>(saver))
-            logLine << "file: " << fsaver->filePath();
+            logLine << "; file: " << fsaver->filePath();
     }
 
     // Составляем список фильтров
@@ -484,7 +504,7 @@ void printSaversInfo()
         FilterList saverFilters = saver->filters();
         for (Filter* filter : saverFilters)
         {
-            lst::FindResult fr = filters.findRef(filter->name(), {lst::BruteForce::Yes});
+            lst::FindResult fr = filters.findRef(filter->name());
             if (fr.success())
                 continue;
 
@@ -499,58 +519,64 @@ void printSaversInfo()
         logLine << "name: " << filter->name()
                 << "; mode: " << ((filter->mode() == Filter::Mode::Include) ? "include" : "exclude")
                 << "; filtering_errors: " << filter->filteringErrors()
-                << "; follow_thread_context: " << filter->followThreadContext()
-                << "; ";
+                << "; follow_thread_context: " << filter->followThreadContext();
 
+        nextCommaVal = false;
         if (FilterModule* modFilter = dynamic_cast<FilterModule*>(filter))
         {
-            logLine << "type: module_name"
+            logLine << "; type: module_name"
                     << "; filtering_noname_modules: " << modFilter->filteringNoNameModules()
                     << "; modules: [ ";
             for (const string& module : modFilter->modules())
-                logLine << module << ", ";
-            logLine << "]; ";
+                logLine << nextComma() << module;
+            logLine << " ]";
         }
         else if (FilterLevel* logFilter = dynamic_cast<FilterLevel*>(filter))
         {
-            logLine << "type: log_level"
-                    << "; level: " << levelToString(logFilter->leve())
-                    << "; ";
+            logLine << "; type: log_level"
+                    << "; level: " << levelToString(logFilter->leve());
         }
         else if (FilterFunc* funcFilter = dynamic_cast<FilterFunc*>(filter))
         {
-            logLine << "type: func_name"
+            logLine << "; type: func_name"
                     << "; functions: [ ";
             for (const string& function : funcFilter->funcs())
-                logLine << function << ", ";
-            logLine << "]; ";
+                logLine << nextComma() << function;
+            logLine << " ]";
         }
         else if (FilterFile* fileFilter = dynamic_cast<FilterFile*>(filter))
         {
-            logLine << "type: file_name"
+            logLine << "; type: file_name"
                     << "; files: [ ";
             for (const string& file : fileFilter->files())
-                logLine << file << ", ";
-            logLine << "]; ";
+                logLine << nextComma() << file;
+            logLine << " ]";
         }
         else if (FilterThread* threadFilter = dynamic_cast<FilterThread*>(filter))
         {
-            logLine << "type: thread_id"
+            logLine << "; type: thread_id"
                     << "; threads: [ ";
             for (pid_t tid : threadFilter->threads())
-                logLine << long(tid) << ", ";
-            logLine << "]; ";
+                logLine << nextComma() << long(tid);
+            logLine << " ]";
         }
         else if (FilterContent* contFilter = dynamic_cast<FilterContent*>(filter))
         {
-            logLine << "type: content"
+            logLine << "; type: content"
                     << "; contents: [ ";
             for (const string& cont : contFilter->contents())
-                logLine << cont << ", ";
-            logLine << "]; ";
+                logLine << nextComma() << cont;
+            logLine << " ]";
         }
     }
     log_info_m << "...";
+
+    logger().flush(2);
+    logger().waitingFlush();
+
+    // Включаем фильтрацию для default-сэйвера
+    if (lst::FindResult fr = savers.findRef(string("default")))
+        savers.item(fr.index())->setFiltersActive(defaultFiltersActive);
 }
 
 } // namespace alog

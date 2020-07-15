@@ -467,6 +467,9 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
     if (filters.empty())
         return false;
 
+    if (!_filtersActive)
+        return false;
+
     for (Filter* filter : filters)
     {
         Filter::Check res = filter->check(m);

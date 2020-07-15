@@ -413,6 +413,10 @@ public:
     // существует, то он будет заменен новым
     void addFilter(FilterPtr);
 
+    // Признак активности системы фильтрации
+    bool filtersActive() const {return _filtersActive;}
+    void setFiltersActive(bool val) {_filtersActive.store(val);}
+
     // Удаляет фильтр
     void removeFilter(const string& name);
 
@@ -444,8 +448,9 @@ private:
     Level  _level = {Error};
     int    _maxLineSize = {5000};
 
-    FilterList _filters;
-    mutable atomic_flag  _filtersLock = ATOMIC_FLAG_INIT;
+    FilterList  _filters;
+    atomic_bool _filtersActive = {true};
+    mutable atomic_flag _filtersLock = ATOMIC_FLAG_INIT;
 
     atomic<Logger*> _logger = {0};
 
