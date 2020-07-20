@@ -361,7 +361,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
         if (!found)
             throw std::logic_error(
                 "For a saver-node impossible to assign filter "
-                "with name '" + filterName + "'. Filter not found.");
+                "with name '" + filterName + "'. Filter not found");
     }
 
     return saver;
