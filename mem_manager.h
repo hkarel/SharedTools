@@ -84,12 +84,12 @@ struct MemBlock
 template<typename T> struct MemBlockArray
 {
     MemBlockArray<T>* next;
-    MemBlock* array_;
+    MemBlock* array;
     MemBlockArray(int arraySize) :
         next(0),
-        array_((MemBlock*) ::malloc(arraySize * sizeof(T)))
+        array((MemBlock*) ::malloc(arraySize * sizeof(T)))
     {}
-    ~MemBlockArray() {::free(array_);}
+    ~MemBlockArray() {::free(array);}
 };
 
 /**
@@ -330,7 +330,7 @@ private:
             a->next = _arrays;
             _arrays = a;
             union {MemBlock* arr; char* offset;};
-            arr = _arrays->array_;
+            arr = _arrays->array;
             //int ii;
             for (int i = 0; i < _arraySize; ++i) {
                 arr->next = _freeBlocks;
