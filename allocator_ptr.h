@@ -61,7 +61,6 @@ template<typename T> struct allocator_ptr
     }
 };
 
-
 /**
   @brief Типовой распределитель памяти для массива объектов.
   Примечание: не использовать array-аллокаторы для container_ptr при условии,
@@ -76,7 +75,6 @@ template<typename T> struct allocator_array_ptr
         delete [] x;
     }
 };
-
 
 /**
   @brief Используется для определения эквивалентных аллокаторов

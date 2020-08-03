@@ -86,7 +86,6 @@ enum class SortState
   CustomDown = 4   /// Список частично отсортирован по убыванию
 };
 
-
 class FindResult;
 
 template<typename ListT, typename CompareT>
@@ -100,7 +99,6 @@ FindResult lastFindResultL(const ListT&, const CompareL&, const FindResult&);
 
 template<typename, typename, typename> class CustomList;
 template<typename, typename, typename> class List;
-
 
 /// @brief Функция проверяет попадает ли значение index в диапазон [minVal-maxVal)
 /// (значение minVal включается в диапазон проверки, а maxVal - нет).
@@ -119,7 +117,6 @@ inline bool checkBounds(int index, ListType &list)
 {
   return inRange(index, 0, list.size());
 }
-
 
 /**
   @brief Класс ListExcept.
@@ -164,14 +161,12 @@ constexpr const char* ERR_NOCREATE_OBJ =
 #  define CHECK_INTERNAL_DATA_PTR(DPTR)
 #endif // NDEBUG
 
-
 /**
   @brief Класс BreakCompare.
   Используется в функциях/стратегиях сравнения элементов
   для прерырания процессов сортировки или поиска.
 */
 struct BreakCompare {};
-
 
 /**
   @brief Класс FindResult - результат функций поиска.
@@ -226,7 +221,6 @@ struct FindResultRange
   FindResult last;
 };
 
-
 /**
   @brief Сервисная структура, используется для агрегации расширенных
          параметров поиска.
@@ -257,7 +251,6 @@ struct FindExtParams
   {}
 };
 
-
 /**
   @brief Сервисная структура, используется для агрегации расширенных
          параметров сортировки.
@@ -285,7 +278,6 @@ struct SortExtParams
     : extParam(extParam), loSortBorder(loSortBorder), hiSortBorder(hiSortBorder)
   {}
 };
-
 
 /**
   @brief Функции выполняют поиск перебором (грубый поиск).
@@ -317,7 +309,6 @@ FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
 template<typename T, typename ListT, typename CompareT>
 T* findItem(const T* item, const ListT& list, const CompareT& compare,
             void* extParam = 0);
-
 
 /**
   @brief Группа функций выполняет поиск первого или последнего элемента в после-
@@ -368,7 +359,6 @@ template<typename ListT, typename CompareT>
 FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
                                 const FindResult& fr, void* extParam = 0);
 
-
 /**
   @brief Макрос используется в классе-стратегии сортировки и поиска.
 */
@@ -405,7 +395,6 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
 #define LIST_COMPARE_MULTI_ITEM(ITEM1, ITEM2) \
   if (ITEM1 != ITEM2) return (ITEM1 < ITEM2) ? -1 : 1;
 
-
 /**
   @brief Класс-стратегия используется для сортировки и поиска.
 */
@@ -435,7 +424,6 @@ template<typename T> struct CompareItem
 */
 struct CompareItemDummy {};
 
-
 /**
   @brief Распределитель памяти для элементов списка
 */
@@ -462,7 +450,6 @@ template<typename T> struct AllocatorItem
     delete x;
   }
 };
-
 
 /**
   @brief Класс CustomList
@@ -704,7 +691,6 @@ private:
   DataType* d_func() const {CHECK_INTERNAL_DATA_PTR(d); return d;}
   template<typename, typename, typename> friend class List;
 };
-
 
 /**
   @brief Класс List
@@ -989,7 +975,6 @@ private:
 
 };
 
-
 //------------------------ Implementation CustomList -------------------------
 
 #define DECL_IMPL_CUSTLIST_CONSTR \
@@ -1013,7 +998,6 @@ private:
   template<typename T, typename Compare, typename Allocator> \
     template<typename SUBT1, typename SUBT2> \
   TYPE CustomList<T, Compare, Allocator>
-
 
 DECL_IMPL_CUSTLIST(int)::indexOf(const T* item) const
 {
@@ -1228,8 +1212,6 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
 #undef DECL_IMPL_CUSTLIST_INTERN_TYPE
 #undef DECL_IMPL_CUSTLIST_SUBTMPL1
 #undef DECL_IMPL_CUSTLIST_SUBTMPL2
-
-
 
 //------------------------- Implementation List ------------------------------
 
@@ -1806,7 +1788,6 @@ DECL_IMPL_LIST(void)::swap(SelfListType& list)
 //  memmove((void*)&List_[0], (void*)&ListTmp[0], shift * sizeof(T*));
 //  delete [] ListTmp;
 //}
-
 
 //------------------------ Implementation Functions --------------------------
 

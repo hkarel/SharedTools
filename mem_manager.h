@@ -73,7 +73,6 @@
 #include <windows.h>
 #endif
 
-
 /**
   @brief MemBlock, MemBlockArray - вспомогательные структуры.
 */
@@ -92,7 +91,6 @@ template<typename T> struct MemBlockArray
     {}
     ~MemBlockArray() {::free(array_);}
 };
-
 
 /**
   @brief Фиктивная стратегия блокировки потоков при создании/освобождении
@@ -164,7 +162,6 @@ template<typename T> struct MemLocker
     ~MemLocker() {locker->unlock();}
     T* locker;
 };
-
 
 /**
   @brief Класс MemManager.
