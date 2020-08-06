@@ -103,6 +103,9 @@ void printList(Line& line, const List& list)
     line << "]";
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 Line& operator<< (Line& line, const QVariant& v)
 {
     if (!line.toLogger())
@@ -234,5 +237,7 @@ Line& operator<< (Line& line, const QVariant& v)
     }
     return line;
 }
+
+#pragma GCC diagnostic pop
 
 } // namespace alog
