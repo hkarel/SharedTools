@@ -61,7 +61,8 @@ ThreadIdLock::~ThreadIdLock()
 {
     SpinLocker locker(_threadIdList->_tidsLock); (void) locker;
     pid_t tid = trd::gettid();
-    for (auto it = _threadIdList->_tids.begin(); it != _threadIdList->_tids.end(); ++it)
+    auto it = _threadIdList->_tids.begin();
+    for (; it != _threadIdList->_tids.end(); ++it)
         if (*it == tid)
             _threadIdList->_tids.erase(it--);
 }
