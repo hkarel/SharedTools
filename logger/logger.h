@@ -721,8 +721,12 @@ namespace detail {
 template<typename T>
 using is_arithmetic = std::enable_if<std::is_arithmetic<T>::value, int>;
 
+template <typename T>
+using is_enum_type = std::enable_if<std::is_enum<T>::value, int>;
+
 template<typename T>
-using not_arithmetic = std::enable_if<!std::is_arithmetic<T>::value, int>;
+using not_supported = std::enable_if<!std::is_arithmetic<T>::value
+                                  && !std::is_enum<T>::value, int>;
 
 template<typename T>
 Line& stream_operator(Line& line, const T t, typename is_arithmetic<T>::type = 0)
@@ -733,9 +737,21 @@ Line& stream_operator(Line& line, const T t, typename is_arithmetic<T>::type = 0
 }
 
 template<typename T>
-Line& stream_operator(Line& line, const T, typename not_arithmetic<T>::type = 0)
+Line& stream_operator(Line& line, const T t, typename is_enum_type<T>::type = 0)
 {
-    static_assert(!std::is_arithmetic<T>::value, "Unknown type for stream operator");
+    if (line.toLogger())
+    {
+        typedef typename std::underlying_type<T>::type enum_type;
+        line.impl->buff += std::to_string(static_cast<enum_type>(t));
+    }
+    return line;
+}
+
+template<typename T>
+Line& stream_operator(Line& line, const T, typename not_supported<T>::type = 0)
+{
+    static_assert(std::is_arithmetic<T>::value || std::is_enum<T>::value,
+                  "Unknown type for stream operator");
     return line;
 }
 

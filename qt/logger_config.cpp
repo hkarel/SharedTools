@@ -1,6 +1,7 @@
 #include "logger_config.h"
 #include "logger/config.h"
 #include "qt/config.h"
+#include "qt/logger_operators.h"
 #include <QtCore>
 
 namespace alog {
