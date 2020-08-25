@@ -67,18 +67,28 @@ public:
     // Признак, позволяющий отличить данный контейнер от container_ptr
     enum {IsContainerPtr = 0};
 
+private:
+    template<typename P>
+    static auto add_ref(P* ptr) -> decltype(ptr->add_ref(), void()) {ptr->add_ref();}
+    template<typename P>
+    static auto add_ref(P* ptr) -> decltype(ptr->AddRef(),  void()) {ptr->AddRef();}
+    template<typename P>
+    static auto release(P* ptr) -> decltype(ptr->release(), void()) {ptr->release();}
+    template<typename P>
+    static auto release(P* ptr) -> decltype(ptr->Release(), void()) {ptr->Release();}
+
 public:
     clife_ptr() : _ptr(0) {}
 
     ~clife_ptr() {
         if (_ptr)
-            _ptr->release();
+            release(_ptr);
     }
 
     explicit clife_ptr(T* p) {
         _ptr = p;
         if (_ptr)
-            _ptr->add_ref();
+            add_ref(_ptr);
     }
 
     clife_ptr(T* p, bool add_ref) {
@@ -86,7 +96,7 @@ public:
         if (_ptr && add_ref) {
             // В зависимости от организации хранимого объекта счетчик ссылок
             // может быть увеличен внутри clife_ptr или снаружи.
-            _ptr->add_ref();
+            self_t::add_ref(_ptr);
         }
     }
 
@@ -146,8 +156,8 @@ public:
         return other_cptrT();
     }
 
-    void release() {if (_ptr) {_ptr->release(); _ptr = 0;}}
-    void reset()   {if (_ptr) {_ptr->release(); _ptr = 0;}}
+    void release() {if (_ptr) {release(_ptr); _ptr = 0;}}
+    void reset()   {if (_ptr) {release(_ptr); _ptr = 0;}}
 
     T* get() const NOEXCEPT {return _ptr;}
 
@@ -163,7 +173,7 @@ public:
 
     void attach(T* p) {
         if (_ptr)
-            _ptr->release();
+            release(_ptr);
         _ptr = p;
     }
 
@@ -188,19 +198,19 @@ private:
     template<typename otherT>
     void assign(const clife_ptr<otherT>& p) {
         if (_ptr)
-            _ptr->release();
+            release(_ptr);
         // Проверка на корректность преобразования типа. Допускается преобразо-
         // вание только от классов-наследников к базовым классам.
         _ptr = p.get();
         if (_ptr)
-            _ptr->add_ref();
+            add_ref(_ptr);
     }
 
     // Используется в rvalue-операторах присваивания и копирования.
     template<typename otherT>
     void assign_rvalue(clife_ptr<otherT>& p) {
         if (_ptr)
-            _ptr->release();
+            release(_ptr);
         _ptr = p.get();
         p._ptr = 0;
     }
