@@ -154,7 +154,7 @@ savers:
     level: debug2
     filters: [filter2, filter3]
     file: ./lbucd2.log.3
-    ...
+...
 */
 
 // Получает список фильтров из указанной yaml-ноды
