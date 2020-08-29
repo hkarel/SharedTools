@@ -750,7 +750,7 @@ Line& stream_operator(Line& line, const T t, typename is_enum_type<T>::type = 0)
 template<typename T>
 Line& stream_operator(Line& line, const T, typename not_supported<T>::type = 0)
 {
-    static_assert(std::is_arithmetic<T>::value || std::is_enum<T>::value,
+    static_assert(!std::is_same<typename not_supported<T>::type, int>::value,
                   "Unknown type for stream operator");
     return line;
 }
