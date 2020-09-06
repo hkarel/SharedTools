@@ -1,4 +1,5 @@
 import qbs
+import qbs.ModUtils
 
 CppApplication {
     name: "list_qtest"
@@ -8,8 +9,12 @@ CppApplication {
     Depends { name: "Qt"; submodules: ["core", "test"] }
 
     cpp.cxxFlags: [
-        "-std=c++11",
+        "-std=c++14",
     ]
+
+    cpp.systemIncludePaths: ModUtils.concatAll(
+        Qt.core.cpp.includePaths
+    )
 
     files: [
         "../list.h",

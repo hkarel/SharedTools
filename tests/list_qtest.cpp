@@ -82,7 +82,7 @@ void ListTest::compressList()
     list.addCopy(3);
 
     qInfo("  Remove elements 1 without compression list");
-    list.remove(0, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
     QCOMPARE(list.count(), 3);
 
     printElements("  List before compression : ", list);
@@ -103,7 +103,7 @@ void ListTest::compressList()
     list.addCopy(3);
 
     qInfo("  Remove elements 2 without compression list");
-    list.remove(1, lst::NO_COMPRESS_LIST);
+    list.remove(1, lst::CompressList::No);
     QCOMPARE(list.count(), 3);
 
     printElements("  List before compression : ", list);
@@ -122,7 +122,7 @@ void ListTest::compressList()
     list.addCopy(3);
 
     qInfo("  Remove elements 3 without compression list");
-    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::CompressList::No);
     QCOMPARE(list.count(), 3);
 
     printElements("  List before compression : ", list);
@@ -142,8 +142,8 @@ void ListTest::compressList()
     list.addCopy(4);
 
     qInfo("  Remove elements 1,2 without compression list");
-    list.remove(0, lst::NO_COMPRESS_LIST);
-    list.remove(1, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
+    list.remove(1, lst::CompressList::No);
     QCOMPARE(list.count(), 4);
 
     printElements("  List before compression : ", list);
@@ -163,8 +163,8 @@ void ListTest::compressList()
     list.addCopy(4);
 
     qInfo("  Remove elements 3,4 without compression list");
-    list.remove(2, lst::NO_COMPRESS_LIST);
-    list.remove(3, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::CompressList::No);
+    list.remove(3, lst::CompressList::No);
     QCOMPARE(list.count(), 4);
 
     printElements("  List before compression : ", list);
@@ -184,9 +184,9 @@ void ListTest::compressList()
     list.addCopy(4);
 
     qInfo("  Remove elements 1,2,3 without compression list");
-    list.remove(0, lst::NO_COMPRESS_LIST);
-    list.remove(1, lst::NO_COMPRESS_LIST);
-    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
+    list.remove(1, lst::CompressList::No);
+    list.remove(2, lst::CompressList::No);
     QCOMPARE(list.count(), 4);
 
     printElements("  List before compression : ", list);
@@ -205,9 +205,9 @@ void ListTest::compressList()
     list.addCopy(4);
 
     qInfo("  Remove elements 2,3,4 without compression list");
-    list.remove(1, lst::NO_COMPRESS_LIST);
-    list.remove(2, lst::NO_COMPRESS_LIST);
-    list.remove(3, lst::NO_COMPRESS_LIST);
+    list.remove(1, lst::CompressList::No);
+    list.remove(2, lst::CompressList::No);
+    list.remove(3, lst::CompressList::No);
     QCOMPARE(list.count(), 4);
 
     printElements("  List before compression : ", list);
@@ -226,10 +226,10 @@ void ListTest::compressList()
     list.addCopy(4);
 
     qInfo("  Remove elements 1,2,3,4 without compression list");
-    list.remove(0, lst::NO_COMPRESS_LIST);
-    list.remove(1, lst::NO_COMPRESS_LIST);
-    list.remove(2, lst::NO_COMPRESS_LIST);
-    list.remove(3, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
+    list.remove(1, lst::CompressList::No);
+    list.remove(2, lst::CompressList::No);
+    list.remove(3, lst::CompressList::No);
     QCOMPARE(list.count(), 4);
 
     printElements("  List before compression : ", list);
@@ -257,16 +257,16 @@ void ListTest::compressList()
     list.addCopy(15);
 
     qInfo("  Remove elements 1,3,5,6,9,10,11,13,14,15 without compression list");
-    list.remove(0,  lst::NO_COMPRESS_LIST);
-    list.remove(2,  lst::NO_COMPRESS_LIST);
-    list.remove(4,  lst::NO_COMPRESS_LIST);
-    list.remove(5,  lst::NO_COMPRESS_LIST);
-    list.remove(8,  lst::NO_COMPRESS_LIST);
-    list.remove(9,  lst::NO_COMPRESS_LIST);
-    list.remove(10, lst::NO_COMPRESS_LIST);
-    list.remove(12, lst::NO_COMPRESS_LIST);
-    list.remove(13, lst::NO_COMPRESS_LIST);
-    list.remove(14, lst::NO_COMPRESS_LIST);
+    list.remove(0,  lst::CompressList::No);
+    list.remove(2,  lst::CompressList::No);
+    list.remove(4,  lst::CompressList::No);
+    list.remove(5,  lst::CompressList::No);
+    list.remove(8,  lst::CompressList::No);
+    list.remove(9,  lst::CompressList::No);
+    list.remove(10, lst::CompressList::No);
+    list.remove(12, lst::CompressList::No);
+    list.remove(13, lst::CompressList::No);
+    list.remove(14, lst::CompressList::No);
     QCOMPARE(list.count(), 15);
 
     printElements("  List before compression : ", list);
