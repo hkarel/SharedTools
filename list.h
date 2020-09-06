@@ -1578,13 +1578,14 @@ DECL_IMPL_LIST(void)::compressList()
   {
     if (it == end)
       return;
+
     if (*it == 0)
+    {
+      --d->count;
       break;
+    }
     ++it;
   }
-
-  // Если попали в эту точку как минимум один элемент является нулевым
-  --d->count;
 
   T** it2 = it + 1;
   while (it2 != end)
