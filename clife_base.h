@@ -44,7 +44,7 @@ public:
     // передача во владение clife_ptr<>(), то целесообразно счетчик жизни
     // устанавливать в 1. В этом случае в коде будет меньше вызовов метода
     // add_ref().
-    clife_base() : _clife_count(0) {}
+    clife_base() = default;
     clife_base(bool add_ref) : _clife_count(add_ref ? 1 : 0) {}
     virtual ~clife_base() = default;
 
@@ -54,5 +54,5 @@ public:
     uint32_t clife_count() const {return _clife_count;}
 
 private:
-    mutable std::atomic<uint32_t> _clife_count;
+    mutable std::atomic<uint32_t> _clife_count = {0};
 };
