@@ -34,6 +34,7 @@
 #  endif
 #endif
 
+#include <cassert>
 #include <type_traits>
 
 //#pragma GCC diagnostic push
