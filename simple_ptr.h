@@ -35,6 +35,7 @@
 #endif
 
 #include "allocator_ptr.h"
+#include <cassert>
 
 /**
   @brief simple_ptr - почти полный аналог auto_ptr и выполнен на его
