@@ -427,7 +427,7 @@ struct CompareItemDummy {};
 /**
   @brief Распределитель памяти для элементов списка
 */
-template<typename T> struct AllocatorItem
+template<typename T> struct AllocItem
 {
   /// @brief Функция создания объектов.
   ///
@@ -700,7 +700,7 @@ private:
 template<
   typename T,
   typename Compare = CompareItem<T>,
-  typename Allocator = AllocatorItem<T>
+  typename Allocator = AllocItem<T>
 >
 class List : public CustomList<T, Compare, Allocator>
 {

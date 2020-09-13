@@ -146,8 +146,7 @@ typedef simple_ptr<Message> MessagePtr;
 /**
   Аллокатор используется для управления жизнью объектов Filter и Saver
 */
-template<typename T>
-struct AllocatorItem
+template<typename T> struct AllocItem
 {
     void destroy(T* x) {if (x) x->release();}
 };
@@ -259,7 +258,7 @@ private:
 
     friend class Saver;
 };
-typedef lst::List<Filter, FindItem<Filter>, AllocatorItem<Filter>> FilterList;
+typedef lst::List<Filter, FindItem<Filter>, AllocItem<Filter>> FilterList;
 typedef clife_ptr<Filter> FilterPtr;
 
 /**
@@ -457,7 +456,7 @@ private:
     friend class SaverStdOut;
     friend class SaverStdErr;
 };
-typedef lst::List<Saver, FindItem<Saver>, AllocatorItem<Saver>> SaverList;
+typedef lst::List<Saver, FindItem<Saver>, AllocItem<Saver>> SaverList;
 typedef clife_ptr<Saver> SaverPtr;
 
 /**
