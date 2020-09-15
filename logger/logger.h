@@ -106,24 +106,24 @@ struct Something
 /**
   Базовое сообщение
 */
-struct Message //: public clife_base
+struct Message
 {
     Level  level;
     string str;
     string module;
 
-    // Буферы prefix и prefix2 хранят результаты функций prefixFormatter{2}.
-    // Основное назначение минимизировать количество вызовов prefixFormatter{2}
+    // Буферы prefix{123} хранят результаты работы функций prefixFormatter{123}
+    // Основное назначение - минимизировать количество вызовов prefixFormatter
     // при записи сообщения сразу в несколько сэйверов.
     // Причина: большое потребление системных ресурсов при многократном вызове
-    //          функций prefixFormatter{2}.
-    // Важно:   prefix-буферы специально сделаны выделяемыми на стеке,
-    //          так как память для них должна выделяться в момент создания
-    //          объекта, а не в момент заполнения префиксов.
-    char prefix [30]  = {0};
-    char prefix2[10]  = {0};
-    char prefix3[300] = {0};
-
+    //          функций prefixFormatter.
+    // Важно:   prefix-буферы специально сделаны выделяемыми на стеке, так как
+    //          память для них должна  выделяться  в момент  создания  объекта,
+    //          а не в момент заполнения префиксов.
+    char prefix1[30]; // Дата и время (точность до секунд)
+    char prefix2[10]; // Время (микросекунды для режима DEBUG2)
+    char prefix3[80]; // Уровень логирования, идентификатор потока (LWP),
+                      // наименование файла, номер строки, имя модуля
     string file;
     string func;
     int    line;
@@ -133,8 +133,8 @@ struct Message //: public clife_base
 
     Something::Ptr something;
 
-    Message() {}
-    Message(Message&&) = default;
+    Message() = default;
+    Message(Message&&) = delete;
     Message(const Message&) = delete;
     Message& operator= (Message&&) = delete;
     Message& operator= (const Message&) = delete;
@@ -230,7 +230,7 @@ public:
     // Возвращает статус фильта: заперт/не заперт
     bool locked() const {return _locked;}
 
-    // Запирает фильтр.
+    // Запирает фильтр
     void lock() {_locked = true;}
 
 private:
@@ -466,7 +466,7 @@ class SaverStdOut : public Saver
 {
 
 public:
-    // Если параметр shortMessages == TRUE,  то в консоль будут выводятся только
+    // Если параметр  shortMessages = TRUE,  то в консоль будут выводятся только
     // сами сообщения, а расширенные параметры сообщения такие как дата, уровень
     // логирования, идентификатор потока и пр. выводиться не будут
     SaverStdOut(const char* name, Level level, bool shortMessages);

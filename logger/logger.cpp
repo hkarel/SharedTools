@@ -103,15 +103,16 @@ string levelToString(Level level)
     return utl::rtrim(s);
 }
 
-// Формирует префикс строки лога. В префикс входит время и дата записи, уровень
-// логирования,  номер потока, наименование функции из которой выполнен вызов
-void prefixFormatter(Message& message, time_t& lastTime, char buff[sizeof(Message::prefix)])
+// Функции  prefixFormatter{123}  формируют  префикс  строки  лога.  В префикс
+// входит время и дата записи, уровень логирования, номер потока, наименование
+// файла, номер строки, имя модуля
+void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Message::prefix1)])
 {
     if (lastTime != message.timeVal.tv_sec)
     {
         std::tm tm;
-        memset(&tm, 0, sizeof(tm));
-        memset(buff, 0, sizeof(Message::prefix));
+        //memset(&tm, 0, sizeof(tm));
+        //memset(buff, 0, sizeof(Message::prefix1));
 
         lastTime = message.timeVal.tv_sec;
         localtime_r(&lastTime, &tm);
@@ -120,18 +121,18 @@ void prefixFormatter(Message& message, time_t& lastTime, char buff[sizeof(Messag
 #if __GNUC__ > 6
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-        snprintf(buff, sizeof(Message::prefix) - 1,
+        snprintf(buff, sizeof(Message::prefix1) - 1,
                  "%02d.%02d.%04d %02d:%02d:%02d",
                  tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
 #pragma GCC diagnostic pop
     }
-    memcpy(message.prefix, buff, sizeof(Message::prefix));
+    memcpy(message.prefix1, buff, sizeof(Message::prefix1));
 }
 
 void prefixFormatter2(Message& message)
 {
-    char buff[sizeof(Message::prefix2)] = {0};
+    char buff[sizeof(Message::prefix2)]; // = {0};
     long tv_usec = long(message.timeVal.tv_usec);
 
     snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
@@ -140,28 +141,33 @@ void prefixFormatter2(Message& message)
 
 void prefixFormatter3(Message& message)
 {
-    char buff[sizeof(Message::prefix3)] = {0};
+    char buff[sizeof(Message::prefix3)]; // = {0};
+    buff[sizeof(buff) - 1] = '\0';
 
     const char* level = levelToStringImpl(message.level);
     long tid = long(message.threadId);
 
-    char module[50] = {0};
-    if (!message.module.empty())
-        snprintf(module, sizeof(module) - 1, "%s", message.module.c_str());
+    //char module[50] = {0};
+    //if (!message.module.empty())
+    //    snprintf(module, sizeof(module) - 1, "%s", message.module.c_str());
 
     //if (!message.file.empty())
     //    snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d:%s%s] ",
     //             level, tid, message.file.c_str(), message.line, message.func.c_str(), module);
     //else
     //    snprintf(buff, sizeof(buff) - 1, " %sLWP%ld %s  ", level, tid, module);
+
+    const char* file = message.file.c_str();
+    const char* module = message.module.c_str();
+
     if (!message.file.empty())
     {
         if (!message.module.empty())
             snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d %s] ",
-                     level, tid, message.file.c_str(), message.line, module);
+                     level, tid, file, message.line, module);
         else
             snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d] ",
-                     level, tid, message.file.c_str(), message.line);
+                     level, tid, file, message.line);
     }
     else if (!message.module.empty())
         snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s] ", level, tid, module);
@@ -532,7 +538,7 @@ void SaverStdOut::flushImpl(const MessageList& messages)
 
         if (!_shortMessages)
         {
-            (*_out) << m->prefix;
+            (*_out) << m->prefix1;
             if (level() == Level::Debug2)
                 (*_out) << m->prefix2;
             (*_out) << m->prefix3;
@@ -618,7 +624,7 @@ void SaverFile::flushImpl(const MessageList& messages)
         if (skipMessage(*m, filters))
             continue;
 
-        fputs(m->prefix, f);
+        fputs(m->prefix1, f);
         if (level() == Level::Debug2)
             fputs(m->prefix2, f);
         fputs(m->prefix3, f);
@@ -737,8 +743,12 @@ void Logger::run()
 
     auto saverFlush = [](const MessageList& messages, Saver* saver)
     {
+        if (!saver->active())
+            return;
+
         if (messages.empty())
             return;
+
         try
         {
             saver->flush(messages);
@@ -783,11 +793,12 @@ void Logger::run()
             auto prefixFormatterL = [this](MessageList& messages, int min, int max)
             {
                 time_t lastTime = 0;
-                char prefixBuff[sizeof(Message::prefix)] = {0};
+                char prefix1Buff[sizeof(Message::prefix1)]; // = {0};
+                prefix1Buff[sizeof(prefix1Buff) - 1] = '\0';
                 Level level = this->level(); // volatile оптимизация
                 for (int i = min; i < max; ++i)
                 {
-                    prefixFormatter(messages[i], lastTime, prefixBuff);
+                    prefixFormatter1(messages[i], lastTime, prefix1Buff);
                     if (level == Level::Debug2)
                         prefixFormatter2(messages[i]);
                     prefixFormatter3(messages[i]);
