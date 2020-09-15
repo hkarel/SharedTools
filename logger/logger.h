@@ -52,11 +52,11 @@
 #include <iostream>
 #include <atomic>
 #include <memory>
-#include <vector>
+#include <cstring>
 #include <string>
 #include <cmath>
-#include <set>
 #include <map>
+#include <set>
 #include <type_traits>
 
 namespace alog /*async logger*/ {
@@ -108,9 +108,7 @@ struct Something
 */
 struct Message
 {
-    Level  level;
-    string str;
-    string module;
+    Level level;
 
     // Буферы prefix{123} хранят результаты работы функций prefixFormatter{123}
     // Основное назначение - минимизировать количество вызовов prefixFormatter
@@ -129,12 +127,15 @@ struct Message
     char prefix2[10]; // Время (микросекунды для режима DEBUG2)
     char prefix3[80]; // Уровень логирования, идентификатор потока (LWP),
                       // наименование файла, номер строки, имя модуля
-    string file;
-    string func;
-    int    line;
+
+    const char* file   = {""};
+    const char* func   = {""};
+    int         line   = {0 };
+    const char* module = {""};
 
     timeval timeVal;
     pid_t   threadId;
+    string  str;
 
     Something::Ptr something;
 
@@ -147,6 +148,16 @@ struct Message
 };
 typedef lst::List<Message, lst::CompareItemDummy> MessageList;
 typedef simple_ptr<Message> MessagePtr;
+
+struct StringCompare
+{
+    int operator() (const string* item1, const string* item2, void*) const
+        {return strcmp(item1->c_str(), item2->c_str());}
+
+    int operator() (const char* item1, const string* item2, void*) const
+        {return strcmp(item1, item2->c_str());}
+};
+typedef lst::List<string, StringCompare> StringList;
 
 /**
   Аллокатор используется для управления жизнью объектов Filter и Saver
@@ -169,16 +180,16 @@ struct FindItem
 /**
   Базовый класс механизма фильтрации
 
-  Для того чтобы  механизм  фильтрации  мог  работать  в нескольких  потоках без
-  дополнительных блокировок в Filter предусмотрен механизм запирания.  Суть  его
-  сводится к следующему: сразу после создания  экземпляра  Filter - он  является
+  Для того чтобы  механизм  фильтрации  мог  работать  в нескольких потоках без
+  дополнительных блокировок в Filter предусмотрен механизм запирания. Суть  его
+  сводится к следующему: сразу после создания  экземпляра  Filter - он является
   не запертым. В это время ему можно назначить необходимые критерии  фильтрации.
-  После того как параметры фильтрации сконфигурированы фильтр запирается. Теперь
-  фильтр может использоваться  в механизмах  фильтрации,  но  изменить  критерии
-  фильтрации для него уже нельзя. Если для запертого фильтра необходимо изменить
-  критерии фильтрации,  то необходимо  выполнить следующие шаги:  создать  новый
-  фильтр,  сконфигурировать его соответствующим образом,  запереть новый фильтр,
-  и заменить старый фильтр новым
+  После  того  как  параметры  фильтрации  сконфигурированы  фильтр  запирается.
+  Теперь фильтр  может  использоваться  в механизмах  фильтрации,  но  изменить
+  критерии фильтрации для него уже нельзя. Если для запертого фильтра необходимо
+  изменить критерии фильтрации, то необходимо выполнить следующие шаги: создать
+  новый фильтр, сконфигурировать его соответствующим  образом,  запереть  новый
+  фильтр, и заменить старый фильтр новым
 */
 class Filter : public clife_base
 {
@@ -272,7 +283,7 @@ typedef clife_ptr<Filter> FilterPtr;
 class FilterModule : public Filter
 {
 public:
-    const set<string>& modules() const {return _modules;}
+    const StringList& modules() const {return _modules;}
 
     // Добавляет модули на которые будет распространяться действие этого фильтра
     void addModule(const string& name);
@@ -284,7 +295,7 @@ public:
 
 private:
     bool checkImpl(const Message&) const override;
-    set<string> _modules;
+    StringList _modules;
     bool _filteringNoNameModules = {false};
 };
 typedef clife_ptr<FilterModule> FilterModulePtr;
@@ -310,14 +321,14 @@ typedef clife_ptr<FilterLevel> FilterLevelPtr;
 class FilterFile : public Filter
 {
 public:
-    const set<string>& files() const {return _files;}
+    const StringList& files() const {return _files;}
 
     // Добавляет файлы на которые будет распространяться действие этого фильтра
     void addFile(const string& name);
 
 private:
     bool checkImpl(const Message&) const override;
-    set<string> _files;
+    StringList _files;
 };
 typedef clife_ptr<FilterFile> FilterFilePtr;
 
@@ -327,14 +338,14 @@ typedef clife_ptr<FilterFile> FilterFilePtr;
 class FilterFunc : public Filter
 {
 public:
-    const set<string>& funcs() const {return _funcs;}
+    const StringList& funcs() const {return _funcs;}
 
     // Добавляет функции на которые будет распространяться действие этого фильтра
     void addFunc(const string& name);
 
 private:
     bool checkImpl(const Message&) const override;
-    set<string> _funcs;
+    StringList _funcs;
 };
 typedef clife_ptr<FilterFunc> FilterFuncPtr;
 
@@ -362,7 +373,7 @@ typedef clife_ptr<FilterThread> FilterThreadPtr;
 class FilterContent : public Filter
 {
 public:
-    const set<string>& contents() const {return _contents;}
+    const StringList& contents() const {return _contents;}
 
     // Добавляет элемент контента на который будет распространяться действие
     // этого фильтра
@@ -370,7 +381,7 @@ public:
 
 private:
     bool checkImpl(const Message&) const override;
-    set<string> _contents;
+    StringList _contents;
 };
 typedef clife_ptr<FilterContent> FilterContentPtr;
 

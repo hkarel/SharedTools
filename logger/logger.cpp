@@ -31,10 +31,10 @@
 #include "steady_timer.h"
 #include "utils.h"
 
-#include <ctime>
-#include <functional>
-#include <stdexcept>
 #include <string.h>
+#include <ctime>
+#include <stdexcept>
+#include <vector>
 
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
@@ -157,20 +157,17 @@ void prefixFormatter3(Message& message)
     //else
     //    snprintf(buff, sizeof(buff) - 1, " %sLWP%ld %s  ", level, tid, module);
 
-    const char* file = message.file.c_str();
-    const char* module = message.module.c_str();
-
-    if (!message.file.empty())
+    if (message.file[0] != '\0')
     {
-        if (!message.module.empty())
+        if (message.module[0] != '\0')
             snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d %s] ",
-                     level, tid, file, message.line, module);
+                     level, tid, message.file, message.line, message.module);
         else
             snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d] ",
-                     level, tid, file, message.line);
+                     level, tid, message.file, message.line);
     }
-    else if (!message.module.empty())
-        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s] ", level, tid, module);
+    else if (message.module[0] != '\0')
+        snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s] ", level, tid, message.module);
     else
         snprintf(buff, sizeof(buff) - 1, " %sLWP%ld ", level, tid);
 
@@ -193,19 +190,25 @@ string Something::modifyMessage(const string&) const
 
 void Filter::setName(const string& name)
 {
-    if (locked()) return;
+    if (locked())
+        return;
+
     _name = name;
 }
 
 void Filter::setMode(Mode val)
 {
-    if (locked()) return;
+    if (locked())
+        return;
+
     _mode = val;
 }
 
 void Filter::setFilteringErrors(bool val)
 {
-    if (locked()) return;
+    if (locked())
+        return;
+
     _filteringErrors = val;
 }
 
@@ -216,7 +219,9 @@ bool Filter::followThreadContext() const
 
 void Filter::setFollowThreadContext(bool val)
 {
-    if (locked()) return;
+    if (locked())
+        return;
+
     _followThreadContext = val;
 }
 
@@ -286,22 +291,36 @@ void Filter::removeIdsTimeoutThreads()
 
 void FilterModule::addModule(const string& name)
 {
-    if (locked()) return;
-    _modules.insert(name);
+    if (locked())
+        return;
+
+    //_modules.insert(name);
+
+    if (_modules.findRef(name))
+        return;
+
+    _modules.addCopy(name);
+    _modules.sort();
 }
 
 void FilterModule::setFilteringNoNameModules(bool val)
 {
-    if (locked()) return;
+    if (locked())
+        return;
+
     _filteringNoNameModules = val;
 }
 
 bool FilterModule::checkImpl(const Message& m) const
 {
-    if (m.module.empty() && !_filteringNoNameModules)
+    if ((m.module[0] == '\0') && !_filteringNoNameModules)
         return true;
 
-    bool res = (_modules.find(m.module) != _modules.end());
+    //bool res = (_modules.find(m.module) != _modules.end());
+
+    lst::FindResult fr = _modules.find(m.module);
+    bool res = fr.success();
+
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
@@ -309,13 +328,15 @@ bool FilterModule::checkImpl(const Message& m) const
 
 void FilterLevel::setLevel(Level val)
 {
-    if (locked()) return;
+    if (locked())
+        return;
+
     _level = val;
 }
 
 bool FilterLevel::checkImpl(const Message& m) const
 {
-    if (m.module.empty() && !filteringNoNameModules())
+    if ((m.module[0] == '\0') && !filteringNoNameModules())
         return true;
 
     if (_level == None)
@@ -323,14 +344,22 @@ bool FilterLevel::checkImpl(const Message& m) const
 
     if (mode() == Mode::Include)
     {
-        if (modules().find(m.module) == modules().end())
+        //if (modules().find(m.module) == modules().end())
+        //    return true;
+
+        lst::FindResult fr = modules().find(m.module);
+        if (fr.failed())
             return true;
 
         return (m.level <= _level);
     }
 
     // Для mode() == Mode::Exclude
-    if (modules().find(m.module) != modules().end())
+    //if (modules().find(m.module) != modules().end())
+    //    return true;
+
+    lst::FindResult fr = modules().find(m.module);
+    if (fr.success())
         return true;
 
     return (m.level <= _level);
@@ -340,13 +369,25 @@ bool FilterLevel::checkImpl(const Message& m) const
 
 void FilterFile::addFile(const string& name)
 {
-    if (locked()) return;
-    _files.insert(name);
+    if (locked())
+        return;
+
+    //_files.insert(name);
+
+    if (_files.findRef(name))
+        return;
+
+    _files.addCopy(name);
+    _files.sort();
 }
 
 bool FilterFile::checkImpl(const Message& m) const
 {
-    bool res  = (_files.find(m.file) != _files.end());
+    //bool res  = (_files.find(m.file) != _files.end());
+
+    lst::FindResult fr = _files.find(m.file);
+    bool res = fr.success();
+
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
@@ -354,13 +395,25 @@ bool FilterFile::checkImpl(const Message& m) const
 
 void FilterFunc::addFunc(const string& name)
 {
-    if (locked()) return;
-    _funcs.insert(name);
+    if (locked())
+        return;
+
+    //_funcs.insert(name);
+
+    if (_funcs.findRef(name))
+        return;
+
+    _funcs.addCopy(name);
+    _funcs.sort();
 }
 
 bool FilterFunc::checkImpl(const Message& m) const
 {
-    bool res  = (_funcs.find(m.func) != _funcs.end());
+    //bool res  = (_funcs.find(m.func) != _funcs.end());
+
+    lst::FindResult fr = _funcs.find(m.func);
+    bool res = fr.success();
+
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
@@ -373,13 +426,15 @@ bool FilterThread::followThreadContext() const
 
 void FilterThread::addThread(long id)
 {
-    if (locked()) return;
+    if (locked())
+        return;
+
     _threads.insert(pid_t(id));
 }
 
 bool FilterThread::checkImpl(const Message& m) const
 {
-    bool res  = (_threads.find(m.threadId) != _threads.end());
+    bool res = (_threads.find(m.threadId) != _threads.end());
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
@@ -387,15 +442,30 @@ bool FilterThread::checkImpl(const Message& m) const
 
 void FilterContent::addContent(const string& cont)
 {
-    if (locked()) return;
-    _contents.insert(cont);
+    if (locked())
+        return;
+
+    //_contents.insert(cont);
+
+    if (_contents.findRef(cont))
+        return;
+
+    _contents.addCopy(cont);
+    _contents.sort();
 }
 
 bool FilterContent::checkImpl(const Message& m) const
 {
     bool res = false;
-    for (const string& c : _contents)
-        if (string::npos != m.str.find(c))
+//    for (const string& c : _contents)
+//        if (string::npos != m.str.find(c))
+//        {
+//            res = true;
+//            break;
+//        }
+
+    for (const string* c : _contents)
+        if (string::npos != m.str.find(*c))
         {
             res = true;
             break;
