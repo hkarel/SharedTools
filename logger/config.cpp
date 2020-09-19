@@ -527,7 +527,7 @@ void printSaversInfo()
             logLine << "; type: module_name"
                     << "; filtering_noname_modules: " << modFilter->filteringNoNameModules()
                     << "; modules: [ ";
-            for (const string& module : modFilter->modules())
+            for (const string* module : modFilter->modules())
                 logLine << nextComma() << module;
             logLine << " ]";
         }
@@ -540,7 +540,7 @@ void printSaversInfo()
         {
             logLine << "; type: func_name"
                     << "; functions: [ ";
-            for (const string& function : funcFilter->funcs())
+            for (const string* function : funcFilter->funcs())
                 logLine << nextComma() << function;
             logLine << " ]";
         }
@@ -548,7 +548,7 @@ void printSaversInfo()
         {
             logLine << "; type: file_name"
                     << "; files: [ ";
-            for (const string& file : fileFilter->files())
+            for (const string* file : fileFilter->files())
                 logLine << nextComma() << file;
             logLine << " ]";
         }
@@ -564,8 +564,8 @@ void printSaversInfo()
         {
             logLine << "; type: content"
                     << "; contents: [ ";
-            for (const string& cont : contFilter->contents())
-                logLine << nextComma() << cont;
+            for (const string* content : contFilter->contents())
+                logLine << nextComma() << content;
             logLine << " ]";
         }
     }

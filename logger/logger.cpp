@@ -1124,14 +1124,14 @@ Line& operator<< (Line& line, char c)
 
 Line& operator<< (Line& line, char* c)
 {
-    if (line.toLogger())
+    if (line.toLogger() && c)
         line.impl->buff += c;
     return line;
 }
 
 Line& operator<< (Line& line, const char* c)
 {
-    if (line.toLogger())
+    if (line.toLogger() && c)
         line.impl->buff += c;
     return line;
 }
@@ -1140,6 +1140,13 @@ Line& operator<< (Line& line, const string& s)
 {
     if (line.toLogger())
         line.impl->buff += s;
+    return line;
+}
+
+Line& operator<< (Line& line, const string* s)
+{
+    if (line.toLogger() && s)
+        line.impl->buff += s->c_str();
     return line;
 }
 
