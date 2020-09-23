@@ -26,7 +26,7 @@
 #include "qt/config.h"
 #include "qt/logger_operators.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <sys/stat.h>
 

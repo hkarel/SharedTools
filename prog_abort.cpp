@@ -25,7 +25,7 @@
 *****************************************************************************/
 
 #include "logger/logger.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 
 void prog_abort()

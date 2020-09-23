@@ -33,9 +33,9 @@
 #else
 #include <sys/syscall.h>
 #endif
+#include <cerrno>
+#include <csignal>
 #include <unistd.h>
-#include <errno.h>
-#include <signal.h>
 
 namespace trd {
 

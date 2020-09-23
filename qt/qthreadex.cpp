@@ -99,7 +99,7 @@ bool QThreadEx::stopImpl(unsigned long timeout)
     return res;
 }
 
-void QThreadEx::sleep(unsigned long timeout)
+void QThreadEx::sleep(unsigned long timeout) const
 {
     timeout *= 1000;
     QElapsedTimer timer;
