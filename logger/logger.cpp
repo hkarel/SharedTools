@@ -110,11 +110,9 @@ void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Messa
 {
     if (lastTime != message.timeVal.tv_sec)
     {
-        std::tm tm;
-        //memset(&tm, 0, sizeof(tm));
-        //memset(buff, 0, sizeof(Message::prefix1));
-
         lastTime = message.timeVal.tv_sec;
+
+        std::tm tm;
         localtime_r(&lastTime, &tm);
 
 #pragma GCC diagnostic push
@@ -146,16 +144,6 @@ void prefixFormatter3(Message& message)
 
     const char* level = levelToStringImpl(message.level);
     long tid = long(message.threadId);
-
-    //char module[50] = {0};
-    //if (!message.module.empty())
-    //    snprintf(module, sizeof(module) - 1, "%s", message.module.c_str());
-
-    //if (!message.file.empty())
-    //    snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d:%s%s] ",
-    //             level, tid, message.file.c_str(), message.line, message.func.c_str(), module);
-    //else
-    //    snprintf(buff, sizeof(buff) - 1, " %sLWP%ld %s  ", level, tid, module);
 
     if (message.file[0] != '\0')
     {
@@ -358,6 +346,7 @@ bool FilterLevel::checkImpl(const Message& m) const
     //if (modules().find(m.module) != modules().end())
     //    return true;
 
+    // Для mode() == Mode::Exclude
     lst::FindResult fr = modules().find(m.module);
     if (fr.success())
         return true;
