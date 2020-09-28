@@ -36,6 +36,10 @@
 #include <stdexcept>
 #include <vector>
 
+#if __cplusplus >= 201703L
+#include <charconv>
+#endif
+
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
 #endif
@@ -103,6 +107,157 @@ string levelToString(Level level)
     return utl::rtrim(s);
 }
 
+#if __cplusplus >= 201703L && defined(LOGGER_LESS_SNPRINTF)
+// Функции  prefixFormatter{123}  формируют  префикс  строки  лога.  В префикс
+// входит время и дата записи, уровень логирования, номер потока, наименование
+// файла, номер строки, имя модуля
+void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Message::prefix1)])
+{
+    if (lastTime != message.timeVal.tv_sec)
+    {
+        lastTime = message.timeVal.tv_sec;
+
+        std::tm tm;
+        localtime_r(&lastTime, &tm);
+
+        char* begin = buff;
+        char* end = begin + sizeof(Message::prefix1);
+        to_chars_result res;
+
+        // Формат: "%02d.%02d.%04d %02d:%02d:%02d"
+
+        if (tm.tm_mday < 10) *begin++ = '0';
+        res = to_chars(begin, end, tm.tm_mday);
+        begin = res.ptr;
+        *begin++ = '.';
+        if ((tm.tm_mon + 1) < 10) *begin++ = '0';
+        res = to_chars(begin, end, tm.tm_mon + 1);
+        begin = res.ptr;
+        *begin++ = '.';
+
+        res = to_chars(begin, end, tm.tm_year + 1900);
+        begin = res.ptr;
+        *begin++ = ' ';
+
+        if (tm.tm_hour < 10) *begin++ = '0';
+        res = to_chars(begin, end, tm.tm_hour);
+        begin = res.ptr;
+        *begin++ = ':';
+
+        if (tm.tm_min < 10) *begin++ = '0';
+        res = to_chars(begin, end, tm.tm_min);
+        begin = res.ptr;
+        *begin++ = ':';
+
+        if (tm.tm_sec < 10) *begin++ = '0';
+        res = to_chars(begin, end, tm.tm_sec);
+        *res.ptr = '\0';
+    }
+    memcpy(message.prefix1, buff, sizeof(Message::prefix1));
+}
+
+void prefixFormatter2(Message& message)
+{
+    char buff[sizeof(Message::prefix2)]; // = {0};
+    char* begin = buff;
+    char* end = begin + sizeof(buff);
+    int tv_usec = int(message.timeVal.tv_usec);
+
+    *begin++ = '.';
+    if (tv_usec >= 100000)
+    {}
+    else if (tv_usec >= 10000)
+    {
+        *begin++ = '0';
+    }
+    else if (tv_usec >= 1000)
+    {
+        *begin++ = '0';
+        *begin++ = '0';
+    }
+    else if (tv_usec >= 100)
+    {
+        for (int i = 0; i < 3; ++i) *begin++ = '0';
+    }
+    else if (tv_usec >= 10)
+    {
+        for (int i = 0; i < 4; ++i) *begin++ = '0';
+    }
+    else // tv_usec < 10
+    {
+        for (int i = 0; i < 5; ++i) *begin++ = '0';
+    }
+
+    to_chars_result res = to_chars(begin, end, tv_usec);
+    *res.ptr = '\0';
+
+    memcpy(message.prefix2, buff, sizeof(buff));
+}
+
+void prefixFormatter3(Message& message)
+{
+    char buff[sizeof(Message::prefix3)]; // = {0};
+    char* begin = buff;
+    char* end = begin + sizeof(buff);
+    to_chars_result res;
+
+    *begin++ = ' ';
+
+    const char* level = levelToStringImpl(message.level);
+    size_t size = 8; // Размер message.level
+    memcpy(begin, level, size);
+    begin += size;
+
+    *begin++ = 'L';
+    *begin++ = 'W';
+    *begin++ = 'P';
+
+    int tid = int(message.threadId);
+    res = to_chars(begin, end, tid);
+    begin = res.ptr;
+
+    if (message.file[0] != '\0')
+    {
+        // Общий формат: " %sLWP%ld [%s:%d %s] "
+
+        *begin++ = ' ';
+        *begin++ = '[';
+        size = strlen(message.file);
+        memcpy(begin, message.file, size);
+        begin += size;
+
+        *begin++ = ':';
+        res = to_chars(begin, end, message.line);
+        begin = res.ptr;
+
+        if (message.module[0] != '\0')
+        {
+            *begin++ = ' ';
+            size = strlen(message.module);
+            memcpy(begin, message.module, size);
+            begin += size;
+        }
+        *begin++ = ']';
+    }
+    else if (message.module[0] != '\0')
+    {
+        // Сокращенный формат: " %sLWP%ld [%s] "
+
+        *begin++ = ' ';
+        *begin++ = '[';
+        size = strlen(message.module);
+        memcpy(begin, message.module, size);
+        begin += size;
+        *begin++ = ']';
+    }
+
+    *begin++ = ' ';
+    *begin++ = '\0';
+
+    memcpy(message.prefix3, buff, sizeof(buff));
+}
+#else // __cplusplus >= 201703L
+
 // Функции  prefixFormatter{123}  формируют  префикс  строки  лога.  В префикс
 // входит время и дата записи, уровень логирования, номер потока, наименование
 // файла, номер строки, имя модуля
@@ -161,6 +316,7 @@ void prefixFormatter3(Message& message)
 
     memcpy(message.prefix3, buff, sizeof(buff));
 }
+#endif // __cplusplus >= 201703L
 
 //-------------------------------- Something ---------------------------------
 
