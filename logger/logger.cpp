@@ -1143,10 +1143,9 @@ Line& operator<< (Line& line, const timeval& tv)
 {
     if (line.toLogger())
     {
-        char buff[10] = {0};
+        char buff[10]; // = {0};
         long tv_usec = long(tv.tv_usec);
         snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
-        buff[5] = '\0';
         line.impl->buff += to_string(tv.tv_sec);
         line.impl->buff += buff;
     }
