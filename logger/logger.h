@@ -128,10 +128,10 @@ struct Message
     char prefix3[80]; // Уровень логирования, идентификатор потока (LWP),
                       // наименование файла, номер строки, имя модуля
 
-    const char* file   = {""};
-    const char* func   = {""};
-    int         line   = {0 };
-    const char* module = {""};
+    const char* file;
+    const char* func;
+    int         line;
+    const char* module;
 
     timeval timeVal;
     pid_t   threadId;
@@ -155,7 +155,7 @@ struct StringCompare
         {return strcmp(item1->c_str(), item2->c_str());}
 
     int operator() (const char* item1, const string* item2, void*) const
-        {return strcmp(item1, item2->c_str());}
+        {return strcmp((item1 ? item1 : ""), item2->c_str());}
 };
 typedef lst::List<string, StringCompare> StringList;
 
@@ -771,6 +771,33 @@ Line& stream_operator(Line& line, const T, typename not_supported<T>::type = 0)
     return line;
 }
 
+inline constexpr char file_sep()
+{
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
+    return '\\';
+#else
+    return '/';
+#endif
+}
+
+template<size_t index>
+inline constexpr const char* file_name(const char* c, int)
+{
+    return (*c == file_sep()) ? (c + 1) : file_name<index - 1>(c - 1, 0);
+}
+
+template<>
+inline constexpr const char* file_name<0>(const char* c, int)
+{
+    return (*c == file_sep()) ? (c + 1) : c;
+}
+
+template <size_t length>
+inline constexpr const char* file_name(const char (&s)[length])
+{
+    return file_name<length - 2>(s + length - 2, 0);
+}
+
 } // namespace detail
 
 template<typename T>
@@ -788,7 +815,7 @@ Line operator<< (Line&& line, const T& t)
 
 } // namespace alog
 
-#define alog_line_location __FILE__, __func__, __LINE__
+#define alog_line_location alog::detail::file_name(__FILE__), __func__, __LINE__
 
 #define log_error   alog::logger().error   (alog_line_location)
 #define log_warn    alog::logger().warn    (alog_line_location)

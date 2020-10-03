@@ -216,7 +216,7 @@ void prefixFormatter3(Message& message)
     res = to_chars(begin, end, tid);
     begin = res.ptr;
 
-    if (message.file[0] != '\0')
+    if (message.file)
     {
         // Общий формат: " %sLWP%ld [%s:%d %s] "
 
@@ -230,7 +230,7 @@ void prefixFormatter3(Message& message)
         res = to_chars(begin, end, message.line);
         begin = res.ptr;
 
-        if (message.module[0] != '\0')
+        if (message.module)
         {
             *begin++ = ' ';
             size = strlen(message.module);
@@ -239,7 +239,7 @@ void prefixFormatter3(Message& message)
         }
         *begin++ = ']';
     }
-    else if (message.module[0] != '\0')
+    else if (message.module)
     {
         // Сокращенный формат: " %sLWP%ld [%s] "
 
@@ -300,16 +300,16 @@ void prefixFormatter3(Message& message)
     const char* level = levelToStringImpl(message.level);
     long tid = long(message.threadId);
 
-    if (message.file[0] != '\0')
+    if (message.file)
     {
-        if (message.module[0] != '\0')
+        if (message.module)
             snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d %s] ",
                      level, tid, message.file, message.line, message.module);
         else
             snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s:%d] ",
                      level, tid, message.file, message.line);
     }
-    else if (message.module[0] != '\0')
+    else if (message.module)
         snprintf(buff, sizeof(buff) - 1, " %sLWP%ld [%s] ", level, tid, message.module);
     else
         snprintf(buff, sizeof(buff) - 1, " %sLWP%ld ", level, tid);
@@ -455,7 +455,7 @@ void FilterModule::setFilteringNoNameModules(bool val)
 
 bool FilterModule::checkImpl(const Message& m) const
 {
-    if ((m.module[0] == '\0') && !_filteringNoNameModules)
+    if ((m.module == 0) && !_filteringNoNameModules)
         return true;
 
     lst::FindResult fr = _modules.find(m.module);
@@ -476,7 +476,7 @@ void FilterLevel::setLevel(Level val)
 
 bool FilterLevel::checkImpl(const Message& m) const
 {
-    if ((m.module[0] == '\0') && !filteringNoNameModules())
+    if ((m.module == 0) && !filteringNoNameModules())
         return true;
 
     if (_level == None)
@@ -878,17 +878,10 @@ Line::~Line()
         message->threadId = trd::gettid();
         message->something = std::move(impl->something);
 
-        if (impl->file)
-        {
-            const char* f = strrchr(impl->file, '/');
-            message->file = (f) ? (f + 1) : impl->file;
-        }
-        if (impl->func)
-            message->func = impl->func;
-
+        message->file = impl->file;
+        message->func = impl->func;
         message->line = impl->line;
-        if (impl->module)
-            message->module = impl->module;
+        message->module = impl->module;
 
         impl->logger->addMessage(std::move(message));
 
