@@ -438,8 +438,6 @@ void FilterModule::addModule(const string& name)
     if (locked())
         return;
 
-    //_modules.insert(name);
-
     if (_modules.findRef(name))
         return;
 
@@ -459,8 +457,6 @@ bool FilterModule::checkImpl(const Message& m) const
 {
     if ((m.module[0] == '\0') && !_filteringNoNameModules)
         return true;
-
-    //bool res = (_modules.find(m.module) != _modules.end());
 
     lst::FindResult fr = _modules.find(m.module);
     bool res = fr.success();
@@ -488,19 +484,12 @@ bool FilterLevel::checkImpl(const Message& m) const
 
     if (mode() == Mode::Include)
     {
-        //if (modules().find(m.module) == modules().end())
-        //    return true;
-
         lst::FindResult fr = modules().find(m.module);
         if (fr.failed())
             return true;
 
         return (m.level <= _level);
     }
-
-    // Для mode() == Mode::Exclude
-    //if (modules().find(m.module) != modules().end())
-    //    return true;
 
     // Для mode() == Mode::Exclude
     lst::FindResult fr = modules().find(m.module);
@@ -517,8 +506,6 @@ void FilterFile::addFile(const string& name)
     if (locked())
         return;
 
-    //_files.insert(name);
-
     if (_files.findRef(name))
         return;
 
@@ -528,8 +515,6 @@ void FilterFile::addFile(const string& name)
 
 bool FilterFile::checkImpl(const Message& m) const
 {
-    //bool res  = (_files.find(m.file) != _files.end());
-
     lst::FindResult fr = _files.find(m.file);
     bool res = fr.success();
 
@@ -543,8 +528,6 @@ void FilterFunc::addFunc(const string& name)
     if (locked())
         return;
 
-    //_funcs.insert(name);
-
     if (_funcs.findRef(name))
         return;
 
@@ -554,8 +537,6 @@ void FilterFunc::addFunc(const string& name)
 
 bool FilterFunc::checkImpl(const Message& m) const
 {
-    //bool res  = (_funcs.find(m.func) != _funcs.end());
-
     lst::FindResult fr = _funcs.find(m.func);
     bool res = fr.success();
 
@@ -585,32 +566,23 @@ bool FilterThread::checkImpl(const Message& m) const
 
 //------------------------------ FilterContent -------------------------------
 
-void FilterContent::addContent(const string& cont)
+void FilterContent::addContent(const string& content)
 {
     if (locked())
         return;
 
-    //_contents.insert(cont);
-
-    if (_contents.findRef(cont))
+    if (_contents.findRef(content))
         return;
 
-    _contents.addCopy(cont);
+    _contents.addCopy(content);
     _contents.sort();
 }
 
 bool FilterContent::checkImpl(const Message& m) const
 {
     bool res = false;
-//    for (const string& c : _contents)
-//        if (string::npos != m.str.find(c))
-//        {
-//            res = true;
-//            break;
-//        }
-
-    for (const string* c : _contents)
-        if (string::npos != m.str.find(*c))
+    for (const string* content : _contents)
+        if (string::npos != m.str.find(*content))
         {
             res = true;
             break;
@@ -1225,19 +1197,6 @@ SaverList Logger::savers(bool withStd) const
 void Logger::redefineLevel()
 {
     Level level = None;
-//    SaverPtr saverOut;
-//    SaverPtr saverErr;
-
-//    { //Block for SpinLocker
-//        SpinLocker locker(_saversLock); (void) locker;
-//        saverOut = _saverOut;
-//        saverErr = _saverErr;
-//    }
-//    if (saverOut && saverOut->active() && (saverOut->level() > level))
-//        level = saverOut->level();
-//    if (saverErr && saverErr->active() && (saverErr->level() > level))
-//        level = saverErr->level();
-
     SaverList savers = this->savers(true);
     for (Saver* saver : savers)
         if (saver->active() && (saver->level() > level))

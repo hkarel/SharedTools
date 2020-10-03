@@ -377,7 +377,7 @@ public:
 
     // Добавляет элемент контента на который будет распространяться действие
     // этого фильтра
-    void addContent(const string& cont);
+    void addContent(const string& content);
 
 private:
     bool checkImpl(const Message&) const override;
