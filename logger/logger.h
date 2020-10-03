@@ -788,9 +788,11 @@ Line operator<< (Line&& line, const T& t)
 
 } // namespace alog
 
-#define log_error   alog::logger().error  (__FILE__, __func__, __LINE__)
-#define log_warn    alog::logger().warn   (__FILE__, __func__, __LINE__)
-#define log_info    alog::logger().info   (__FILE__, __func__, __LINE__)
-#define log_verbose alog::logger().verbose(__FILE__, __func__, __LINE__)
-#define log_debug   alog::logger().debug  (__FILE__, __func__, __LINE__)
-#define log_debug2  alog::logger().debug2 (__FILE__, __func__, __LINE__)
+#define alog_line_location __FILE__, __func__, __LINE__
+
+#define log_error   alog::logger().error   (alog_line_location)
+#define log_warn    alog::logger().warn    (alog_line_location)
+#define log_info    alog::logger().info    (alog_line_location)
+#define log_verbose alog::logger().verbose (alog_line_location)
+#define log_debug   alog::logger().debug   (alog_line_location)
+#define log_debug2  alog::logger().debug2  (alog_line_location)
