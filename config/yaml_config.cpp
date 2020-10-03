@@ -35,12 +35,12 @@
 #include <QByteArray>
 #endif
 
-#define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "YamlConfig")
-#define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "YamlConfig")
-#define log_info_m    alog::logger().info   (__FILE__, __func__, __LINE__, "YamlConfig")
-#define log_verbose_m alog::logger().verbose(__FILE__, __func__, __LINE__, "YamlConfig")
-#define log_debug_m   alog::logger().debug  (__FILE__, __func__, __LINE__, "YamlConfig")
-#define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "YamlConfig")
+#define log_error_m   alog::logger().error   (alog_line_location, "YamlConfig")
+#define log_warn_m    alog::logger().warn    (alog_line_location, "YamlConfig")
+#define log_info_m    alog::logger().info    (alog_line_location, "YamlConfig")
+#define log_verbose_m alog::logger().verbose (alog_line_location, "YamlConfig")
+#define log_debug_m   alog::logger().debug   (alog_line_location, "YamlConfig")
+#define log_debug2_m  alog::logger().debug2  (alog_line_location, "YamlConfig")
 
 #define YAMLCONFIG_CATCH_2 \
     } catch (YAML::Exception& e) { \

@@ -4,12 +4,12 @@
 #include "logger/logger.h"
 #include <signal.h>
 
-#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TetsModule")
-#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TetsModule")
-#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TetsModule")
-#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "TetsModule")
-#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TetsModule")
-#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "TetsModule")
+#define log_error_m   alog::logger().error_f   (alog_line_location, "TetsModule")
+#define log_warn_m    alog::logger().warn_f    (alog_line_location, "TetsModule")
+#define log_info_m    alog::logger().info_f    (alog_line_location, "TetsModule")
+#define log_verbose_m alog::logger().verbose_f (alog_line_location, "TetsModule")
+#define log_debug_m   alog::logger().debug_f   (alog_line_location, "TetsModule")
+#define log_debug2_m  alog::logger().debug2_f  (alog_line_location, "TetsModule")
 
 using namespace std;
 using namespace alog;

@@ -155,12 +155,12 @@ char* Settings::typeName()
 
 
 #define SETTING_VALUE_NOT_FOUND(MODULE_NAME) \
-    alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, MODULE_NAME) \
+    alog::logger().warn(alog_line_location, MODULE_NAME) \
         << "Config parameter " << name << " not found. " \
         << "Will be returned default value: \"" << defaultVal << "\"";
 
 #define SETTING_VALUE_FAILED_CONVERT(MODULE_NAME) \
-    alog::logger().warn_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, MODULE_NAME) \
+    alog::logger().warn(alog_line_location, MODULE_NAME) \
         << "Failed to convert parameter " << name << " = '" << value << "' " \
         << "to type '" << Settings::typeName<T>() << "'. " \
         << "Will be returned default value: \"" << defaultVal << "\"";

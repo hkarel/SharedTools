@@ -30,12 +30,12 @@
 #include "utils.h"
 #include <fstream>
 
-#define log_error_m   alog::logger().error_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_warn_m    alog::logger().warn_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_info_m    alog::logger().info_f   (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_verbose_m alog::logger().verbose_f(__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_debug_m   alog::logger().debug_f  (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
-#define log_debug2_m  alog::logger().debug2_f (__FILE__, LOGGER_FUNC_NAME, __LINE__, "Settings")
+#define log_error_m   alog::logger().error   (alog_line_location, "Settings")
+#define log_warn_m    alog::logger().warn    (alog_line_location, "Settings")
+#define log_info_m    alog::logger().info    (alog_line_location, "Settings")
+#define log_verbose_m alog::logger().verbose (alog_line_location, "Settings")
+#define log_debug_m   alog::logger().debug   (alog_line_location, "Settings")
+#define log_debug2_m  alog::logger().debug2  (alog_line_location, "Settings")
 
 
 void settingsWrite(const Settings& s, const std::string& fileName)
