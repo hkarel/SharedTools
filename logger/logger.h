@@ -128,10 +128,10 @@ struct Message
     char prefix3[80]; // Уровень логирования, идентификатор потока (LWP),
                       // наименование файла, номер строки, имя модуля
 
-    const char* file;
-    const char* func;
-    int         line;
-    const char* module;
+    const char* file   = {0};
+    const char* func   = {0};
+    int         line   = {0};
+    const char* module = {0};
 
     timeval timeVal;
     pid_t   threadId;
@@ -145,6 +145,8 @@ struct Message
     Message& operator= (Message&&) = delete;
     Message& operator= (const Message&) = delete;
 
+    bool moduleEqual(const char* module) const
+        {return strcmp((this->module ? this->module : ""), module) == 0;}
 };
 typedef lst::List<Message, lst::CompareItemDummy> MessageList;
 typedef simple_ptr<Message> MessagePtr;
@@ -560,13 +562,13 @@ struct Line
     {
         Logger*        logger;
         Level          level;
-        const char*    file;   // Наименование файла
-        const char*    func;   // Наименование функции
-        int            line;   // Номер строки вызова
-        const char*    module; // Наименование модуля
+        const char*    file;      // Наименование файла
+        const char*    func;      // Наименование функции
+        int            line;      // Номер строки вызова
+        const char*    module;    // Наименование модуля
         string         buff;
-        Something::Ptr something; // Параметр используется  для  передачи
-                                  // произвольных данных от точки логгиро-
+        Something::Ptr something; // Параметр используется для передачи
+                                  // произвольных данных от точки логиро-
                                   // вания до сэйвера
     };
     simple_ptr<Impl> impl;

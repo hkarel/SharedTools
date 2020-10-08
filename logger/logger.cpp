@@ -872,9 +872,10 @@ Line::~Line()
     try
     {
         MessagePtr message {new Message};
+
         message->level = impl->level;
         message->str = std::move(impl->buff);
-        gettimeofday(&message->timeVal, NULL);
+        gettimeofday(&message->timeVal, nullptr);
         message->threadId = trd::gettid();
         message->something = std::move(impl->something);
 
