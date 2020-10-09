@@ -93,7 +93,7 @@ string levelToString(Level);
 struct Something
 {
     typedef simple_ptr<Something> Ptr;
-    virtual ~Something() {}
+    virtual ~Something() = default;
 
     // Возвращает TRUE если есть необходимость в модификации сообщения
     // перед тем, как оно будет записано сэйвером
