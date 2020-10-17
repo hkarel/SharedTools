@@ -196,6 +196,8 @@ void prefixFormatter2(Message& message)
 
 void prefixFormatter3(Message& message)
 {
+    // TODO Не реализована проверка превышения длины полей над размером буфера
+
     char buff[sizeof(Message::prefix3)]; // = {0};
     char* begin = buff;
     char* end = begin + sizeof(buff);
@@ -252,7 +254,7 @@ void prefixFormatter3(Message& message)
     }
 
     *begin++ = ' ';
-    *begin++ = '\0';
+    *begin   = '\0';
 
     memcpy(message.prefix3, buff, sizeof(buff));
 }
@@ -274,7 +276,7 @@ void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Messa
 #if __GNUC__ > 6
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-        snprintf(buff, sizeof(Message::prefix1) - 1,
+        snprintf(buff, sizeof(Message::prefix1),
                  "%02d.%02d.%04d %02d:%02d:%02d",
                  tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
@@ -288,7 +290,7 @@ void prefixFormatter2(Message& message)
     char buff[sizeof(Message::prefix2)]; // = {0};
     long tv_usec = long(message.timeVal.tv_usec);
 
-    snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
+    snprintf(buff, sizeof(buff), ".%06ld", tv_usec);
     memcpy(message.prefix2, buff, sizeof(buff));
 }
 
@@ -975,7 +977,11 @@ void Logger::run()
             {
                 time_t lastTime = 0;
                 char prefix1Buff[sizeof(Message::prefix1)]; // = {0};
-                prefix1Buff[sizeof(prefix1Buff) - 1] = '\0';
+
+                // Значение для Message::prefix1 всегда фиксированной длины,
+                // поэтому нет необходимости присваивать последний нуль
+                // prefix1Buff[sizeof(prefix1Buff) - 1] = '\0';
+
                 Level level = this->level(); // volatile оптимизация
                 for (int i = min; i < max; ++i)
                 {
@@ -1252,9 +1258,9 @@ Line& operator<< (Line& line, const timeval& tv)
 {
     if (line.toLogger())
     {
-        char buff[10]; // = {0};
+        char buff[8]; // = {0};
         long tv_usec = long(tv.tv_usec);
-        snprintf(buff, sizeof(buff) - 1, ".%06ld", tv_usec);
+        snprintf(buff, sizeof(buff), ".%06ld", tv_usec);
         line.impl->buff += to_string(tv.tv_sec);
         line.impl->buff += buff;
     }
