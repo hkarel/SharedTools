@@ -206,17 +206,16 @@ void prefixFormatter2(Message& message)
 
 void prefixFormatter3(Message& message)
 {
-    // TODO Не реализована проверка превышения длины полей над размером буфера
-
     char buff[sizeof(Message::prefix3)];
     char* begin = buff;
     char* end = begin + sizeof(buff);
     to_chars_result res;
+    size_t size, file_sz, module_sz;
 
     *begin++ = ' ';
 
     const char* level = levelToStringImpl(message.level);
-    size_t size = 8; // Размер message.level
+    size = 8; // Размер message.level
     memcpy(begin, level, size);
     begin += size;
 
@@ -228,28 +227,84 @@ void prefixFormatter3(Message& message)
     res = to_chars(begin, end, tid);
     begin = res.ptr;
 
+    #define STUB_NORMAL  \
+        {*begin++ = ']'; \
+         *begin++ = ' '; \
+         *begin   = '\0';}
+
+    #define STUB_EDGE      \
+        {*(end - 3) = ']'; \
+         *(end - 2) = ' '; \
+         *(end - 1) = '\0';}
+
     if (message.file)
     {
         // Общий формат: " %sLWP%ld [%s:%d %s] "
 
         *begin++ = ' ';
         *begin++ = '[';
-        size = strlen(message.file);
-        memcpy(begin, message.file, size);
-        begin += size;
 
-        *begin++ = ':';
+        size = end - begin;
+        file_sz = strlen(message.file);
+        memcpy(begin, message.file, min(size, file_sz));
+
+        if (file_sz >= size)
+        {
+            STUB_EDGE
+            memcpy(message.prefix3, buff, sizeof(buff));
+            return;
+        }
+        begin += file_sz;
+
+        if ((end - begin) > 3)
+        {
+            *begin++ = ':';
+        }
+        else
+        {
+            STUB_EDGE
+            memcpy(message.prefix3, buff, sizeof(buff));
+            return;
+        }
+
         res = to_chars(begin, end, message.line);
+        if (res.ec != std::errc())
+        {
+            if ((end - begin) > 3)
+                STUB_NORMAL
+            else
+                STUB_EDGE
+
+            memcpy(message.prefix3, buff, sizeof(buff));
+            return;
+        }
         begin = res.ptr;
 
         if (message.module)
         {
-            *begin++ = ' ';
-            size = strlen(message.module);
-            memcpy(begin, message.module, size);
-            begin += size;
+            if ((end - begin) > 3)
+            {
+                *begin++ = ' ';
+            }
+            else
+            {
+                STUB_EDGE
+                memcpy(message.prefix3, buff, sizeof(buff));
+                return;
+            }
+
+            size = end - begin;
+            module_sz = strlen(message.module);
+            memcpy(begin, message.module, min(size, module_sz));
+
+            if (module_sz >= size)
+            {
+                STUB_EDGE
+                memcpy(message.prefix3, buff, sizeof(buff));
+                return;
+            }
+            begin += module_sz;
         }
-        *begin++ = ']';
     }
     else if (message.module)
     {
@@ -257,14 +312,20 @@ void prefixFormatter3(Message& message)
 
         *begin++ = ' ';
         *begin++ = '[';
-        size = strlen(message.module);
-        memcpy(begin, message.module, size);
-        begin += size;
-        *begin++ = ']';
+
+        size = end - begin;
+        module_sz = strlen(message.module);
+        memcpy(begin, message.module, min(size, module_sz));
+        begin += module_sz;
     }
 
-    *begin++ = ' ';
-    *begin   = '\0';
+    if ((end - begin) > 3)
+        STUB_NORMAL
+    else
+        STUB_EDGE
+
+    #undef STUB_NORMAL
+    #undef STUB_EDGE
 
     memcpy(message.prefix3, buff, sizeof(buff));
 }
