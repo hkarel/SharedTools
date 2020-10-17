@@ -152,30 +152,31 @@ void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Messa
     memcpy(message.prefix1, buff, sizeof(Message::prefix1));
 }
 
-void prefixFormatter2(Message& message)
+template<size_t rsize>
+void usecToString(int usec, char* result)
 {
-    char buff[sizeof(Message::prefix2)]; // = {0};
-    char* begin = buff;
-    char* end = begin + sizeof(buff);
-    int tv_usec = int(message.timeVal.tv_usec);
+    static_assert(rsize >= 8, "Size of result must be at least 8");
+
+    char* begin = result;
+    char* end = begin + rsize;
 
     *begin++ = '.';
-    if (tv_usec >= 100000)
+    if (usec >= 100000)
     {}
-    else if (tv_usec >= 10000)
+    else if (usec >= 10000)
     {
         *begin++ = '0';
     }
-    else if (tv_usec >= 1000)
+    else if (usec >= 1000)
     {
         *begin++ = '0';
         *begin++ = '0';
     }
-    else if (tv_usec >= 100)
+    else if (usec >= 100)
     {
         for (int i = 0; i < 3; ++i) *begin++ = '0';
     }
-    else if (tv_usec >= 10)
+    else if (usec >= 10)
     {
         for (int i = 0; i < 4; ++i) *begin++ = '0';
     }
@@ -184,8 +185,21 @@ void prefixFormatter2(Message& message)
         for (int i = 0; i < 5; ++i) *begin++ = '0';
     }
 
-    to_chars_result res = to_chars(begin, end, tv_usec);
-    *res.ptr = '\0';
+    to_chars_result res = to_chars(begin, end, usec);
+    if (res.ec != std::errc())
+    {
+        strcpy(result, "INVALID");
+        return;
+    }
+
+    // Микросекунды не должны превышать 6 знаков (плюс 1 символ на '.')
+    *(result + 7) = '\0';
+}
+
+void prefixFormatter2(Message& message)
+{
+    char buff[sizeof(Message::prefix2)];
+    usecToString<sizeof(buff)>(message.timeVal.tv_usec, buff);
 
     memcpy(message.prefix2, buff, sizeof(buff));
 }
@@ -194,7 +208,7 @@ void prefixFormatter3(Message& message)
 {
     // TODO Не реализована проверка превышения длины полей над размером буфера
 
-    char buff[sizeof(Message::prefix3)]; // = {0};
+    char buff[sizeof(Message::prefix3)];
     char* begin = buff;
     char* end = begin + sizeof(buff);
     to_chars_result res;
@@ -1254,11 +1268,25 @@ Line& operator<< (Line& line, const timeval& tv)
 {
     if (line.toLogger())
     {
-        char buff[8]; // = {0};
+#if __cplusplus >= 201703L && defined(LOGGER_LESS_SNPRINTF)
+        // tv_sec
+        detail::stream_operator(line, tv.tv_sec);
+
+        // tv_usec
+        // При размере буфера в 8 символов функция usecToString() может вернуть
+        // значение INVALID,  если по какой-то причине tv_usec окажется больше,
+        // чем 6 знаков. Чтобы этого  избежать  размер  буфера  увеличен  до 16
+        // символов
+        char buff[16];
+        usecToString<sizeof(buff)>(tv.tv_usec, buff);
+        line.impl->buff += buff;
+#else
+        char buff[8];
         long tv_usec = long(tv.tv_usec);
         snprintf(buff, sizeof(buff), ".%06ld", tv_usec);
         line.impl->buff += to_string(tv.tv_sec);
         line.impl->buff += buff;
+#endif
     }
     return line;
 }

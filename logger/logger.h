@@ -761,7 +761,7 @@ Line& stream_operator(Line& line, const T t, typename is_integral<T>::type = 0)
 {
     if (line.toLogger())
     {
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L && defined(LOGGER_LESS_SNPRINTF)
         char buff[32];
         to_chars_result res = to_chars(buff, buff + sizeof(buff), t);
         if (res.ec == std::errc())
@@ -770,7 +770,7 @@ Line& stream_operator(Line& line, const T t, typename is_integral<T>::type = 0)
             line.impl->buff += buff;
         }
         else
-            line.impl->buff += "invalid integral number";
+            line.impl->buff += "INVALID";
 #else
         line.impl->buff += std::to_string(t);
 #endif
