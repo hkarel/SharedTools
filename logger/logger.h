@@ -59,6 +59,10 @@
 #include <set>
 #include <type_traits>
 
+#if __cplusplus >= 201703L
+#include <charconv>
+#endif
+
 namespace alog /*async logger*/ {
 
 using namespace std;
@@ -736,8 +740,14 @@ Line& operator<< (Line&, const timeval&);
 
 namespace detail {
 
+//template<typename T>
+//using is_arithmetic = std::enable_if<std::is_arithmetic<T>::value, int>;
+
 template<typename T>
-using is_arithmetic = std::enable_if<std::is_arithmetic<T>::value, int>;
+using is_integral = std::enable_if<std::is_integral<T>::value, int>;
+
+template<typename T>
+using is_floating = std::enable_if<std::is_floating_point<T>::value, int>;
 
 template <typename T>
 using is_enum_type = std::enable_if<std::is_enum<T>::value, int>;
@@ -747,7 +757,29 @@ using not_supported = std::enable_if<!std::is_arithmetic<T>::value
                                   && !std::is_enum<T>::value, int>;
 
 template<typename T>
-Line& stream_operator(Line& line, const T t, typename is_arithmetic<T>::type = 0)
+Line& stream_operator(Line& line, const T t, typename is_integral<T>::type = 0)
+{
+    if (line.toLogger())
+    {
+#if __cplusplus >= 201703L
+        char buff[32];
+        to_chars_result res = to_chars(buff, buff + sizeof(buff), t);
+        if (res.ec == std::errc())
+        {
+            *res.ptr = '\0';
+            line.impl->buff += buff;
+        }
+        else
+            line.impl->buff += "invalid integral number";
+#else
+        line.impl->buff += std::to_string(t);
+#endif
+    }
+    return line;
+}
+
+template<typename T>
+Line& stream_operator(Line& line, const T t, typename is_floating<T>::type = 0)
 {
     if (line.toLogger())
         line.impl->buff += std::to_string(t);
@@ -759,8 +791,8 @@ Line& stream_operator(Line& line, const T t, typename is_enum_type<T>::type = 0)
 {
     if (line.toLogger())
     {
-        typedef typename std::underlying_type<T>::type enum_type;
-        line.impl->buff += std::to_string(static_cast<enum_type>(t));
+        typedef typename std::underlying_type<T>::type integral_type;
+        stream_operator(line, static_cast<integral_type>(t));
     }
     return line;
 }

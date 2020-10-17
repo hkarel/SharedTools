@@ -36,10 +36,6 @@
 #include <stdexcept>
 #include <vector>
 
-#if __cplusplus >= 201703L
-#include <charconv>
-#endif
-
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
 #include <windows.h>
 #endif
