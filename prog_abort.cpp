@@ -34,6 +34,5 @@ void prog_abort()
     alog::logger().flush();
     alog::logger().waitingFlush();
     alog::logger().stop();
-    usleep(200*1000);
     abort();
 }
