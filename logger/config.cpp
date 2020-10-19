@@ -25,7 +25,6 @@
 *****************************************************************************/
 
 #include "logger/config.h"
-#include "utils.h"
 #include <stdexcept>
 
 #define log_error_m   alog::logger().error   (alog_line_location, "LogConfig")

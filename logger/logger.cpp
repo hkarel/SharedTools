@@ -29,9 +29,9 @@
 #include "break_point.h"
 #include "spin_locker.h"
 #include "steady_timer.h"
-#include "utils.h"
 
 #include <string.h>
+#include <algorithm>
 #include <ctime>
 #include <stdexcept>
 #include <vector>
@@ -100,7 +100,12 @@ static const char* levelToStringImpl(Level level)
 string levelToString(Level level)
 {
     string s = levelToStringImpl(level);
-    return utl::rtrim(s);
+
+    // См. реализацию utl::rtrim(), минимизация зависимости от модуля utils
+    auto begin = std::find_if_not(s.rbegin(), s.rend(),
+                 [](unsigned char c) {return std::isspace(c);}).base();
+    s.erase(begin, s.end());
+    return s;
 }
 
 #if __cplusplus >= 201703L && defined(LOGGER_LESS_SNPRINTF)
