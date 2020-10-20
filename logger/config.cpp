@@ -34,7 +34,6 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "LogConfig")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "LogConfig")
 
-
 namespace alog {
 
 using namespace std;

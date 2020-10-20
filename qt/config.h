@@ -25,26 +25,12 @@
 
 #pragma once
 
-#include "config/yaml_config.h"
 #include <QtCore>
 #ifdef QT_NETWORK_LIB
 #include <QHostAddress>
 #endif
-#include <ctime>
 
 namespace config {
-
-// Возвращает путь до директории с файлами конфигурации для проекта
-QString dir();
-
-// Развертывает имя файла конфигурации до полного пути
-QString path(const QString& configFile);
-
-// Базовые настройки приложения
-YamlConfig& base();
-
-// Сохраняемые настройки приложения
-YamlConfig& state();
 
 // Расширяет правую часть пути до файла полным путем до файла относительно
 // текущего приложения
@@ -53,21 +39,5 @@ QString getFilePath(const QString& partFilePath);
 // Расширяет правую часть пути до директории полным путем до директории
 // относительно текущего приложения
 QString getDirPath(const QString& partDirPath);
-
-// Выполняет расширение пути для двух случаев:
-// 1) Символ '~' до полного пути к домашней директории (заменяет функцию homeDirExpansion);
-// 2) В Windows кодовое слово 'ProgramData' до директории с программными данными
-void dirExpansion(QString& filePath);
-
-#ifdef QT_NETWORK_LIB
-// Возвращает host-адрес из файла конфигурации
-bool readHostAddress(const QString& confHostStr, QHostAddress&);
-#endif
-
-// Возвращает время модификации базового конфиг-файла
-std::time_t baseModifyTime();
-
-// Возвращает время модификации конфиг-файла для логгера
-std::time_t loggerModifyTime();
 
 } // namespace config

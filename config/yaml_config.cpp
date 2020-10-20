@@ -1,3 +1,4 @@
+/* clang-format off */
 /*****************************************************************************
   The MIT License
 
@@ -27,9 +28,10 @@
 #include "break_point.h"
 #include "spin_locker.h"
 #include "utils.h"
+
+#include <cerrno>
 #include <fstream>
 #include <stdexcept>
-#include <errno.h>
 
 #if defined(QT_CORE_LIB)
 #include <QByteArray>

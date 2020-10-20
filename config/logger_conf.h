@@ -1,7 +1,8 @@
+/* clang-format off */
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2015 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2020 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -21,40 +22,21 @@
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  ---
+
+  Модуль содержит функции конфигурирования системы логирования
+  с использованием конфигурационных файлов приложения.
+
 *****************************************************************************/
 
-#include "qt/config.h"
-#include "qt/logger_operators.h"
-#include "config/file_conf.h"
+#pragma once
 
-#include <cstdlib>
-#include <iostream>
+namespace alog {
 
-namespace config {
+// Конфигурирование дефолтного сэйвера для логгера
+bool configDefaultSaver();
 
-QString getFilePath(const QString& partFilePath)
-{
-    QString filePath = QCoreApplication::applicationDirPath() + "/../" + partFilePath;
-    if (!QFile::exists(filePath))
-    {
-        filePath = QCoreApplication::applicationDirPath() + "/../../../" + partFilePath;
-        if (!QFile::exists(filePath))
-            return QString();
-    }
-    return filePath;
-}
+// Конфигурирование дополнительных сэйверов для логгера
+void configExtensionSavers();
 
-QString getDirPath(const QString& partDirPath)
-{
-    QDir dir {QCoreApplication::applicationDirPath() + "/../" + partDirPath};
-    if (dir.exists())
-        return dir.absolutePath();
-
-    QDir dir2 {QCoreApplication::applicationDirPath() + "/../../../" + partDirPath};
-    if (dir2.exists())
-        return dir2.absolutePath();
-
-    return QString();
-}
-
-} // namespace config
+} // namespace alog

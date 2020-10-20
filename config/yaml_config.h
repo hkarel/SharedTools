@@ -27,9 +27,8 @@
 #pragma once
 
 #include "defmac.h"
-#include "logger/logger.h"
 #include "safe_singleton.h"
-#include "utils.h"
+#include "logger/logger.h"
 
 #include <yaml-cpp/yaml.h>
 #include <atomic>
