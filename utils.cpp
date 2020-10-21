@@ -88,6 +88,7 @@ void savePidFile(const string& fileName)
     }
 }
 
+#if __cplusplus < 201703L
 string toString(short val)
 {
     return toString(int(val));
@@ -100,55 +101,56 @@ string toString(unsigned short val)
 
 string toString(int val)
 {
-    char buff[34] = {0};
-    snprintf(buff, sizeof(buff)-1, "%d", val);
+    char buff[32]; buff[sizeof(buff) - 1] = '\0';
+    snprintf(buff, sizeof(buff) - 1, "%d", val);
     return buff;
 }
 
 string toString(unsigned int val)
 {
-    char buff[34] = {0};
-    snprintf(buff, sizeof(buff)-1, "%u", val);
+    char buff[32]; buff[sizeof(buff) - 1] = '\0';
+    snprintf(buff, sizeof(buff) - 1, "%u", val);
     return buff;
 }
 
 string toString(long val)
 {
-    char buff[68] = {0};
-    snprintf(buff, sizeof(buff)-1, "%ld", val);
+    char buff[32]; buff[sizeof(buff) - 1] = '\0';
+    snprintf(buff, sizeof(buff) - 1, "%ld", val);
     return buff;
 }
 
 string toString(unsigned long val)
 {
-    char buff[68] = {0};
-    snprintf(buff, sizeof(buff)-1, "%lu", val);
+    char buff[32]; buff[sizeof(buff) - 1] = '\0';
+    snprintf(buff, sizeof(buff) - 1, "%lu", val);
     return buff;
 }
 
 string toString(long long val)
 {
-    char buff[68] = {0};
+    char buff[32]; buff[sizeof(buff) - 1] = '\0';
 #if defined(_MSC_VER) || defined(__MINGW32__)
     const char* format = "%I64d";
 #else
     const char* format = "%lld";
 #endif
-    snprintf(buff, sizeof(buff)-1, format, val);
+    snprintf(buff, sizeof(buff) - 1, format, val);
     return buff;
 }
 
 string toString(unsigned long long val)
 {
-    char buff[68] = {0};
+    char buff[32]; buff[sizeof(buff) - 1] = '\0';
 #if defined(_MSC_VER) || defined(__MINGW32__)
     const char* format = "%I64u";
 #else
     const char* format = "%llu";
 #endif
-    snprintf(buff, sizeof(buff)-1, format, val);
+    snprintf(buff, sizeof(buff) - 1, format, val);
     return buff;
 }
+#endif // #if __cplusplus < 201703L
 
 static inline uint8_t toHexChar(uint8_t c) noexcept
 {

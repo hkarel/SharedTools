@@ -40,6 +40,10 @@
 #include <numeric>
 #include <algorithm>
 
+#if __cplusplus >= 201703L
+#include <charconv>
+#endif
+
 namespace utl {
 
 using namespace std;
@@ -91,6 +95,20 @@ inline bool assign(atomic_bool& a, bool value)
 }
 
 // Выполняет преобразование в строку
+#if __cplusplus >= 201703L
+template<typename T>
+string toString(T val, enable_if_t<is_integral<T>::value, int> = 0)
+{
+    char buff[32];
+    to_chars_result res = to_chars(buff, buff + sizeof(buff), val);
+    if (res.ec == std::errc())
+    {
+        *res.ptr = '\0';
+        return buff;
+    }
+    return {};
+}
+#else
 string toString(short val);
 string toString(unsigned short val);
 
@@ -102,7 +120,7 @@ string toString(unsigned long val);
 
 string toString(long long val);
 string toString(unsigned long long val);
-
+#endif
 
 // Выполняет преобразование UUID в строковое представление.
 string uuidToString(const uint8_t uuid[16]);
