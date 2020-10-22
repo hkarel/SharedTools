@@ -130,24 +130,22 @@ string toString(unsigned long val)
 string toString(long long val)
 {
     char buff[32]; buff[sizeof(buff) - 1] = '\0';
-#if defined(_MSC_VER) || defined(__MINGW32__)
-    const char* format = "%I64d";
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
+    snprintf(buff, sizeof(buff) - 1, "%I64d", val);
 #else
-    const char* format = "%lld";
+    snprintf(buff, sizeof(buff) - 1, "%lld", val);
 #endif
-    snprintf(buff, sizeof(buff) - 1, format, val);
     return buff;
 }
 
 string toString(unsigned long long val)
 {
     char buff[32]; buff[sizeof(buff) - 1] = '\0';
-#if defined(_MSC_VER) || defined(__MINGW32__)
-    const char* format = "%I64u";
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
+    snprintf(buff, sizeof(buff) - 1, "%I64u", val);
 #else
-    const char* format = "%llu";
+    snprintf(buff, sizeof(buff) - 1, "%llu", val);
 #endif
-    snprintf(buff, sizeof(buff) - 1, format, val);
     return buff;
 }
 #endif // #if __cplusplus < 201703L
