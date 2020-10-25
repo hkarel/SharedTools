@@ -847,6 +847,23 @@ Line operator<< (Line&& line, const T& t)
     return std::move(line);
 }
 
+// Вспомогательная функция, используется в тех случаях, когда  значение  file
+// для функций логирования не является фиксированным  константным  параметром.
+// Примером такой ситуации могут быть  лог-сообщения  поступающие  из  другой
+// программы, например docker-контейнера. В этом случае  вызов  функции  логи-
+// рования будет выглядеть следующим образом:
+//   int dockerLine = 10;
+//   string dockerFile = ".../docker/example.py";
+//   const char* file = __file__cache(dockerFile.c_str());
+//   alog::logger().info(file, "", dockerLine, "Docker") << dockerMessage;
+//
+const char* __file__cache(const char* file);
+
+inline const char* __file__cache(const string& file)
+{
+    return __file__cache(file.c_str());
+}
+
 } // namespace alog
 
 #define alog_line_location alog::detail::file_name(__FILE__), __func__, __LINE__
