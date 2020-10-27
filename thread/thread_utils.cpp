@@ -28,7 +28,7 @@
 #include "break_point.h"
 #include "spin_locker.h"
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #include <processthreadsapi.h>
 #else
 #include <sys/syscall.h>

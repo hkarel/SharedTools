@@ -51,7 +51,7 @@ T& safe_singleton()
 {
     static std::unique_ptr<T> t;
     static std::mutex lock;
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     if (!t)
 #else
     if (__builtin_expect(!t, 0))
@@ -73,7 +73,7 @@ typename T::Ptr& safe_singleton_ptr()
 {
     static typename T::Ptr t;
     static std::mutex lock;
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     if (!t)
 #else
     if (__builtin_expect(!t, 0))
