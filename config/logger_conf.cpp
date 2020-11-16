@@ -48,7 +48,6 @@ bool configDefaultSaver()
     string logFile;
 #ifdef MINGW
     config::base().getValue("logger.file_win", logFile);
-    config::dirExpansion(logFile);
 #else
     config::base().getValue("logger.file", logFile);
 #endif
