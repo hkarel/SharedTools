@@ -476,6 +476,16 @@ void printSaversInfo()
         return "";
     };
 
+    bool nextCommaVal2;
+    auto nextComma2 = [&nextCommaVal2]()
+    {
+        if (nextCommaVal2)
+            return ", ";
+
+        nextCommaVal2 = true;
+        return "";
+    };
+
     for (Saver* saver : savers)
     {
         alog::Line logLine = log_info_m << "Saver : ";
@@ -546,8 +556,18 @@ void printSaversInfo()
         {
             logLine << "; type: file_name"
                     << "; files: [";
-            for (const string* file : fileFilter->files())
-                logLine << nextComma() << file;
+            for (FilterFile::FileLine* fl : fileFilter->files())
+            {
+                logLine << nextComma() << fl->file;
+                if (!fl->lines.empty())
+                {
+                    logLine << ": [";
+                    nextCommaVal2 = false;
+                    for (int line : fl->lines)
+                        logLine << nextComma2() << line;
+                    logLine << "]";
+                }
+            }
             logLine << "]";
         }
         else if (FilterThread* threadFilter = dynamic_cast<FilterThread*>(filter))
