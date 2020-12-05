@@ -769,7 +769,7 @@ bool Saver::skipMessage(const Message& m, const FilterList& filters)
             // сообщения об ошибках
             return false;
         }
-        else if (res == Filter::Check::Fail)
+        if (res == Filter::Check::Fail)
             return true;
     }
 
