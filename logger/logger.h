@@ -327,14 +327,31 @@ typedef clife_ptr<FilterLevel> FilterLevelPtr;
 class FilterFile : public Filter
 {
 public:
-    const StringList& files() const {return _files;}
+    struct FileLine
+    {
+        string   file;
+        set<int> lines;
+
+        struct Compare
+        {
+            int operator() (const FileLine* item1, const FileLine* item2, void*) const
+                {return strcmp(item1->file.c_str(), item2->file.c_str());}
+
+            int operator() (const char* file, const FileLine* item2, void*) const
+                {return strcmp((file ? file : ""), item2->file.c_str());}
+        };
+    };
+    typedef lst::List<FileLine, FileLine::Compare> Files;
+
+public:
+    const Files& files() const {return _files;}
 
     // Добавляет файлы на которые будет распространяться действие фильтра
     void addFile(const string& name);
 
 private:
     bool checkImpl(const Message&) const override;
-    StringList _files;
+    Files _files;
 };
 typedef clife_ptr<FilterFile> FilterFilePtr;
 

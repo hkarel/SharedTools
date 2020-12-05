@@ -584,18 +584,37 @@ void FilterFile::addFile(const string& name)
     if (locked())
         return;
 
-    if (_files.findRef(name))
-        return;
+    string file;
+    int line = 0;
+    if (const char* d = strrchr(name.c_str(), ':'))
+    {
+        file = string(name.c_str(), size_t(d - name.c_str()));
+        line = std::atoi(d + 1);
+    }
+    else
+        file = name;
 
-    _files.addCopy(name);
-    _files.sort();
+    FileLine* fl = _files.findItem(file.c_str());
+    if (fl == 0)
+    {
+        fl = _files.add();
+        fl->file = file;
+        _files.sort();
+    }
+    if (line)
+        fl->lines.insert(line);
 }
 
 bool FilterFile::checkImpl(const Message& m) const
 {
-    lst::FindResult fr = _files.find(m.file);
-    bool res = fr.success();
-
+    bool res = false;
+    if (FileLine* fl = _files.findItem(m.file))
+    {
+        if (!fl->lines.empty())
+            res = (fl->lines.find(m.line) != fl->lines.end());
+        else
+            res = true;
+    }
     return (mode() == Mode::Exclude) ? !res : res;
 }
 
