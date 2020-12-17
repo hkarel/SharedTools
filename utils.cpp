@@ -235,7 +235,7 @@ void uuidToHexString(const uint8_t uuid[], uint8_t result[], bool addHexPrefix)
 
 vector<string> split(const string& str, char delim, bool keepEmptyParts)
 {
-    stringstream stream(str);
+    istringstream stream {str};
     string item;
     vector<string> elems;
     while (std::getline(stream, item, delim))
