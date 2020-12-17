@@ -77,11 +77,11 @@ void savePidFile(const string& fileName);
 template<typename std::size_t BuffSize = 1024>
 string formatMessage(const char* format, ...)  __attribute__ ((format (printf, 1, 2)));
 
-// Используется для изменения значений атомарных флагов. Функция используется
-// в тех случаях, когда нужно избегать постоянного присвоения значений атомар-
-// ной переменной. В примере ниже в переменной atomic_val происходит постоянное
-// присвоение значения true. Каждое присвоение приводик к сбросу линии кеша
-// процессора, что понижает производительность.
+// Функция изменяет значений атомарных флагов,  используется  в  тех  случаях,
+// когда нужно избегать постоянного присвоения значений атомарной  переменной.
+// В примере ниже в переменной atomic_val  происходит  постоянное  присвоение
+// значения true. Каждое присвоение приводик к сбросу линии кеша процессора,
+// что снижает производительность.
 // while (true) {
 //    ...
 //    if (true)
@@ -134,7 +134,7 @@ void uuidToString(const uint8_t uuid[16], uint8_t result[40]);
 // добавлен признак шестнадцатеричного представления '0x'.
 string uuidToHexString(const uint8_t uuid[16], bool addHexPrefix = true);
 
-// Аналогична функции uuidToHexString(const uint8_t uuid[16], bool addHexPrefix),
+// Аналог функции uuidToHexString(const uint8_t uuid[16], bool addHexPrefix),
 // но результат пишется в параметр result.
 void uuidToHexString(const uint8_t uuid[16], uint8_t result[40], bool addHexPrefix);
 
@@ -144,12 +144,12 @@ void uuidToHexString(const uint8_t uuid[16], uint8_t result[40], bool addHexPref
 //   keepEmptyParts - сохранять в результирующем списке пустые строки.
 vector<string> split(const string& str, char delim, bool keepEmptyParts = false);
 
-// Выполняет округление действительного числа number до signCount знаков
-// после запятой
+// Выполняет примитивное (не математическое) округление действительного числа
+// number до signCount знаков после запятой
 double round(double number, int signCount);
 
-// Функции сложения/вычитания структур timeval. По сути эти функции повторяют
-// макросы timeradd/timersub, проблема в том, в MinGW эти макросы не реализованы.
+// Функции сложения/вычитания структур timeval. Они повторяют макросы
+// timeradd/timersub, но в MinGW эти макросы не реализованы.
 void timeAdd(const timeval& a, const timeval& b, timeval& result);
 void timeSub(const timeval& a, const timeval& b, timeval& result);
 
