@@ -823,7 +823,7 @@ Line& stream_operator(Line& line, const T, typename not_supported<T>::type = 0)
 
 inline constexpr char file_sep()
 {
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(_MSC_VER)
     return '\\';
 #else
     return '/';
