@@ -339,6 +339,8 @@ template<typename VectorT>
 bool YamlConfig::getValueVect(const YAML::Node& baseNode, const std::string& name,
                               VectorT& value, bool logWarn) const
 {
+    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+
     YAML::Node node = nodeGet(baseNode, name, logWarn);
     if (!node || node.IsNull())
         return false;
@@ -377,7 +379,6 @@ template<typename T>
 bool YamlConfig::getValue(const std::string& name,
                           std::vector<T>& value, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
     return getValueVect(_root, name, value, logWarn);
 }
 
@@ -385,7 +386,6 @@ template<typename T>
 bool YamlConfig::getValue(const YAML::Node& baseNode, const std::string& name,
                           std::vector<T>& value, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
     return getValueVect(baseNode, name, value, logWarn);
 }
 
@@ -394,7 +394,6 @@ template<typename T>
 bool YamlConfig::getValue(const std::string& name,
                           QVector<T>& value, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
     return getValueVect(_root, name, value, logWarn);
 }
 
@@ -402,7 +401,6 @@ template<typename T>
 bool YamlConfig::getValue(const YAML::Node& baseNode, const std::string& name,
                           QVector<T>& value, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
     return getValueVect(baseNode, name, value, logWarn);
 }
 #endif
