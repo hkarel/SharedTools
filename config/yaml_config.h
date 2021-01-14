@@ -43,6 +43,7 @@
 
 #if defined(QT_CORE_LIB)
 #include <QString>
+#include <QList>
 #include <QVector>
 #endif
 
@@ -89,12 +90,12 @@ public:
     // Возвращает ноду с именем name относительно базовой ноды baseNode
     YAML::Node getNode(const YAML::Node& baseNode, const std::string& name) const;
 
-    // Используется для получения простого значения (скаляр) из ноды
-    // с именем name. Имя может быть составным. Составное имя записывается
+    // Используется  для  получения  простого  значения  (скаляр)  из  ноды
+    // с именем name. Имя может быть составным.  Составное имя записывается
     // следующим образом: 'param1.param2.param3'.
-    // Возвращает TRUE если нода с именем 'name' существует и в параметр value
-    // было успешно записано значение.  Если параметр  logWarn  равен TRUE, то
-    // в случае неудачного считывания данных лог выводится сообщение о причинах.
+    // Возвращает TRUE если нода с именем  name  существует и в параметр value
+    // было успешно записано значение.  Параметр  logWarn  определяет нужно ли
+    // выводить сообщения в лог при неудачном считывании данных
     template<typename T>
     bool getValue(const std::string& name, T& value, bool logWarn = true) const;
 
@@ -103,11 +104,10 @@ public:
     bool getValue(const YAML::Node& baseNode, const std::string& name,
                   T& value, bool logWarn = true) const;
 
-    // Используется для получения списка значений из ноды с именем name.
-    // Возвращает TRUE если нода с именем 'name' существует и в параметр value
-    // был успешно заполнен значениями. Если параметр logWarn равен TRUE,
-    // то в случае неудачного считывания данных лог выводится сообщение
-    // о причинах.
+    // Используется для получения  списка  значений  из  ноды  с  именем name.
+    // Возвращает TRUE если нода с именем  name  существует и в параметр value
+    // был успешно заполнен значениями. Параметр  logWarn  определяет нужно ли
+    // выводить сообщения в лог при неудачном считывании данных
     template<typename T>
     bool getValue(const std::string& name,
                   std::vector<T>& value, bool logWarn = true) const;
@@ -120,7 +120,7 @@ public:
 
 #if defined(QT_CORE_LIB)
     // Перегруженная функция, используется для считывания списка значений
-    // в QVector.
+    // в QVector
     template<typename T>
     bool getValue(const std::string& name,
                   QVector<T>& value, bool logWarn = true) const;
@@ -130,20 +130,33 @@ public:
     template<typename T>
     bool getValue(const YAML::Node& baseNode, const std::string& name,
                   QVector<T>& value, bool logWarn = true) const;
+
+    // Перегруженная функция, используется для считывания списка значений
+    // в QList
+    template<typename T>
+    bool getValue(const std::string& name,
+                  QList<T>& value, bool logWarn = true) const;
+
+    // Используется для получения списка значений относительно базовой
+    // ноды baseNode
+    template<typename T>
+    bool getValue(const YAML::Node& baseNode, const std::string& name,
+                  QList<T>& value, bool logWarn = true) const;
 #endif
 
-    // Используется для получения значений для нод сложной конфигурации.
+    // Используется  для  получения  значений  для  нод  сложной  конфигурации.
     // В качестве параметра func используется функция или функтор со следующей
     // сигнатурой function(YamlConfig* conf, YAML::Node& node, bool logWarn),
-    // где: conf - указатель на текущий конфигуратор; node - читаемая нода;
-    // logWarn - определяет нужно ли выводить сообщения в лог в случае неудач-
-    // ного считывания данных.
+    // где:
+    //   conf - указатель на текущий конфигуратор; node - читаемая нода;
+    //   logWarn - определяет нужно ли выводить сообщения в лог при неудачном
+    //   считывании данных
     bool getValue(const std::string& name, Func func, bool logWarn = true) const;
 
     // Используется для записи простого значения (скаляр) в ноду с именем name.
     // Имя может быть составным. Составное имя записывается следующим образом:
     // 'param1.param2.param3'.
-    // Возвращает TRUE если значение было удачно записано в ноду.
+    // Возвращает TRUE если значение было удачно записано в ноду
     template<typename T>
     bool setValue(const std::string& name, const T& value);
 
@@ -153,7 +166,7 @@ public:
                   const std::string& name, const T& value);
 
     // Используется для записи списка значений в ноду с именем name.
-    // Возвращает TRUE если список был удачно записан в ноду.
+    // Возвращает TRUE если список был удачно записан в ноду
     template<typename T>
     bool setValue(const std::string& name, const std::vector<T>& value,
                   YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
@@ -165,8 +178,7 @@ public:
                   YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
 
 #if defined(QT_CORE_LIB)
-    // Перегруженная функция, используется для записи списка значений
-    // из QVector.
+    // Перегруженная функция, используется для записи списка значений из QVector
     template<typename T>
     bool setValue(const std::string& name, const QVector<T>& value,
                   YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
@@ -176,10 +188,21 @@ public:
     bool setValue(YAML::Node& baseNode,
                   const std::string& name, const QVector<T>& value,
                   YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
+
+    // Перегруженная функция, используется для записи списка значений из QList
+    template<typename T>
+    bool setValue(const std::string& name, const QList<T>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
+
+    // Используется для записи списка значений относительно базовой ноды baseNode
+    template<typename T>
+    bool setValue(YAML::Node& baseNode,
+                  const std::string& name, const QList<T>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
 #endif
 
     // Используется для записи значений для нод сложной конфигурации,
-    // см. описание getValue().
+    // см. описание getValue()
     bool setValue(const std::string& name, Func func);
 
 private:
@@ -189,7 +212,7 @@ private:
     static char* typeName();
 
     // Используется для того чтобы можно было сохранять/загружать в конфиг
-    // строки QString. См. ниже специализацию этой структуры для QString.
+    // строки QString. См. ниже специализацию этой структуры для QString
     template<typename T>
     struct ProxyStdString
     {
@@ -199,12 +222,12 @@ private:
     };
 
     // Возвращает ноду по имени 'name'. Если ноды с заданным именем нет
-    // в списке, то будет возвращена пустая нода.
+    // в списке, то будет возвращена пустая нода
     YAML::Node nodeGet(const YAML::Node& baseNode,
                        const std::string& name, bool logWarn) const;
 
     // Используется в функциях setValue(). Строит иерархию нод согласно
-    // заданному параметру 'name'.
+    // заданному параметру 'name'
     YAML::Node nodeSet(YAML::Node& baseNode, const std::string& name);
 
     template<typename VectorT>
@@ -403,6 +426,20 @@ bool YamlConfig::getValue(const YAML::Node& baseNode, const std::string& name,
 {
     return getValueVect(baseNode, name, value, logWarn);
 }
+
+template<typename T>
+bool YamlConfig::getValue(const std::string& name,
+                          QList<T>& value, bool logWarn) const
+{
+    return getValueVect(_root, name, value, logWarn);
+}
+
+template<typename T>
+bool YamlConfig::getValue(const YAML::Node& baseNode, const std::string& name,
+                          QList<T>& value, bool logWarn) const
+{
+    return getValueVect(baseNode, name, value, logWarn);
+}
 #endif
 
 template<typename T>
@@ -470,6 +507,20 @@ bool YamlConfig::setValue(const std::string& name,
 template<typename T>
 bool YamlConfig::setValue(YAML::Node& baseNode, const std::string& name,
                           const QVector<T>& value, YAML::EmitterStyle::value nodeStyle)
+{
+    return setValueVect(baseNode, name, value, nodeStyle);
+}
+
+template<typename T>
+bool YamlConfig::setValue(const std::string& name,
+                          const QList<T>& value, YAML::EmitterStyle::value nodeStyle)
+{
+    return setValueVect(_root, name, value, nodeStyle);
+}
+
+template<typename T>
+bool YamlConfig::setValue(YAML::Node& baseNode, const std::string& name,
+                          const QList<T>& value, YAML::EmitterStyle::value nodeStyle)
 {
     return setValueVect(baseNode, name, value, nodeStyle);
 }
