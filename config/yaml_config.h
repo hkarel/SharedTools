@@ -66,6 +66,10 @@ public:
     // Перечитывает yaml-структуру из файла
     bool rereadFile();
 
+    // Возвращает TRUE если параметры конфигурации были изменены, устанавливается
+    // в FALSE после сохранения данных в файл
+    bool changed() const;
+
     // Определяет, что параметры конфигурации не могут изменяться
     bool readOnly() const;
     void setReadOnly(bool);
@@ -93,8 +97,8 @@ public:
     // Используется  для  получения  простого  значения  (скаляр)  из  ноды
     // с именем name. Имя может быть составным.  Составное имя записывается
     // следующим образом: 'param1.param2.param3'.
-    // Возвращает TRUE если нода с именем  name  существует и в параметр value
-    // было успешно записано значение.  Параметр  logWarn  определяет нужно ли
+    // Возвращает TRUE если нода с именем name существует и в параметр value
+    // успешно записано  значение.  Параметр  logWarn  определяет  нужно  ли
     // выводить сообщения в лог при неудачном считывании данных
     template<typename T>
     bool getValue(const std::string& name, T& value, bool logWarn = true) const;
@@ -105,8 +109,8 @@ public:
                   T& value, bool logWarn = true) const;
 
     // Используется для получения  списка  значений  из  ноды  с  именем name.
-    // Возвращает TRUE если нода с именем  name  существует и в параметр value
-    // был успешно заполнен значениями. Параметр  logWarn  определяет нужно ли
+    // Возвращает TRUE если нода с именем  name  существует и параметр  value
+    // успешно  заполнен  значениями.  Параметр  logWarn  определяет нужно ли
     // выводить сообщения в лог при неудачном считывании данных
     template<typename T>
     bool getValue(const std::string& name,
@@ -239,6 +243,7 @@ private:
                       const VectorT& value, YAML::EmitterStyle::value nodeStyle);
 
 private:
+    std::atomic_bool _changed = {false};
     std::atomic_bool _readOnly = {false};
     std::atomic_bool _saveDisabled = {false};
     std::string _filePath;
@@ -460,6 +465,7 @@ bool YamlConfig::setValue(YAML::Node& baseNode,
     YAMLCONFIG_TRY
     node = YAML::Node(ProxyStdString<T>::setter(value));
     YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
+    _changed = true;
     return true;
 }
 
@@ -479,6 +485,7 @@ bool YamlConfig::setValueVect(YAML::Node& baseNode, const std::string& name,
     for (const ValueType& v : value)
         node.push_back(ProxyStdString<ValueType>::setter(v));
     YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
+    _changed = true;
     return true;
 }
 

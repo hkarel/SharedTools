@@ -82,6 +82,7 @@ bool YamlConfig::readFile(const std::string& filePath)
         return false;
     }
     YAMLCONFIG_CATCH_2
+    _changed = false;
     return true;
 }
 
@@ -98,12 +99,18 @@ bool YamlConfig::readString(const std::string& str)
         return false;
     }
     YAMLCONFIG_CATCH_2
+    _changed = false;
     return true;
 }
 
 bool YamlConfig::rereadFile()
 {
     return readFile(_filePath);
+}
+
+bool YamlConfig::changed() const
+{
+    return _changed;
 }
 
 bool YamlConfig::readOnly() const
@@ -187,6 +194,7 @@ bool YamlConfig::save(const std::string& filePath,
         return false;
     }
     YAMLCONFIG_CATCH_2
+    _changed = false;
     return true;
 }
 
@@ -301,12 +309,13 @@ bool YamlConfig::getValue(const std::string& name, Func func, bool logWarn) cons
     if (!node || node.IsNull())
         return false;
 
+    bool res = false;
     YAMLCONFIG_TRY
     _nameNodeFunc = name + ".";
-    bool res = func(const_cast<YamlConfig*>(this), node, logWarn);
+    res = func(const_cast<YamlConfig*>(this), node, logWarn);
     _nameNodeFunc.clear();
-    return res;
     YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
+    return res;
 }
 
 bool YamlConfig::setValue(const std::string& name, Func func)
@@ -316,12 +325,14 @@ bool YamlConfig::setValue(const std::string& name, Func func)
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSet(_root, name);
+    bool res = false;
     YAMLCONFIG_TRY
     _nameNodeFunc = name + ".";
-    bool res = func(this, node, false);
+    res = func(this, node, false);
     _nameNodeFunc.clear();
-    return res;
     YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
+    _changed = true;
+    return res;
 }
 
 YamlConfigLock::YamlConfigLock(const YamlConfig& yc)
