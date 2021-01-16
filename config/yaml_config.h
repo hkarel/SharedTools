@@ -281,11 +281,11 @@ inline char* YamlConfig::typeName()
 #endif
 }
 
-#define YAMLGET_FUNC 0
-#define YAMLSET_FUNC 1
-#define YAMLRETURN(VAL) (VAL)
+#define YAML_GET_FUNC 0
+#define YAML_SET_FUNC 1
+#define YAML_RETURN(VAL) (VAL)
 
-#define YAMLCONFIG_LOG_ERROR(ERROR, GETSET) \
+#define YAML_CONFIG_LOG_ERROR(ERROR, GETSET) \
     alog::Line logLine = \
     alog::logger().error(alog_line_location, "YamlConfig") \
         << "Yaml error"; \
@@ -296,25 +296,25 @@ inline char* YamlConfig::typeName()
     logLine << ". Detail: " << ERROR \
             << ". File: " << _filePath;
 
-#define YAMLCONFIG_TRY \
+#define YAML_CONFIG_TRY \
     try {
 
-#define YAMLCONFIG_CATCH(GETSET, RETURN) \
+#define YAML_CONFIG_CATCH(GETSET, RETURN) \
     } catch (YAML::Exception& e) { \
-        YAMLCONFIG_LOG_ERROR(e.what(), GETSET) \
+        YAML_CONFIG_LOG_ERROR(e.what(), GETSET) \
         _nameNodeFunc.clear(); \
         return RETURN; \
     } catch (std::exception& e) { \
-        YAMLCONFIG_LOG_ERROR(e.what(), GETSET) \
+        YAML_CONFIG_LOG_ERROR(e.what(), GETSET) \
         _nameNodeFunc.clear(); \
         return RETURN; \
     } catch (...) { \
-        YAMLCONFIG_LOG_ERROR("Unknown error", GETSET) \
+        YAML_CONFIG_LOG_ERROR("Unknown error", GETSET) \
         _nameNodeFunc.clear(); \
         return RETURN; \
     }
 
-#define YAMLCONFIG_CHECK_READONLY \
+#define YAML_CONFIG_CHECK_READONLY \
         if (_readOnly) {\
             alog::logger().warn(alog_line_location, "YamlConfig") \
                 << "Failed to set parameter: " << name \
@@ -356,10 +356,10 @@ bool YamlConfig::getValue(const YAML::Node& baseNode,
         return false;
     }
 
-    YAMLCONFIG_TRY
+    YAML_CONFIG_TRY
     // было так: value = node.as<T>();
     value = ProxyStdString<T>::getter(node.as<typename ProxyStdString<T>::Type>());
-    YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
+    YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     return true;
 }
 
@@ -392,12 +392,12 @@ bool YamlConfig::getValueVect(const YAML::Node& baseNode, const std::string& nam
                     << ". The elements of sequence are not a scalar type";
             return false;
         }
-        YAMLCONFIG_TRY
+        YAML_CONFIG_TRY
         typedef typename VectorT::value_type ValueType;
         // было так: v.push_back(n.as<ValueType>());
         v.push_back(ProxyStdString<ValueType>::getter(
                         n.as<typename ProxyStdString<ValueType>::Type>()));
-        YAMLCONFIG_CATCH(YAMLGET_FUNC, YAMLRETURN(false))
+        YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     }
     value.swap(v);
     return true;
@@ -457,14 +457,14 @@ template<typename T>
 bool YamlConfig::setValue(YAML::Node& baseNode,
                           const std::string& name, const T& value)
 {
-    YAMLCONFIG_CHECK_READONLY
+    YAML_CONFIG_CHECK_READONLY
 
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
-    YAMLCONFIG_TRY
+    YAML_CONFIG_TRY
     node = YAML::Node(ProxyStdString<T>::setter(value));
-    YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
+    YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return true;
 }
@@ -473,18 +473,18 @@ template<typename VectorT>
 bool YamlConfig::setValueVect(YAML::Node& baseNode, const std::string& name,
                               const VectorT& value, YAML::EmitterStyle::value nodeStyle)
 {
-    YAMLCONFIG_CHECK_READONLY
+    YAML_CONFIG_CHECK_READONLY
 
     std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
-    YAMLCONFIG_TRY
+    YAML_CONFIG_TRY
     node = YAML::Node();
     node.SetStyle(nodeStyle);
     typedef typename VectorT::value_type ValueType;
     for (const ValueType& v : value)
         node.push_back(ProxyStdString<ValueType>::setter(v));
-    YAMLCONFIG_CATCH(YAMLSET_FUNC, YAMLRETURN(false))
+    YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return true;
 }
