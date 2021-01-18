@@ -67,7 +67,7 @@ void ThreadBase::start()
 
 void ThreadBase::startImpl()
 {
-    std::lock_guard<std::mutex> locker(_startStopLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_startStopLock}; (void) locker;
 
     //break_point
 
@@ -95,7 +95,7 @@ void ThreadBase::stop(bool wait)
 
 void ThreadBase::stopImpl(bool /*wait*/)
 {
-    std::lock_guard<std::mutex> locker(_startStopLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_startStopLock}; (void) locker;
 
     // Примечание: входящий параметр wait на данный момент не используется,
     // так как не удалось добиться стабильной работы системы при асинхронном

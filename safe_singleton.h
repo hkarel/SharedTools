@@ -57,7 +57,7 @@ T& safe_singleton()
     if (__builtin_expect(!t, 0))
 #endif
     {
-        std::lock_guard<std::mutex> locker(lock); (void) locker;
+        std::lock_guard<std::mutex> locker {lock}; (void) locker;
         if (!t)
             t = std::unique_ptr<T>(new T());
     }
@@ -79,7 +79,7 @@ typename T::Ptr& safe_singleton_ptr()
     if (__builtin_expect(!t, 0))
 #endif
     {
-        std::lock_guard<std::mutex> locker(lock); (void) locker;
+        std::lock_guard<std::mutex> locker {lock}; (void) locker;
         if (!t)
             t = typename T::Ptr(new T());
     }

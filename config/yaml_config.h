@@ -342,7 +342,7 @@ template<typename T>
 bool YamlConfig::getValue(const YAML::Node& baseNode,
                           const std::string& name, T& value, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, logWarn);
     if (!node || node.IsNull())
@@ -367,7 +367,7 @@ template<typename VectorT>
 bool YamlConfig::getValueVect(const YAML::Node& baseNode, const std::string& name,
                               VectorT& value, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, logWarn);
     if (!node || node.IsNull())
@@ -459,7 +459,7 @@ bool YamlConfig::setValue(YAML::Node& baseNode,
 {
     YAML_CONFIG_CHECK_READONLY
 
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
     YAML_CONFIG_TRY
@@ -475,7 +475,7 @@ bool YamlConfig::setValueVect(YAML::Node& baseNode, const std::string& name,
 {
     YAML_CONFIG_CHECK_READONLY
 
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
     YAML_CONFIG_TRY

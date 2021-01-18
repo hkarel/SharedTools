@@ -54,7 +54,7 @@ bool QThreadEx::stop(unsigned long timeout)
 
 void QThreadEx::startImpl(Priority priority)
 {
-    QMutexLocker locker(&_startStopLock); (void) locker;
+    QMutexLocker locker {&_startStopLock}; (void) locker;
 
     //while (_waitThreadStart)
     //    usleep(100);
@@ -85,7 +85,7 @@ void QThreadEx::startImpl(Priority priority)
 
 bool QThreadEx::stopImpl(unsigned long timeout)
 {
-    QMutexLocker locker(&_startStopLock); (void) locker;
+    QMutexLocker locker {&_startStopLock}; (void) locker;
 
     while (_waitThreadStart)
         usleep(100);

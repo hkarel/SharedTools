@@ -65,7 +65,7 @@
 
 bool YamlConfig::readFile(const std::string& filePath)
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath = filePath;
@@ -88,7 +88,7 @@ bool YamlConfig::readFile(const std::string& filePath)
 
 bool YamlConfig::readString(const std::string& str)
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath.clear();
@@ -142,7 +142,7 @@ bool YamlConfig::save(const std::string& filePath,
         return false;
     }
 
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     if (!filePath.empty())
@@ -205,7 +205,7 @@ std::string YamlConfig::filePath() const
 
 bool YamlConfig::remove(const std::string& name, bool logWarn)
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
      size_t pos = name.find_last_of('.');
@@ -241,7 +241,7 @@ YAML::Node YamlConfig::getNode(const YAML::Node& baseNode,
     if (parts.empty())
         return YAML::Node();
 
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     typedef std::function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
     NodeFunc get_node = [&](const YAML::Node& node, size_t i)
@@ -303,7 +303,7 @@ YAML::Node YamlConfig::nodeSet(YAML::Node& baseNode, const std::string& name)
 
 bool YamlConfig::getValue(const std::string& name, Func func, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(_root, name, logWarn);
     if (!node || node.IsNull())
@@ -322,7 +322,7 @@ bool YamlConfig::setValue(const std::string& name, Func func)
 {
     YAML_CONFIG_CHECK_READONLY
 
-    std::lock_guard<std::recursive_mutex> locker(_configLock); (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeSet(_root, name);
     bool res = false;

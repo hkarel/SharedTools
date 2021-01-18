@@ -48,7 +48,7 @@ struct Test
     {
         //nanosleep(100);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        std::lock_guard<std::mutex> locker(mut); (void) locker;
+        std::lock_guard<std::mutex> locker {mut}; (void) locker;
 
         std::cout << "on_slot: " << x + y  << "   " << ++index5 << *s << '\n';
         //std::cout << x + y  << '\n';

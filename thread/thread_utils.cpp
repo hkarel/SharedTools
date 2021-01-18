@@ -41,25 +41,25 @@ namespace trd {
 
 bool ThreadIdList::empty() const
 {
-    SpinLocker locker(_tidsLock); (void) locker;
+    SpinLocker locker {_tidsLock}; (void) locker;
     return _tids.empty();
 }
 
 void ThreadIdList::lock(std::function<void (std::vector<pid_t>&)> func)
 {
-    SpinLocker locker(_tidsLock); (void) locker;
+    SpinLocker locker {_tidsLock}; (void) locker;
     func(_tids);
 }
 
 ThreadIdLock::ThreadIdLock(ThreadIdList* l) : _threadIdList(l)
 {
-    SpinLocker locker(_threadIdList->_tidsLock); (void) locker;
+    SpinLocker locker {_threadIdList->_tidsLock}; (void) locker;
     _threadIdList->_tids.push_back(trd::gettid());
 }
 
 ThreadIdLock::~ThreadIdLock()
 {
-    SpinLocker locker(_threadIdList->_tidsLock); (void) locker;
+    SpinLocker locker {_threadIdList->_tidsLock}; (void) locker;
     pid_t tid = trd::gettid();
     auto it = _threadIdList->_tids.begin();
     for (; it != _threadIdList->_tids.end(); ++it)

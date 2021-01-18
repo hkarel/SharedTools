@@ -210,7 +210,7 @@ struct SimpleSignal<R (Args...)> : public SimpleSignalBase<R, Args...>
 template<typename R, typename... Args>
 void SimpleSignalBase<R, Args...>::connect(const Slot& f, bool unique)
 {
-    SpinLocker locker(_slotsLock); (void) locker;
+    SpinLocker locker {_slotsLock}; (void) locker;
     if (unique)
         for (const Slot& slot : _slots)
             if (slot == f)
@@ -232,7 +232,7 @@ void SimpleSignalBase<R, Args...>::disconnect(const Slot& f, bool all)
     std::size_t index = 0;
 
     { //Block for SpinLocker
-        SpinLocker locker(_slotsLock); (void) locker;
+        SpinLocker locker {_slotsLock}; (void) locker;
         for (std::size_t i = 0; i < _slots.size(); ++i)
             if (f == _slots[i])
             {
@@ -254,7 +254,7 @@ void SimpleSignalBase<R, Args...>::disconnect(const Slot& f, bool all)
     while (true)
     {
         { //Block for SpinLocker
-            SpinLocker locker(_slotsLock); (void) locker;
+            SpinLocker locker {_slotsLock}; (void) locker;
             if (index == _slotIndex)
                 continue;
         }
@@ -265,7 +265,7 @@ void SimpleSignalBase<R, Args...>::disconnect(const Slot& f, bool all)
 template<typename R, typename... Args>
 bool SimpleSignalBase<R, Args...>::exists(const Slot& f) const
 {
-    SpinLocker locker(_slotsLock); (void) locker;
+    SpinLocker locker {_slotsLock}; (void) locker;
     for (const Slot& slot : _slots)
         if (slot == f)
             return true;
@@ -276,14 +276,14 @@ bool SimpleSignalBase<R, Args...>::exists(const Slot& f) const
 template<typename R, typename... Args>
 bool SimpleSignalBase<R, Args...>::empty() const
 {
-    SpinLocker locker(_slotsLock); (void) locker;
+    SpinLocker locker {_slotsLock}; (void) locker;
     return _slots.empty();
 }
 
 template<typename R, typename... Args>
 R SimpleSignalBase<R, Args...>::emit_(Args... args) const
 {
-    //std::lock_guard<std::mutex> locker(_emitLock); (void) locker;
+    //std::lock_guard<std::mutex> locker {_emitLock}; (void) locker;
 
     // При передаче args... не используем вызов std::forward(),
     // см. пояснения в примечании к описанию модуля.
@@ -293,7 +293,7 @@ R SimpleSignalBase<R, Args...>::emit_(Args... args) const
 template<typename R, typename... Args>
 void SimpleSignalBase<R, Args...>::clear()
 {
-    SpinLocker locker(_slotsLock); (void) locker;
+    SpinLocker locker {_slotsLock}; (void) locker;
     _slots.clear();
 }
 
@@ -311,7 +311,7 @@ Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Re
     while (true)
     {
         { //Block for SpinLocker
-            SpinLocker locker(_slotsLock); (void) locker;
+            SpinLocker locker {_slotsLock}; (void) locker;
             do {
                 if (++_slotIndex >= _slots.size())
                     return res;
@@ -340,7 +340,7 @@ void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Re
     while (true)
     {
         { //Block for SpinLocker
-            SpinLocker locker(_slotsLock); (void) locker;
+            SpinLocker locker {_slotsLock}; (void) locker;
             do {
                 if (++_slotIndex >= _slots.size())
                     return;

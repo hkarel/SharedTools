@@ -218,13 +218,13 @@ public:
         // и таким образом сэкономить на перерасчете указателей в менеджере памяти
         // (когда речь идет о миллионных списках - это может дать существенную
         // экономию).
-        MemLocker<LockT> locker(&_lock); (void) locker;
+        MemLocker<LockT> locker {&_lock}; (void) locker;
         _clear();
     }
 
     T* allocate()
     {
-        MemLocker<LockT> locker(&_lock); (void) locker;
+        MemLocker<LockT> locker {&_lock}; (void) locker;
         grow();
         MemBlock* b = _freeBlocks;
         _freeBlocks = _freeBlocks->next;
@@ -235,7 +235,7 @@ public:
     void free(T* t)
     {
         if (t) {
-            MemLocker<LockT> locker(&_lock); (void) locker;
+            MemLocker<LockT> locker {&_lock}; (void) locker;
             MemBlock* b = reinterpret_cast<MemBlock*>(t);
             b->next = _freeBlocks;
             _freeBlocks = b;
@@ -269,7 +269,7 @@ public:
 
     void clear()
     {
-        MemLocker<LockT> locker(&_lock); (void) locker;
+        MemLocker<LockT> locker {&_lock}; (void) locker;
         if (_callsCount == 0)
             _clear();
     }

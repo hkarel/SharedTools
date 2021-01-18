@@ -49,7 +49,7 @@ void ThreadPool::stop()
     _stopped = true;
     for (Item* it : _threads)
     {
-        lock_guard<mutex> locker(it->_sleepMutex); (void) locker;
+        lock_guard<mutex> locker {it->_sleepMutex}; (void) locker;
         if (it->_sleeps)
             it->_sleepCond.notify_all();
     }
@@ -83,7 +83,7 @@ ThreadPool::Item* ThreadPool::run(Func runFunc)
         return 0;
     }
 
-    lock_guard<mutex> locker(_threadsLock); (void) locker;
+    lock_guard<mutex> locker {_threadsLock}; (void) locker;
 
     Item* item = 0;
     for (Item* it : _threads)
@@ -98,7 +98,7 @@ ThreadPool::Item* ThreadPool::run(Func runFunc)
         }
 
         { //Block for lock_guard
-            lock_guard<mutex> locker(it->_sleepMutex); (void) locker;
+            lock_guard<mutex> locker {it->_sleepMutex}; (void) locker;
             if (it->_sleeps)
             {
                 it->_func = std::move(runFunc);
@@ -144,7 +144,7 @@ void ThreadPool::Item::run()
         // фактически будет приводить к блокировке потока, который сделал
         // вызов ThreadPool::Item::join().
         {
-            lock_guard<mutex> locker(_workMutex); (void) locker;
+            lock_guard<mutex> locker {_workMutex}; (void) locker;
             _working = false;
             _workCond.notify_all();
         }
@@ -154,7 +154,7 @@ void ThreadPool::Item::run()
             break;
 
         { //Block for unique_lock
-            unique_lock<mutex> locker(_sleepMutex);
+            unique_lock<mutex> locker {_sleepMutex};
             _sleeps = true;
             cv_status stat;
             do {
@@ -177,7 +177,7 @@ void ThreadPool::Item::join()
 {
     if (_working)
     {
-        unique_lock<mutex> locker(_workMutex); (void) locker;
+        unique_lock<mutex> locker {_workMutex}; (void) locker;
 //        static chrono::microseconds timeout {5};
 //        while (!_joinCond.wait_for(locker, timeout, [this]{
 //            //return !this->_working.load(memory_order_acquire);

@@ -716,7 +716,7 @@ void Saver::flush(const MessageList& messages)
 FilterList Saver::filters() const
 {
     FilterList filters;
-    SpinLocker locker(_filtersLock); (void) locker;
+    SpinLocker locker {_filtersLock}; (void) locker;
     for (int i = 0; i < _filters.count(); ++i)
     {
         Filter* f = _filters.item(i);
@@ -728,7 +728,7 @@ FilterList Saver::filters() const
 
 void Saver::addFilter(FilterPtr filter)
 {
-    SpinLocker locker(_filtersLock); (void) locker;
+    SpinLocker locker {_filtersLock}; (void) locker;
     lst::FindResult fr = _filters.findRef(filter->name(), {lst::BruteForce::Yes});
     if (fr.success())
         _filters.remove(fr.index());
@@ -740,7 +740,7 @@ void Saver::addFilter(FilterPtr filter)
 
 void Saver::removeFilter(const string& name)
 {
-    SpinLocker locker(_filtersLock); (void) locker;
+    SpinLocker locker {_filtersLock}; (void) locker;
     lst::FindResult fr = _filters.findRef(name, {lst::BruteForce::Yes});
     if (fr.success())
         _filters.remove(fr.index());
@@ -748,7 +748,7 @@ void Saver::removeFilter(const string& name)
 
 void Saver::clearFilters()
 {
-    SpinLocker locker(_filtersLock); (void) locker;
+    SpinLocker locker {_filtersLock}; (void) locker;
     _filters.clear();
 }
 
@@ -1005,7 +1005,7 @@ Logger::~Logger()
 
 void Logger::addMessage(MessagePtr&& m)
 {
-    SpinLocker locker(_messagesLock); (void) locker;
+    SpinLocker locker {_messagesLock}; (void) locker;
     _messages.add(m.release());
 }
 
@@ -1045,7 +1045,7 @@ void Logger::run()
     {
         bool messagesIsEmpty;
         { //Block for SpinLocker
-            SpinLocker locker(_messagesLock); (void) locker;
+            SpinLocker locker {_messagesLock}; (void) locker;
             messagesIsEmpty = _messages.empty();
         }
 
@@ -1057,7 +1057,7 @@ void Logger::run()
 
         MessageList messages;
         { //Block for SpinLocker
-            SpinLocker locker(_messagesLock); (void) locker;
+            SpinLocker locker {_messagesLock}; (void) locker;
             messages.swap(_messages);
         }
         if (!threadStop() && messages.empty() && messagesBuff.empty())
@@ -1113,7 +1113,7 @@ void Logger::run()
             SaverPtr saverErr;
 
             { //Block for SpinLocker
-                SpinLocker locker(_saversLock); (void) locker;
+                SpinLocker locker {_saversLock}; (void) locker;
                 saverOut = _saverOut;
                 saverErr = _saverErr;
             }
@@ -1171,7 +1171,7 @@ void Logger::addSaverStdOut(Level level, bool shortMessages)
 {
     waitingFlush();
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         _saverOut = SaverPtr(new SaverStdOut("stdout", level, shortMessages));
         _saverOut->setLogger(this);
     }
@@ -1182,7 +1182,7 @@ void Logger::addSaverStdErr(Level level, bool shortMessages)
 {
     waitingFlush();
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         _saverErr = SaverPtr(new SaverStdErr("stderr", level, shortMessages));
         _saverErr->setLogger(this);
     }
@@ -1193,7 +1193,7 @@ void Logger::removeSaverStdOut()
 {
     waitingFlush();
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         _saverOut.reset();
     }
     redefineLevel();
@@ -1203,7 +1203,7 @@ void Logger::removeSaverStdErr()
 {
     waitingFlush();
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         _saverErr.reset();
     }
     redefineLevel();
@@ -1212,7 +1212,7 @@ void Logger::removeSaverStdErr()
 void Logger::addSaver(SaverPtr saver)
 {
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         lst::FindResult fr = _savers.findRef(saver->name(), {lst::BruteForce::Yes});
         if (fr.success())
             _savers.remove(fr.index());
@@ -1228,7 +1228,7 @@ void Logger::removeSaver(const string& name)
 {
     waitingFlush();
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         lst::FindResult fr = _savers.findRef(name, {lst::BruteForce::Yes});
         if (fr.success())
         {
@@ -1249,7 +1249,7 @@ SaverPtr Logger::findSaver(const string& name)
 void Logger::clearSavers(bool clearStd)
 {
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         if (clearStd)
         {
             _saverOut.reset();
@@ -1266,7 +1266,7 @@ SaverList Logger::savers(bool withStd) const
 {
     SaverList savers;
     { //Block for SpinLocker
-        SpinLocker locker(_saversLock); (void) locker;
+        SpinLocker locker {_saversLock}; (void) locker;
         for (Saver* s : _savers)
         {
             s->add_ref();
@@ -1387,7 +1387,7 @@ const char* __file__cache(const char* file)
         if (*f == '\0')
             return 0;
 
-        SpinLocker locker(lock); (void) locker;
+        SpinLocker locker {lock}; (void) locker;
         if (lst::FindResult fr = list.find(f))
             return list.item(fr.index())->c_str();
 

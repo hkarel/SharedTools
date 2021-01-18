@@ -35,7 +35,7 @@ RingBuffer::~RingBuffer()
 
 void RingBuffer::init(size_t bufferSize)
 {
-    std::lock_guard<std::mutex> locker(_buffLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
 
     if (_buffBegin)
         free(_buffBegin);
@@ -54,7 +54,7 @@ void RingBuffer::init(size_t bufferSize)
 
 void RingBuffer::reset()
 {
-    std::lock_guard<std::mutex> locker(_buffLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
 
     if (_buffBegin)
         free(_buffBegin);
@@ -69,19 +69,19 @@ void RingBuffer::reset()
 
 size_t RingBuffer::available() const
 {
-    std::lock_guard<std::mutex> locker(_buffLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
     return _available;
 }
 
 size_t RingBuffer::size() const
 {
-    std::lock_guard<std::mutex> locker(_buffLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
     return _buffSize;
 }
 
 bool RingBuffer::read(char* dest, size_t length)
 {
-    std::lock_guard<std::mutex> locker(_buffLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
 
     if (_buffBegin == 0
         || _available < length)
@@ -113,7 +113,7 @@ bool RingBuffer::read(char* dest, size_t length)
 
 bool RingBuffer::write(const char* source, size_t length)
 {
-    std::lock_guard<std::mutex> locker(_buffLock); (void) locker;
+    std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
 
     if (_buffBegin == 0
         || (length * 2) > _buffSize)
