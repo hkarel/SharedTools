@@ -55,7 +55,7 @@
 //#include "_memalloc.h"
 //#endif
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(DEBUGGING_ON_RELEASE)
 #define GET_DEBUG _dbg = get();
 #else
 #define GET_DEBUG
@@ -440,7 +440,7 @@ private:
 private:
     counter_ptr_t* _counter = {0};
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(DEBUGGING_ON_RELEASE)
     // Используется для просмотра в отладчике параметров типа Т,
     // counter_ptr_t этого делать не позволяет, так как возвращает void*
     mutable T* _dbg = {0};
