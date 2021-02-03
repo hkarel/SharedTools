@@ -86,12 +86,6 @@ public:
             release(_ptr);
     }
 
-    explicit clife_ptr(T* p) {
-        _ptr = p;
-        if (_ptr)
-            add_ref(_ptr);
-    }
-
     clife_ptr(T* p, bool add_ref) {
         _ptr = p;
         if (_ptr && add_ref) {
@@ -100,6 +94,9 @@ public:
             self_t::add_ref(_ptr);
         }
     }
+
+    explicit clife_ptr(T* p) : clife_ptr(p, true /*add_ref*/)
+    {}
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
     // неявно, и их поведение будет отличаться от ожидаемого.
