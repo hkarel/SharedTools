@@ -211,14 +211,17 @@ public:
         release(_counter);
     }
 
-    explicit container_ptr(T* p, bool fake = false) {
-        PRINT_DEBUG("explicit container_ptr(T* p, bool fake = false)", "")
-        // Описание параметра fake см. в struct counter_ptr_t
+    // Описание параметра fake см. в struct counter_ptr_t
+    container_ptr(T* p, bool fake) {
+        PRINT_DEBUG("container_ptr(T* p, bool fake). fake = ", fake)
         _counter = create_counter();
         _counter->ptr = p;
         _counter->fake = fake;
         GET_DEBUG
     }
+
+    explicit container_ptr(T* p) : container_ptr(p, false /*fake*/)
+    {}
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
     // неявно, и их поведение будет отличаться от ожидаемого
