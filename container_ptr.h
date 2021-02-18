@@ -30,14 +30,6 @@
 
 #pragma once
 
-#ifndef NOEXCEPT
-#  ifdef _MSC_VER
-#    define NOEXCEPT
-#  else
-#    define NOEXCEPT noexcept
-#  endif
-#endif
-
 #include "allocator_ptr.h"
 
 #include <new>
@@ -116,11 +108,11 @@ struct counter_ptr_t
 
     void* __ptr() {return (join) ? &ptr : ptr;}
 
-    counter_ptr_t() NOEXCEPT
+    counter_ptr_t() noexcept
         : count(1), dummy(false), join(false), reserved(0), ptr(nullptr)
     {}
 
-    ~counter_ptr_t() NOEXCEPT = default;
+    ~counter_ptr_t() noexcept = default;
 
     counter_ptr_t(counter_ptr_t&&) = delete;
     counter_ptr_t(const counter_ptr_t&) = delete;
@@ -305,11 +297,11 @@ public:
     //    STATIC_CHECK_CPTR(1, No_implement)
     //}
 
-    T* get() const NOEXCEPT {return get(_counter);}
+    T* get() const noexcept {return get(_counter);}
 
-    T* operator-> () const NOEXCEPT {return  get();}
-    T& operator*  () const NOEXCEPT {return *get();}
-    operator T*   () const NOEXCEPT {return  get();}
+    T* operator-> () const noexcept {return  get();}
+    T& operator*  () const noexcept {return *get();}
+    operator T*   () const noexcept {return  get();}
 
     // Функция reset() введена вместо функции release(),  это сделано для того,
     // чтобы осуществить однотипное поведение  одноименных  функций  в классах
@@ -318,14 +310,14 @@ public:
     //             дополнительные  затраты  на создание  объекта counter_ptr_t
     void reset() {assign(self_t(/*0*/));}
 
-    bool empty() const NOEXCEPT {return (get() == nullptr);}
+    bool empty() const noexcept {return (get() == nullptr);}
 
-    explicit operator bool () const NOEXCEPT {return !empty();}
-    bool operator! () const NOEXCEPT {return empty();}
+    explicit operator bool () const noexcept {return !empty();}
+    bool operator! () const noexcept {return empty();}
 
     // Функции совместимости с Qt
-    T* data() const NOEXCEPT {return get();}
-    bool isNull() const NOEXCEPT {return empty();}
+    T* data() const noexcept {return get();}
+    bool isNull() const noexcept {return empty();}
 
     // Вспомогательные функции.
     static T* create() {return allocator_t::create();}
@@ -394,7 +386,7 @@ private:
             }
     }
 
-    static T* get(counter_ptr_t* counter) NOEXCEPT {
+    static T* get(counter_ptr_t* counter) noexcept {
         return static_cast<T*>(counter ? counter->__ptr() : nullptr);
     }
 
