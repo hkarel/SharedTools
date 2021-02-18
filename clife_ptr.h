@@ -181,8 +181,8 @@ public:
         return p;
     }
 
-    bool empty()    const NOEXCEPT {return (_ptr == nullptr);}
-    bool is_empty() const NOEXCEPT {return (_ptr == nullptr);}
+    bool empty() const NOEXCEPT {return (_ptr == nullptr);}
+    [[deprecated]] bool is_empty() const NOEXCEPT {return (_ptr == nullptr);}
 
     explicit operator bool () const NOEXCEPT {return (_ptr != nullptr);}
     bool operator! () const NOEXCEPT {return (_ptr == nullptr);}
