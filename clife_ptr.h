@@ -184,8 +184,8 @@ public:
     bool empty() const NOEXCEPT {return (_ptr == nullptr);}
     [[deprecated]] bool is_empty() const NOEXCEPT {return (_ptr == nullptr);}
 
-    explicit operator bool () const NOEXCEPT {return (_ptr != nullptr);}
-    bool operator! () const NOEXCEPT {return (_ptr == nullptr);}
+    explicit operator bool () const NOEXCEPT {return !empty();}
+    bool operator! () const NOEXCEPT {return empty();}
 
     // Фиктивная функция, введена для обеспечения возможности компиляции
     // шаблонных функций использующих как clife_ptr, так и container_ptr.
