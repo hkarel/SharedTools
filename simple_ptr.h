@@ -54,7 +54,7 @@ public:
     typedef simple_ptr<T, Allocator>  self_t;
 
 public:
-    explicit simple_ptr(T* p = 0) : _ptr(p) {}
+    explicit simple_ptr(T* p = nullptr) : _ptr(p) {}
     ~simple_ptr() {allocator_t::destroy(_ptr);}
 
     // По аналогии с unique_ptr запрещаем конструктор копирования и
@@ -66,7 +66,7 @@ public:
     self_t& operator= (const self_t&) = delete;
 
     simple_ptr(self_t&& p) {
-        _ptr = 0;
+        _ptr = nullptr;
         assign(p);
     }
 
@@ -77,7 +77,7 @@ public:
 
     template<typename otherT, template<typename> class otherA>
     simple_ptr(simple_ptr<otherT, otherA> && p) {
-        _ptr = 0;
+        _ptr = nullptr;
         assign(p);
     }
 
@@ -95,11 +95,11 @@ public:
 
     // Допускается использовать только для инициализации
     T** ref() {
-        assert(_ptr == 0);
+        assert(_ptr == nullptr);
         return &_ptr;
     }
 
-    T* release() NOEXCEPT {T* tmp(_ptr); _ptr = 0; return tmp;}
+    T* release() NOEXCEPT {T* tmp {_ptr}; _ptr = nullptr; return tmp;}
 
     // Функция введена для удобства, как замена конструкции
     // вида: simple_ptr<TYPE>(p.release()). Функция носит декоративный характер,
@@ -110,16 +110,16 @@ public:
     // тивой конструктора simple_ptr.
     self_t release_ptr() {return self_t(release());}
 
-    void reset(T* p = 0) {
+    void reset(T* p = nullptr) {
         if (_ptr != p)
             allocator_t::destroy(_ptr);
         _ptr = p;
     }
 
-    bool empty() const NOEXCEPT {return (_ptr == 0);}
+    bool empty() const NOEXCEPT {return (_ptr == nullptr);}
 
-    explicit operator bool () const NOEXCEPT {return (_ptr != 0);}
-    bool operator! () const NOEXCEPT {return (_ptr == 0);}
+    explicit operator bool () const NOEXCEPT {return (_ptr != nullptr);}
+    bool operator! () const NOEXCEPT {return (_ptr == nullptr);}
 
     // Функции совместимости с Qt
     T* data() const NOEXCEPT {return get();}
@@ -150,6 +150,6 @@ private:
     }
 
 private:
-    T* _ptr = {0};
+    T* _ptr = {nullptr};
 };
 
