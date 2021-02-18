@@ -118,8 +118,8 @@ public:
 
     bool empty() const NOEXCEPT {return (_ptr == nullptr);}
 
-    explicit operator bool () const NOEXCEPT {return (_ptr != nullptr);}
-    bool operator! () const NOEXCEPT {return (_ptr == nullptr);}
+    explicit operator bool () const NOEXCEPT {return !empty();}
+    bool operator! () const NOEXCEPT {return empty();}
 
     // Функции совместимости с Qt
     T* data() const NOEXCEPT {return get();}
