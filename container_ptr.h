@@ -117,7 +117,7 @@ struct counter_ptr_t
     void* __ptr() {return (join) ? &ptr : ptr;}
 
     counter_ptr_t() NOEXCEPT
-        : count(1), fake(0), join(0), reserved(0), ptr(0)
+        : count(1), dummy(false), join(false), reserved(0), ptr(nullptr)
     {}
 
     ~counter_ptr_t() NOEXCEPT = default;
@@ -199,7 +199,7 @@ public:
         // Не создаем счетчик для пустого контейнера, при создании большого
         // числа экземпляров container_ptr такое  решение  позволит  меньше
         // фрагментировать память.
-        // _counter = 0;
+        // _counter = nullptr;
         GET_DEBUG
     }
 
@@ -318,7 +318,7 @@ public:
     //             дополнительные  затраты  на создание  объекта counter_ptr_t
     void reset() {assign(self_t(/*0*/));}
 
-    bool empty() const NOEXCEPT {return (get() == 0);}
+    bool empty() const NOEXCEPT {return (get() == nullptr);}
 
     explicit operator bool () const NOEXCEPT {return !empty();}
     bool operator! () const NOEXCEPT {return empty();}
@@ -344,7 +344,7 @@ public:
         const int size = sizeof(counter_ptr_t)
                          - sizeof(((counter_ptr_t*)0)->ptr) + sizeof(T);
         void* ptr = malloc(size);
-        if (ptr == 0)
+        if (ptr == nullptr)
             throw std::bad_alloc();
         self._counter = allocate_counter(ptr);
         self._counter->join = true;
@@ -366,7 +366,7 @@ private:
 
     static counter_ptr_t* create_counter() {
         void* ptr = malloc(sizeof(counter_ptr_t));
-        if (ptr == 0)
+        if (ptr == nullptr)
             throw std::bad_alloc();
         return allocate_counter(ptr);
     }
@@ -395,7 +395,7 @@ private:
     }
 
     static T* get(counter_ptr_t* counter) NOEXCEPT {
-        return static_cast<T*>(counter ? counter->__ptr() : 0);
+        return static_cast<T*>(counter ? counter->__ptr() : nullptr);
     }
 
     // Проверяет эквивалентность аллокаторов
@@ -435,17 +435,17 @@ private:
     void assign_rvalue(container_ptr<otherT, otherA>& p) {
         release(_counter);
         _counter = p._counter;
-        p._counter = 0;
+        p._counter = nullptr;
         GET_DEBUG
     }
 
 private:
-    counter_ptr_t* _counter = {0};
+    counter_ptr_t* _counter = {nullptr};
 
 #if !defined(NDEBUG) || defined(DEBUGGING_ON_RELEASE)
     // Используется для просмотра в отладчике параметров типа Т,
     // counter_ptr_t этого делать не позволяет, так как возвращает void*
-    mutable T* _dbg = {0};
+    mutable T* _dbg = {nullptr};
 #endif
 
     template<typename, template<typename> class> friend class container_ptr;
