@@ -66,7 +66,7 @@ public:
     typedef clife_ptr<T> self_t;
 
     // Признак, позволяющий отличить данный контейнер от container_ptr
-    enum {IsContainerPtr = 0};
+    enum {IsContainerPtr = false};
 
 private:
     template<typename P>
@@ -79,7 +79,7 @@ private:
     static auto release(P* ptr) -> decltype(ptr->Release(), void()) {ptr->Release();}
 
 public:
-    clife_ptr() : _ptr(0) {}
+    clife_ptr() : _ptr(nullptr) {}
 
     ~clife_ptr() {
         if (_ptr)
@@ -101,7 +101,7 @@ public:
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
     // неявно, и их поведение будет отличаться от ожидаемого.
     clife_ptr(const self_t& p) {
-        _ptr = 0;
+        _ptr = nullptr;
         assign(p);
     }
     self_t& operator= (const self_t& p) {
@@ -111,7 +111,7 @@ public:
 
     template<typename otherT>
     clife_ptr(const clife_ptr<otherT>& p) {
-        _ptr = 0;
+        _ptr = nullptr;
         assign(p);
     }
     template<typename otherT>
@@ -121,7 +121,7 @@ public:
     }
 
     clife_ptr(self_t&& p) {
-        _ptr = 0;
+        _ptr = nullptr;
         assign_rvalue(p);
     }
     self_t& operator= (self_t&& p) {
@@ -131,7 +131,7 @@ public:
 
     template<typename otherT>
     clife_ptr(clife_ptr<otherT>&& p) {
-        _ptr = 0;
+        _ptr = nullptr;
         assign_rvalue(p);
     }
     template<typename otherT>
@@ -154,8 +154,8 @@ public:
         return other_cptrT();
     }
 
-    void release() {if (_ptr) {release(_ptr); _ptr = 0;}}
-    void reset()   {if (_ptr) {release(_ptr); _ptr = 0;}}
+    void release() {if (_ptr) {release(_ptr); _ptr = nullptr;}}
+    void reset()   {if (_ptr) {release(_ptr); _ptr = nullptr;}}
 
     T* get() const NOEXCEPT {return _ptr;}
 
@@ -165,7 +165,7 @@ public:
 
     // Допускается использовать только для инициализации.
     T** ref() {
-        assert(_ptr == 0);
+        assert(_ptr == nullptr);
         return &_ptr;
     }
 
@@ -177,15 +177,15 @@ public:
 
     T* detach() NOEXCEPT {
         T* p = _ptr;
-        _ptr = 0;
+        _ptr = nullptr;
         return p;
     }
 
-    bool empty()    const NOEXCEPT {return (_ptr == 0);}
-    bool is_empty() const NOEXCEPT {return (_ptr == 0);}
+    bool empty()    const NOEXCEPT {return (_ptr == nullptr);}
+    bool is_empty() const NOEXCEPT {return (_ptr == nullptr);}
 
-    explicit operator bool () const NOEXCEPT {return (_ptr != 0);}
-    bool operator! () const NOEXCEPT {return (_ptr == 0);}
+    explicit operator bool () const NOEXCEPT {return (_ptr != nullptr);}
+    bool operator! () const NOEXCEPT {return (_ptr == nullptr);}
 
     // Фиктивная функция, введена для обеспечения возможности компиляции
     // шаблонных функций использующих как clife_ptr, так и container_ptr.
@@ -210,11 +210,11 @@ private:
         if (_ptr)
             release(_ptr);
         _ptr = p.get();
-        p._ptr = 0;
+        p._ptr = nullptr;
     }
 
 private:
-    T* _ptr = {0};
+    T* _ptr = {nullptr};
 
     template<typename> friend class clife_ptr;
 };
