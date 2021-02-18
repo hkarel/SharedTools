@@ -26,14 +26,6 @@
 
 #pragma once
 
-#ifndef NOEXCEPT
-#  ifdef _MSC_VER
-#    define NOEXCEPT
-#  else
-#    define NOEXCEPT noexcept
-#  endif
-#endif
-
 #include "allocator_ptr.h"
 #include <cassert>
 
@@ -87,11 +79,11 @@ public:
         return *this;
     }
 
-    T* get() const NOEXCEPT {return _ptr;}
+    T* get() const noexcept {return _ptr;}
 
-    T* operator-> () const NOEXCEPT {return  get();}
-    T& operator*  () const NOEXCEPT {return *get();}
-    operator T*   () const NOEXCEPT {return  get();}
+    T* operator-> () const noexcept {return  get();}
+    T& operator*  () const noexcept {return *get();}
+    operator T*   () const noexcept {return  get();}
 
     // Допускается использовать только для инициализации
     T** ref() {
@@ -99,7 +91,7 @@ public:
         return &_ptr;
     }
 
-    T* release() NOEXCEPT {T* tmp {_ptr}; _ptr = nullptr; return tmp;}
+    T* release() noexcept {T* tmp {_ptr}; _ptr = nullptr; return tmp;}
 
     // Функция введена для удобства, как замена конструкции
     // вида: simple_ptr<TYPE>(p.release()). Функция носит декоративный характер,
@@ -116,18 +108,18 @@ public:
         _ptr = p;
     }
 
-    bool empty() const NOEXCEPT {return (_ptr == nullptr);}
+    bool empty() const noexcept {return (_ptr == nullptr);}
 
-    explicit operator bool () const NOEXCEPT {return !empty();}
-    bool operator! () const NOEXCEPT {return empty();}
+    explicit operator bool () const noexcept {return !empty();}
+    bool operator! () const noexcept {return empty();}
 
     // Функции совместимости с Qt
-    T* data() const NOEXCEPT {return get();}
-    T* take() NOEXCEPT {return release();}
-    bool isNull() const NOEXCEPT {return empty();}
+    T* data() const noexcept {return get();}
+    T* take() noexcept {return release();}
+    bool isNull() const noexcept {return empty();}
 
     // Размер элемента smart-pointer.
-    int type_size() const NOEXCEPT {return sizeof(element_t);}
+    int type_size() const noexcept {return sizeof(element_t);}
 
     // Вспомогательные функции.
     static T* create() {return allocator_t::create();}
