@@ -77,29 +77,28 @@ struct counter_ptr_t
     void add_ref() {++count;}
     uint32_t release() {return --count;}
 
-    // Флаг fake - определяет состояние ложного счетчика ссылок.
-    // Если fake == true, то при уничтожении counter_ptr - объект владения раз-
-    // рушен не будет, таким образом контейнер вырождается в обычный  указатель
-    unsigned int fake : 1;
+    // Флаг dummy определяет состояние ложного счетчика ссылок.
+    // Если dummy равен true, то при уничтожении counter_ptr - объект владения
+    // разрушен не будет, таким образом  container_ptr  вырождается  в обычный
+    // указатель
+    unsigned int dummy : 1;
 
     // Флаг join - признак выделения единого сегмента памяти для counter_ptr_t
     // и целевого объекта. Основное назначение: сократить издежки на выделение/
     // освобождение памяти при работе с большим количеством маленьких однотипных
     // объектов.
-    // ! Не использовать с флагом fake == true - поведение не исследовано.
-    // ! Не использовать "внутри" спец-аллокаторов памяти - поведение не иссле-
-    //   довано.
-    // ! Не использовать для объектов с полиморфным поведением: Base->Derived -
-    //   поведение не исследовано.
-    // [22.02.2013] Замечания  по совместной  работе  fake и join: по  сути эти
-    // параметры являются  взаимоисключающими.  Смарт-указатель  с флагом  fake
-    // создается уже для существующих объектов, и так,  чтобы после  разрушения
-    // смарт-указателя, объект владения остался жив.
+    // Не использовать join в следующих ситуациях (поведение не исследовано):
+    //   1. Внутри спец-аллокаторов памяти;
+    //   2. Для объектов с полиморфным поведением: Base->Derived.
+    // [22.02.2013] Замечания  по совместной  работе  dummy и join: по сути эти
+    // параметры  являются  взаимоисключающими.  container_ptr  с флагом  dummy
+    // создается уже для существующих объектов, таким образом,  нельзя  создать
+    // container_ptr одновременно с флагами join и dummy.
     // Типичный пример: есть некая функция some_func(container_ptr<T>), ее нужно
-    // вызвать из метода класса и в качестве параметра отправить в нее this.
-    // Если создать обычный (не fake) указатель, то при выходе из метода класса
-    // получим убийство this. Поэтому единственный корректный  способ  выйти из
-    // данной ситуации будет такой: some_func(container_ptr(this, fake_ptr)).
+    // вызвать из метода класса, и в качестве параметра отправить в нее this.
+    // Если создать обычный (не dummy) указатель, то при выходе из метода класса
+    // получим разрушение this. Поэтому единственный  корректный  способ  выйти
+    // из данной ситуации будет такой: some_func(container_ptr(this, dummy_ptr)).
     // С другой стороны смарт-указатели  с флагом join всегда  создаются  через
     // функцию create_join_ptr(), что в принципе,  исключает  использование уже
     // существующего адреса объекта владения
@@ -193,8 +192,7 @@ public:
     typedef Allocator<T> allocator_t;
     typedef container_ptr<T, Allocator> self_t;
 
-    // См. описание counter_ptr_t::fake
-    enum {Fake = 1};
+    enum {dummy_ptr = true};
 
 public:
     container_ptr() {
@@ -211,16 +209,16 @@ public:
         release(_counter);
     }
 
-    // Описание параметра fake см. в struct counter_ptr_t
-    container_ptr(T* p, bool fake) {
-        PRINT_DEBUG("container_ptr(T* p, bool fake). fake = ", fake)
+    container_ptr(T* p, bool dummy /*см. counter_ptr_t::dummy*/) {
+        PRINT_DEBUG("container_ptr(T* p, bool dummy). dummy = ", dummy)
         _counter = create_counter();
         _counter->ptr = p;
-        _counter->fake = fake;
+        _counter->join = false;
+        _counter->dummy = dummy;
         GET_DEBUG
     }
 
-    explicit container_ptr(T* p) : container_ptr(p, false /*fake*/)
+    explicit container_ptr(T* p) : container_ptr(p, false /*dummy*/)
     {}
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
@@ -350,6 +348,7 @@ public:
             throw std::bad_alloc();
         self._counter = allocate_counter(ptr);
         self._counter->join = true;
+        self._counter->dummy = false;
         new (get(self._counter)) T(std::forward<Args>(args)...);
         return self;
     }
@@ -386,7 +385,7 @@ private:
                         destroy<T, Allocator>(get(counter), true);
                 }
                 else {
-                    if (!counter->fake)
+                    if (!counter->dummy)
                         container_ptr_destroy<join_yes>::template
                             destroy<T, Allocator>(get(counter), false);
                 }
