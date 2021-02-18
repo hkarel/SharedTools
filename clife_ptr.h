@@ -26,14 +26,6 @@
 
 #pragma  once
 
-#ifndef NOEXCEPT
-#  ifdef _MSC_VER
-#    define NOEXCEPT
-#  else
-#    define NOEXCEPT noexcept
-#  endif
-#endif
-
 #include <cassert>
 #include <type_traits>
 
@@ -157,11 +149,11 @@ public:
     void release() {if (_ptr) {release(_ptr); _ptr = nullptr;}}
     void reset()   {if (_ptr) {release(_ptr); _ptr = nullptr;}}
 
-    T* get() const NOEXCEPT {return _ptr;}
+    T* get() const noexcept {return _ptr;}
 
-    T* operator-> () const NOEXCEPT {return  _ptr;}
-    T& operator*  () const NOEXCEPT {return *_ptr;}
-    operator T*   () const NOEXCEPT {return  _ptr;}
+    T* operator-> () const noexcept {return  _ptr;}
+    T& operator*  () const noexcept {return *_ptr;}
+    operator T*   () const noexcept {return  _ptr;}
 
     // Допускается использовать только для инициализации.
     T** ref() {
@@ -175,17 +167,17 @@ public:
         _ptr = p;
     }
 
-    T* detach() NOEXCEPT {
+    T* detach() noexcept {
         T* p = _ptr;
         _ptr = nullptr;
         return p;
     }
 
-    bool empty() const NOEXCEPT {return (_ptr == nullptr);}
-    [[deprecated]] bool is_empty() const NOEXCEPT {return (_ptr == nullptr);}
+    bool empty() const noexcept {return (_ptr == nullptr);}
+    [[deprecated]] bool is_empty() const noexcept {return (_ptr == nullptr);}
 
-    explicit operator bool () const NOEXCEPT {return !empty();}
-    bool operator! () const NOEXCEPT {return empty();}
+    explicit operator bool () const noexcept {return !empty();}
+    bool operator! () const noexcept {return empty();}
 
     // Фиктивная функция, введена для обеспечения возможности компиляции
     // шаблонных функций использующих как clife_ptr, так и container_ptr.
