@@ -55,16 +55,7 @@
 
 #pragma once
 
-#ifndef NOEXCEPT
-#  ifdef _MSC_VER
-#    define NOEXCEPT
-#  else
-#    define NOEXCEPT noexcept
-#  endif
-#endif
-
 #include <utility>
-
 
 namespace closure
 {
@@ -72,7 +63,6 @@ namespace closure
     template<typename> struct CreateHelper;
 
 } // namespace closure
-
 
 /**
   Базовый класс позволяет иметь общие операторы '==' и '!='
@@ -84,25 +74,24 @@ protected:
     void* proxy = {0};
 
 public:
-    bool equal(const ClosureBase& c) const NOEXCEPT
+    bool equal(const ClosureBase& c) const noexcept
     {
         return (self == c.self) && (proxy == c.proxy);
     }
 };
 
-inline bool operator== (const ClosureBase& c1, const ClosureBase& c2) NOEXCEPT
+inline bool operator== (const ClosureBase& c1, const ClosureBase& c2) noexcept
 {
     return c1.equal(c2);
 }
 
-inline bool operator!= (const ClosureBase& c1, const ClosureBase& c2) NOEXCEPT
+inline bool operator!= (const ClosureBase& c1, const ClosureBase& c2) noexcept
 {
     return !c1.equal(c2);
 }
 
 // Обобщенная декларация
 template<typename, typename... > class Closure;
-
 
 /**
   Closure
@@ -135,22 +124,21 @@ public:
                : ( (proxy) ? ((proxy_f)proxy)(std::forward<Args>(args)...)       : R() );
     }
 
-    bool empty() const NOEXCEPT {return (proxy == 0);}
+    bool empty() const noexcept {return (proxy == 0);}
 
-    explicit operator bool () const NOEXCEPT {return !empty();}
-    bool operator! () const NOEXCEPT {return empty();}
+    explicit operator bool () const noexcept {return !empty();}
+    bool operator! () const noexcept {return empty();}
 
     void reset(const Closure& c = Closure()) {*this = c;}
 
-
 private:
-    Closure(void *self, proxy_m proxy) NOEXCEPT
+    Closure(void *self, proxy_m proxy) noexcept
     {
         this->self = self;
         this->proxy = (void*)proxy;
     }
 
-    Closure(proxy_f proxy) NOEXCEPT
+    Closure(proxy_f proxy) noexcept
     {
         this->self = 0;
         this->proxy = (void*)proxy;
@@ -158,7 +146,6 @@ private:
 
     template<typename> friend struct closure::CreateHelper;
 };
-
 
 namespace closure
 {
@@ -187,7 +174,7 @@ namespace closure
         typedef Closure<R (Args...)> ClosureType;
 
         template<R (B::*mem_func)(Args...), typename D>
-        static ClosureType Init(D *d) NOEXCEPT
+        static ClosureType Init(D *d) noexcept
         {
             // Проверяем корректность преобразования типа. Допускается преобразование
             // только от классов-наследников к базовым классам.
@@ -202,7 +189,7 @@ namespace closure
         typedef Closure<R (Args...)> ClosureType;
 
         template<R (B::*mem_func)(Args...) const, typename D>
-        static ClosureType Init(D *d) NOEXCEPT
+        static ClosureType Init(D *d) noexcept
         {
             B* b = d;
             return ClosureType(b, ProxyFunc<Args...>::template Func<B, R, mem_func>);
@@ -215,7 +202,7 @@ namespace closure
         typedef Closure<R (Args...)> ClosureType;
 
         template<R (*func)(Args...)>
-        constexpr static ClosureType Init() NOEXCEPT
+        constexpr static ClosureType Init() noexcept
         {
             return ClosureType(func);
         }
@@ -234,7 +221,6 @@ namespace closure
     }
 
 } // namespace closure
-
 
 // Макрос для создания объекта Closure
 // FUNC_PTR  Указатель на функцию член класса или на обычную функцию.

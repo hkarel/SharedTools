@@ -68,14 +68,6 @@
 
 #pragma once
 
-#ifndef NOEXCEPT
-#  ifdef _MSC_VER
-#    define NOEXCEPT
-#  else
-#    define NOEXCEPT noexcept
-#  endif
-#endif
-
 #include "closure/closure3.h"
 #include "spin_locker.h"
 
@@ -147,8 +139,8 @@ private:
     struct ResetSlotIndex
     {
         T* p;
-        ResetSlotIndex(T* p) NOEXCEPT : p(p) {}
-        ~ResetSlotIndex() NOEXCEPT {(*p) = -1;}
+        ResetSlotIndex(T* p) noexcept : p(p) {}
+        ~ResetSlotIndex() noexcept {(*p) = -1;}
     };
 
     template<typename Res>
