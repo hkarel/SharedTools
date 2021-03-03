@@ -37,12 +37,12 @@ namespace trd {
 //    //_waitThreadStop = true;
 //}
 
-bool ThreadBase::threadStop() const NOEXCEPT
+bool ThreadBase::threadStop() const noexcept
 {
     return _threadStop;
 }
 
-bool ThreadBase::threadRun() const NOEXCEPT
+bool ThreadBase::threadRun() const noexcept
 {
 //    thread::native_handle_type thr = nativeHandle();
 //    if (thr != 0)
@@ -55,7 +55,7 @@ bool ThreadBase::threadRun() const NOEXCEPT
     return _threadRun;
 }
 
-std::thread::native_handle_type ThreadBase::nativeHandle() NOEXCEPT
+std::thread::native_handle_type ThreadBase::nativeHandle() noexcept
 {
     return _thread.native_handle();
 }
