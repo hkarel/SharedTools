@@ -26,14 +26,6 @@
 
 #pragma once
 
-#ifndef NOEXCEPT
-#  ifdef _MSC_VER
-#    define NOEXCEPT
-#  else
-#    define NOEXCEPT noexcept
-#  endif
-#endif
-
 #include <atomic>
 
 /**
@@ -42,10 +34,10 @@
 */
 struct SpinLocker
 {
-    explicit SpinLocker(std::atomic_flag& locker) NOEXCEPT : locker(locker) {
+    explicit SpinLocker(std::atomic_flag& locker) noexcept : locker(locker) {
         lock();
     }
-    ~SpinLocker() NOEXCEPT {
+    ~SpinLocker() noexcept {
         unlock();
     }
     void lock() {
