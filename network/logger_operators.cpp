@@ -25,9 +25,11 @@
 
 #include "network/logger_operators.h"
 
+#ifndef MINGW
 #ifndef FREEBSD
 #include <netinet/ether.h>
 #endif
+#endif // MINGW
 
 namespace alog {
 
@@ -46,6 +48,7 @@ Line& operator<< (Line& line, const sockaddr_in& in)
     return line;
 }
 
+#ifndef MINGW
 Line& operator<< (Line& line, const ether_addr& addr)
 {
     if (line.toLogger())
@@ -69,5 +72,6 @@ Line& operator<< (Line& line, const sockaddr_nl& nl)
     return line;
 }
 #endif
+#endif // MINGW
 
 } // namespace alog

@@ -29,23 +29,32 @@
 
 #pragma once
 
+#include "defmac.h"
 #include "logger/logger.h"
 #include <sys/types.h>
+
+#ifdef MINGW
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
 #include <net/ethernet.h>
 
 #ifndef FREEBSD
 #include <linux/netlink.h>
 #endif
+#endif // MINGW
 
 
 namespace alog {
 
 Line& operator<< (Line& line, const sockaddr_in&);
+
+#ifndef MINGW
 Line& operator<< (Line& line, const ether_addr&);
 
 #ifndef FREEBSD
 Line& operator<< (Line& line, const sockaddr_nl&);
 #endif
+#endif // MINGW
 
 } // namespace alog
