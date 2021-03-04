@@ -87,9 +87,6 @@ void dirExpansion(std::string& filePath)
     size_t n = filePath.find(programData);
     if (n == 0)
     {
-        break_point
-        // Отладить
-
         const char* prdata = getenv("PROGRAMDATA");
         filePath.replace(0, strlen(programData), string(prdata));
         slashReplace();
