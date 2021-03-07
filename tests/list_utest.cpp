@@ -21,7 +21,7 @@ struct C {};
 
 struct CompareA
 {
-    int operator() (const A* item1, const A* item2, void*) const
+    int operator() (const A* item1, const A* item2) const
     {
         //return LIST_COMPARE_ITEM(*item1, *item2);
         return 0;
@@ -375,14 +375,14 @@ bool find_addInSort_Test()
 }
 
 
-int compareFunc(const int* item1, const int* item2, void*)
+int compareFunc(const int* item1, const int* item2)
 {
     return LIST_COMPARE_ITEM(*item1, *item2);
 }
 
 struct CompareFunctor
 {
-    int operator() (const int* item1, const int* item2, void* extParam) const
+    int operator() (const int* item1, const int* item2) const
     {
       return LIST_COMPARE_ITEM(*item1, *item2);
     }
@@ -820,7 +820,7 @@ struct SortTwoVal
 
     struct Compare
     {
-        int operator() (const SortTwoVal* item1, const SortTwoVal* item2, void* = 0) const
+        int operator() (const SortTwoVal* item1, const SortTwoVal* item2) const
         {
             LIST_COMPARE_MULTI_ITEM(item1->val1,  item2->val1)
             return LIST_COMPARE_ITEM(item2->val2, item1->val2);
@@ -1072,7 +1072,7 @@ void compressList_Test()
     list.addCopy(3);
 
     printf("Remove elements 1 without compression list\n");
-    list.remove(0, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
 
     print_elements(list, 3);
 
@@ -1092,7 +1092,7 @@ void compressList_Test()
     list.addCopy(3);
 
     printf("Remove elements 2 without compression list\n");
-    list.remove(1, lst::NO_COMPRESS_LIST);
+    list.remove(1, lst::CompressList::No);
 
     print_elements(list, 3);
 
@@ -1112,7 +1112,7 @@ void compressList_Test()
     list.addCopy(3);
 
     printf("Remove elements 3 without compression list\n");
-    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::CompressList::No);
 
     print_elements(list, 3);
 
@@ -1132,8 +1132,8 @@ void compressList_Test()
     list.addCopy(4);
 
     printf("Remove elements 1,2 without compression list\n");
-    list.remove(0, lst::NO_COMPRESS_LIST);
-    list.remove(1, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
+    list.remove(1, lst::CompressList::No);
 
     print_elements(list, 4);
 
@@ -1153,8 +1153,8 @@ void compressList_Test()
     list.addCopy(4);
 
     printf("Remove elements 3,4 without compression list\n");
-    list.remove(2, lst::NO_COMPRESS_LIST);
-    list.remove(3, lst::NO_COMPRESS_LIST);
+    list.remove(2, lst::CompressList::No);
+    list.remove(3, lst::CompressList::No);
 
     print_elements(list, 4);
 
@@ -1174,9 +1174,9 @@ void compressList_Test()
     list.addCopy(4);
 
     printf("Remove elements 1,2,3 without compression list\n");
-    list.remove(0, lst::NO_COMPRESS_LIST);
-    list.remove(1, lst::NO_COMPRESS_LIST);
-    list.remove(2, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
+    list.remove(1, lst::CompressList::No);
+    list.remove(2, lst::CompressList::No);
 
     print_elements(list, 4);
 
@@ -1195,9 +1195,9 @@ void compressList_Test()
     list.addCopy(4);
 
     printf("Remove elements 2,3,4 without compression list\n");
-    list.remove(1, lst::NO_COMPRESS_LIST);
-    list.remove(2, lst::NO_COMPRESS_LIST);
-    list.remove(3, lst::NO_COMPRESS_LIST);
+    list.remove(1, lst::CompressList::No);
+    list.remove(2, lst::CompressList::No);
+    list.remove(3, lst::CompressList::No);
 
     print_elements(list, 4);
 
@@ -1216,10 +1216,10 @@ void compressList_Test()
     list.addCopy(4);
 
     printf("Remove elements 1,2,3,4 without compression list\n");
-    list.remove(0, lst::NO_COMPRESS_LIST);
-    list.remove(1, lst::NO_COMPRESS_LIST);
-    list.remove(2, lst::NO_COMPRESS_LIST);
-    list.remove(3, lst::NO_COMPRESS_LIST);
+    list.remove(0, lst::CompressList::No);
+    list.remove(1, lst::CompressList::No);
+    list.remove(2, lst::CompressList::No);
+    list.remove(3, lst::CompressList::No);
 
     print_elements(list, 4);
 
@@ -1247,16 +1247,16 @@ void compressList_Test()
     list.addCopy(15);
 
     printf("Remove elements 1,3,5,6,9,10,11,13,14,15 without compression list\n");
-    list.remove(0,  lst::NO_COMPRESS_LIST);
-    list.remove(2,  lst::NO_COMPRESS_LIST);
-    list.remove(4,  lst::NO_COMPRESS_LIST);
-    list.remove(5,  lst::NO_COMPRESS_LIST);
-    list.remove(8,  lst::NO_COMPRESS_LIST);
-    list.remove(9,  lst::NO_COMPRESS_LIST);
-    list.remove(10, lst::NO_COMPRESS_LIST);
-    list.remove(12, lst::NO_COMPRESS_LIST);
-    list.remove(13, lst::NO_COMPRESS_LIST);
-    list.remove(14, lst::NO_COMPRESS_LIST);
+    list.remove(0,  lst::CompressList::No);
+    list.remove(2,  lst::CompressList::No);
+    list.remove(4,  lst::CompressList::No);
+    list.remove(5,  lst::CompressList::No);
+    list.remove(8,  lst::CompressList::No);
+    list.remove(9,  lst::CompressList::No);
+    list.remove(10, lst::CompressList::No);
+    list.remove(12, lst::CompressList::No);
+    list.remove(13, lst::CompressList::No);
+    list.remove(14, lst::CompressList::No);
 
     print_elements(list, 15);
 

@@ -45,14 +45,14 @@ private slots:
     void notUniqueStructFind();
 };
 
-int compareFunc(const int* item1, const int* item2, void*)
+int compareFunc(const int* item1, const int* item2)
 {
     return LIST_COMPARE_ITEM(*item1, *item2);
 }
 
 struct CompareFunctor
 {
-    int operator() (const int* item1, const int* item2, void* /*extParam*/) const
+    int operator() (const int* item1, const int* item2) const
     {
       return LIST_COMPARE_ITEM(*item1, *item2);
     }
@@ -1416,7 +1416,7 @@ struct SortTwoVal
 
     struct Compare
     {
-        int operator() (const SortTwoVal* item1, const SortTwoVal* item2, void* = 0) const
+        int operator() (const SortTwoVal* item1, const SortTwoVal* item2) const
         {
             LIST_COMPARE_MULTI_ITEM(item1->val1,  item2->val1)
             return LIST_COMPARE_ITEM(item2->val2, item1->val2);

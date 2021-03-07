@@ -149,10 +149,10 @@ typedef simple_ptr<Message> MessagePtr;
 
 struct StringCompare
 {
-    int operator() (const string* item1, const string* item2, void*) const
+    int operator() (const string* item1, const string* item2) const
         {return strcmp(item1->c_str(), item2->c_str());}
 
-    int operator() (const char* item1, const string* item2, void*) const
+    int operator() (const char* item1, const string* item2) const
         {return strcmp((item1 ? item1 : ""), item2->c_str());}
 };
 typedef lst::List<string, StringCompare> StringList;
@@ -171,7 +171,7 @@ template<typename T> struct AllocItem
 template<typename T>
 struct FindItem
 {
-    int operator() (const string* name, const T* item2, void*) const
+    int operator() (const string* name, const T* item2) const
         {return name->compare(item2->name());}
 };
 
@@ -326,10 +326,10 @@ public:
 
         struct Compare
         {
-            int operator() (const FileLine* item1, const FileLine* item2, void*) const
+            int operator() (const FileLine* item1, const FileLine* item2) const
                 {return strcmp(item1->file.c_str(), item2->file.c_str());}
 
-            int operator() (const char* file, const FileLine* item2, void*) const
+            int operator() (const char* file, const FileLine* item2) const
                 {return strcmp((file ? file : ""), item2->file.c_str());}
         };
     };

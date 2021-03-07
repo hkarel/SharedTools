@@ -220,12 +220,6 @@ struct FindResultRange
 */
 struct FindExtParams
 {
-  /// Указатель на дополнительные  параметры  передаваемые  в  функцию  поиска.
-  /// Если в качестве стратегии поиска используется не функтор, а обычная функ-
-  /// ция, то extParam - это единственный способ передать в эту функцию внешние
-  /// данные
-  void *extParam = {0};
-
   /// Признак поиска простым перебором (метод грубой силы).
   /// Если bruteForce = Yes поиск будет происходить простым перебором, даже
   /// для отсортированного списка
@@ -240,7 +234,7 @@ struct FindExtParams
 
   FindExtParams() = default;
   FindExtParams(BruteForce bruteForce)
-    : extParam(0), bruteForce(bruteForce), startFindIndex(0)
+    : bruteForce(bruteForce), startFindIndex(0)
   {}
 };
 
@@ -250,11 +244,6 @@ struct FindExtParams
 */
 struct SortExtParams
 {
-  /// Используется для передачи в функцию сортировки дополнительных параметров.
-  /// Применяется, как правило, если в качестве  стратегии  сортировки  исполь-
-  /// зуется не функтор, а обычная функция
-  void *extParam = {0};
-
   /// loSortBorder, hiSortBorder  Границы  сортировки,  позволяют  производить
   /// сортировку по указанному диапазону. При назначении диапазона соблюдаются
   /// следующие требования:
@@ -267,8 +256,8 @@ struct SortExtParams
   int hiSortBorder = {-1};
 
   SortExtParams() = default;
-  SortExtParams(void *extParam, int loSortBorder = 0, int hiSortBorder = -1)
-    : extParam(extParam), loSortBorder(loSortBorder), hiSortBorder(hiSortBorder)
+  SortExtParams(int loSortBorder, int hiSortBorder = -1)
+    : loSortBorder(loSortBorder), hiSortBorder(hiSortBorder)
   {}
 };
 
@@ -281,10 +270,8 @@ struct SortExtParams
 
   Следующие три функции  в качестве  compare-элемента  используют  функцию
   или функтор со следующей сигнатурой:
-    int function(const T* item1, const ListT::ValueType* item2, void* extParam)
+    int function(const T* item1, const ListT::ValueType* item2)
 
-  Дополнительные пояснения по параметру extParam можно посмотреть в описании
-  к параметру FindExtParams::extParam.
   Примечание: в качестве контейнера ListT можно использовать std::vector
 */
 template<typename ListT, typename CompareL>
@@ -295,16 +282,13 @@ auto findItem(const ListT& list, const CompareL& compare) -> typename ListT::poi
 
 //---
 template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare,
-                void* extParam = 0);
+FindResult find(const T* item, const ListT& list, const CompareT& compare);
 
 template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
-                   void* extParam = 0);
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare);
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare,
-            void* extParam = 0);
+T* findItem(const T* item, const ListT& list, const CompareT& compare);
 
 /**
   @brief Группа функций выполняет поиск первого или последнего элемента в после-
@@ -332,15 +316,14 @@ FindResult lastFindResultL(const ListT& list, const CompareL& compare,
 
 /// Примечание: в качестве compare-элемента используется функция или функтор
 /// с сигнатурой:
-/// int function(const ListT::ValueType* item1, const ListT::ValueType* item2,
-///              void* extParam).
+/// int function(const ListT::ValueType* item1, const ListT::ValueType* item2)
 template<typename ListT, typename CompareT>
 FindResult firstFindResult(const ListT& list, const CompareT& compare,
-                           const FindResult& fr, void* extParam = 0);
+                           const FindResult& fr);
 
 template<typename ListT, typename CompareT>
 FindResult lastFindResult(const ListT& list, const CompareT& compare,
-                          const FindResult& fr, void* extParam = 0);
+                          const FindResult& fr);
 
 /**
   @brief Группа функций выполняет поиск первого и последнего элемента в после-
@@ -352,7 +335,7 @@ FindResultRange rangeFindResultL(const ListT& list, const CompareL& compare,
 
 template<typename ListT, typename CompareT>
 FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
-                                const FindResult& fr, void* extParam = 0);
+                                const FindResult& fr);
 
 /**
   @brief Макрос используется в классе-стратегии сортировки и поиска.
@@ -367,7 +350,7 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
          полям с убывающим приоритетом сравнения от field1 к field3.
          struct Compare
          {
-           int operator() (const Type* item1, const Type* item2, void*) const
+           int operator() (const Type* item1, const Type* item2) const
            {
              LIST_COMPARE_MULTI_ITEM( item1->field1, item2->field1)
              LIST_COMPARE_MULTI_ITEM( item1->field2, item2->field2)
@@ -378,7 +361,7 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
          Альтернативный вариант записи
          struct Compare
          {
-           int operator() (const Type* item1, const Type* item2, void*) const
+           int operator() (const Type* item1, const Type* item2) const
            {
              LIST_COMPARE_MULTI_ITEM(item1->field1, item2->field1)
              LIST_COMPARE_MULTI_ITEM(item1->field2, item2->field2)
@@ -397,17 +380,12 @@ template<typename T> struct CompareItem
 {
   /// @param[in] item1 Первый сравниваемый элемент.
   /// @param[in] item2 Второй сравниваемый элемент.
-  /// @param[in] extParam  Параметр  требуется  для  совместимости сигнатуры
-  ///     вызова  operator()  в  функциях  CustomList::find() и List::sort().
-  ///     Как правило этот параметр используется  когда в качестве стратегии
-  ///     сравнения применяется не функтор, а обычная функция.
-  ///     См. так же описание к функциям CustomList::find(), List::sort().
   /// @return Результат сравнения.
   /// Примечание: Оператор не должен быть виртуальным.  Если оператор сделать
   /// виртуальным, то для каждого инстанциируемого класса придется определять
   /// операторы "<", ">", "==", что сводит "на нет" идею класса-стратегии
   /// применительно к сортировке
-  int operator() (const T* item1, const T* item2, void* /*extParam*/) const
+  int operator() (const T* item1, const T* item2) const
   {
     return LIST_COMPARE_ITEM(*item1, *item2);
   }
@@ -958,8 +936,7 @@ private:
   void init(Container container);
 
   template<typename CompareU>
-  void qsort(T** sortList, int L, int R,
-             CompareU& compare, SortMode sortMode, void *extParam);
+  void qsort(T** sortList, int L, int R, CompareU& compare, SortMode sortMode);
 
   void grow();
 
@@ -1042,7 +1019,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, CompareU)::find(const U* item,
 {
   auto l = [item, &compare, &extParams](const T* item2) -> int
   {
-    return compare(item, item2, extParams.extParam);
+    return compare(item, item2);
   };
   return findL(l, extParams);
 }
@@ -1640,8 +1617,7 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
 DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::qsort(T** sortList,
                                                int L, int R,
                                                CompareU& compare,
-                                               SortMode sortMode,
-                                               void* extParam)
+                                               SortMode sortMode)
 {
   int i = L;
   int j = R;
@@ -1651,12 +1627,12 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::qsort(T** sortList,
     switch (sortMode)
     {
       case SortMode::Up:
-        while ((compare(sortList[i], x, extParam) < 0) && (i < R)) ++i;
-        while ((compare(sortList[j], x, extParam) > 0) && (j > L)) --j;
+        while ((compare(sortList[i], x) < 0) && (i < R)) ++i;
+        while ((compare(sortList[j], x) > 0) && (j > L)) --j;
         break;
       default: // SortMode::Down
-        while ((compare(sortList[i], x, extParam) > 0) && (i < R)) ++i;
-        while ((compare(sortList[j], x, extParam) < 0) && (j > L)) --j;
+        while ((compare(sortList[i], x) > 0) && (i < R)) ++i;
+        while ((compare(sortList[j], x) < 0) && (j > L)) --j;
     }
     if (i <= j)
     {
@@ -1667,8 +1643,8 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::qsort(T** sortList,
     }
   } while (i <= j);
 
-  if (L < j) qsort(sortList, L, j, compare, sortMode, extParam);
-  if (i < R) qsort(sortList, i, R, compare, sortMode, extParam);
+  if (L < j) qsort(sortList, L, j, compare, sortMode);
+  if (i < R) qsort(sortList, i, R, compare, sortMode);
 }
 
 DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
@@ -1695,10 +1671,10 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
         hiSortBorder = d->count;
 
       if ((loSortBorder != 0) || (hiSortBorder != d->count))
-        setSortState((sortMode == SortMode::Up) ? SortState::CustomUp : SortState::CustomDown);
+        setSortState((sortMode == SortMode::Up) ? SortState::CustomUp
+                                                : SortState::CustomDown);
 
-      qsort<CompareU>(d->list, loSortBorder, hiSortBorder - 1,
-                      compare, sortMode, extParams.extParam);
+      qsort<CompareU>(d->list, loSortBorder, hiSortBorder - 1, compare, sortMode);
     }
     catch (BreakCompare&)
     {
@@ -1806,28 +1782,25 @@ auto findItem(const ListT& list, const CompareL& compare) -> typename ListT::poi
 
 //---
 template<typename T, typename ListT, typename CompareT>
-FindResult find(const T* item, const ListT& list, const CompareT& compare,
-                void* extParam)
+FindResult find(const T* item, const ListT& list, const CompareT& compare)
 {
-  auto l = [item, &compare, extParam](typename ListT::const_pointer item2) -> int
+  auto l = [item, &compare](typename ListT::const_pointer item2) -> int
   {
-    return compare(item, item2, extParam);
+    return compare(item, item2);
   };
   return find(list, l);
 }
 
 template<typename T, typename ListT, typename CompareT>
-FindResult findRef(const T& item, const ListT& list, const CompareT& compare,
-                   void* extParam)
+FindResult findRef(const T& item, const ListT& list, const CompareT& compare)
 {
-  return find<T, ListT, CompareT>(&item, list, compare, extParam);
+  return find<T, ListT, CompareT>(&item, list, compare);
 }
 
 template<typename T, typename ListT, typename CompareT>
-T* findItem(const T* item, const ListT& list, const CompareT& compare,
-            void* extParam)
+T* findItem(const T* item, const ListT& list, const CompareT& compare)
 {
-  FindResult fr = find<T, ListT, CompareT>(item, list, compare, extParam);
+  FindResult fr = find<T, ListT, CompareT>(item, list, compare);
   return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
 }
 
@@ -1868,30 +1841,30 @@ FindResult lastFindResultL(const ListT& list, const CompareL& compare,
 
 template<typename ListT, typename CompareT>
 FindResult firstFindResult(const ListT& list, const CompareT& compare,
-                           const FindResult& fr, void* extParam)
+                           const FindResult& fr)
 {
   if (fr.failed())
     return fr;
 
   const typename ListT::ValueType* item = &list.at(fr.index());
-  auto l = [item, &compare, extParam](const typename ListT::ValueType* item2) -> int
+  auto l = [item, &compare](const typename ListT::ValueType* item2) -> int
   {
-    return compare(item, item2, extParam);
+    return compare(item, item2);
   };
   return firstFindResultL(list, l, fr);
 }
 
 template<typename ListT, typename CompareT>
 FindResult lastFindResult(const ListT& list, const CompareT& compare,
-                          const FindResult& fr, void* extParam)
+                          const FindResult& fr)
 {
   if (fr.failed())
     return fr;
 
   const typename ListT::ValueType* item = &list.at(fr.index());
-  auto l = [item, &compare, extParam](const typename ListT::ValueType* item2) -> int
+  auto l = [item, &compare](const typename ListT::ValueType* item2) -> int
   {
-    return compare(item, item2, extParam);
+    return compare(item, item2);
   };
   return lastFindResultL(list, l, fr);
 }
@@ -1909,11 +1882,11 @@ FindResultRange rangeFindResultL(const ListT& list, const CompareL& compare,
 
 template<typename ListT, typename CompareT>
 FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
-                                const FindResult& fr, void* extParam)
+                                const FindResult& fr)
 {
   FindResultRange frr;
-  frr.first = firstFindResult(list, compare, fr, extParam);
-  frr.last  = lastFindResult (list, compare, fr, extParam);
+  frr.first = firstFindResult(list, compare, fr);
+  frr.last  = lastFindResult (list, compare, fr);
   return frr;
 }
 
