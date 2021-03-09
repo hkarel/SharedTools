@@ -30,6 +30,7 @@
 #include "utils.h"
 
 #include <cerrno>
+#include <chrono>
 #include <fstream>
 #include <stdexcept>
 
@@ -154,13 +155,14 @@ bool YamlConfig::save(const std::string& filePath,
         return false;
     }
 
-    std::srand(std::time(nullptr));
-    std::string fileTmp = _filePath + ".tmp" + utl::toString(std::rand());
+    typedef std::chrono::high_resolution_clock clock;
+    uint64_t timeTick = clock::now().time_since_epoch().count();
+    std::string fileTmp = _filePath + ".tmp" + utl::toString(timeTick);
     std::remove(fileTmp.c_str());
 
     try
     {
-        std::ofstream file(fileTmp, std::ios_base::out);
+        std::ofstream file {fileTmp, std::ios_base::out};
         if (!file.is_open())
         {
             log_error_m << "Cannot open temporary file " << fileTmp << " for write";
