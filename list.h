@@ -146,7 +146,7 @@ constexpr const char* ERR_NOCREATE_OBJ =
      if (INDEX < LESS) throw LIST_EXCEPT("Index must not be less than "#LESS);
 
 #  define CHECK_INTERNAL_DATA_PTR(DPTR) \
-     if (DPTR == 0) throw LIST_EXCEPT("Internal data-pointer is null");
+     if (DPTR == nullptr) throw LIST_EXCEPT("Internal data-pointer is null");
 #else
 #  define CHECK_BORDERS(INDEX)
 #  define CHECK_NOTLESS(INDEX, LESS)
@@ -605,11 +605,11 @@ public:
 
   /// @brief Возвращает первый элемент в списке.
   /// Если список пустой, то возвращает нуль.
-  T* first() const {return (d_func()->count) ? d->list[0] : 0;}
+  T* first() const {return (d_func()->count) ? d->list[0] : nullptr;}
 
   /// @brief Возвращает последний элемент в списке.
   /// Если список пустой, то возвращает нуль.
-  T* last() const {return (d_func()->count) ? d->list[d->count - 1] : 0;}
+  T* last() const {return (d_func()->count) ? d->list[d->count - 1] : nullptr;}
 
   template<typename IteratorT> class Range
   {
@@ -650,7 +650,7 @@ private:
 private:
   template<typename DataT> struct Data
   {
-    DataT**   list      = {0};
+    DataT**   list      = {nullptr};
     int       count     = {0};
     int       capacity  = {0};
     SortState sortState = {SortState::Unknown};
@@ -1030,7 +1030,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL2(T*, U, CompareU)::findItem(const U* item,
                                                        const FindExtParams& extParams) const
 {
   FindResult fr = find<U, CompareU>(item, compare, extParams);
-  return fr.success() ? d->list[fr.index()] : 0;
+  return fr.success() ? d->list[fr.index()] : nullptr;
 }
 
 DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, CompareU)::findRef(const U& item,
@@ -1143,7 +1143,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(T*, CompareL)::findItemL(const CompareL& compare,
                                                      const FindExtParams& extParams) const
 {
   FindResult fr = findL(compare, extParams);
-  return fr.success() ? d->list[fr.index()] : 0;
+  return fr.success() ? d->list[fr.index()] : nullptr;
 }
 
 DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(int index1, int index2) const
@@ -1227,7 +1227,7 @@ DECL_IMPL_LIST_DESTR::~List()
 DECL_IMPL_LIST(void)::init(Container container)
 {
   CustomListType::d = new DataType();
-  CustomListType::d->list = 0;
+  CustomListType::d->list = nullptr;
   CustomListType::d->count = 0;
   CustomListType::d->capacity = 0;
   CustomListType::d->sortState = SortState::Unknown;
@@ -1237,13 +1237,13 @@ DECL_IMPL_LIST(void)::init(Container container)
 DECL_IMPL_LIST_CONSTR::List(CustomListType&& list)
 {
   CustomListType::d = list.d;
-  list.d = 0;
+  list.d = nullptr;
 }
 
 DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
 {
   CustomListType::d = list.d;
-  list.d = 0;
+  list.d = nullptr;
 }
 
 DECL_IMPL_LIST(T*)::add()
@@ -1335,7 +1335,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, Condition)::removeCond(const Condition& condition,
     {
       if (d->container == Container::Yes)
         d->allocator.destroy(*it);
-      *it = 0;
+      *it = nullptr;
     }
     ++it;
   }
@@ -1401,7 +1401,7 @@ DECL_IMPL_LIST(T*)::release(int index, CompressList compressList)
     --d->count;
   }
   else
-    *it = 0;
+    *it = nullptr;
 
   return res;
 }
@@ -1468,7 +1468,7 @@ DECL_IMPL_LIST(T*)::insert(int index)
 
   // Функция create() должна вызываться без параметров,
   // см. комментарии в типовом аллокаторе.
-  return insert(d->allocator.create(/*0*/), index);
+  return insert(d->allocator.create(/*nullptr*/), index);
 }
 
 DECL_IMPL_LIST(T*)::insert(T* item, int index)
@@ -1551,7 +1551,7 @@ DECL_IMPL_LIST(void)::compressList()
     if (it == end)
       return;
 
-    if (*it == 0)
+    if (*it == nullptr)
     {
       --d->count;
       break;
@@ -1562,7 +1562,7 @@ DECL_IMPL_LIST(void)::compressList()
   T** it2 = it + 1;
   while (it2 != end)
   {
-    if (*it2 == 0)
+    if (*it2 == nullptr)
     {
       ++it2;
       --d->count;
@@ -1777,7 +1777,8 @@ template<typename ListT, typename CompareL>
 auto findItem(const ListT& list, const CompareL& compare) -> typename ListT::pointer
 {
   FindResult fr = find<ListT, CompareL>(list, compare);
-  return fr.success() ? const_cast<typename ListT::pointer>(&list.at(fr.index())) : 0;
+  return fr.success() ? const_cast<typename ListT::pointer>(&list.at(fr.index()))
+                      : nullptr;
 }
 
 //---
@@ -1801,7 +1802,7 @@ template<typename T, typename ListT, typename CompareT>
 T* findItem(const T* item, const ListT& list, const CompareT& compare)
 {
   FindResult fr = find<T, ListT, CompareT>(item, list, compare);
-  return fr.success() ? const_cast<T*>(&list.at(fr.index())) : 0;
+  return fr.success() ? const_cast<T*>(&list.at(fr.index())) : nullptr;
 }
 
 //---
