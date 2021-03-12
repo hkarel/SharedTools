@@ -62,9 +62,9 @@ int main ()
 #ifndef NDEBUG
   #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     #include <intrin.h>
-    #define break_point  __debugbreak();
-  #elif defined(__arm__)
-    #define break_point
+    #define break_point {__debugbreak();}
+  #elif defined(__arm__) || defined(__ANDROID__)
+    #define break_point {}
   #else
     #include <stdio.h>
     #include <signal.h>
@@ -79,8 +79,8 @@ int main ()
             assert(signal(SIGTRAP, sigtrap_handler) != SIG_ERR);
         }
     } static init_break_point;
-    //#define break_point  {asm volatile("int $3");}
-    #define break_point  {asm volatile("int $3" ::: "cc", "memory");}
+    //#define break_point {asm volatile("int $3");}
+    #define break_point {asm volatile("int $3" ::: "cc", "memory");}
   #endif
 #else
   #define break_point {}
