@@ -46,6 +46,8 @@ public:
     // add_ref().
     clife_base() = default;
     clife_base(bool add_ref) : _clife_count(add_ref ? 1 : 0) {}
+
+    explicit clife_base(const clife_base&) {}
     virtual ~clife_base() = default;
 
     void add_ref() const {++_clife_count;}
