@@ -93,6 +93,16 @@ void dirExpansion(std::string& filePath)
         return;
     }
 
+    const char* appData = "AppData";
+    n = filePath.find(appData);
+    if (n == 0)
+    {
+        const char* appdata = getenv("APPDATA");
+        filePath.replace(0, strlen(appData), string(appdata));
+        slashReplace();
+        return;
+    }
+
     if (filePath[0] == '~')
     {
         const char* home = getenv("HOME");
