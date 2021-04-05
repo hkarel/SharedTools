@@ -28,7 +28,7 @@
 #include "break_point.h"
 #include <QElapsedTimer>
 
-QThreadEx::QThreadEx() : QThreadEx((QObject*)0)
+QThreadEx::QThreadEx() : QThreadEx(nullptr)
 {}
 
 QThreadEx::QThreadEx(QObject* parent) : QThread(parent)
