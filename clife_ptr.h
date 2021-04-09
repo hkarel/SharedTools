@@ -71,12 +71,8 @@ private:
     static auto release(P* ptr) -> decltype(ptr->Release(), void()) {ptr->Release();}
 
 public:
-    clife_ptr() : _ptr(nullptr) {}
-
-    ~clife_ptr() {
-        if (_ptr)
-            release(_ptr);
-    }
+    clife_ptr() noexcept {}
+    clife_ptr(std::nullptr_t) noexcept {}
 
     clife_ptr(T* p, bool add_ref) {
         _ptr = p;
@@ -89,6 +85,10 @@ public:
 
     explicit clife_ptr(T* p) : clife_ptr(p, true /*add_ref*/)
     {}
+
+    ~clife_ptr() {
+        if (_ptr) release(_ptr);
+    }
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
     // неявно, и их поведение будет отличаться от ожидаемого.
