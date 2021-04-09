@@ -187,7 +187,7 @@ public:
     enum {dummy_ptr = true};
 
 public:
-    container_ptr() {
+    container_ptr() noexcept {
         // Не создаем счетчик для пустого контейнера, при создании большого
         // числа экземпляров container_ptr такое  решение  позволит  меньше
         // фрагментировать память.
@@ -195,10 +195,8 @@ public:
         GET_DEBUG
     }
 
-    ~container_ptr() {
-        PRINT_DEBUG("~container_ptr(), container_ptr_check_join: ",
-                    (container_ptr_check_join<T, Allocator>::Yes))
-        release(_counter);
+    container_ptr(std::nullptr_t) noexcept {
+        GET_DEBUG
     }
 
     container_ptr(T* p, bool dummy /*см. counter_ptr_t::dummy*/) {
@@ -212,6 +210,12 @@ public:
 
     explicit container_ptr(T* p) : container_ptr(p, false /*dummy*/)
     {}
+
+    ~container_ptr() {
+        PRINT_DEBUG("~container_ptr(), container_ptr_check_join: ",
+                    (container_ptr_check_join<T, Allocator>::Yes))
+        release(_counter);
+    }
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
     // неявно, и их поведение будет отличаться от ожидаемого
