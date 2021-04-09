@@ -46,8 +46,15 @@ public:
     typedef simple_ptr<T, Allocator>  self_t;
 
 public:
-    explicit simple_ptr(T* p = nullptr) : _ptr(p) {}
-    ~simple_ptr() {allocator_t::destroy(_ptr);}
+    simple_ptr() noexcept {}
+    simple_ptr(std::nullptr_t) noexcept {}
+
+    explicit simple_ptr(T* p) noexcept : _ptr(p)
+    {}
+
+    ~simple_ptr() {
+        allocator_t::destroy(_ptr);
+    }
 
     // По аналогии с unique_ptr запрещаем конструктор копирования и
     // оператор присваивания.
@@ -57,8 +64,9 @@ public:
     self_t& operator= (self_t&) = delete;
     self_t& operator= (const self_t&) = delete;
 
+    // Дефолтные функции должны быть определены, иначе компилятор создаст их
+    // неявно, и их поведение будет отличаться от ожидаемого
     simple_ptr(self_t&& p) {
-        _ptr = nullptr;
         assign(p);
     }
 
@@ -69,7 +77,6 @@ public:
 
     template<typename otherT, template<typename> class otherA>
     simple_ptr(simple_ptr<otherT, otherA> && p) {
-        _ptr = nullptr;
         assign(p);
     }
 
