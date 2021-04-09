@@ -93,7 +93,6 @@ public:
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
     // неявно, и их поведение будет отличаться от ожидаемого.
     clife_ptr(const self_t& p) {
-        _ptr = nullptr;
         assign(p);
     }
     self_t& operator= (const self_t& p) {
@@ -103,7 +102,6 @@ public:
 
     template<typename otherT>
     clife_ptr(const clife_ptr<otherT>& p) {
-        _ptr = nullptr;
         assign(p);
     }
     template<typename otherT>
@@ -113,7 +111,6 @@ public:
     }
 
     clife_ptr(self_t&& p) {
-        _ptr = nullptr;
         assign_rvalue(p);
     }
     self_t& operator= (self_t&& p) {
@@ -123,7 +120,6 @@ public:
 
     template<typename otherT>
     clife_ptr(clife_ptr<otherT>&& p) {
-        _ptr = nullptr;
         assign_rvalue(p);
     }
     template<typename otherT>
