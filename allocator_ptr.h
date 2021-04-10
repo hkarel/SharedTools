@@ -58,7 +58,7 @@ template<typename T> struct allocator_ptr
     // и экземпляра counter_ptr_t
     static void destroy(T* x, bool join) {
         static_assert(sizeof(T) > 0, "Can't delete pointer to incomplete type");
-        if (x) {if (join) x->~T(); else delete x;}
+        if (x && join) x->~T(); else delete x;
     }
 };
 
