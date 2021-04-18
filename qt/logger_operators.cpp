@@ -224,6 +224,11 @@ Line& operator<< (Line& line, const QVariant& v)
                 const QVector<QUuidEx>& vect = v.value<QVector<QUuidEx>>();
                 printList(line, vect);
             }
+            else if (v.userType() == qMetaTypeId<QVector<qint32>>())
+            {
+                const QVector<qint32>& vect = v.value<QVector<qint32>>();
+                printList(line, vect);
+            }
             else
             {
                 line << "Unsupported QVariant user-type for logger"
