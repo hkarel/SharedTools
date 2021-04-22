@@ -824,7 +824,7 @@ public:
   ///   ...
   ///   delete t;
   /// }
-  T*   releaseLast();
+  T* releaseLast();
 
   /// @brief Меняет местами элементы в списке.
   ///
@@ -936,8 +936,8 @@ private:
   void init(Container container);
 
   template<typename CompareU>
-  void qsort(T** sortList, int L, int R, CompareU& compare, SortMode sortMode);
-
+  static void qsort(T** sortList, int L, int R, CompareU& compare,
+                    SortMode sortMode);
   void grow();
 
   void setCount(int val) {d_func()->count = val;}
@@ -1674,7 +1674,7 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
         setSortState((sortMode == SortMode::Up) ? SortState::CustomUp
                                                 : SortState::CustomDown);
 
-      qsort<CompareU>(d->list, loSortBorder, hiSortBorder - 1, compare, sortMode);
+      qsort(d->list, loSortBorder, hiSortBorder - 1, compare, sortMode);
     }
     catch (BreakCompare&)
     {
