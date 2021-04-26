@@ -25,11 +25,20 @@
 *****************************************************************************/
 
 #include "config/appl_conf.h"
+#include "config/logger_conf.h"
 #include "break_point.h"
 #include "safe_singleton.h"
+#include "logger/config.h"
 
 #include <unistd.h>
 #include <sys/stat.h>
+
+#define log_error_m   alog::logger().error   (alog_line_location, "ApplConfig")
+#define log_warn_m    alog::logger().warn    (alog_line_location, "ApplConfig")
+#define log_info_m    alog::logger().info    (alog_line_location, "ApplConfig")
+#define log_verbose_m alog::logger().verbose (alog_line_location, "ApplConfig")
+#define log_debug_m   alog::logger().debug   (alog_line_location, "ApplConfig")
+#define log_debug2_m  alog::logger().debug2  (alog_line_location, "ApplConfig")
 
 namespace config {
 
@@ -171,6 +180,68 @@ bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
 
     return true;
 }
-#endif
+#endif // QT_NETWORK_LIB
+
+#ifdef QT_CORE_LIB
+ChangeChecker::ChangeChecker()
+{
+    chk_connect_a(&_timer, &QTimer::timeout, this, &ChangeChecker::timeout)
+}
+
+bool ChangeChecker::init(int timeout)
+{
+    _timer.setInterval(timeout * 1000);
+    _baseModifyTime = baseModifyTime();
+    _loggerModifyTime = loggerModifyTime();
+    return true;
+}
+
+void ChangeChecker::start()
+{
+    _timer.start();
+}
+
+void ChangeChecker::stop()
+{
+    _timer.stop();
+}
+
+void ChangeChecker::timeout()
+{
+    bool modify = false;
+    std::time_t modifyTime = baseModifyTime();
+    if (_baseModifyTime != modifyTime)
+    {
+        modify = true;
+        _baseModifyTime = modifyTime;
+        base().rereadFile();
+        log_verbose_m << "Config file was reread: " << base().filePath();
+
+        alog::configDefaultSaver();
+    }
+
+    modifyTime = loggerModifyTime();
+    if (_loggerModifyTime != modifyTime)
+    {
+        modify = true;
+        _loggerModifyTime = modifyTime;
+        alog::configExtensionSavers();
+    }
+
+    if (modify)
+    {
+        alog::printSaversInfo();
+        emit changed();
+    }
+
+}
+#endif // QT_CORE_LIB
 
 } // namespace config
+
+#undef log_error_m
+#undef log_warn_m
+#undef log_info_m
+#undef log_verbose_m
+#undef log_debug_m
+#undef log_debug2_m

@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include "defmac.h"
 #include "yaml_config.h"
 #include <ctime>
 #include <string>
@@ -81,5 +82,37 @@ std::time_t loggerModifyTime();
 // Возвращает host-адрес из файла конфигурации
 bool readHostAddress(const QString& confHostStr, QHostAddress&);
 #endif
+
+#ifdef QT_CORE_LIB
+/**
+  Проверяет факт модификации базового конфиг-файла и файла конфигурации логгера
+  по изменению их временной метки. Если изменение временной метки обнаружено -
+  выполняется перечитывание файлов конфигурации, и эмитируется сигнал changed()
+*/
+class ChangeChecker : public QObject
+{
+public:
+    ChangeChecker();
+
+    bool init(int timeout = 15 /*сек*/);
+    void start();
+    void stop();
+
+signals:
+    void changed();
+
+private slots:
+    void timeout();
+
+private:
+    Q_OBJECT
+    DISABLE_DEFAULT_COPY(ChangeChecker)
+
+    QTimer _timer;
+    // Время последней модификации конфиг-файлов
+    std::time_t _baseModifyTime = {0};
+    std::time_t _loggerModifyTime = {0};
+};
+#endif // QT_CORE_LIB
 
 } // namespace config
