@@ -139,7 +139,7 @@ bool YamlConfig::save(const std::string& filePath,
 {
     if (_saveDisabled)
     {
-        log_warn_m << "Save the data is disabled. File: " << _filePath;
+        log_warn_m << "Save data is disabled. File: " << _filePath;
         return false;
     }
 
