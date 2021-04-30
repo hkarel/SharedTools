@@ -43,6 +43,60 @@ namespace alog {
 
 using namespace std;
 
+bool createLoggerParams(const string& loggerFile)
+{
+    if (config::base().readOnly())
+    {
+        log_error_m << "Unable to create log-saver parameters for logger"
+                    << ". Config data is read only";
+        return false;
+    }
+    if (config::base().saveDisabled())
+    {
+        log_error_m << "Unable to create log-saver parameters for logger"
+                    << ". Save data is disabled for config file";
+        return false;
+    }
+
+    bool modify = false;
+
+    string logLevelStr;
+    if (!config::base().getValue("logger.level", logLevelStr))
+    {
+        logLevelStr = "info";
+        config::base().setValue("logger.level", logLevelStr);
+        modify = true;
+    }
+
+    bool logContinue;
+    if (!config::base().getValue("logger.continue", logContinue))
+    {
+        config::base().setValue("logger.continue", false);
+        modify = true;
+    }
+
+    string logFile;
+#ifdef MINGW
+    if (!config::base().getValue("logger.file_win", logFile))
+    {
+        config::base().setValue("logger.file_win", loggerFile);
+        modify = true;
+    }
+#else
+    if (!config::base().getValue("logger.file", logFile))
+    {
+        config::base().setValue("logger.file", loggerFile);
+        modify = true;
+    }
+#endif
+
+    bool ret = true;
+    if (modify)
+        ret = config::base().save();
+
+    return ret;
+}
+
 bool configDefaultSaver()
 {
     string logFile;
