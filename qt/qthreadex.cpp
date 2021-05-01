@@ -33,8 +33,8 @@ QThreadEx::QThreadEx() : QThreadEx(nullptr)
 
 QThreadEx::QThreadEx(QObject* parent) : QThread(parent)
 {
-    chk_connect_d(this, SIGNAL(started()),  this, SLOT(onStarted()))
-    chk_connect_d(this, SIGNAL(finished()), this, SLOT(onFinished()))
+    chk_connect_d(this, &QThread::started,  this, &QThreadEx::onStarted)
+    chk_connect_d(this, &QThread::finished, this, &QThreadEx::onFinished)
 }
 
 bool QThreadEx::threadStop() const noexcept
