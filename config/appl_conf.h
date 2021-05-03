@@ -32,6 +32,8 @@
 
 #include "defmac.h"
 #include "yaml_config.h"
+#include "safe_singleton.h"
+
 #include <ctime>
 #include <string>
 
@@ -87,13 +89,13 @@ bool readHostAddress(const QString& confHostStr, QHostAddress&);
 /**
   Проверяет факт модификации базового конфиг-файла и файла конфигурации логгера
   по изменению их временной метки. Если изменение временной метки обнаружено -
-  выполняется перечитывание файлов конфигурации, и эмитируется сигнал changed()
+  выполняется перечитывание файлов конфигурации, и эмитируется сигнал changed().
+  Примечание: Функции init(), start(), stop() должны  вызываться  из  основного
+              потока приложения после сознания экземпляра QCoreApplication
 */
 class ChangeChecker : public QObject
 {
 public:
-    ChangeChecker();
-
     bool init(int timeout = 15 /*сек*/);
     void start();
     void stop();
@@ -106,13 +108,18 @@ private slots:
 
 private:
     Q_OBJECT
+    ChangeChecker();
     DISABLE_DEFAULT_COPY(ChangeChecker)
 
     QTimer _timer;
     // Время последней модификации конфиг-файлов
     std::time_t _baseModifyTime = {0};
     std::time_t _loggerModifyTime = {0};
+
+    template<typename T, int> friend T& ::safe_singleton();
 };
+
+ChangeChecker& changeChecker();
 #endif // QT_CORE_LIB
 
 } // namespace config

@@ -185,7 +185,7 @@ bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
 #ifdef QT_CORE_LIB
 ChangeChecker::ChangeChecker()
 {
-    chk_connect_a(&_timer, &QTimer::timeout, this, &ChangeChecker::timeout)
+    chk_connect_q(&_timer, &QTimer::timeout, this, &ChangeChecker::timeout)
 }
 
 bool ChangeChecker::init(int timeout)
@@ -233,7 +233,11 @@ void ChangeChecker::timeout()
         alog::printSaversInfo();
         emit changed();
     }
+}
 
+ChangeChecker& changeChecker()
+{
+    return safe_singleton<ChangeChecker>();
 }
 #endif // QT_CORE_LIB
 
