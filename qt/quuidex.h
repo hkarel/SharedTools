@@ -78,7 +78,9 @@ public:
     {
         static_assert(sizeof(u1) == 16, "Parameter u1 should be size 16 byte");
         static_assert(sizeof(u2) == 16, "Parameter u2 should be size 16 byte");
-#ifdef __x86_64__
+#if defined(__SIZEOF_INT128__)
+        COMPARE(*((__uint128_t*) &u1), *((__uint128_t*) &u2))
+#elif defined(__x86_64__)
         COMPARE(((quint64*) &u1)[0], ((quint64*) &u2)[0])
         COMPARE(((quint64*) &u1)[1], ((quint64*) &u2)[1])
 #else
