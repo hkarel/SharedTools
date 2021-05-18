@@ -138,11 +138,11 @@ void ThreadPool::Item::run()
             _func = nullptr_t(); // Обнуляем рабочую функцию
         }
 
-        // Тонкость: если вызывать _workCond.notify_all() без блокирования
+        // Тонкость: если вызывать _workCond.notify_all()  без блокирования
         // мьютекса _workMutex, то в функции ThreadPool::Item::join() будут
-        // периодически  происходить не срабатывания _workCond.wait(), что
-        // фактически будет приводить к блокировке потока, который сделал
-        // вызов ThreadPool::Item::join().
+        // периодически  происходить не срабатывания _workCond.wait(),  что
+        // фактически будет приводить к блокировке потока,  который  сделал
+        // вызов ThreadPool::Item::join()
         {
             lock_guard<mutex> locker {_workMutex}; (void) locker;
             _working = false;
