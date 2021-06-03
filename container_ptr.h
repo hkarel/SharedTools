@@ -48,9 +48,11 @@
 //#endif
 
 #if !defined(NDEBUG) || defined(DEBUGGING_ON_RELEASE)
-#define GET_DEBUG _dbg = get();
+#define GET_DEBUG  _dbg = get();
+#define GET_DEBUG2 self._dbg = self.get();
 #else
 #define GET_DEBUG
+#define GET_DEBUG2
 #endif
 
 #ifdef CONTAINER_PTR_DEBUG
@@ -346,6 +348,7 @@ public:
         self._counter->join = true;
         self._counter->dummy = false;
         new (get(self._counter)) T(std::forward<Args>(args)...);
+        GET_DEBUG2
         return self;
     }
 
@@ -448,5 +451,6 @@ private:
 };
 
 #undef GET_DEBUG
+#undef GET_DEBUG2
 #undef PRINT_DEBUG
 
