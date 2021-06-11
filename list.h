@@ -575,10 +575,10 @@ public:
 
   /// @brief Признак того, что список является контейнером.
   ///
-  /// Если container() == TRUE, то при разрушении или очистке списка все эле-
-  /// менты будут автоматически разрушены, в противном случае элементы списка
-  /// разрушены не будут
-  bool container() const {return d_func()->container;}
+  /// Если container() == Container::Yes, то при разрушении или очистке списка
+  /// все элементы будут автоматически разрушены, в противном случае  элементы
+  /// списка разрушены не будут
+  Container container() const {return d_func()->container;}
 
   /// @brief Определяет состояние сортировки
   SortState sortState() const {return d_func()->sortState;}
@@ -658,7 +658,7 @@ private:
     Allocator allocator;
   };
   typedef Data<T> DataType;
-  DataType* d;
+  DataType* d = {nullptr};
 
   DataType* d_func() const {CHECK_INTERNAL_DATA_PTR(d); return d;}
   template<typename, typename, typename> friend class List;
@@ -945,8 +945,7 @@ private:
   void setCount(int val) {d_func()->count = val;}
   void setSortState(SortState val) {d_func()->sortState = val;}
   void setAllocator(const Allocator& val) {d_func()->allocator = val;}
-  void setContainer(bool val) {d_func()->container = val;}
-
+  void setContainer(Container val) {d_func()->container = val;}
 };
 
 //------------------------ Implementation CustomList -------------------------
