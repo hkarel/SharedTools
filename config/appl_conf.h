@@ -65,9 +65,16 @@ YamlConfig& base();
 // Сохраняемые настройки приложения
 YamlConfig& state();
 
-// Выполняет расширение пути для двух случаев:
-// 1) Символ '~' до полного пути к домашней директории (заменяет функцию homeDirExpansion);
-// 2) В Windows кодовое слово 'ProgramData' до директории с программными данными
+// Выполняет расширение пути для следующих случаев:
+//   1) Символ '~' до полного пути к домашней директории;
+//   2) Слово 'ProgramData' до директории расположения данных программы;
+//   3) Слово 'AppData' до директории расположения настроек/данных программы.
+// Пункты 2, 3 актуальны только для Windows.
+// Примеры:
+//   ~/.config/my_appl   -> /home/my_user/.config/my_appl (для Linux)
+//   ~/.config/my_appl   -> C:/Users/my_user/.config/my_appl (для Windows)
+//   ProgramData/my_appl -> C:/ProgramData/my_appl
+//   AppData/my_appl     -> C:/Users/my_user/AppData/Roaming/my_appl
 void dirExpansion(string& filePath);
 
 #ifdef QT_CORE_LIB
