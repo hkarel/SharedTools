@@ -42,6 +42,7 @@
 #endif
 
 #if defined(QT_CORE_LIB)
+#include "qt/quuidex.h"
 #include <QString>
 #include <QList>
 #include <QVector>
@@ -336,6 +337,25 @@ struct YamlConfig::ProxyStdString<QString>
     typedef std::string Type;
     static Type setter(const QString& s) {return Type(s.toUtf8().constData());}
     static QString getter(const Type& s) {return QString::fromUtf8(s.c_str());}
+};
+template<>
+struct YamlConfig::ProxyStdString<QUuid>
+{
+    typedef std::string Type;
+    static Type setter(const QUuid& u) {
+        QByteArray ba = u.toByteArray(); ba.remove(0, 1); ba.chop(1);
+        return Type(ba.constData());
+    }
+    static QUuid getter(const Type& s) {
+        return QUuid(QByteArray::fromRawData(s.c_str(), int(s.size())));
+    }
+};
+template<>
+struct YamlConfig::ProxyStdString<QUuidEx>
+{
+    typedef std::string Type;
+    static Type setter(const QUuidEx& u) {return ProxyStdString<QUuid>::setter(u);}
+    static QUuidEx getter(const Type& s) {return ProxyStdString<QUuid>::getter(s);}
 };
 #endif
 
