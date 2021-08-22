@@ -872,6 +872,9 @@ inline const char* __file__cache(const string& file)
     return __file__cache(file.c_str());
 }
 
+// Сервисная функция, используется для остановки системы логирования
+void stop();
+
 } // namespace alog
 
 #define alog_line_location alog::detail::file_name(__FILE__), __func__, __LINE__

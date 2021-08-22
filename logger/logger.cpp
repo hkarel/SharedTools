@@ -1398,4 +1398,11 @@ const char* __file__cache(const char* file)
     return 0;
 }
 
+void stop()
+{
+    logger().flush();
+    logger().waitingFlush();
+    logger().stop();
+}
+
 } // namespace alog
