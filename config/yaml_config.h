@@ -43,6 +43,7 @@
 
 #if defined(QT_CORE_LIB)
 #include "qt/quuidex.h"
+#include <QPair>
 #include <QString>
 #include <QList>
 #include <QVector>
@@ -152,6 +153,15 @@ public:
     bool getValue(const YAML::Node& baseNode,
                   const std::string& name, QList<T>& value,
                   bool logWarn = true) const;
+
+    template<typename T1, typename T2>
+    bool getValue(const std::string& name, QPair<T1, T2>& value,
+                  bool logWarn = true) const;
+
+    template<typename T1, typename T2>
+    bool getValue(const YAML::Node& baseNode,
+                  const std::string& name, QPair<T1, T2>& value,
+                  bool logWarn = true) const;
 #endif
 
     // Используется  для  получения  значений  для  нод  сложной  конфигурации.
@@ -162,6 +172,11 @@ public:
     //   logWarn - определяет нужно ли выводить сообщения в лог при неудачном
     //   считывании данных
     bool getValue(const std::string& name, Func func, bool logWarn = true) const;
+
+    // Используется для получения значений для нод сложной конфигурации относи-
+    // тельно базовой ноды baseNode
+    bool getValue(const YAML::Node& baseNode,
+                  const std::string& name, Func func, bool logWarn = true) const;
 
     // Используется для записи простого значения (скаляр) в ноду с именем name.
     // Имя может быть составным. Составное имя записывается следующим образом:
@@ -209,11 +224,24 @@ public:
     bool setValue(YAML::Node& baseNode,
                   const std::string& name, const QList<T>& value,
                   YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
+
+    template<typename T1, typename T2>
+    bool setValue(const std::string& name, QPair<T1, T2>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
+
+    template<typename T1, typename T2>
+    bool setValue(YAML::Node& baseNode,
+                  const std::string& name, QPair<T1, T2>& value,
+                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
 #endif
 
     // Используется для записи значений для нод сложной конфигурации,
     // см. описание getValue()
     bool setValue(const std::string& name, Func func);
+
+    // Используется для записи значений для нод сложной конфигурации относи-
+    // тельно базовой ноды baseNode
+    bool setValue(YAML::Node& baseNode, const std::string& name, Func func);
 
 private:
     DISABLE_DEFAULT_COPY(YamlConfig)
@@ -221,8 +249,8 @@ private:
     template<typename T>
     static char* typeName();
 
-    // Используется для того чтобы можно было сохранять/загружать в конфиг
-    // строки QString. См. ниже специализацию этой структуры для QString
+    // Используется для сохранения и чтения строк с типом QString.
+    // См. ниже специализацию этой структуры для QString
     template<typename T>
     struct ProxyStdString
     {
@@ -476,6 +504,27 @@ bool YamlConfig::getValue(const YAML::Node& baseNode,
 {
     return getValueVect(baseNode, name, value, logWarn);
 }
+
+template<typename T1, typename T2>
+bool YamlConfig::getValue(const std::string& name, QPair<T1, T2>& value,
+                          bool logWarn) const
+{
+    return getValue(_root, name, value, logWarn);
+}
+
+template<typename T1, typename T2>
+bool YamlConfig::getValue(const YAML::Node& baseNode,
+                          const std::string& name, QPair<T1, T2>& value,
+                          bool logWarn) const
+{
+    YamlConfig::Func func = [&value](YamlConfig* conf, YAML::Node& node, bool logWarn)
+    {
+        bool r1 = conf->getValue(node, "first",  value.first,  logWarn);
+        bool r2 = conf->getValue(node, "second", value.second, logWarn);
+        return r1 && r2;
+    };
+    return getValue(baseNode, name, func, logWarn);
+}
 #endif
 
 template<typename T>
@@ -565,6 +614,29 @@ bool YamlConfig::setValue(YAML::Node& baseNode,
                           YAML::EmitterStyle::value nodeStyle)
 {
     return setValueVect(baseNode, name, value, nodeStyle);
+}
+
+template<typename T1, typename T2>
+bool YamlConfig::setValue(const std::string& name, QPair<T1, T2>& value,
+                          YAML::EmitterStyle::value nodeStyle)
+{
+    return setValue(_root, name, value, nodeStyle);
+}
+
+template<typename T1, typename T2>
+bool YamlConfig::setValue(YAML::Node& baseNode,
+                          const std::string& name, QPair<T1, T2>& value,
+                          YAML::EmitterStyle::value nodeStyle)
+{
+    YamlConfig::Func func = [&value, nodeStyle]
+                            (YamlConfig* conf, YAML::Node& node, bool /*logWarn*/)
+    {
+        node.SetStyle(nodeStyle);
+        bool r1 = conf->setValue(node, "first",  value.first);
+        bool r2 = conf->setValue(node, "second", value.second);
+        return r1 && r2;
+    };
+    return setValue(baseNode, name, func);
 }
 #endif
 

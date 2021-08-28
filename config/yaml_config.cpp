@@ -305,9 +305,15 @@ YAML::Node YamlConfig::nodeSet(YAML::Node& baseNode, const std::string& name)
 
 bool YamlConfig::getValue(const std::string& name, Func func, bool logWarn) const
 {
+    return getValue(_root, name, func, logWarn);
+}
+
+bool YamlConfig::getValue(const YAML::Node& baseNode,
+                          const std::string& name, Func func, bool logWarn) const
+{
     std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
-    YAML::Node node = nodeGet(_root, name, logWarn);
+    YAML::Node node = nodeGet(baseNode, name, logWarn);
     if (!node || node.IsNull())
         return false;
 
@@ -322,11 +328,17 @@ bool YamlConfig::getValue(const std::string& name, Func func, bool logWarn) cons
 
 bool YamlConfig::setValue(const std::string& name, Func func)
 {
+    return setValue(_root, name, func);
+}
+
+bool YamlConfig::setValue(YAML::Node& baseNode,
+                          const std::string& name, Func func)
+{
     YAML_CONFIG_CHECK_READONLY
 
     std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
-    YAML::Node node = nodeSet(_root, name);
+    YAML::Node node = nodeSet(baseNode, name);
     bool res = false;
     YAML_CONFIG_TRY
     _nameNodeFunc = name + ".";
