@@ -254,10 +254,9 @@ private:
     template<typename T>
     static char* typeName();
 
-    // Используется для сохранения и чтения строк с типом QString.
-    // См. ниже специализацию этой структуры для QString
+    // Используется для преобразования типов к строковому представлению
     template<typename T>
-    struct ProxyStdString
+    struct ProxyType
     {
         typedef T Type;
         static  T setter(T t) {return t;}
@@ -353,14 +352,14 @@ inline char* Config::typeName()
 
 #if defined(QT_CORE_LIB)
 template<>
-struct Config::ProxyStdString<QString>
+struct Config::ProxyType<QString>
 {
     typedef string Type;
     static Type setter(const QString& s) {return Type(s.toUtf8().constData());}
     static QString getter(const Type& s) {return QString::fromUtf8(s.c_str());}
 };
 template<>
-struct Config::ProxyStdString<QUuid>
+struct Config::ProxyType<QUuid>
 {
     typedef string Type;
     static Type setter(const QUuid& u) {
@@ -372,11 +371,11 @@ struct Config::ProxyStdString<QUuid>
     }
 };
 template<>
-struct Config::ProxyStdString<QUuidEx>
+struct Config::ProxyType<QUuidEx>
 {
     typedef string Type;
-    static Type setter(const QUuidEx& u) {return ProxyStdString<QUuid>::setter(u);}
-    static QUuidEx getter(const Type& s) {return ProxyStdString<QUuid>::getter(s);}
+    static Type setter(const QUuidEx& u) {return ProxyType<QUuid>::setter(u);}
+    static QUuidEx getter(const Type& s) {return ProxyType<QUuid>::getter(s);}
 };
 #endif
 
@@ -406,7 +405,7 @@ bool Config::getValue(const YAML::Node& baseNode,
 
     YAML_CONFIG_TRY
     // было так: value = node.as<T>();
-    value = ProxyStdString<T>::getter(node.as<typename ProxyStdString<T>::Type>());
+    value = ProxyType<T>::getter(node.as<typename ProxyType<T>::Type>());
     YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     return true;
 }
@@ -444,8 +443,8 @@ bool Config::getValueVect(const YAML::Node& baseNode,
         YAML_CONFIG_TRY
         typedef typename VectorT::value_type ValueType;
         // было так: v.push_back(n.as<ValueType>());
-        v.push_back(ProxyStdString<ValueType>::getter(
-                        n.as<typename ProxyStdString<ValueType>::Type>()));
+        v.push_back(ProxyType<ValueType>::getter(
+                    n.as<typename ProxyType<ValueType>::Type>()));
         YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     }
     value.swap(v);
@@ -536,7 +535,7 @@ bool Config::setValue(YAML::Node& baseNode,
 
     YAML::Node node = nodeSet(baseNode, name);
     YAML_CONFIG_TRY
-    node = YAML::Node(ProxyStdString<T>::setter(value));
+    node = YAML::Node(ProxyType<T>::setter(value));
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return true;
@@ -557,7 +556,7 @@ bool Config::setValueVect(YAML::Node& baseNode,
     node.SetStyle(nodeStyle);
     typedef typename VectorT::value_type ValueType;
     for (const ValueType& v : value)
-        node.push_back(ProxyStdString<ValueType>::setter(v));
+        node.push_back(ProxyType<ValueType>::setter(v));
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return true;
