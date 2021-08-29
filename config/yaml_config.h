@@ -299,17 +299,6 @@ private:
     template<typename T, int> friend T& ::safe_singleton();
 };
 
-class ConfigLock
-{
-public:
-    ConfigLock(const Config&);
-    ~ConfigLock();
-
-private:
-    DISABLE_DEFAULT_FUNC(ConfigLock)
-    recursive_mutex* _configLock;
-};
-
 //---------------------------- Implementation  -------------------------------
 
 template<typename T>

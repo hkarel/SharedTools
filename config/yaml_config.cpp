@@ -348,15 +348,4 @@ bool Config::setValue(YAML::Node& baseNode,
     return res;
 }
 
-ConfigLock::ConfigLock(const Config& yc)
-{
-    _configLock = &yc._configLock;
-    _configLock->lock();
-}
-
-ConfigLock::~ConfigLock()
-{
-    _configLock->unlock();
-}
-
 } // namespace yaml
