@@ -45,13 +45,15 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "YamlConfig")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "YamlConfig")
 
+namespace yaml {
+
 #define YAML_CONFIG_CATCH_2 \
     } catch (YAML::Exception& e) { \
         alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
         if (!_filePath.empty()) \
             logLine << ". File: " << _filePath; \
         return false; \
-    } catch (std::exception& e) { \
+    } catch (exception& e) { \
         alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
         if (!_filePath.empty()) \
             logLine << ". File: " << _filePath; \
@@ -63,14 +65,13 @@
         return false; \
     }
 
-
-bool YamlConfig::readFile(const std::string& filePath)
+bool Config::readFile(const string& filePath)
 {
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath = filePath;
-    std::ifstream file(_filePath, std::ifstream::in);
+    ifstream file(_filePath, ifstream::in);
     if (!file.is_open())
     {
         log_warn_m << "Cannot open config file: " << _filePath;
@@ -87,9 +88,9 @@ bool YamlConfig::readFile(const std::string& filePath)
     return true;
 }
 
-bool YamlConfig::readString(const std::string& str)
+bool Config::readString(const string& str)
 {
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath.clear();
@@ -104,38 +105,37 @@ bool YamlConfig::readString(const std::string& str)
     return true;
 }
 
-bool YamlConfig::rereadFile()
+bool Config::rereadFile()
 {
     return readFile(_filePath);
 }
 
-bool YamlConfig::changed() const
+bool Config::changed() const
 {
     return _changed;
 }
 
-bool YamlConfig::readOnly() const
+bool Config::readOnly() const
 {
     return _readOnly;
 }
 
-void YamlConfig::setReadOnly(bool val)
+void Config::setReadOnly(bool val)
 {
     _readOnly = val;
 }
 
-bool YamlConfig::saveDisabled() const
+bool Config::saveDisabled() const
 {
     return _saveDisabled;
 }
 
-void YamlConfig::setSaveDisabled(bool val)
+void Config::setSaveDisabled(bool val)
 {
     _saveDisabled = val;
 }
 
-bool YamlConfig::save(const std::string& filePath,
-                      YAML::EmitterStyle::value nodeStyle)
+bool Config::save(const string& filePath, YAML::EmitterStyle::value nodeStyle)
 {
     if (_saveDisabled)
     {
@@ -143,7 +143,7 @@ bool YamlConfig::save(const std::string& filePath,
         return false;
     }
 
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     if (!filePath.empty())
@@ -155,18 +155,18 @@ bool YamlConfig::save(const std::string& filePath,
         return false;
     }
 
-    typedef std::chrono::high_resolution_clock clock;
+    typedef chrono::high_resolution_clock clock;
     uint64_t timeTick = clock::now().time_since_epoch().count();
-    std::string fileTmp = _filePath + ".tmp" + utl::toString(timeTick);
-    std::remove(fileTmp.c_str());
+    string fileTmp = _filePath + ".tmp" + utl::toString(timeTick);
+    remove(fileTmp.c_str());
 
     try
     {
-        std::ofstream file {fileTmp, std::ios_base::out};
+        ofstream file {fileTmp, ios_base::out};
         if (!file.is_open())
         {
             log_error_m << "Cannot open temporary file " << fileTmp << " for write";
-            std::remove(fileTmp.c_str());
+            remove(fileTmp.c_str());
             return false;
         }
 
@@ -177,19 +177,19 @@ bool YamlConfig::save(const std::string& filePath,
     }
     catch (...)
     {
-        std::remove(fileTmp.c_str());
+        remove(fileTmp.c_str());
         throw;
     }
 
-    if (0 != std::remove(_filePath.c_str()))
+    if (0 != remove(_filePath.c_str()))
         if (errno != ENOENT)
         {
             log_error_m << "Failed remove old data file " << _filePath;
-            std::remove(fileTmp.c_str());
+            remove(fileTmp.c_str());
             return false;
         }
 
-    if (0 != std::rename(fileTmp.c_str(), _filePath.c_str()))
+    if (0 != rename(fileTmp.c_str(), _filePath.c_str()))
     {
         log_error_m << "Failed rename temporary file " << fileTmp
                     << " to " << _filePath;
@@ -200,24 +200,24 @@ bool YamlConfig::save(const std::string& filePath,
     return true;
 }
 
-std::string YamlConfig::filePath() const
+string Config::filePath() const
 {
     return _filePath;
 }
 
-bool YamlConfig::remove(const std::string& name, bool logWarn)
+bool Config::remove(const string& name, bool logWarn)
 {
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
      size_t pos = name.find_last_of('.');
-     if (pos == std::string::npos)
+     if (pos == string::npos)
      {
          _root.remove(name);
          return true;
      }
-     std::string namePre = name.substr(0, pos);
-     std::string nameKey = name.substr(pos + 1);
+     string namePre = name.substr(0, pos);
+     string nameKey = name.substr(pos + 1);
 
      YAML::Node node = getNode(namePre);
      if (!node || node.IsNull())
@@ -228,24 +228,23 @@ bool YamlConfig::remove(const std::string& name, bool logWarn)
     return true;
 }
 
-YAML::Node YamlConfig::getNode(const std::string& name) const
+YAML::Node Config::getNode(const string& name) const
 {
     return getNode(_root, name);
 }
 
-YAML::Node YamlConfig::getNode(const YAML::Node& baseNode,
-                               const std::string& name) const
+YAML::Node Config::getNode(const YAML::Node& baseNode, const string& name) const
 {
     if (name == ".")
         return baseNode;
 
-    std::vector<std::string> parts = utl::split(name, '.');
+    vector<string> parts = utl::split(name, '.');
     if (parts.empty())
         return YAML::Node();
 
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
-    typedef std::function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
+    typedef function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
     NodeFunc get_node = [&](const YAML::Node& node, size_t i)
     {
         if (!node.IsDefined() || node.IsNull())
@@ -258,7 +257,7 @@ YAML::Node YamlConfig::getNode(const YAML::Node& baseNode,
             return YAML::Node();
 
         YAML_CONFIG_TRY
-        std::string s = parts[i];
+        string s = parts[i];
         YAML::Node n = node[s];
         return get_node(n, ++i);
         YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(YAML::Node()))
@@ -266,8 +265,8 @@ YAML::Node YamlConfig::getNode(const YAML::Node& baseNode,
     return get_node(baseNode, 0);
 }
 
-YAML::Node YamlConfig::nodeGet(const YAML::Node& baseNode,
-                               const std::string& name, bool logWarn) const
+YAML::Node Config::nodeGet(const YAML::Node& baseNode,
+                           const string& name, bool logWarn) const
 {
     YAML::Node node = getNode(baseNode, name);
     if (node.IsNull() && logWarn)
@@ -278,18 +277,18 @@ YAML::Node YamlConfig::nodeGet(const YAML::Node& baseNode,
     return node;
 }
 
-YAML::Node YamlConfig::nodeSet(YAML::Node& baseNode, const std::string& name)
+YAML::Node Config::nodeSet(YAML::Node& baseNode, const string& name)
 {
-    std::vector<std::string> parts = utl::split(name, '.');
+    vector<string> parts = utl::split(name, '.');
 
-    typedef std::function<YAML::Node (YAML::Node&, size_t)> NodeFunc;
+    typedef function<YAML::Node (YAML::Node&, size_t)> NodeFunc;
     NodeFunc get_node = [&](YAML::Node& node, size_t i)
     {
         if (i == parts.size())
             return node;
 
         YAML_CONFIG_TRY
-        std::string s = parts[i];
+        string s = parts[i];
         YAML::Node n = node[s];
         if (n.IsDefined() && !n.IsMap() && i < (parts.size() - 1))
         {
@@ -303,15 +302,15 @@ YAML::Node YamlConfig::nodeSet(YAML::Node& baseNode, const std::string& name)
     return get_node(baseNode, 0);
 }
 
-bool YamlConfig::getValue(const std::string& name, Func func, bool logWarn) const
+bool Config::getValue(const string& name, Func func, bool logWarn) const
 {
     return getValue(_root, name, func, logWarn);
 }
 
-bool YamlConfig::getValue(const YAML::Node& baseNode,
-                          const std::string& name, Func func, bool logWarn) const
+bool Config::getValue(const YAML::Node& baseNode,
+                      const string& name, Func func, bool logWarn) const
 {
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, logWarn);
     if (!node || node.IsNull())
@@ -320,23 +319,23 @@ bool YamlConfig::getValue(const YAML::Node& baseNode,
     bool res = false;
     YAML_CONFIG_TRY
     _nameNodeFunc = name + ".";
-    res = func(const_cast<YamlConfig*>(this), node, logWarn);
+    res = func(const_cast<Config*>(this), node, logWarn);
     _nameNodeFunc.clear();
     YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     return res;
 }
 
-bool YamlConfig::setValue(const std::string& name, Func func)
+bool Config::setValue(const string& name, Func func)
 {
     return setValue(_root, name, func);
 }
 
-bool YamlConfig::setValue(YAML::Node& baseNode,
-                          const std::string& name, Func func)
+bool Config::setValue(YAML::Node& baseNode,
+                      const string& name, Func func)
 {
     YAML_CONFIG_CHECK_READONLY
 
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
     bool res = false;
@@ -349,22 +348,15 @@ bool YamlConfig::setValue(YAML::Node& baseNode,
     return res;
 }
 
-YamlConfigLock::YamlConfigLock(const YamlConfig& yc)
+ConfigLock::ConfigLock(const Config& yc)
 {
     _configLock = &yc._configLock;
     _configLock->lock();
 }
 
-YamlConfigLock::~YamlConfigLock()
+ConfigLock::~ConfigLock()
 {
     _configLock->unlock();
 }
 
-#undef YAML_CONFIG_CATCH_2
-
-#undef log_error_m
-#undef log_warn_m
-#undef log_info_m
-#undef log_verbose_m
-#undef log_debug_m
-#undef log_debug2_m
+} // namespace yaml
