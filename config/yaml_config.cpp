@@ -219,7 +219,7 @@ bool Config::remove(const string& name, bool logWarn)
      string namePre = name.substr(0, pos);
      string nameKey = name.substr(pos + 1);
 
-     YAML::Node node = getNode(namePre);
+     YAML::Node node = this->node(namePre);
      if (!node || node.IsNull())
          return false;
 
@@ -228,12 +228,12 @@ bool Config::remove(const string& name, bool logWarn)
     return true;
 }
 
-YAML::Node Config::getNode(const string& name) const
+YAML::Node Config::node(const string& name) const
 {
-    return getNode(_root, name);
+    return node(_root, name);
 }
 
-YAML::Node Config::getNode(const YAML::Node& baseNode, const string& name) const
+YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
 {
     if (name == ".")
         return baseNode;
@@ -268,7 +268,7 @@ YAML::Node Config::getNode(const YAML::Node& baseNode, const string& name) const
 YAML::Node Config::nodeGet(const YAML::Node& baseNode,
                            const string& name, bool logWarn) const
 {
-    YAML::Node node = getNode(baseNode, name);
+    YAML::Node node = this->node(baseNode, name);
     if (node.IsNull() && logWarn)
     {
         log_warn_m << "Parameter '" << (_nameNodeFunc + name) << "' is undefined"
@@ -298,46 +298,72 @@ YAML::Node Config::nodeSet(YAML::Node& baseNode, const string& name)
         return get_node(n, ++i);
         YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(YAML::Node()))
     };
-    //return get_node(_root, 0);
     return get_node(baseNode, 0);
 }
 
-bool Config::getValue(const string& name, Func func, bool logWarn) const
+YAML::EmitterStyle::value Config::nodeStyle(const std::string& name) const
 {
-    return getValue(_root, name, func, logWarn);
+    return nodeStyle(_root, name);
 }
 
-bool Config::getValue(const YAML::Node& baseNode,
-                      const string& name, Func func, bool logWarn) const
+YAML::EmitterStyle::value Config::nodeStyle(const YAML::Node& baseNode,
+                                            const std::string& name) const
 {
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
-    YAML::Node node = nodeGet(baseNode, name, logWarn);
+    YAML::Node node = nodeGet(baseNode, name, true);
     if (!node || node.IsNull())
-        return false;
+        return YAML::EmitterStyle::value::Default;
 
+    YAML::EmitterStyle::value style;
+    YAML_CONFIG_TRY
+    style = node.Style();
+    YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(YAML::EmitterStyle::value::Default))
+    return style;
+}
+
+void Config::setNodeStyle(const std::string& name, YAML::EmitterStyle::value style)
+{
+    setNodeStyle(_root, name, style);
+}
+
+void Config::setNodeStyle(YAML::Node& baseNode, const std::string& name,
+                          YAML::EmitterStyle::value style)
+{
+    if (_readOnly)
+    {
+        log_warn_m << "Failed set node style for " << name
+                   << ". Config data is read only";
+        return;
+    }
+
+    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+
+    // Исходим из того, что стиль устанавливается для уже существующей ноды,
+    // поэтому вызываем nodeGet()
+    YAML::Node node = nodeGet(baseNode, name, true);
+    if (!node || node.IsNull())
+        return;
+
+    YAML_CONFIG_TRY
+    node.SetStyle(style);
+    YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN((void)0))
+}
+
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              Func func, bool logWarn) const
+{
     bool res = false;
     YAML_CONFIG_TRY
     _nameNodeFunc = name + ".";
-    res = func(const_cast<Config*>(this), node, logWarn);
+    res = func(const_cast<Config*>(this), const_cast<YAML::Node&>(node), logWarn);
     _nameNodeFunc.clear();
     YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     return res;
 }
 
-bool Config::setValue(const string& name, Func func)
+bool Config::setValueInternal(YAML::Node& node, const string& name, Func func)
 {
-    return setValue(_root, name, func);
-}
-
-bool Config::setValue(YAML::Node& baseNode,
-                      const string& name, Func func)
-{
-    YAML_CONFIG_CHECK_READONLY
-
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
-
-    YAML::Node node = nodeSet(baseNode, name);
     bool res = false;
     YAML_CONFIG_TRY
     _nameNodeFunc = name + ".";

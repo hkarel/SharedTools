@@ -54,6 +54,26 @@ namespace yaml {
 
 using namespace std;
 
+namespace detail {
+
+#if defined(QT_CORE_LIB)
+#define YAML_TYPES(TYPE) is_fundamental<TYPE>::value \
+                         || std::is_same<TYPE, std::string>::value \
+                         || std::is_same<TYPE, QString>::value \
+                         || std::is_same<TYPE, QUuid>::value \
+                         || std::is_same<TYPE, QUuidEx>::value
+#else
+#define YAML_TYPES(TYPE) std::is_fundamental<TYPE>::value \
+                         || std::is_same<TYPE, std::string>::value
+
+#endif
+
+template<typename T> using is_yaml_type  = std::enable_if< (YAML_TYPES(T)), int>;
+template<typename T> using not_yaml_type = std::enable_if<!(YAML_TYPES(T)), int>;
+
+#undef YAML_TYPES
+} // namespace detail
+
 /**
   Механизм чтения и записи конфигурационных файлов в YAML-нотации
 */
@@ -95,96 +115,43 @@ public:
     // Удаляет ноду по имени
     bool remove(const string& name, bool logWarn = true);
 
-    // Возвращает ноду с именем name
-    YAML::Node getNode(const string& name) const;
+    // Возвращает ноду с именем name. Результат может быть использован
+    // в качестве базовой ноды (baseNode)
+    YAML::Node node(const string& name) const;
 
     // Возвращает ноду с именем name относительно базовой ноды baseNode
-    YAML::Node getNode(const YAML::Node& baseNode, const string& name) const;
+    YAML::Node node(const YAML::Node& baseNode, const string& name) const;
 
-    // Используется  для  получения  простого  значения  (скаляр)  из  ноды
-    // с именем name. Имя может быть составным.  Составное имя записывается
-    // следующим образом: 'param1.param2.param3'.
+    // Возвращает стиль записи для ноды с именем name
+    YAML::EmitterStyle::value nodeStyle(const std::string& name) const;
+
+    // Возвращает стиль записи для ноды с именем name относительно базовой ноды
+    YAML::EmitterStyle::value nodeStyle(const YAML::Node& baseNode,
+                                        const std::string& name) const;
+
+    // Устанавливает стиль записи для ноды с именем name
+    void setNodeStyle(const std::string& name, YAML::EmitterStyle::value);
+
+    // Устанавливает стиль записи для ноды с именем name относительно базовой ноды
+    void setNodeStyle(YAML::Node& baseNode, const std::string& name,
+                      YAML::EmitterStyle::value);
+
+    // Используется для получения значения из ноды с именем  name. Имя может
+    // быть составным. Составное имя записывается следующим образом:
+    // 'param1.param2.param3'.
     // Возвращает TRUE если нода с именем name существует и в параметр value
     // успешно записано  значение.  Параметр  logWarn  определяет  нужно  ли
     // выводить сообщения в лог при неудачном считывании данных
     template<typename T>
-    bool getValue(const string& name, T& value,
-                  bool logWarn = true) const;
+    bool getValue(const string& name, T& value, bool logWarn = true) const;
 
     // Возвращает значение относительно базовой ноды baseNode
     template<typename T>
-    bool getValue(const YAML::Node& baseNode,
-                  const string& name, T& value,
+    bool getValue(const YAML::Node& baseNode, const string& name, T& value,
                   bool logWarn = true) const;
 
-    // Используется для получения  списка  значений  из  ноды  с  именем name.
-    // Возвращает TRUE если нода с именем  name  существует и параметр  value
-    // успешно  заполнен  значениями.  Параметр  logWarn  определяет нужно ли
-    // выводить сообщения в лог при неудачном считывании данных
-    template<typename T>
-    bool getValue(const string& name, vector<T>& value,
-                  bool logWarn = true) const;
-
-    // Используется для получения списка значений относительно базовой
-    // ноды baseNode
-    template<typename T>
-    bool getValue(const YAML::Node& baseNode,
-                  const string& name, vector<T>& value,
-                  bool logWarn = true) const;
-
-#if defined(QT_CORE_LIB)
-    // Перегруженная функция, используется для считывания списка значений
-    // в QVector
-    template<typename T>
-    bool getValue(const string& name, QVector<T>& value,
-                  bool logWarn = true) const;
-
-    // Используется для получения списка значений относительно базовой
-    // ноды baseNode
-    template<typename T>
-    bool getValue(const YAML::Node& baseNode,
-                  const string& name, QVector<T>& value,
-                  bool logWarn = true) const;
-
-    // Перегруженная функция, используется для считывания списка значений
-    // в QList
-    template<typename T>
-    bool getValue(const string& name, QList<T>& value,
-                  bool logWarn = true) const;
-
-    // Используется для получения списка значений относительно базовой
-    // ноды baseNode
-    template<typename T>
-    bool getValue(const YAML::Node& baseNode,
-                  const string& name, QList<T>& value,
-                  bool logWarn = true) const;
-
-    template<typename T1, typename T2>
-    bool getValue(const string& name, QPair<T1, T2>& value,
-                  bool logWarn = true) const;
-
-    template<typename T1, typename T2>
-    bool getValue(const YAML::Node& baseNode,
-                  const string& name, QPair<T1, T2>& value,
-                  bool logWarn = true) const;
-#endif
-
-    // Используется  для  получения  значений  для  нод  сложной  конфигурации.
-    // В качестве параметра func используется функция или функтор со следующей
-    // сигнатурой function(Config* conf, YAML::Node& node, bool logWarn),
-    // где:
-    //   conf - указатель на текущий конфигуратор; node - читаемая нода;
-    //   logWarn - определяет нужно ли выводить сообщения в лог при неудачном
-    //   считывании данных
-    bool getValue(const string& name, Func func, bool logWarn = true) const;
-
-    // Используется для получения значений для нод сложной конфигурации относи-
-    // тельно базовой ноды baseNode
-    bool getValue(const YAML::Node& baseNode,
-                  const string& name, Func func, bool logWarn = true) const;
-
-    // Используется для записи простого значения (скаляр) в ноду с именем name.
-    // Имя может быть составным. Составное имя записывается следующим образом:
+    // Используется для записи значения в ноду с именем name. Имя может быть
+    // составным. Составное имя записывается следующим образом:
     // 'param1.param2.param3'.
     // Возвращает TRUE если значение было удачно записано в ноду
     template<typename T>
@@ -192,61 +159,7 @@ public:
 
     // Устанавливает значение относительно базовой ноды baseNode
     template<typename T>
-    bool setValue(YAML::Node& baseNode,
-                  const string& name, const T& value);
-
-    // Используется для записи списка значений в ноду с именем name.
-    // Возвращает TRUE если список был удачно записан в ноду
-    template<typename T>
-    bool setValue(const string& name, const vector<T>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-
-    // Используется для записи списка значений относительно базовой ноды baseNode
-    template<typename T>
-    bool setValue(YAML::Node& baseNode,
-                  const string& name, const vector<T>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-
-#if defined(QT_CORE_LIB)
-    // Перегруженная функция, используется для записи списка значений из QVector
-    template<typename T>
-    bool setValue(const string& name, const QVector<T>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-
-    // Используется для записи списка значений относительно базовой ноды baseNode
-    template<typename T>
-    bool setValue(YAML::Node& baseNode,
-                  const string& name, const QVector<T>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-
-    // Перегруженная функция, используется для записи списка значений из QList
-    template<typename T>
-    bool setValue(const string& name, const QList<T>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-
-    // Используется для записи списка значений относительно базовой ноды baseNode
-    template<typename T>
-    bool setValue(YAML::Node& baseNode,
-                  const string& name, const QList<T>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-
-    template<typename T1, typename T2>
-    bool setValue(const string& name, QPair<T1, T2>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-
-    template<typename T1, typename T2>
-    bool setValue(YAML::Node& baseNode,
-                  const string& name, QPair<T1, T2>& value,
-                  YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Flow);
-#endif
-
-    // Используется для записи значений для нод сложной конфигурации,
-    // см. описание getValue()
-    bool setValue(const string& name, Func func);
-
-    // Используется для записи значений для нод сложной конфигурации относи-
-    // тельно базовой ноды baseNode
-    bool setValue(YAML::Node& baseNode, const string& name, Func func);
+    bool setValue(YAML::Node& baseNode, const string& name, const T& value);
 
 private:
     DISABLE_DEFAULT_COPY(Config)
@@ -264,7 +177,7 @@ private:
     };
 
     // Возвращает ноду по имени 'name'. Если ноды с заданным именем нет
-    // в списке, то будет возвращена пустая нода
+    // в списке будет возвращена пустая нода
     YAML::Node nodeGet(const YAML::Node& baseNode, const string& name,
                        bool logWarn) const;
 
@@ -272,15 +185,101 @@ private:
     // заданному параметру 'name'
     YAML::Node nodeSet(YAML::Node& baseNode, const string& name);
 
-    template<typename VectorT>
-    bool getValueVect(const YAML::Node& baseNode,
-                      const string& name, VectorT& value,
-                      bool logWarn = true) const;
+private:
+    template<typename T>
+    bool getValueBase(const YAML::Node& node, const string& name, T& value,
+                      bool logWarn) const;
+
+    // Используется  для  получения  значений  для  нод  сложной  конфигурации.
+    // В качестве параметра func используется функция или функтор со следующей
+    // сигнатурой function(Config* conf, YAML::Node& node, bool logWarn),
+    // где:
+    //   conf - указатель на текущий конфигуратор; node - читаемая нода;
+    //   logWarn - определяет нужно ли выводить сообщения в лог при неудачном
+    //   считывании данных
+    bool getValueInternal(const YAML::Node& node, const string& name,
+                          Func func, bool logWarn) const;
 
     template<typename VectorT>
-    bool setValueVect(YAML::Node& baseNode,
-                      const string& name, const VectorT& value,
-                      YAML::EmitterStyle::value nodeStyle);
+    bool getValueVector(const YAML::Node& node, const string& name,
+                        VectorT& value, bool logWarn) const;
+
+    template<typename T>
+    bool getValueInternal(const YAML::Node& node, const string& name,
+                          vector<T>& value, bool logWarn) const;
+
+#if defined(QT_CORE_LIB)
+    template<typename T>
+    bool getValueInternal(const YAML::Node& node, const string& name,
+                          QVector<T>& value, bool logWarn) const;
+
+    template<typename T>
+    bool getValueInternal(const YAML::Node& node, const string& name,
+                          QList<T>& value, bool logWarn) const;
+
+    template<typename T1, typename T2>
+    bool getValueInternal(const YAML::Node& node, const string& name,
+                          QPair<T1, T2>& value, bool logWarn) const;
+#endif
+
+    template<typename T>
+    static bool getValueProxy(const Config* config, YAML::Node& node,
+                              const string& name, T& value, bool logWarn,
+                              typename detail::is_yaml_type<T>::type = 0)
+    {
+        return config->getValueBase(node, name, value, logWarn);
+    }
+    template<typename T>
+    static bool getValueProxy(const Config* config, YAML::Node& node,
+                              const string& name, T& value, bool logWarn,
+                              typename detail::not_yaml_type<T>::type = 0)
+    {
+        return config->getValueInternal(node, name, value, logWarn);
+    }
+
+private:
+    template<typename T>
+    bool setValueBase(YAML::Node& node, const string& name, const T& value);
+
+    // Используется для записи значений для нод сложной конфигурации
+    bool setValueInternal(YAML::Node& node, const string& name, Func func);
+
+    template<typename VectorT>
+    bool setValueVector(YAML::Node& node, const string& name,
+                        const VectorT& value);
+
+    template<typename T>
+    bool setValueInternal(YAML::Node& node, const string& name,
+                          const vector<T>& value);
+
+#if defined(QT_CORE_LIB)
+    template<typename T>
+    bool setValueInternal(YAML::Node& node, const string& name,
+                          const QVector<T>& value);
+
+    template<typename T>
+    bool setValueInternal(YAML::Node& node, const string& name,
+                          const QList<T>& value);
+
+    template<typename T1, typename T2>
+    bool setValueInternal(YAML::Node& node, const string& name,
+                          const QPair<T1, T2>& value);
+#endif
+
+    template<typename T>
+    static bool setValueProxy(Config* config, YAML::Node& node,
+                              const string& name, const T& value,
+                              typename detail::is_yaml_type<T>::type = 0)
+    {
+        return config->setValueBase(node, name, value);
+    }
+    template<typename T>
+    static bool setValueProxy(Config* config, YAML::Node& node,
+                              const string& name, const T& value,
+                              typename detail::not_yaml_type<T>::type = 0)
+    {
+        return config->setValueInternal(node, name, value);
+    }
 
 private:
     atomic_bool _changed = {false};
@@ -318,9 +317,9 @@ inline char* Config::typeName()
     alog::Line logLine = \
     alog::logger().error(alog_line_location, "YamlConfig") \
         << "Yaml error"; \
-    if (GETSET == 0) \
+    if (GETSET == YAML_GET_FUNC) \
         logLine << ". Failed to get parameter: " << (_nameNodeFunc + name); \
-    else \
+    else /*YAML_SET_FUNC*/ \
         logLine << ". Failed to set parameter: " << (_nameNodeFunc + name); \
     logLine << log_format(". Detail: %?. File: %?", ERROR, _filePath);
 
@@ -343,11 +342,11 @@ inline char* Config::typeName()
     }
 
 #define YAML_CONFIG_CHECK_READONLY \
-        if (_readOnly) {\
+        if (_readOnly) { \
             alog::logger().warn(alog_line_location, "YamlConfig") \
                 << "Failed to set parameter: " << name \
                 << ". Config data is read only"; \
-            return false;  \
+            return false; \
         }
 
 #if defined(QT_CORE_LIB)
@@ -386,8 +385,8 @@ bool Config::getValue(const string& name, T& value, bool logWarn) const
 }
 
 template<typename T>
-bool Config::getValue(const YAML::Node& baseNode,
-                          const string& name, T& value, bool logWarn) const
+bool Config::getValue(const YAML::Node& baseNode, const string& name, T& value,
+                      bool logWarn) const
 {
     lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
@@ -395,6 +394,13 @@ bool Config::getValue(const YAML::Node& baseNode,
     if (!node || node.IsNull())
         return false;
 
+    return getValueProxy(this, node, name, value, logWarn);
+}
+
+template<typename T>
+bool Config::getValueBase(const YAML::Node& node, const string& name, T& value,
+                          bool logWarn) const
+{
     if (!node.IsScalar())
     {
         if (logWarn)
@@ -411,16 +417,9 @@ bool Config::getValue(const YAML::Node& baseNode,
 }
 
 template<typename VectorT>
-bool Config::getValueVect(const YAML::Node& baseNode,
-                              const string& name, VectorT& value,
-                              bool logWarn) const
+bool Config::getValueVector(const YAML::Node& node, const string& name,
+                            VectorT& value, bool logWarn) const
 {
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
-
-    YAML::Node node = nodeGet(baseNode, name, logWarn);
-    if (!node || node.IsNull())
-        return false;
-
     if (!node.IsSequence())
     {
         if (logWarn)
@@ -452,70 +451,38 @@ bool Config::getValueVect(const YAML::Node& baseNode,
 }
 
 template<typename T>
-bool Config::getValue(const string& name, vector<T>& value,
-                          bool logWarn) const
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              vector<T>& value, bool logWarn) const
 {
-    return getValueVect(_root, name, value, logWarn);
-}
-
-template<typename T>
-bool Config::getValue(const YAML::Node& baseNode,
-                          const string& name, vector<T>& value,
-                          bool logWarn) const
-{
-    return getValueVect(baseNode, name, value, logWarn);
+    return getValueVector(node, name, value, logWarn);
 }
 
 #if defined(QT_CORE_LIB)
 template<typename T>
-bool Config::getValue(const string& name, QVector<T>& value,
-                          bool logWarn) const
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              QVector<T>& value, bool logWarn) const
 {
-    return getValueVect(_root, name, value, logWarn);
+    return getValueVector(node, name, value, logWarn);
 }
 
 template<typename T>
-bool Config::getValue(const YAML::Node& baseNode,
-                          const string& name, QVector<T>& value,
-                          bool logWarn) const
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              QList<T>& value, bool logWarn) const
 {
-    return getValueVect(baseNode, name, value, logWarn);
-}
-
-template<typename T>
-bool Config::getValue(const string& name, QList<T>& value,
-                          bool logWarn) const
-{
-    return getValueVect(_root, name, value, logWarn);
-}
-
-template<typename T>
-bool Config::getValue(const YAML::Node& baseNode,
-                          const string& name, QList<T>& value,
-                          bool logWarn) const
-{
-    return getValueVect(baseNode, name, value, logWarn);
+    return getValueVector(node, name, value, logWarn);
 }
 
 template<typename T1, typename T2>
-bool Config::getValue(const string& name, QPair<T1, T2>& value,
-                          bool logWarn) const
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              QPair<T1, T2>& value, bool logWarn) const
 {
-    return getValue(_root, name, value, logWarn);
-}
-
-template<typename T1, typename T2>
-bool Config::getValue(const YAML::Node& baseNode,
-                          const string& name, QPair<T1, T2>& value,
-                          bool logWarn) const
-{
-    Config::Func func = [&value](Config* conf, YAML::Node& node, bool logWarn)
+    Config::Func func = [&value](Config* c, YAML::Node& n, bool logWarn)
     {
-        bool r1 = conf->getValue(node, "first",  value.first,  logWarn);
-        bool r2 = conf->getValue(node, "second", value.second, logWarn);
+        bool r1 = c->getValue(n, "first",  value.first,  logWarn);
+        bool r2 = c->getValue(n, "second", value.second, logWarn);
         return r1 && r2;
     };
-    return getValue(baseNode, name, func, logWarn);
+    return getValueInternal(node, name, func, logWarn);
 }
 #endif
 
@@ -526,14 +493,19 @@ bool Config::setValue(const string& name, const T& value)
 }
 
 template<typename T>
-bool Config::setValue(YAML::Node& baseNode,
-                          const string& name, const T& value)
+bool Config::setValue(YAML::Node& baseNode, const string& name, const T& value)
 {
     YAML_CONFIG_CHECK_READONLY
 
     lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
+    return setValueProxy(const_cast<Config*>(this), node, name, value);
+}
+
+template<typename T>
+bool Config::setValueBase(YAML::Node& node, const string& name, const T& value)
+{
     YAML_CONFIG_TRY
     node = YAML::Node(ProxyType<T>::setter(value));
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
@@ -542,18 +514,12 @@ bool Config::setValue(YAML::Node& baseNode,
 }
 
 template<typename VectorT>
-bool Config::setValueVect(YAML::Node& baseNode,
-                              const string& name, const VectorT& value,
-                              YAML::EmitterStyle::value nodeStyle)
+bool Config::setValueVector(YAML::Node& node, const string& name,
+                            const VectorT& value)
 {
-    YAML_CONFIG_CHECK_READONLY
-
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
-
-    YAML::Node node = nodeSet(baseNode, name);
     YAML_CONFIG_TRY
     node = YAML::Node();
-    node.SetStyle(nodeStyle);
+    node.SetStyle(YAML::EmitterStyle::Flow);
     typedef typename VectorT::value_type ValueType;
     for (const ValueType& v : value)
         node.push_back(ProxyType<ValueType>::setter(v));
@@ -563,72 +529,39 @@ bool Config::setValueVect(YAML::Node& baseNode,
 }
 
 template<typename T>
-bool Config::setValue(const string& name, const vector<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
+bool Config::setValueInternal(YAML::Node& node, const string& name,
+                              const vector<T>& value)
 {
-    return setValueVect(_root, name, value, nodeStyle);
-}
-
-template<typename T>
-bool Config::setValue(YAML::Node& baseNode,
-                          const string& name, const vector<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
-{
-    return setValueVect(baseNode, name, value, nodeStyle);
+    return setValueVector(node, name, value);
 }
 
 #if defined(QT_CORE_LIB)
 template<typename T>
-bool Config::setValue(const string& name, const QVector<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
+bool Config::setValueInternal(YAML::Node& node, const string& name,
+                              const QVector<T>& value)
 {
-    return setValueVect(_root, name, value, nodeStyle);
+    return setValueVector(node, name, value);
 }
 
 template<typename T>
-bool Config::setValue(YAML::Node& baseNode,
-                          const string& name, const QVector<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
+bool Config::setValueInternal(YAML::Node& node, const string& name,
+                              const QList<T>& value)
 {
-    return setValueVect(baseNode, name, value, nodeStyle);
-}
-
-template<typename T>
-bool Config::setValue(const string& name, const QList<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
-{
-    return setValueVect(_root, name, value, nodeStyle);
-}
-
-template<typename T>
-bool Config::setValue(YAML::Node& baseNode,
-                          const string& name, const QList<T>& value,
-                          YAML::EmitterStyle::value nodeStyle)
-{
-    return setValueVect(baseNode, name, value, nodeStyle);
+    return setValueVector(node, name, value);
 }
 
 template<typename T1, typename T2>
-bool Config::setValue(const string& name, QPair<T1, T2>& value,
-                          YAML::EmitterStyle::value nodeStyle)
+bool Config::setValueInternal(YAML::Node& node, const string& name,
+                              const QPair<T1, T2>& value)
 {
-    return setValue(_root, name, value, nodeStyle);
-}
-
-template<typename T1, typename T2>
-bool Config::setValue(YAML::Node& baseNode,
-                          const string& name, QPair<T1, T2>& value,
-                          YAML::EmitterStyle::value nodeStyle)
-{
-    Config::Func func = [&value, nodeStyle]
-                            (Config* conf, YAML::Node& node, bool /*logWarn*/)
+    Config::Func func = [&value] (Config* c, YAML::Node& n, bool /*logWarn*/)
     {
-        node.SetStyle(nodeStyle);
-        bool r1 = conf->setValue(node, "first",  value.first);
-        bool r2 = conf->setValue(node, "second", value.second);
+        n.SetStyle(YAML::EmitterStyle::Flow);
+        bool r1 = c->setValue(n, "first",  value.first);
+        bool r2 = c->setValue(n, "second", value.second);
         return r1 && r2;
     };
-    return setValue(baseNode, name, func);
+    return setValueInternal(node, name, func);
 }
 #endif
 

@@ -146,7 +146,7 @@ bool configDefaultSaver()
     SaverPtr saver {new SaverFile("default", logFile, logLevel, logContinue)};
 
     // Загружаем фильтры для дефолтного сэйвера
-    const YAML::Node filtersNode = config::base().getNode("logger.filters");
+    const YAML::Node filtersNode = config::base().node("logger.filters");
     FilterList filters;
     loadFilters(filtersNode, filters);
     for (Filter* filter : filters)
