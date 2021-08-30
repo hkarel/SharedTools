@@ -97,14 +97,13 @@ bool readHostAddress(const QString& confHostStr, QHostAddress&);
   Проверяет факт модификации базового конфиг-файла и файла конфигурации логгера
   по изменению их временной метки. Если изменение временной метки обнаружено -
   выполняется перечитывание файлов конфигурации, и эмитируется сигнал changed().
-  Примечание: Функции init(), start(), stop() должны  вызываться  из  основного
-              потока приложения после сознания экземпляра QCoreApplication
+  Примечание: Функции start(), stop() должны  вызываться  из  основного  потока
+              приложения после сознания экземпляра QCoreApplication
 */
 class ChangeChecker : public QObject
 {
 public:
-    bool init(int timeout = 15 /*сек*/);
-    void start();
+    void start(int timeout = 15 /*сек*/);
     void stop();
 
 signals:

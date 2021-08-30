@@ -188,16 +188,11 @@ ChangeChecker::ChangeChecker()
     chk_connect_q(&_timer, &QTimer::timeout, this, &ChangeChecker::timeout)
 }
 
-bool ChangeChecker::init(int timeout)
+void ChangeChecker::start(int timeout)
 {
-    _timer.setInterval(timeout * 1000);
     _baseModifyTime = baseModifyTime();
     _loggerModifyTime = loggerModifyTime();
-    return true;
-}
-
-void ChangeChecker::start()
-{
+    _timer.setInterval(timeout * 1000);
     _timer.start();
 }
 
