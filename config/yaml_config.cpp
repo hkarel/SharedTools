@@ -158,15 +158,21 @@ bool Config::save(const string& filePath, YAML::EmitterStyle::value nodeStyle)
     typedef chrono::high_resolution_clock clock;
     uint64_t timeTick = clock::now().time_since_epoch().count();
     string fileTmp = _filePath + ".tmp" + utl::toString(timeTick);
-    remove(fileTmp.c_str());
+
+    // Не удалять пространство имен std у функции remove(),  т.к. это приведет
+    // к переопределению вызова функции remove() при сборке под  MinGW.  Будет
+    // вызываться функция член-класса, вместо системной функции, как следствие
+    // механизм сохранения корректно работать не будет
+    std::remove(fileTmp.c_str());
 
     try
     {
         ofstream file {fileTmp, ios_base::out};
         if (!file.is_open())
         {
-            log_error_m << "Cannot open temporary file " << fileTmp << " for write";
-            remove(fileTmp.c_str());
+            log_error_m << log_format(
+                "Cannot open temporary file %? for write", fileTmp);
+            std::remove(fileTmp.c_str());
             return false;
         }
 
@@ -177,22 +183,25 @@ bool Config::save(const string& filePath, YAML::EmitterStyle::value nodeStyle)
     }
     catch (...)
     {
-        remove(fileTmp.c_str());
+        std::remove(fileTmp.c_str());
         throw;
     }
 
-    if (0 != remove(_filePath.c_str()))
+    if (0 != std::remove(_filePath.c_str()))
         if (errno != ENOENT)
         {
-            log_error_m << "Failed remove old data file " << _filePath;
-            remove(fileTmp.c_str());
+            log_error_m << log_format(
+                "Failed remove old data file %?. Error code: %?",
+                _filePath, errno);
+            std::remove(fileTmp.c_str());
             return false;
         }
 
-    if (0 != rename(fileTmp.c_str(), _filePath.c_str()))
+    if (0 != std::rename(fileTmp.c_str(), _filePath.c_str()))
     {
-        log_error_m << "Failed rename temporary file " << fileTmp
-                    << " to " << _filePath;
+        log_error_m << log_format(
+            "Failed rename temporary file %? to %?. Error code: %?",
+            fileTmp, _filePath, errno);
         return false;
     }
     YAML_CONFIG_CATCH_2
@@ -205,7 +214,7 @@ string Config::filePath() const
     return _filePath;
 }
 
-bool Config::remove(const string& name, bool logWarn)
+bool Config::remove(const string& name, bool /*logWarn*/)
 {
     lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
