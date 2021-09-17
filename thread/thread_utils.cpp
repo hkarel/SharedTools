@@ -45,7 +45,7 @@ bool ThreadIdList::empty() const
     return _tids.empty();
 }
 
-void ThreadIdList::lock(std::function<void (std::vector<pid_t>&)> func)
+void ThreadIdList::lock(std::function<void (const std::vector<pid_t>&)> func)
 {
     SpinLocker locker {_tidsLock}; (void) locker;
     func(_tids);

@@ -57,7 +57,7 @@ public:
 
     // Вызывает ламбда-функцию для безопасной работы со списком идентификаторов
     // потоков
-    void lock(std::function<void (std::vector<pid_t>&)> func);
+    void lock(std::function<void (const std::vector<pid_t>&)> func);
 
 private:
     DISABLE_DEFAULT_COPY(ThreadIdList)
