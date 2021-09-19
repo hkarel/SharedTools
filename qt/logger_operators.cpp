@@ -52,11 +52,7 @@ Line& operator<< (Line& line, const QByteArray& b)
 Line& operator<< (Line& line, const QUuid& u)
 {
     if (line.toLogger())
-    {
-        QByteArray ba {u.toString().toUtf8()};
-        ba.chop(1);
-        line << (ba.constData() + 1);
-    }
+        line << u.toString(QUuid::StringFormat::WithoutBraces);
     return line;
 }
 
