@@ -57,6 +57,47 @@ Line& operator<< (Line& line, const QUuidT<N>& u)
     return line;
 }
 
+namespace detail {
+
+template<typename Array>
+Line& printArray(Line& line, const Array& array)
+{
+    line << '[';
+    bool first = true;
+    for (auto it = array.begin(); it != array.end(); ++it)
+    {
+        const char* comma = ", ";
+        if (first)
+        {
+            first = false;
+            comma = nullptr;
+        }
+        line << comma << *it;
+    }
+    line << ']';
+    return line;
+}
+
+} // namespace detail
+
+template<typename T>
+Line& operator<< (Line& line, const QVector<T>& v)
+{
+    return detail::printArray(line, v);
+}
+
+template<typename T>
+Line& operator<< (Line& line, const QList<T>& l)
+{
+    return detail::printArray(line, l);
+}
+
+template<typename T>
+Line& operator<< (Line& line, const QSet<T>& s)
+{
+    return detail::printArray(line, s);
+}
+
 template<typename... Args>
 inline Format<Args...> format(const QString& descript, Args&&... args)
 {

@@ -86,19 +86,6 @@ Line& operator<< (Line& line, const QHostAddress& h)
 }
 #endif
 
-template<typename List>
-void printList(Line& line, const List& list)
-{
-    line << "[";
-    for (int i = 0; i < list.count(); ++i)
-    {
-        if (i != 0)
-            line << ", ";
-        line << list[i];
-    }
-    line << "]";
-}
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
@@ -213,17 +200,17 @@ Line& operator<< (Line& line, const QVariant& v)
             else if (v.userType() == qMetaTypeId<QVector<QUuid>>())
             {
                 const QVector<QUuid>& vect = v.value<QVector<QUuid>>();
-                printList(line, vect);
+                line << vect;
             }
             else if (v.userType() == qMetaTypeId<QVector<QUuidEx>>())
             {
                 const QVector<QUuidEx>& vect = v.value<QVector<QUuidEx>>();
-                printList(line, vect);
+                line << vect;
             }
             else if (v.userType() == qMetaTypeId<QVector<qint32>>())
             {
                 const QVector<qint32>& vect = v.value<QVector<qint32>>();
-                printList(line, vect);
+                line << vect;
             }
             else
             {
