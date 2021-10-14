@@ -89,6 +89,18 @@ Line& operator<< (Line& line, const QHostAddress& h)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
+#define ELSE_IF__QVARIANT_VECTOR(TYPE) \
+    else if (v.userType() == qMetaTypeId<QVector<TYPE>>()) { \
+        const QVector<TYPE>& vect = v.value<QVector<TYPE>>(); \
+        line << vect; \
+    }
+
+#define ELSE_IF__QVARIANT_LIST(TYPE) \
+    else if (v.userType() == qMetaTypeId<QList<TYPE>>()) { \
+        const QList<TYPE>& lst = v.value<QList<TYPE>>(); \
+        line << lst; \
+    }
+
 Line& operator<< (Line& line, const QVariant& v)
 {
     if (!line.toLogger())
@@ -197,21 +209,32 @@ Line& operator<< (Line& line, const QVariant& v)
                 line << u;
             }
 #endif
-            else if (v.userType() == qMetaTypeId<QVector<QUuid>>())
-            {
-                const QVector<QUuid>& vect = v.value<QVector<QUuid>>();
-                line << vect;
-            }
-            else if (v.userType() == qMetaTypeId<QVector<QUuidEx>>())
-            {
-                const QVector<QUuidEx>& vect = v.value<QVector<QUuidEx>>();
-                line << vect;
-            }
-            else if (v.userType() == qMetaTypeId<QVector<qint32>>())
-            {
-                const QVector<qint32>& vect = v.value<QVector<qint32>>();
-                line << vect;
-            }
+            ELSE_IF__QVARIANT_VECTOR(qint16)
+            ELSE_IF__QVARIANT_VECTOR(quint16)
+            ELSE_IF__QVARIANT_VECTOR(qint32)
+            ELSE_IF__QVARIANT_VECTOR(quint32)
+            ELSE_IF__QVARIANT_VECTOR(qint64)
+            ELSE_IF__QVARIANT_VECTOR(quint64)
+            ELSE_IF__QVARIANT_VECTOR(float)
+            ELSE_IF__QVARIANT_VECTOR(double)
+            ELSE_IF__QVARIANT_VECTOR(QUuid)
+            ELSE_IF__QVARIANT_VECTOR(QUuidEx)
+            ELSE_IF__QVARIANT_VECTOR(QTime)
+            ELSE_IF__QVARIANT_VECTOR(QDate)
+            ELSE_IF__QVARIANT_VECTOR(QDateTime)
+            ELSE_IF__QVARIANT_LIST(qint16)
+            ELSE_IF__QVARIANT_LIST(quint16)
+            ELSE_IF__QVARIANT_LIST(qint32)
+            ELSE_IF__QVARIANT_LIST(quint32)
+            ELSE_IF__QVARIANT_LIST(qint64)
+            ELSE_IF__QVARIANT_LIST(quint64)
+            ELSE_IF__QVARIANT_LIST(float)
+            ELSE_IF__QVARIANT_LIST(double)
+            ELSE_IF__QVARIANT_LIST(QUuid)
+            ELSE_IF__QVARIANT_LIST(QUuidEx)
+            ELSE_IF__QVARIANT_LIST(QTime)
+            ELSE_IF__QVARIANT_LIST(QDate)
+            ELSE_IF__QVARIANT_LIST(QDateTime)
             else
             {
                 line << "Unsupported QVariant user-type for logger"
@@ -225,6 +248,9 @@ Line& operator<< (Line& line, const QVariant& v)
     }
     return line;
 }
+
+#undef ELSE_IF__QVARIANT_VECTOR
+#undef ELSE_IF__QVARIANT_LIST
 
 #pragma GCC diagnostic pop
 
