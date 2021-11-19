@@ -92,7 +92,7 @@ bool createLoggerParams(const string& loggerFile)
 
     bool ret = true;
     if (modify)
-        ret = config::base().save();
+        ret = config::base().saveFile();
 
     return ret;
 }

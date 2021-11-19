@@ -47,7 +47,7 @@
 
 namespace yaml {
 
-#define YAML_CONFIG_CATCH_2 \
+#define YAML_CONFIG_CATCH_FILE \
     } catch (YAML::Exception& e) { \
         alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
         if (!_filePath.empty()) \
@@ -62,6 +62,18 @@ namespace yaml {
         alog::Line logLine = log_error_m << "YAML error. Detail: Unknown error"; \
         if (!_filePath.empty()) \
             logLine << ". File: " << _filePath; \
+        return false; \
+    }
+
+#define YAML_CONFIG_CATCH_STRING \
+    } catch (YAML::Exception& e) { \
+        alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
+        return false; \
+    } catch (exception& e) { \
+        alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
+        return false; \
+    } catch (...) { \
+        alog::Line logLine = log_error_m << "YAML error. Detail: Unknown error"; \
         return false; \
     }
 
@@ -83,7 +95,7 @@ bool Config::readFile(const string& filePath)
         log_error_m << "Undefined YAML-structure for config file: " << filePath;
         return false;
     }
-    YAML_CONFIG_CATCH_2
+    YAML_CONFIG_CATCH_FILE
     _changed = false;
     return true;
 }
@@ -100,7 +112,7 @@ bool Config::readString(const string& str)
         log_error_m << "Undefined YAML-structure in input string";
         return false;
     }
-    YAML_CONFIG_CATCH_2
+    YAML_CONFIG_CATCH_STRING
     _changed = false;
     return true;
 }
@@ -113,6 +125,11 @@ bool Config::rereadFile()
 bool Config::changed() const
 {
     return _changed;
+}
+
+void Config::resetChanged()
+{
+    _changed = false;
 }
 
 bool Config::readOnly() const
@@ -135,7 +152,7 @@ void Config::setSaveDisabled(bool val)
     _saveDisabled = val;
 }
 
-bool Config::save(const string& filePath, YAML::EmitterStyle::value nodeStyle)
+bool Config::saveFile(const string& filePath, YAML::EmitterStyle::value nodeStyle)
 {
     if (_saveDisabled)
     {
@@ -204,8 +221,26 @@ bool Config::save(const string& filePath, YAML::EmitterStyle::value nodeStyle)
             fileTmp, _filePath, errno);
         return false;
     }
-    YAML_CONFIG_CATCH_2
+    YAML_CONFIG_CATCH_FILE
     _changed = false;
+    return true;
+}
+
+bool Config::saveString(const string& str, YAML::EmitterStyle::value nodeStyle)
+{
+    if (_saveDisabled)
+    {
+        log_warn_m << "Save data is disabled";
+        return false;
+    }
+
+    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+
+    YAML_CONFIG_TRY
+    ostringstream stream {str, ios_base::out};
+    _root.SetStyle(nodeStyle);
+    stream << _root;
+    YAML_CONFIG_CATCH_STRING
     return true;
 }
 
@@ -233,7 +268,7 @@ bool Config::remove(const string& name, bool /*logWarn*/)
          return false;
 
     node.remove(nameKey);
-    YAML_CONFIG_CATCH_2
+    YAML_CONFIG_CATCH_FILE
     return true;
 }
 

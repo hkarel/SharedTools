@@ -65,7 +65,6 @@ namespace detail {
 #else
 #define YAML_TYPES(TYPE) std::is_fundamental<TYPE>::value \
                          || std::is_same<TYPE, std::string>::value
-
 #endif
 
 template<typename T> using is_yaml_type  = std::enable_if< (YAML_TYPES(T)), int>;
@@ -97,6 +96,9 @@ public:
     // в FALSE после сохранения данных в файл
     bool changed() const;
 
+    // Сбрасывает флаг изменений в FALSE. Смотри пояснения для функции saveString()
+    void resetChanged();
+
     // Определяет, что параметры конфигурации не могут изменяться
     bool readOnly() const;
     void setReadOnly(bool);
@@ -105,9 +107,15 @@ public:
     bool saveDisabled() const;
     void setSaveDisabled(bool);
 
-    // Сохраняет данные в файл
-    bool save(const string& filePath = string(),
-              YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Block);
+    // Сохраняет данные в файл, при этом флаг изменений (changed) сбрасывается
+    // в FALSE
+    bool saveFile(const string& filePath = string(),
+            YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Block);
+
+    // Сохраняет данные в строку, при этом флаг изменений (changed) не сбрасывается
+    // в FALSE. Для сброса флага изменений нужно явно вызвать функцию resetChanged()
+    bool saveString(const string&,
+            YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Block);
 
     // Возвращает полное имя файла конфигурации
     string filePath() const;
