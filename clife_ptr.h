@@ -78,7 +78,7 @@ public:
         _ptr = p;
         if (_ptr && add_ref) {
             // В зависимости от организации хранимого объекта счетчик ссылок
-            // может быть увеличен внутри clife_ptr или снаружи.
+            // может быть увеличен внутри clife_ptr или снаружи
             self_t::add_ref(_ptr);
         }
     }
@@ -91,7 +91,7 @@ public:
     }
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
-    // неявно, и их поведение будет отличаться от ожидаемого.
+    // неявно, и их поведение будет отличаться от ожидаемого
     clife_ptr(const self_t& p) {
         assign(p);
     }
@@ -128,7 +128,7 @@ public:
         return *this;
     }
 
-    // Динамическое преобразование типа.
+    // Динамическое преобразование типа
     template<typename other_cptrT>
     other_cptrT dynamic_cast_to() const {
         typedef typename other_cptrT::element_t other_element_t;
@@ -151,7 +151,7 @@ public:
     T& operator*  () const noexcept {return *_ptr;}
     operator T*   () const noexcept {return  _ptr;}
 
-    // Допускается использовать только для инициализации.
+    // Допускается использовать только для инициализации
     T** ref() {
         assert(_ptr == nullptr);
         return &_ptr;
@@ -176,23 +176,23 @@ public:
     bool operator! () const noexcept {return empty();}
 
     // Фиктивная функция, введена для обеспечения возможности компиляции
-    // шаблонных функций использующих как clife_ptr, так и container_ptr.
-    //static self_t create_join_ptr() {return self_t();}
+    // шаблонных функций использующих как clife_ptr, так и container_ptr
+    // static self_t create_join_ptr() {return self_t();}
 
 private:
-    // Используется в обычных операторах присваивания и копирования.
+    // Используется в обычных операторах присваивания и копирования
     template<typename otherT>
     void assign(const clife_ptr<otherT>& p) {
         if (_ptr)
             release(_ptr);
         // Проверка на корректность преобразования типа. Допускается преобразо-
-        // вание только от классов-наследников к базовым классам.
+        // вание только от классов-наследников к базовым классам
         _ptr = p.get();
         if (_ptr)
             add_ref(_ptr);
     }
 
-    // Используется в rvalue-операторах присваивания и копирования.
+    // Используется в rvalue-операторах присваивания и копирования
     template<typename otherT>
     void assign_rvalue(clife_ptr<otherT>& p) {
         if (_ptr)
