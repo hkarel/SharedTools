@@ -25,14 +25,6 @@
 
 #include "version_number.h"
 
-const VersionNumber& productVersion()
-{
-    const static VersionNumber version(VERSION_PROJECT_MAJOR,
-                                       VERSION_PROJECT_MINOR,
-                                       VERSION_PROJECT_PATCH);
-    return version;
-}
-
 VersionNumber::VersionNumber(quint8 major, quint8 minor, quint8 patch)
 {
     ver.major = major;
@@ -84,4 +76,12 @@ bool operator>= (const VersionNumber v1, const VersionNumber v2)
 bool operator<= (const VersionNumber v1, const VersionNumber v2)
 {
     return (v1 < v2) || (v1 == v2);
+}
+
+const VersionNumber& productVersion()
+{
+    const static VersionNumber version(VERSION_PROJECT_MAJOR,
+                                       VERSION_PROJECT_MINOR,
+                                       VERSION_PROJECT_PATCH);
+    return version;
 }
