@@ -160,12 +160,32 @@ inline quint64 hash64(const QUuidT<N>& u)
 }
 
 /**
-  Дайжест-функция, возвращает первые 8 символов строкового представления uuid-а
+  Дайжест-функции, возвращают первые 8 символов строкового представления uuid-а
 */
+inline QString digest(const QUuid& u)
+{
+    return u.toString().mid(1, 8);
+}
+
 template<int N>
 inline QString digest(const QUuidT<N>& u)
 {
-    return u.toString().mid(1, 8);
+    return digest(static_cast<const QUuid&>(u));
+}
+
+/**
+  Сервисные функции, возвращают строковое представление uuid без обрамляющих
+  фигурных скобок
+*/
+inline QString toString(const QUuid& u)
+{
+    return u.toString(QUuid::StringFormat::WithoutBraces);
+}
+
+template<int N>
+inline QString toString(const QUuidT<N>& u)
+{
+    return toString(static_cast<const QUuid&>(u));
 }
 
 typedef QUuidT<0> QUuidEx;
