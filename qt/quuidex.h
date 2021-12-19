@@ -101,12 +101,12 @@ public:
     }
 
     template<int M>
-    bool operator== (const QUuidT<M>& u) noexcept {return equal(*this, u);}
+    bool operator== (const QUuidT<M>& u) const noexcept {return equal(*this, u);}
     template<int M>
-    bool operator!= (const QUuidT<M>& u) noexcept {return !equal(*this, u);}
+    bool operator!= (const QUuidT<M>& u) const noexcept {return !equal(*this, u);}
 
-    bool operator== (const QUuid& u) noexcept {return  equal(*this, u);}
-    bool operator!= (const QUuid& u) noexcept {return !equal(*this, u);}
+    bool operator== (const QUuid& u) const noexcept {return  equal(*this, u);}
+    bool operator!= (const QUuid& u) const noexcept {return !equal(*this, u);}
 
     template<int M>
     bool operator< (const QUuidT<M>& u) const noexcept {return (compare(*this, u) < 0);}
