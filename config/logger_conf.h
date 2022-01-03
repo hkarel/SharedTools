@@ -41,7 +41,7 @@ bool createLoggerParams(const std::string& loggerFile);
 // Конфигурирование сэйвера по умолчанию для логгера
 bool configDefaultSaver();
 
-// Конфигурирование дополнительных сэйверов для логгера
-void configExtensionSavers();
+// Конфигурирование расширенных/дополнительных сэйверов для логгера
+void configExtendedSavers();
 
 } // namespace alog

@@ -220,7 +220,7 @@ void ChangeChecker::timeout()
     {
         modify = true;
         _loggerModifyTime = modifyTime;
-        alog::configExtensionSavers();
+        alog::configExtendedSavers();
     }
 
     if (modify)

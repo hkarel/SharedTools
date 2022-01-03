@@ -156,7 +156,7 @@ bool configDefaultSaver()
     return true;
 }
 
-void configExtensionSavers()
+void configExtendedSavers()
 {
     string logConf;
 #ifdef MINGW
