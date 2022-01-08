@@ -325,7 +325,7 @@ public:
     T* data() const noexcept {return get();}
     bool isNull() const noexcept {return empty();}
 
-    // Вспомогательные функции.
+    // Вспомогательные функции
     static T* create() {return allocator_t::create();}
     static T* create(const T& x) {return allocator_t::create(&x);}
     static self_t create_ptr() {return self_t(allocator_t::create());}

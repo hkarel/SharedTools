@@ -30,9 +30,9 @@
 #include <cassert>
 
 /**
-  @brief simple_ptr - почти полный аналог auto_ptr и выполнен на его
-  основе. Отличие состоит в том, что для simple_ptr определен аллокатор
-  для создания и разрушения объекта владения.
+  @brief simple_ptr - почти полный аналог auto_ptr и выполнен на его основе.
+  Отличие состоит в том, что для simple_ptr определен аллокатор для создания
+  и разрушения объекта владения
 */
 template<
     typename T,
@@ -57,7 +57,7 @@ public:
     }
 
     // По аналогии с unique_ptr запрещаем конструктор копирования и
-    // оператор присваивания.
+    // оператор присваивания
     simple_ptr(self_t&) = delete;
     simple_ptr(const self_t&) = delete;
 
@@ -100,13 +100,13 @@ public:
 
     T* release() noexcept {T* tmp {_ptr}; _ptr = nullptr; return tmp;}
 
-    // Функция введена для удобства, как замена конструкции
-    // вида: simple_ptr<TYPE>(p.release()). Функция носит декоративный характер,
-    // как правило используется для передачи параметра в функцию.
-    // Запись через release_ptr() позволяет наглядно отразить тот факт, что
-    // параметр передан в функцию и за ее пределами более не действителен.
-    // Вызов просто p.release() может вступать в проиворечие с explicit-дирек-
-    // тивой конструктора simple_ptr.
+    // Функция введена для удобства, как замена конструкции вида:
+    //   simple_ptr<TYPE>(p.release())
+    // Функция носит декоративный характер, как правило используется для пере-
+    // дачи параметра в функцию. Запись через release_ptr() позволяет наглядно
+    // отразить тот факт,  что  параметр  передан  в функцию и за ее пределами
+    // более не действителен. Вызов просто p.release() может вступать в проти-
+    // воречие с explicit-директивой конструктора simple_ptr
     self_t release_ptr() {return self_t(release());}
 
     void reset(T* p = nullptr) {
@@ -125,10 +125,10 @@ public:
     T* take() noexcept {return release();}
     bool isNull() const noexcept {return empty();}
 
-    // Размер элемента smart-pointer.
+    // Размер элемента smart-pointer
     int type_size() const noexcept {return sizeof(element_t);}
 
-    // Вспомогательные функции.
+    // Вспомогательные функции
     static T* create() {return allocator_t::create();}
     static T* create(const T& x) {return allocator_t::create(&x);}
     static self_t create_ptr() {return self_t(allocator_t::create());}
@@ -144,7 +144,7 @@ private:
             allocator_t::destroy(_ptr);
 
         // Проверяем корректность преобразования типа, допускается
-        // преобразование только к базовым типам.
+        // преобразование только к базовым типам
         _ptr = p.release();
     }
 
