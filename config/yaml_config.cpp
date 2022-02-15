@@ -309,14 +309,19 @@ YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
     return get_node(baseNode, 0);
 }
 
-YAML::Node Config::nodeGet(const YAML::Node& baseNode,
-                           const string& name, bool logWarn) const
+YAML::Node Config::nodeGet(const string& name, bool logWarn) const
+{
+    return nodeGet(_root, name, logWarn);
+}
+
+YAML::Node Config::nodeGet(const YAML::Node& baseNode, const string& name,
+                           bool logWarn) const
 {
     YAML::Node node = this->node(baseNode, name);
     if (node.IsNull() && logWarn)
     {
-        log_warn_m << "Parameter '" << (_nameNodeFunc + name) << "' is undefined"
-                   << ". Config file: " << _filePath;
+        log_warn_m << log_format("Parameter '%?' is undefined. Config file: %?",
+                                 _nameNodeFunc + name, _filePath);
     }
     return node;
 }

@@ -130,6 +130,14 @@ public:
     // Возвращает ноду с именем name относительно базовой ноды baseNode
     YAML::Node node(const YAML::Node& baseNode, const string& name) const;
 
+    // Возвращает ноду с именем name. Если ноды с заданным именем не существует,
+    // будет возвращена пустая нода, а в лог выведено соответствующее сообщение
+    YAML::Node nodeGet(const string& name, bool logWarn = true) const;
+
+    // Возвращает ноду с именем name относительно базовой ноды baseNode
+    YAML::Node nodeGet(const YAML::Node& baseNode, const string& name,
+                       bool logWarn = true) const;
+
     // Возвращает стиль записи для ноды с именем name
     YAML::EmitterStyle::value nodeStyle(const std::string& name) const;
 
@@ -184,13 +192,8 @@ private:
         static  T getter(T t) {return t;}
     };
 
-    // Возвращает ноду по имени 'name'. Если ноды с заданным именем нет
-    // в списке будет возвращена пустая нода
-    YAML::Node nodeGet(const YAML::Node& baseNode, const string& name,
-                       bool logWarn) const;
-
     // Используется в функциях setValue(). Строит иерархию нод согласно
-    // заданному параметру 'name'
+    // заданному параметру name
     YAML::Node nodeSet(YAML::Node& baseNode, const string& name);
 
 private:
