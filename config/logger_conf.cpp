@@ -145,6 +145,11 @@ bool configDefaultSaver()
     Level logLevel = levelFromString(logLevelStr);
     SaverPtr saver {new SaverFile("default", logFile, logLevel, logContinue)};
 
+    int maxLineSize = -1;
+    config::base().getValue("logger.max_line_size", maxLineSize);
+    if (maxLineSize >= 0)
+        saver->setMaxLineSize(maxLineSize);
+
     // Загружаем фильтры для дефолтного сэйвера
     const YAML::Node filtersNode = config::base().node("logger.filters");
     FilterList filters;
