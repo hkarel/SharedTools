@@ -44,11 +44,11 @@
 
 #if defined(QT_CORE_LIB)
 #include "qt/quuidex.h"
-#include <QPair>
-#include <QString>
 #include <QList>
-#include <QVector>
+#include <QPair>
 #include <QSize>
+#include <QString>
+#include <QVector>
 #endif
 
 namespace yaml {
@@ -496,8 +496,12 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
 {
     Config::Func func = [&value](Config* c, YAML::Node& n, bool logWarn)
     {
-        bool r1 = c->getValue(n, "first",  value.first,  logWarn);
-        bool r2 = c->getValue(n, "second", value.second, logWarn);
+        T1 first; T2 second;
+        bool r1 = c->getValue(n, "first",  first,  logWarn);
+        bool r2 = c->getValue(n, "second", second, logWarn);
+        if (r1 && r2)
+            value = {first, second};
+
         return r1 && r2;
     };
     return getValueInternal(node, name, func, logWarn);

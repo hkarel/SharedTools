@@ -417,14 +417,12 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
     Config::Func func = [&value](Config* c, YAML::Node& n, bool logWarn)
     {
         int width, height;
-        bool r1 = c->getValue(n, "width",  width, logWarn);
+        bool r1 = c->getValue(n, "width",  width,  logWarn);
         bool r2 = c->getValue(n, "height", height, logWarn);
         if (r1 && r2)
-        {
             value = {width, height};
-            return true;
-        }
-        return false;
+
+        return r1 && r2;
     };
     return getValueInternal(node, name, func, logWarn);
 }
