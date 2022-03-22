@@ -411,6 +411,24 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
     return res;
 }
 
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              QSize& value, bool logWarn) const
+{
+    Config::Func func = [&value](Config* c, YAML::Node& n, bool logWarn)
+    {
+        int width, height;
+        bool r1 = c->getValue(n, "width",  width, logWarn);
+        bool r2 = c->getValue(n, "height", height, logWarn);
+        if (r1 && r2)
+        {
+            value = {width, height};
+            return true;
+        }
+        return false;
+    };
+    return getValueInternal(node, name, func, logWarn);
+}
+
 bool Config::setValueInternal(YAML::Node& node, const string& name, Func func)
 {
     bool res = false;
@@ -421,6 +439,19 @@ bool Config::setValueInternal(YAML::Node& node, const string& name, Func func)
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return res;
+}
+
+bool Config::setValueInternal(YAML::Node& node, const string& name,
+                              const QSize& value)
+{
+    Config::Func func = [&value] (Config* c, YAML::Node& n, bool /*logWarn*/)
+    {
+        n.SetStyle(YAML::EmitterStyle::Flow);
+        bool r1 = c->setValue(n, "width",  value.width());
+        bool r2 = c->setValue(n, "height", value.height());
+        return r1 && r2;
+    };
+    return setValueInternal(node, name, func);
 }
 
 } // namespace yaml
