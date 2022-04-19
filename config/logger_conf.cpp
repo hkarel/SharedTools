@@ -151,9 +151,12 @@ bool configDefaultSaver()
         saver->setMaxLineSize(maxLineSize);
 
     // Загружаем фильтры для дефолтного сэйвера
-    const YAML::Node filtersNode = config::base().node("logger.filters");
     FilterList filters;
-    loadFilters(filtersNode, filters);
+    { //Block for locker
+        auto locker {config::base().locker()}; (void) locker;
+        const YAML::Node filtersNode = config::base().node("logger.filters");
+        loadFilters(filtersNode, filters);
+    }
     for (Filter* filter : filters)
         saver->addFilter(FilterPtr(filter));
 
