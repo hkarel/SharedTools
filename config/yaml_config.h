@@ -82,6 +82,17 @@ class Config
 public:
     typedef function<bool (Config*, YAML::Node&, bool /*logWarn*/)> Func;
 
+    struct Locker
+    {
+        ~Locker();
+    private:
+        DISABLE_DEFAULT_FUNC(Locker)
+        Locker(const Config*);
+        Config const* config;
+        friend class Config;
+    };
+    Locker locker() const __attribute__ ((warn_unused_result)) {return Locker(this);}
+
     Config() = default;
 
     // Читает yaml-структуру из файла. filePath - полное имя файла
@@ -125,17 +136,24 @@ public:
     bool remove(const string& name, bool logWarn = true);
 
     // Возвращает ноду с именем name. Результат может быть использован
-    // в качестве базовой ноды (baseNode)
+    // в качестве базовой ноды (baseNode).
+    // Функция используется совместно с Config::locker()
+    // Пример:
+    //   auto locker {сonfig.locker()}; (void) locker;
+    //   YAML::Node node = сonfig.node("node_name");
     YAML::Node node(const string& name) const;
 
     // Возвращает ноду с именем name относительно базовой ноды baseNode
+    // Функция используется совместно с Config::locker()
     YAML::Node node(const YAML::Node& baseNode, const string& name) const;
 
     // Возвращает ноду с именем name. Если ноды с заданным именем не существует,
-    // будет возвращена пустая нода, а в лог выведено соответствующее сообщение
+    // будет возвращена пустая нода, а в лог выведено соответствующее сообщение.
+    // Функция используется совместно с Config::locker()
     YAML::Node nodeGet(const string& name, bool logWarn = true) const;
 
-    // Возвращает ноду с именем name относительно базовой ноды baseNode
+    // Возвращает ноду с именем name относительно базовой ноды baseNode.
+    // Функция используется совместно с Config::locker()
     YAML::Node nodeGet(const YAML::Node& baseNode, const string& name,
                        bool logWarn = true) const;
 
@@ -305,13 +323,14 @@ private:
     atomic_bool _saveDisabled = {false};
     string _filePath;
     YAML::Node _root;
+
     mutable recursive_mutex _configLock;
+    mutable atomic_int _lockedCount = {0};
 
     // Вспомогательная переменная, используется для вывода в лог информации
     // по не найденной ноде
     mutable string _nameNodeFunc;
 
-    friend class ConfigLock;
     template<typename T, int> friend T& ::safe_singleton();
 };
 
@@ -406,7 +425,8 @@ template<typename T>
 bool Config::getValue(const YAML::Node& baseNode, const string& name, T& value,
                       bool logWarn) const
 {
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this->locker()}; (void) locker;
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, logWarn);
     if (!node || node.IsNull())

@@ -27,6 +27,7 @@
 #include "yaml_config.h"
 #include "break_point.h"
 #include "spin_locker.h"
+#include "prog_abort.h"
 #include "utils.h"
 
 #include <cerrno>
@@ -76,6 +77,17 @@ namespace yaml {
         alog::Line logLine = log_error_m << "YAML error. Detail: Unknown error"; \
         return false; \
     }
+
+Config::Locker::Locker(const Config* c) : config(c)
+{
+    config->_configLock.lock();
+    ++config->_lockedCount;
+}
+Config::Locker::~Locker()
+{
+    config->_configLock.unlock();
+    --config->_lockedCount;
+}
 
 bool Config::readFile(const string& filePath)
 {
@@ -251,7 +263,8 @@ string Config::filePath() const
 
 bool Config::remove(const string& name, bool /*logWarn*/)
 {
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this->locker()}; (void) locker;
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
      size_t pos = name.find_last_of('.');
@@ -286,7 +299,12 @@ YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
     if (parts.empty())
         return YAML::Node();
 
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    if (_lockedCount == 0)
+    {
+        log_error_m << "Yaml config not locked. Use function Config::locker()";
+        prog_abort();
+    }
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     typedef function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
     NodeFunc get_node = [&](const YAML::Node& node, size_t i)
@@ -358,7 +376,8 @@ YAML::EmitterStyle::value Config::nodeStyle(const std::string& name) const
 YAML::EmitterStyle::value Config::nodeStyle(const YAML::Node& baseNode,
                                             const std::string& name) const
 {
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this->locker()}; (void) locker;
+    //std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, true);
     if (!node || node.IsNull())
@@ -386,7 +405,8 @@ void Config::setNodeStyle(YAML::Node& baseNode, const std::string& name,
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this->locker()}; (void) locker;
+    //std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     // Исходим из того, что стиль устанавливается для уже существующей ноды,
     // поэтому вызываем nodeGet()
