@@ -91,6 +91,11 @@ public:
         Config const* config;
         friend class Config;
     };
+
+    // Блокирует конфигуратор для безопасного вызова функций node(), nodeGet().
+    // Пример использования:
+    //   auto locker {сonfig.locker()}; (void) locker;
+    //   YAML::Node node = сonfig.node("node_name");
     Locker locker() const __attribute__ ((warn_unused_result)) {return Locker(this);}
 
     Config() = default;
@@ -138,9 +143,6 @@ public:
     // Возвращает ноду с именем name. Результат может быть использован
     // в качестве базовой ноды (baseNode).
     // Функция используется совместно с Config::locker()
-    // Пример:
-    //   auto locker {сonfig.locker()}; (void) locker;
-    //   YAML::Node node = сonfig.node("node_name");
     YAML::Node node(const string& name) const;
 
     // Возвращает ноду с именем name относительно базовой ноды baseNode
