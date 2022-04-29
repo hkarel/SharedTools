@@ -40,11 +40,11 @@ void RingBuffer::init(size_t bufferSize)
     if (_buffBegin)
         free(_buffBegin);
 
-    _buffSize = bufferSize;
+    _buffSize  = bufferSize;
     _buffBegin = (char*) malloc(_buffSize);
-    _buffEnd = _buffBegin + _buffSize;
-    _begin = _buffBegin;
-    _end = _buffBegin;
+    _buffEnd   = _buffBegin + _buffSize;
+    _begin     = _buffBegin;
+    _end       = _buffBegin;
     _available = 0;
 
 #ifndef NDEBUG
@@ -59,11 +59,11 @@ void RingBuffer::reset()
     if (_buffBegin)
         free(_buffBegin);
 
-    _begin = 0;
-    _end = 0;
-    _buffBegin = 0;
-    _buffEnd = 0;
-    _buffSize = 0;
+    _begin     = nullptr;
+    _end       = nullptr;
+    _buffBegin = nullptr;
+    _buffEnd   = nullptr;
+    _buffSize  = 0;
     _available = 0;
 }
 
@@ -83,7 +83,7 @@ bool RingBuffer::read(char* dest, size_t length)
 {
     std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
 
-    if (_buffBegin == 0
+    if (_buffBegin == nullptr
         || _available < length)
     {
         return false;
@@ -115,7 +115,7 @@ bool RingBuffer::write(const char* source, size_t length)
 {
     std::lock_guard<std::mutex> locker {_buffLock}; (void) locker;
 
-    if (_buffBegin == 0
+    if (_buffBegin == nullptr
         || (length * 2) > _buffSize)
     {
         return false;
