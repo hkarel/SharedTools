@@ -241,9 +241,12 @@ private:
                           vector<T>& value, bool logWarn) const;
 
 #if defined(QT_CORE_LIB)
+
+#if QT_VERSION < 0x060000
     template<typename T>
     bool getValueInternal(const YAML::Node& node, const string& name,
                           QVector<T>& value, bool logWarn) const;
+#endif
 
     template<typename T>
     bool getValueInternal(const YAML::Node& node, const string& name,
@@ -288,9 +291,12 @@ private:
                           const vector<T>& value);
 
 #if defined(QT_CORE_LIB)
+
+#if QT_VERSION < 0x060000
     template<typename T>
     bool setValueInternal(YAML::Node& node, const string& name,
                           const QVector<T>& value);
+#endif
 
     template<typename T>
     bool setValueInternal(YAML::Node& node, const string& name,
@@ -498,12 +504,15 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
 }
 
 #if defined(QT_CORE_LIB)
+
+#if QT_VERSION < 0x060000
 template<typename T>
 bool Config::getValueInternal(const YAML::Node& node, const string& name,
                               QVector<T>& value, bool logWarn) const
 {
     return getValueVector(node, name, value, logWarn);
 }
+#endif
 
 template<typename T>
 bool Config::getValueInternal(const YAML::Node& node, const string& name,
@@ -580,12 +589,15 @@ bool Config::setValueInternal(YAML::Node& node, const string& name,
 }
 
 #if defined(QT_CORE_LIB)
+
+#if QT_VERSION < 0x060000
 template<typename T>
 bool Config::setValueInternal(YAML::Node& node, const string& name,
                               const QVector<T>& value)
 {
     return setValueVector(node, name, value);
 }
+#endif
 
 template<typename T>
 bool Config::setValueInternal(YAML::Node& node, const string& name,

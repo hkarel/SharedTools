@@ -80,11 +80,13 @@ Line& printArray(Line& line, const Array& array)
 
 } // namespace detail
 
+#if QT_VERSION < 0x060000
 template<typename T>
 Line& operator<< (Line& line, const QVector<T>& v)
 {
     return detail::printArray(line, v);
 }
+#endif
 
 template<typename T>
 Line& operator<< (Line& line, const QList<T>& l)

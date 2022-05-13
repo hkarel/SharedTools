@@ -28,6 +28,7 @@
 #include <QMutex>
 #include <QThread>
 #include <atomic>
+#include <climits>
 
 /**
   Класс QThredEx расширяет функционал QThred. Основное назначение механизмов
