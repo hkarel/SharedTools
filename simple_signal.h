@@ -295,7 +295,7 @@ Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Re
     if (_block) return res;
 
     Slot slot;
-    ResetSlotIndex<decltype(_slotIndex)> reset_index(&_slotIndex); (void) reset_index;
+    ResetSlotIndex<decltype(_slotIndex)> resetIndex {&_slotIndex}; (void) resetIndex;
 
     _slotIndex = -1;
     while (true)
@@ -324,7 +324,7 @@ void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Re
     if (_block) return;
 
     Slot slot;
-    ResetSlotIndex<decltype(_slotIndex)> reset_index(&_slotIndex); (void) reset_index;
+    ResetSlotIndex<decltype(_slotIndex)> resetIndex {&_slotIndex}; (void) resetIndex;
 
     _slotIndex = -1;
     while (true)
