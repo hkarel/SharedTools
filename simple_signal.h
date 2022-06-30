@@ -74,10 +74,6 @@
 #include <vector>
 #include <type_traits>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
-
-
 /**
   SimpleSignalBase - базовая реализация механизма SIGNAL
 */
@@ -165,7 +161,7 @@ private:
     // [11.10.2016] Карелин: использование atomic_int катастрофически
     //              снижает производительность вызовов call().
     // mutable std::atomic_int _slotIndex = {-1};
-    mutable int _slotIndex = {-1};
+    mutable std::size_t _slotIndex = std::size_t(-1);
 
     volatile bool _block = {false};
 };
@@ -297,7 +293,7 @@ Res SimpleSignalBase<R, Args...>::call(Args... args, typename disable_if_void<Re
     Slot slot;
     ResetSlotIndex<decltype(_slotIndex)> resetIndex {&_slotIndex}; (void) resetIndex;
 
-    _slotIndex = -1;
+    _slotIndex = std::size_t(-1);
     while (true)
     {
         { //Block for SpinLocker
@@ -326,7 +322,7 @@ void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Re
     Slot slot;
     ResetSlotIndex<decltype(_slotIndex)> resetIndex {&_slotIndex}; (void) resetIndex;
 
-    _slotIndex = -1;
+    _slotIndex = std::size_t(-1);
     while (true)
     {
         { //Block for SpinLocker
@@ -344,5 +340,3 @@ void SimpleSignalBase<R, Args...>::call(Args... args, typename enable_if_void<Re
         slot(args...);
     }
 }
-
-#pragma GCC diagnostic pop
