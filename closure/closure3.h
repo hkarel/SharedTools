@@ -70,8 +70,8 @@ namespace closure
 class ClosureBase
 {
 protected:
-    void* self  = {0};
-    void* proxy = {0};
+    void* self  = {nullptr};
+    void* proxy = {nullptr};
 
 public:
     bool equal(const ClosureBase& c) const noexcept
@@ -102,6 +102,9 @@ class Closure<R (Args...)> : public ClosureBase
 public:
     typedef R (*proxy_m)(void*, Args...);
     typedef R (*proxy_f)(Args...);
+
+    // Для совместимости с STL
+    typedef R result_type;
 
     Closure() = default;
     Closure(const Closure &) = default;
@@ -140,7 +143,7 @@ private:
 
     Closure(proxy_f proxy) noexcept
     {
-        this->self = 0;
+        this->self = nullptr;
         this->proxy = (void*)proxy;
     }
 
