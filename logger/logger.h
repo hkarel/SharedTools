@@ -769,7 +769,7 @@ Line& stream_operator(Line& line, const T t, typename is_integral<T>::type = 0)
 {
     if (line.toLogger())
     {
-#if __cplusplus >= 201703L && defined(LOGGER_LESS_SNPRINTF)
+#if __cplusplus >= 201703L && !defined(LOGGER_USE_SNPRINTF)
         char buff[32];
         to_chars_result res = to_chars(buff, buff + sizeof(buff), t);
         if (res.ec == std::errc())

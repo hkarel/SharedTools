@@ -108,7 +108,7 @@ string levelToString(Level level)
     return s;
 }
 
-#if __cplusplus >= 201703L && defined(LOGGER_LESS_SNPRINTF)
+#if __cplusplus >= 201703L && !defined(LOGGER_USE_SNPRINTF)
 // Функции  prefixFormatter{123}  формируют  префикс  строки  лога.  В префикс
 // входит время и дата записи, уровень логирования, номер потока, наименование
 // файла, номер строки, имя модуля
@@ -1353,7 +1353,7 @@ Line& operator<< (Line& line, const timeval& tv)
 {
     if (line.toLogger())
     {
-#if __cplusplus >= 201703L && defined(LOGGER_LESS_SNPRINTF)
+#if __cplusplus >= 201703L && !defined(LOGGER_USE_SNPRINTF)
         // tv_sec
         detail::stream_operator(line, tv.tv_sec);
 
