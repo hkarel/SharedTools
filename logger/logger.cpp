@@ -1381,21 +1381,23 @@ const char* __file__cache(const char* file)
     static StringList list;
     static atomic_flag lock = ATOMIC_FLAG_INIT;
 
-    if (const char* f = strrchr(file, '/'))
-    {
+    const char* f = strrchr(file, '/');
+
+    if (f)
         f += 1;
-        if (*f == '\0')
-            return 0;
+    else
+        f = file;
 
-        SpinLocker locker {lock}; (void) locker;
-        if (lst::FindResult fr = list.find(f))
-            return list.item(fr.index())->c_str();
+    if (*f == '\0')
+        return 0;
 
-        f = list.add(new string(f))->c_str();
-        list.sort();
-        return f;
-    }
-    return 0;
+    SpinLocker locker {lock}; (void) locker;
+    if (lst::FindResult fr = list.find(f))
+        return list.item(fr.index())->c_str();
+
+    f = list.add(new string(f))->c_str();
+    list.sort();
+    return f;
 }
 
 void stop()
