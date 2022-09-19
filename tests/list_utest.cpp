@@ -851,7 +851,7 @@ void findNotuniqueStruct_Test()
     v = list.add(); v->val1 = 6; v->val2 = 99;
 
     list.sort(lst::SortMode::Up);
-    printf("\n--- List of SortTwoVal was sorted up ---\n");
+    printf("\n--- List of SortTwoVal was sorted up/down ---\n");
     for (SortTwoVal* v : list)
     {
         printf("val1: %d  val2: %d\n", v->val1, v->val2);
@@ -859,7 +859,7 @@ void findNotuniqueStruct_Test()
     printf("\n");
 
     list.sort(lst::SortMode::Down);
-    printf("\n--- List of SortTwoVal was sorted down ---\n");
+    printf("\n--- List of SortTwoVal was sorted down/up ---\n");
     for (SortTwoVal* v : list)
     {
         printf("val1: %d  val2: %d\n", v->val1, v->val2);
