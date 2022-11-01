@@ -1407,4 +1407,17 @@ void stop()
     logger().stop();
 }
 
+string round(float value, int signCount)
+{
+    return round(double(value), signCount);
+}
+
+string round(double value, int signCount)
+{
+    char buff[30]; buff[sizeof(buff) - 1] = '\0';
+    string fmt = "%." + to_string(signCount) + "lf";
+    snprintf(buff, sizeof(buff) - 1, fmt.c_str(), value);
+    return buff;
+}
+
 } // namespace alog

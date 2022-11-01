@@ -875,6 +875,10 @@ inline const char* __file__cache(const string& file)
 // Сервисная функция, используется для остановки системы логирования
 void stop();
 
+// Сервисные функции, используются для вывода в лог округленных значений
+string round(float value, int signCount = 2);
+string round(double value, int signCount = 2);
+
 } // namespace alog
 
 #define alog_line_location alog::detail::file_name(__FILE__), __func__, __LINE__
