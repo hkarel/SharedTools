@@ -106,7 +106,13 @@ Line& operator<< (Line& line, const QVariant& v)
     if (!line.toLogger())
         return line;
 
-    if (v.type() == QVariant::Type(qMetaTypeId<float>()))
+#if QT_VERSION >= 0x060000
+    const int vType = v.typeId();
+    if (vType == qMetaTypeId<float>())
+#else
+    const QVariant::Type vType = v.type();
+    if (vType == QVariant::Type(qMetaTypeId<float>()))
+#endif
     {
         line << v.toFloat();
         return line;
@@ -118,7 +124,7 @@ Line& operator<< (Line& line, const QVariant& v)
         return line;
     }
 
-    switch (v.type())
+    switch (vType)
     {
         case QVariant::Invalid:
             line << "Invalid QVariant";
