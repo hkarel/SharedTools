@@ -31,7 +31,7 @@
 
 #ifndef QDATASTREAM_VERSION
 #  if QT_VERSION >= 0x050000
-#    define QDATASTREAM_VERSION QDataStream::Qt_5_9
+#    define QDATASTREAM_VERSION QDataStream::Qt_5_12
 #  else
 #    define QDATASTREAM_VERSION QDataStream::Qt_4_8
 #  endif
