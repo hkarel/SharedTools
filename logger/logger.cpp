@@ -116,11 +116,14 @@ void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Messa
 {
     if (lastTime != message.timeVal.tv_sec)
     {
+        std::tm tm;
         lastTime = message.timeVal.tv_sec;
 
-        std::tm tm;
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
+        localtime_s(&tm, &lastTime);
+#else
         localtime_r(&lastTime, &tm);
-
+#endif
         char* begin = buff;
         char* end = begin + sizeof(Message::prefix1);
         to_chars_result res;
@@ -343,10 +346,14 @@ void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Messa
 {
     if (lastTime != message.timeVal.tv_sec)
     {
+        std::tm tm;
         lastTime = message.timeVal.tv_sec;
 
-        std::tm tm;
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
+        localtime_s(&tm, &lastTime);
+#else
         localtime_r(&lastTime, &tm);
+#endif
 
 #pragma GCC diagnostic push
 #if __GNUC__ > 6
