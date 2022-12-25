@@ -195,8 +195,8 @@ public:
     // Режим работы фильта: включающий/исключающий
     enum class Mode {Include, Exclude};
 
-    Filter() {}
-    virtual ~Filter() {}
+    Filter() = default;
+    virtual ~Filter() = default;
 
     // Имя фильтра
     const string& name() const {return _name;}
@@ -248,7 +248,7 @@ public:
     void lock() {_locked = true;}
 
 private:
-    Filter(Filter&&) = default;
+    Filter(Filter&&) = delete;
     Filter(const Filter&) = delete;
     Filter& operator= (Filter&&) = delete;
     Filter& operator= (const Filter&) = delete;
@@ -407,7 +407,7 @@ class Saver : public clife_base
 {
 public:
     Saver(const string& name, Level level = Error);
-    virtual ~Saver() {}
+    virtual ~Saver() = default;
 
     // Имя сэйвера
     const string& name() const {return _name;}
