@@ -81,7 +81,7 @@ Line& operator<< (Line& line, const QDateTime& dt)
 Line& operator<< (Line& line, const QHostAddress& h)
 {
     if (line.toLogger())
-        line << QStringToUtf8(h.isNull() ? QString("undefined") : h.toString());
+        line << (h.isNull() ? QString("undefined") : h.toString());
     return line;
 }
 
