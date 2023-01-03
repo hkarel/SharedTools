@@ -84,6 +84,22 @@ Line& operator<< (Line& line, const QHostAddress& h)
         line << QStringToUtf8(h.isNull() ? QString("undefined") : h.toString());
     return line;
 }
+
+Line& operator<< (Line& line, const QHostAddress::SpecialAddress specialAddr)
+{
+    if (line.toLogger())
+        switch (specialAddr)
+        {
+            case QHostAddress::Null          : line << "Null";          break;
+            case QHostAddress::Broadcast     : line << "Broadcast";     break;
+            case QHostAddress::LocalHost     : line << "LocalHost";     break;
+            case QHostAddress::LocalHostIPv6 : line << "LocalHostIPv6"; break;
+            case QHostAddress::Any           : line << "Any";           break;
+            case QHostAddress::AnyIPv6       : line << "AnyIPv6";       break;
+            case QHostAddress::AnyIPv4       : line << "AnyIPv4";       break;
+        }
+    return line;
+}
 #endif
 
 #pragma GCC diagnostic push

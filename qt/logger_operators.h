@@ -47,6 +47,7 @@ Line& operator<< (Line&, const QDate&);
 Line& operator<< (Line&, const QDateTime&);
 #ifdef QT_NETWORK_LIB
 Line& operator<< (Line&, const QHostAddress&);
+Line& operator<< (Line&, const QHostAddress::SpecialAddress);
 #endif
 Line& operator<< (Line&, const QVariant&);
 
