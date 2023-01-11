@@ -365,16 +365,20 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
     return saver;
 }
 
-bool loadFilters(const YAML::Node& filtersNode, FilterList& filters)
+bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
+                 const string& confFile)
 {
     bool result = false;
     try
     {
-        if (!filtersNode.IsDefined() || filtersNode.IsNull())
-            return false;
+        if (!filtersNode.IsDefined())
+            throw std::logic_error("Filters node is undefined");
+
+        if (filtersNode.IsNull())
+            return true;
 
         if (!filtersNode.IsSequence())
-            throw std::logic_error("Filters-node must have sequence type");
+            throw std::logic_error("Filters node must have sequence type");
 
         for (const YAML::Node& yfilter : filtersNode)
             if (FilterPtr f = createFilter(yfilter))
@@ -385,17 +389,20 @@ bool loadFilters(const YAML::Node& filtersNode, FilterList& filters)
     catch (YAML::ParserException& e)
     {
         filters.clear();
-        log_error_m << "YAML error. Detail: " << e.what();
+        log_error_m << "Logger configuration YAML error. Detail: " << e.what()
+                    << ". Config file: " << confFile;
     }
     catch (std::exception& e)
     {
         filters.clear();
-        log_error_m << "Configuration error. Detail: " << e.what();
+        log_error_m << "Logger configuration error. Detail: " << e.what()
+                    << ". Config file: " << confFile;
     }
     catch (...)
     {
         filters.clear();
-        log_error_m << "Unknown error";
+        log_error_m << "Logger configuration unknown error"
+                    << ". Config file: " << confFile;
     }
     return result;
 }
@@ -409,33 +416,38 @@ bool loadSavers(const string& confFile, SaverList& savers)
 
         const YAML::Node& yfilters = conf["filters"];
         FilterList filters;
-        loadFilters(yfilters, filters);
+        loadFilters(yfilters, filters, confFile);
 
         const YAML::Node& ysavers = conf["savers"];
-        if (ysavers.IsDefined())
-        {
-            if (!ysavers.IsSequence())
-                throw std::logic_error("Savers-node must have sequence type");
 
-            for (const YAML::Node& ysaver : ysavers)
-                if (SaverPtr s = createSaver(ysaver, filters))
-                    savers.add(s.detach());
-        }
+        if (!ysavers.IsDefined())
+            throw std::logic_error("Savers node is undefined");
+
+        if (ysavers.IsNull())
+            return true;
+
+        if (!ysavers.IsSequence())
+            throw std::logic_error("Savers node must have sequence type");
+
+        for (const YAML::Node& ysaver : ysavers)
+            if (SaverPtr s = createSaver(ysaver, filters))
+                savers.add(s.detach());
+
         result = true;
     }
     catch (YAML::ParserException& e)
     {
-        log_error_m << "YAML error. Detail: " << e.what()
+        log_error_m << "Logger configuration YAML error. Detail: " << e.what()
                     << ". Config file: " << confFile;
     }
     catch (std::exception& e)
     {
-        log_error_m << "Configuration error. Detail: " << e.what()
+        log_error_m << "Logger configuration error. Detail: " << e.what()
                     << ". Config file: " << confFile;
     }
     catch (...)
     {
-        log_error_m << "Unknown error"
+        log_error_m << "Logger configuration unknown error"
                     << ". Config file: " << confFile;
     }
     return result;

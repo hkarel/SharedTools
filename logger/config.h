@@ -160,7 +160,8 @@ savers:
 */
 
 // Получает список фильтров из указанной yaml-ноды
-bool loadFilters(const YAML::Node& filtersNode, FilterList& filters);
+bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
+                 const string& confFile);
 
 // Загрузка сэйверов из отдельного файла конфигурации
 bool loadSavers(const string& confFile, SaverList& savers);

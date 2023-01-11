@@ -155,7 +155,7 @@ bool configDefaultSaver()
     { //Block for locker
         auto locker {config::base().locker()}; (void) locker;
         const YAML::Node filtersNode = config::base().node("logger.filters");
-        loadFilters(filtersNode, filters);
+        loadFilters(filtersNode, filters, config::base().filePath());
     }
     for (Filter* filter : filters)
         saver->addFilter(FilterPtr(filter));
