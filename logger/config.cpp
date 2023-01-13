@@ -55,11 +55,11 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     {
         if (yfilter[field].IsNull())
             throw std::logic_error(
-                "For filter-node a field '" + field + "' can not be null");
+                "For 'filter' node a field '" + field + "' can not be null");
 
         if (yfilter[field].Type() != type)
             throw std::logic_error(
-                "For filter-node a field '" + field + "' "
+                "For 'filter' node a field '" + field + "' "
                 "must have type '" + yamlTypeName(type) + "'");
     };
 
@@ -246,11 +246,11 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
     {
         if (ysaver[field].IsNull())
             throw std::logic_error(
-                "For saver-node a field '" + field + "' can not be null");
+                "For 'saver' node a field '" + field + "' can not be null");
 
         if (ysaver[field].Type() != type)
             throw std::logic_error(
-                "For saver-node a field '" + field + "' "
+                "For 'saver' node a field '" + field + "' "
                 "must have type '" + yamlTypeName(type) + "'");
     };
 
