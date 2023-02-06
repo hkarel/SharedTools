@@ -1582,8 +1582,10 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   break_point
 
   clear();
-
-  // Так делать нельзя, поэтому выполняем присвоение параметров через функции
+  DataType* d = d_func();
+  //
+  // Нельзя выполнять присвоение через разыменование d, в этом случае емкость
+  // списка будет установлена неверно
   // *d = *(list.d);
   //
   setCapacity(list.capacity());
@@ -1593,11 +1595,10 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   setCount(list.count());
   setSortState(SortState::Unknown);
 
-  T** srcIt = list.listBegin();
+  T** srcIt  = list.listBegin();
   T** srcEnd = list.listEnd();
-  T** dstIt = this->listBegin();
-  int count = 0;
-  DataType* d = d_func();
+  T** dstIt  = this->listBegin();
+  int count  = 0;
   while (srcIt != srcEnd)
   {
     try
