@@ -322,8 +322,8 @@ public:
     bool operator! () const noexcept {return empty();}
 
     // Функции совместимости с Qt
-    T* data() const noexcept {return get();}
-    bool isNull() const noexcept {return empty();}
+    [[deprecated]] T* data() const noexcept {return get();}
+    [[deprecated]] bool isNull() const noexcept {return empty();}
 
     // Вспомогательные функции
     static T* create() {return allocator_t::create();}
@@ -453,4 +453,3 @@ private:
 #undef GET_DEBUG
 #undef GET_DEBUG2
 #undef PRINT_DEBUG
-
