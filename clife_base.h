@@ -46,7 +46,15 @@ public:
     clife_base() = default;
     clife_base(bool add_ref) : _clife_count(add_ref ? 1 : 0) {}
 
-    explicit clife_base(const clife_base&) {}
+    // Конструктор и оператор присваивания сделаны  фиктивными  для  того,
+    // чтобы предотвратить изменение счетчика жизни объекта (_clife_count)
+    // вне функций add_ref()/release()
+    clife_base(const clife_base&) {}
+    clife_base& operator= (const clife_base&) {return *this;}
+
+    clife_base(clife_base&&) = delete;
+    clife_base& operator= (clife_base&&) = delete;
+
     virtual ~clife_base() = default;
 
     void add_ref() const {++_clife_count;}
