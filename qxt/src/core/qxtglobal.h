@@ -147,7 +147,7 @@ QXT_CORE_EXPORT const char* qxtVersion();
 #define QXT_D(PUB) PUB##Private& d = qxt_d()
 #define QXT_P(PUB) PUB& p = qxt_p()
 
-template <typename PUB>
+template<typename PUB>
 class QxtPrivate
 {
 public:
@@ -172,7 +172,7 @@ private:
     PUB* qxt_p_ptr;
 };
 
-template <typename PUB, typename PVT>
+template<typename PUB, typename PVT>
 class QxtPrivateInterface
 {
     friend class QxtPrivate<PUB>;

@@ -123,7 +123,7 @@
 
 
 /// @brief Функция регистрирует метатип с учетом и без учета пространства имен.
-template <typename T> void qRegisterMetaTypeExt(const char* type_name)
+template<typename T> void qRegisterMetaTypeExt(const char* type_name)
 {
     // Регистрация типа с учетом пространства имен
     qRegisterMetaType<T>(type_name);
@@ -159,7 +159,7 @@ template <typename T> void qRegisterMetaTypeExt(const char* type_name)
   @brief Функция регистрирует потоковые операторы и метатип с учетом
   и без учета пространства имен.
 */
-template <typename T> void qRegisterMetaTypeStreamOperatorsExt(const char* type_name)
+template<typename T> void qRegisterMetaTypeStreamOperatorsExt(const char* type_name)
 {
     // Регистрация типа с учетом пространства имен
     qRegisterMetaTypeStreamOperators<T>(type_name);

@@ -757,7 +757,7 @@ using is_integral = std::enable_if<std::is_integral<T>::value, int>;
 template<typename T>
 using is_floating = std::enable_if<std::is_floating_point<T>::value, int>;
 
-template <typename T>
+template<typename T>
 using is_enum_type = std::enable_if<std::is_enum<T>::value, int>;
 
 template<typename T>
@@ -834,7 +834,7 @@ inline constexpr const char* file_name<0>(const char* c, int)
     return (*c == file_sep()) ? (c + 1) : c;
 }
 
-template <size_t length>
+template<size_t length>
 inline constexpr const char* file_name(const char (&s)[length])
 {
     return file_name<length - 2>(s + length - 2, 0);

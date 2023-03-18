@@ -41,20 +41,20 @@ namespace closure
 #endif
 
 
-template <typename> struct Closure;
+template<typename> struct Closure;
 
 
 namespace closure
 {
     //this template generate function, which call "pmem" member function
-    template <typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES, R (T::*mem_func)(CLOSURE_TYPES)>
+    template<typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES, R (T::*mem_func)(CLOSURE_TYPES)>
     R ProxyFunc(void* self CLOSURE_COMMA CLOSURE_FUNC_PARAMS)
     {
         return (static_cast<T*>(self) ->* mem_func)(CLOSURE_FUNC_ARGS);
     }
 
     //this template generate function, which call "pmem" const member function
-    template <typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES, R (T::*mem_func)(CLOSURE_TYPES) const>
+    template<typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES, R (T::*mem_func)(CLOSURE_TYPES) const>
     R ProxyFuncConst(void* self CLOSURE_COMMA CLOSURE_FUNC_PARAMS)
     {
         return (static_cast<T*>(self) ->* mem_func)(CLOSURE_FUNC_ARGS);
@@ -63,7 +63,7 @@ namespace closure
 } //namespace closure
 
 
-template <typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
+template<typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
 class Closure<R(CLOSURE_TYPES)> : private closure::ClosureBase
 {
 public:
@@ -119,10 +119,10 @@ namespace closure
 {
     namespace CLOSURE_NAMESPACE
     {
-        template <typename B, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
+        template<typename B, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
         struct CreateClosureHelper
         {
-            template <R (B::*mem_func)(CLOSURE_TYPES), typename D>
+            template<R (B::*mem_func)(CLOSURE_TYPES), typename D>
             Closure<R(CLOSURE_TYPES)> Init(D *d)
             {
                 // Проверяем корректность преобразования типа. Допускается преобразование
@@ -134,10 +134,10 @@ namespace closure
             }
         };
 
-        template <typename B, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
+        template<typename B, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
         struct CreateClosureHelperConst
         {
-            template <R (B::*mem_func)(CLOSURE_TYPES) const, typename D>
+            template<R (B::*mem_func)(CLOSURE_TYPES) const, typename D>
             Closure<R(CLOSURE_TYPES)> Init(const D *d)
             {
                 const B* b = d;
@@ -152,7 +152,7 @@ namespace closure
 
 
     //helper function, to deduce return and parameters types of given pointer to member function
-    template <typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
+    template<typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
     CLOSURE_NAMESPACE::CreateClosureHelper<T, R CLOSURE_COMMA CLOSURE_TYPES>
         CreateClosure(R (T::*)(CLOSURE_TYPES))
     {
@@ -160,7 +160,7 @@ namespace closure
     }
 
     //helper function, to deduce return and parameters types of given pointer to member const function
-    template <typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
+    template<typename T, typename R CLOSURE_COMMA CLOSURE_TYPENAMES>
     CLOSURE_NAMESPACE::CreateClosureHelperConst<T, R CLOSURE_COMMA CLOSURE_TYPES>
         CreateClosure(R (T::*)(CLOSURE_TYPES) const)
     {

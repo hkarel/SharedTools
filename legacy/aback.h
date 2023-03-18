@@ -68,11 +68,11 @@ public:
     AutoBackMember(const AutoBackMember& abm);
     ~AutoBackMember() {if (cancel && *cancel) c = 0; if (c && pm) (c->*pm) = m;}
 
-    template <typename T, typename M>
+    template<typename T, typename M>
     friend inline AutoBackMember<T, M> createAutoBackMember(/*const*/ T*, M (T::*), M, bool* cancel);
 };
 
-template <typename T, typename M>
+template<typename T, typename M>
 inline AutoBackMember<T, M> createAutoBackMember(/*const*/ T* c,
                                                  M (T::*pm), M m, bool* cancel = 0) {
     return AutoBackMember<T, M>(c, pm, m, cancel);
@@ -108,11 +108,11 @@ public:
     AutoBackMemberVlt(const AutoBackMemberVlt&);
     ~AutoBackMemberVlt() {if (cancel && *cancel) c = 0; if (c && pm) (c->*pm) = m;}
 
-    template <typename T, typename M>
+    template<typename T, typename M>
     friend inline AutoBackMemberVlt<T, M> createAutoBackMember(/*const*/ T*, volatile M (T::*), M, bool* cancel);
 };
 
-template <typename T, typename M>
+template<typename T, typename M>
 inline AutoBackMemberVlt<T, M> createAutoBackMember(/*const*/ T* c,
                                                     volatile M (T::*pm), M m, bool* cancel = 0) {
     return AutoBackMemberVlt<T, M>(c, pm, m, cancel);
@@ -157,11 +157,11 @@ public:
     AutoBackMemberFunc(const AutoBackMemberFunc&);
     ~AutoBackMemberFunc() {if (cancel && *cancel) c = 0; if (c && pf) (c->*pf)(p);}
 
-    template <typename T, typename R, typename M>
+    template<typename T, typename R, typename M>
     friend inline AutoBackMemberFunc<T, R, M> createAutoBackMemberFunc(/*const*/ T*, R (T::*)(M), M, M, bool*);
 };
 
-template <typename T, typename R, typename M>
+template<typename T, typename R, typename M>
 inline AutoBackMemberFunc<T, R, M> createAutoBackMemberFunc(/*const*/ T* c,
                                                             R (T::*pf)(M),
                                                             M m, M p, bool* cancel = 0) {

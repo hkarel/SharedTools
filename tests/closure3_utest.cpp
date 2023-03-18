@@ -90,7 +90,6 @@ struct TestDeriv : Test
 //--- Эксперименты (неудачные) по вызову lambda функции ---
 #include <type_traits>
 
-
 auto l = [](float x, float y) -> float
 {
     return x + y;
@@ -101,33 +100,28 @@ l_ptr l_func = l;
 
 float (*l_func2)(float, float) = l;
 
-
-
 // Обобщенная декларация
-template <typename> struct CreateHelperL {};
+template<typename> struct CreateHelperL {};
 
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 struct CreateHelperL<R (Args...)>
 {
     static int test() {return 0;}
 
 };
 
-
-template <typename R, typename... Args>
+template<typename R, typename... Args>
 struct CreateHelperL<R (*)(Args...)>
 {
     static int test() {return 1;}
 
 };
 
-template <typename B, typename R, typename... Args>
+template<typename B, typename R, typename... Args>
 struct CreateHelperL<R (B::*)(Args...)>
 {
     static int test() {return 2;}
 };
-
-
 
 template<typename Func, Func func>
 void CreateL()
