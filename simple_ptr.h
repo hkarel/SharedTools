@@ -121,9 +121,9 @@ public:
     bool operator! () const noexcept {return empty();}
 
     // Функции совместимости с Qt
-    T* data() const noexcept {return get();}
-    T* take() noexcept {return release();}
-    bool isNull() const noexcept {return empty();}
+    [[deprecated]] T* data() const noexcept {return get();}
+    [[deprecated]] T* take() noexcept {return release();}
+    [[deprecated]] bool isNull() const noexcept {return empty();}
 
     // Размер элемента smart-pointer
     int type_size() const noexcept {return sizeof(element_t);}
