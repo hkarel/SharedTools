@@ -61,6 +61,10 @@
 #define PRINT_DEBUG(PRINT, VALUE)
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 /**
   Вспомогательная структура, используется для подсчета ссылок в container_ptr
 */
@@ -103,8 +107,8 @@ struct counter_ptr_t
 
     // Указатель на целевой объект.  Используем тип void*  чтобы не возникло
     // проблем с преобразованием типов.
-    // Этот параметр должен идти последним в списке параметров, это позволит
-    // экономить 4(8) байта при выделении единого сегмента памяти
+    // Параметр ptr должен идти последним в списке параметров, это позволит
+    // сэкономить 4/8 байт при выделении единого сегмента памяти
     // (см. описание join)
     void* ptr;
 
@@ -364,6 +368,11 @@ private:
         GET_DEBUG
     }
 
+#pragma GCC diagnostic push
+#if __GNUC__ > 10
+#pragma GCC diagnostic ignored "-Wmismatched-new-delete"
+#endif
+
     static counter_ptr_t* create_counter() {
         void* ptr = malloc(sizeof(counter_ptr_t));
         if (ptr == nullptr)
@@ -393,6 +402,8 @@ private:
                 free(counter);
             }
     }
+
+#pragma GCC diagnostic pop
 
     static T* get(counter_ptr_t* counter) noexcept {
         return static_cast<T*>(counter ? counter->__ptr() : nullptr);
@@ -451,6 +462,9 @@ private:
 
     template<typename, template<typename> class> friend class container_ptr;
 };
+
+// GCC diagnostic ignored "-Wfree-nonheap-object"
+#pragma GCC diagnostic pop
 
 #undef GET_DEBUG
 #undef GET_DEBUG2

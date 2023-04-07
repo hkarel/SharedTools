@@ -55,7 +55,12 @@ public:
     clife_base(clife_base&&) = delete;
     clife_base& operator= (clife_base&&) = delete;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+
     virtual ~clife_base() = default;
+
+#pragma GCC diagnostic pop
 
     void add_ref() const {++_clife_count;}
     void release() const {if (--_clife_count == 0) delete this;}
