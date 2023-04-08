@@ -326,10 +326,11 @@ public:
     [[deprecated]] bool isNull() const noexcept {return empty();}
 
     // Вспомогательные функции
-    static T* create() {return allocator_t::create();}
-    static T* create(const T& x) {return allocator_t::create(&x);}
-    static self_t create_ptr() {return self_t(allocator_t::create());}
-    static self_t create_ptr(const T& x) {return self_t(allocator_t::create(&x));}
+    static self_t create() {return self_t(allocator_t::create());}
+    static self_t create(const T& x) {return self_t(allocator_t::create(&x));}
+
+    [[deprecated]] static self_t create_ptr() {return self_t(allocator_t::create());}
+    [[deprecated]] static self_t create_ptr(const T& x) {return self_t(allocator_t::create(&x));}
 
     // Создает объект container_ptr с единым сегментом памяти для целевого
     // объекта и экземпляра counter_ptr_t
