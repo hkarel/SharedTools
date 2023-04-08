@@ -129,10 +129,11 @@ public:
     int type_size() const noexcept {return sizeof(element_t);}
 
     // Вспомогательные функции
-    static T* create() {return allocator_t::create();}
-    static T* create(const T& x) {return allocator_t::create(&x);}
-    static self_t create_ptr() {return self_t(allocator_t::create());}
-    static self_t create_ptr(const T& x) {return self_t(allocator_t::create(&x));}
+    static self_t create() {return self_t(allocator_t::create());}
+    static self_t create(const T& x) {return self_t(allocator_t::create(&x));}
+
+    [[deprecated]] static self_t create_ptr() {return self_t(allocator_t::create());}
+    [[deprecated]] static self_t create_ptr(const T& x) {return self_t(allocator_t::create(&x));}
 
 private:
     template<typename otherT, template<typename> class otherA>
