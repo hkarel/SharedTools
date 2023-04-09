@@ -97,8 +97,8 @@ struct counter_ptr_t
     // класса получим разрушение  this.  Чтобы корректно выйти из этой ситуации
     // используется container_ptr с фиктивным счетчиком ссылок:
     //   some_func(container_ptr(this, true /*dummy*/)).
-    // С другой стороны смарт-указатели  с флагом join всегда  создаются  через
-    // функцию create_join_ptr(), что в принципе,  исключает  использование уже
+    // С другой стороны смарт-указатели  с флагом join всегда создаются через
+    // функцию create_join(), что  в принципе,  исключает  использование  уже
     // существующего адреса объекта владения
     unsigned int join : 1;
 
@@ -130,9 +130,9 @@ struct counter_ptr_t
 /**
   Вспомогательная структура, используется для определения  наличия в аллокаторе
   функции разрушения вида:  destroy(T* x, bool join).  Эта функция используется
-  для разрушения объектов созданных функцией container_ptr::create_join_ptr().
-  Наличие (или отсутствие) функции destroy(T* x, bool join)  определяет  возмож-
-  ность создавать объекты  с помощью  функции  container_ptr::create_join_ptr(),
+  для разрушения объектов созданных функцией container_ptr::create_join().
+  Наличие (или отсутствие) функции destroy(T* x, bool join) определяет  возмож-
+  ность  создавать  объекты  с  помощью  функции  container_ptr::create_join(),
   а так же определяет политику разрушения объектов. Политика разрушения объектов
   определяется структурами container_ptr_destroy<bool>
 */
@@ -149,12 +149,12 @@ struct container_ptr_check_join
   container_ptr  в  зависимости  от  наличия  функции  destroy(T* x, bool join)
   в управляющем аллокаторе.
   Общая политика позволяет разрушать объекты созданные с помощью  оператора new,
-  а так же созданные с помощью функции container_ptr::create_join_ptr().
+  а так же созданные с помощью функции container_ptr::create_join().
   Для этого случая аллокатор должен иметь функцию разрушения вида:
     destroy(T* x, bool join).
   Специализированная политика позволяет разрушать  объекты  созданные с помощью
   оператора  new (или других подобных операторов),  но не допускает  разрушения
-  объектов созданных с помощью функции container_ptr::create_join_ptr()
+  объектов созданных с помощью функции container_ptr::create_join()
 */
 template<bool join_enable>
 struct container_ptr_destroy
@@ -339,7 +339,7 @@ public:
     // Создает объект container_ptr с единым сегментом памяти для целевого
     // объекта и экземпляра counter_ptr_t
     template<typename... Args>
-    static self_t create_join_ptr(Args&&... args) {
+    static self_t create_join(Args&&... args) {
         enum {join_yes = container_ptr_check_join<T, Allocator>::Yes};
         static_assert(join_yes, "Allocator must have function "
                                 "with signature: destroy(T* x, bool join)");
@@ -355,6 +355,11 @@ public:
         new (get(self._counter)) T(std::forward<Args>(args)...);
         GET_DEBUG2
         return self;
+    }
+
+    template<typename... Args>
+    [[deprecated]] static self_t create_join_ptr(Args&&... args) {
+        return create_join(std::forward<Args>(args)...);
     }
 
 private:
