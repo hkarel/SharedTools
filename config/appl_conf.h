@@ -128,4 +128,41 @@ private:
 ChangeChecker& changeChecker();
 #endif // QT_CORE_LIB
 
+namespace detail {
+
+template<typename VectorT>
+void checkSizeMetric(VectorT& values, const VectorT& defaultValues)
+{
+    if (defaultValues.size() < values.size())
+    {
+        values.resize(defaultValues.size());
+        return;
+    }
+    if (defaultValues.size() > values.size())
+    {
+        auto it = defaultValues.begin() + values.size();
+        for (; it != defaultValues.end(); ++it)
+            values.push_back(*it);
+    }
+}
+
+} // namespace detail
+
+// Проверяет прочитанный из конфиг-файла список значений на соответствие списку
+// по умолчанию. Если прочитанный список оказывается короче, то он будет допол-
+// нен элементами из списка по умолчанию
+template<typename T>
+void checkSizeMetric(vector<T>& values, const vector<T>& defaultValues)
+{
+    detail::checkSizeMetric(values, defaultValues);
+}
+
+#ifdef QT_CORE_LIB
+template<typename T>
+void checkSizeMetric(QVector<T>& values, const QVector<T>& defaultValues)
+{
+    detail::checkSizeMetric(values, defaultValues);
+}
+#endif
+
 } // namespace config

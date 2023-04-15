@@ -342,7 +342,7 @@ private:
     template<typename T, int> friend T& ::safe_singleton();
 };
 
-//---------------------------- Implementation  -------------------------------
+//------------------------------ Implementation ------------------------------
 
 template<typename T>
 inline char* Config::typeName()
