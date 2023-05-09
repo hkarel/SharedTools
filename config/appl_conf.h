@@ -82,10 +82,13 @@ void dirExpansion(QString& filePath);
 #endif
 
 // Возвращает время модификации базового конфиг-файла
-std::time_t baseModifyTime();
+time_t baseModifyTime();
+
+// Возвращает наименование конфиг-файла для логгера
+string loggerConfFile();
 
 // Возвращает время модификации конфиг-файла для логгера
-std::time_t loggerModifyTime();
+time_t loggerModifyTime();
 
 #ifdef QT_NETWORK_LIB
 // Возвращает host-адрес из файла конфигурации
@@ -94,13 +97,63 @@ bool readHostAddress(const QString& confHostStr, QHostAddress&);
 
 #ifdef QT_CORE_LIB
 /**
-  Проверяет факт модификации базового конфиг-файла и файла конфигурации логгера
-  по изменению их временной метки. Если изменение временной метки обнаружено -
-  выполняется перечитывание файлов конфигурации, и эмитируется сигнал changed().
-  Примечание: Функции start(), stop() должны  вызываться  из  основного  потока
+  Проверяет факт модификации файла по изменению его  временной  метки.
+  Примечание: Функции start() и stop() должны вызываться из основного
+              потока приложения после сознания экземпляра QCoreApplication
+*/
+class Observer : public QObject
+{
+public:
+    Observer();
+
+    void start(int timeout = 15 /*сек*/);
+    void stop();
+
+    void addFile(const QString& filePath);
+    void removeFile(const QString& filePath);
+
+    // Список наблюдаемых файлов
+    QStringList files() const;
+
+    // Очищает список наблюдаемых файлов
+    void clear();
+
+    // Возвращает время последней модификации файла
+    static time_t modifyTime(const QString& filePath);
+
+signals:
+    // Сигнал эмитируется когда любой из файлов был изменен
+    void changed();
+
+    // Сигнал эмитируется когда файл filePath был изменен
+    void changedItem(const QString& filePath);
+
+private slots:
+    void timeout();
+
+private:
+    Q_OBJECT
+    DISABLE_DEFAULT_COPY(Observer)
+
+    QTimer _timer;
+
+    //          Время последней модификации файла
+    //          |       Полный путь до файла (filePath)
+    //          |       |
+    QList<QPair<time_t, QString>> _files;
+    mutable QMutex _filesLock;
+
+    template<typename T, int> friend T& ::safe_singleton();
+};
+Observer& observer();
+
+/**
+  Проверяет факт модификации базового конфиг-файла и файла конфигурации логгера.
+  Механизм работает на основе класса Observer.
+  Примечание: Функции start() и stop() должны вызываться  из  основного  потока
               приложения после сознания экземпляра QCoreApplication
 */
-class ChangeChecker : public QObject
+class ObserverBase : public QObject
 {
 public:
     void start(int timeout = 15 /*сек*/);
@@ -110,22 +163,19 @@ signals:
     void changed();
 
 private slots:
-    void timeout();
+    void changedItem(const QString& filePath);
 
 private:
     Q_OBJECT
-    ChangeChecker();
-    DISABLE_DEFAULT_COPY(ChangeChecker)
+    ObserverBase();
+    DISABLE_DEFAULT_COPY(ObserverBase)
 
-    QTimer _timer;
-    // Время последней модификации конфиг-файлов
-    std::time_t _baseModifyTime = {0};
-    std::time_t _loggerModifyTime = {0};
+    Observer _observer;
 
     template<typename T, int> friend T& ::safe_singleton();
 };
+ObserverBase& observerBase();
 
-ChangeChecker& changeChecker();
 #endif // QT_CORE_LIB
 
 namespace detail {

@@ -30,6 +30,10 @@
 #include "safe_singleton.h"
 #include "logger/config.h"
 
+#ifdef QT_CORE_LIB
+#include "qt/logger_operators.h"
+#endif
+
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -129,17 +133,16 @@ void dirExpansion(QString& filePath)
 }
 #endif
 
-std::time_t baseModifyTime()
+time_t baseModifyTime()
 {
     struct stat st;
     ::stat(base().filePath().c_str(), &st);
     return st.st_mtime;
 }
 
-std::time_t loggerModifyTime()
+string loggerConfFile()
 {
     string logConf;
-    std::time_t confTime = 0;
 #ifdef MINGW
     base().getValue("logger.conf_win", logConf);
 #else
@@ -149,13 +152,22 @@ std::time_t loggerModifyTime()
     {
         dirExpansion(logConf);
         if (::access(logConf.c_str(), F_OK) != -1)
-        {
-            struct stat st;
-            ::stat(logConf.c_str(), &st);
-            confTime = st.st_mtime;
-        }
+            return logConf;
+        else
+            log_error_m << "Logger config file not exists: " << logConf;
     }
-    return confTime;
+    return {};
+}
+
+time_t loggerModifyTime()
+{
+    string logConf = loggerConfFile();
+    if (logConf.empty())
+        return 0;
+
+    struct stat st;
+    ::stat(logConf.c_str(), &st);
+    return st.st_mtime;
 }
 
 #ifdef QT_NETWORK_LIB
@@ -183,43 +195,158 @@ bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
 #endif // QT_NETWORK_LIB
 
 #ifdef QT_CORE_LIB
-ChangeChecker::ChangeChecker()
+Observer::Observer()
 {
-    chk_connect_q(&_timer, &QTimer::timeout, this, &ChangeChecker::timeout)
+    chk_connect_q(&_timer, &QTimer::timeout, this, &Observer::timeout)
 }
 
-void ChangeChecker::start(int timeout)
+time_t Observer::modifyTime(const QString& filePath)
 {
-    _baseModifyTime = baseModifyTime();
-    _loggerModifyTime = loggerModifyTime();
+    struct stat st;
+    ::stat(filePath.toUtf8().constData(), &st);
+    return st.st_mtime;
+}
+
+void Observer::start(int timeout)
+{
+    QMutexLocker locker {&_filesLock}; (void) locker;
+
+    for (auto& p : _files)
+        p.first = modifyTime(p.second);
+
     _timer.setInterval(timeout * 1000);
     _timer.start();
 }
 
-void ChangeChecker::stop()
+void Observer::stop()
 {
     _timer.stop();
 }
 
-void ChangeChecker::timeout()
+void Observer::addFile(const QString& filePath)
+{
+    QMutexLocker locker {&_filesLock}; (void) locker;
+
+    bool found = false;
+    for (const auto& p : _files)
+        if (p.second == filePath)
+        {
+            found = true;
+            break;
+        }
+
+    if (!found)
+    {
+        _files.append({modifyTime(filePath), filePath});
+        log_debug_m << "Observer add file: " << filePath;
+    }
+}
+
+void Observer::removeFile(const QString& filePath)
+{
+    QMutexLocker locker {&_filesLock}; (void) locker;
+
+    for (int i = 0; i < _files.count(); ++i)
+        if (_files[i].second == filePath)
+        {
+            _files.removeAt(i--);
+            log_debug_m << "Observer remove file: " << filePath;
+        }
+}
+
+QStringList Observer::files() const
+{
+    QMutexLocker locker {&_filesLock}; (void) locker;
+
+    QStringList files;
+    for (const auto& p : _files)
+        files.append(p.second);
+
+    return files;
+}
+
+void Observer::clear()
+{
+    QMutexLocker locker {&_filesLock}; (void) locker;
+
+    for (const auto& p : _files)
+        log_debug_m << "Observer remove file: " << p.second;
+    _files.clear();
+}
+
+void Observer::timeout()
+{
+    QStringList files;
+    { //Block for QMutexLocker
+        QMutexLocker locker {&_filesLock}; (void) locker;
+        for (auto& p : _files)
+        {
+            if (::access(p.second.toUtf8().constData(), F_OK) == -1)
+            {
+                log_error_m << "Observer, file not exists: " << p.second;
+                continue;
+            }
+            time_t modifyTime = Observer::modifyTime(p.second);
+            if (p.first != modifyTime)
+            {
+                p.first = modifyTime;
+                files.append(p.second);
+            }
+        }
+    }
+    for (const QString& f : files)
+    {
+        log_error_m << "Observer, file changed: " << f;
+        emit changedItem(f);
+    }
+    if (files.count())
+        emit changed();
+}
+
+Observer& observer()
+{
+    return safe_singleton<Observer>();
+}
+
+ObserverBase::ObserverBase()
+{
+    chk_connect_a(&_observer, &Observer::changedItem,
+                  this, &ObserverBase::changedItem)
+}
+
+void ObserverBase::start(int timeout)
+{
+    _observer.clear();
+    _observer.addFile(base().filePath().c_str());
+
+    string logConf = loggerConfFile();
+    if (!logConf.empty())
+        _observer.addFile(logConf.c_str());
+
+    _observer.start(timeout);
+}
+
+void ObserverBase::stop()
+{
+    _observer.stop();
+}
+
+void ObserverBase::changedItem(const QString& filePath)
 {
     bool modify = false;
-    std::time_t modifyTime = baseModifyTime();
-    if (_baseModifyTime != modifyTime)
+    if (filePath == base().filePath().c_str())
     {
         modify = true;
-        _baseModifyTime = modifyTime;
         base().rereadFile();
-        log_verbose_m << "Config file was reread: " << base().filePath();
-
+        log_verbose_m << "Config file was reread: " << filePath;
         alog::configDefaultSaver();
     }
 
-    modifyTime = loggerModifyTime();
-    if (_loggerModifyTime != modifyTime)
+    string logConf = loggerConfFile();
+    if (!logConf.empty() && (filePath == logConf.c_str()))
     {
         modify = true;
-        _loggerModifyTime = modifyTime;
+        log_verbose_m << "Logger config file was reread: " << filePath;
         alog::configExtendedSavers();
     }
 
@@ -230,9 +357,9 @@ void ChangeChecker::timeout()
     }
 }
 
-ChangeChecker& changeChecker()
+ObserverBase& observerBase()
 {
-    return safe_singleton<ChangeChecker>();
+    return safe_singleton<ObserverBase>();
 }
 #endif // QT_CORE_LIB
 
