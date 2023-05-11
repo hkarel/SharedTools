@@ -85,6 +85,11 @@ YamlConfig& state()
     return ::safe_singleton<YamlConfig, 1>();
 }
 
+YamlConfig& work()
+{
+    return ::safe_singleton<YamlConfig, 2>();
+}
+
 void dirExpansion(std::string& filePath)
 {
     if (filePath.empty())
