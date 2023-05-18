@@ -99,6 +99,7 @@ bool Config::readFile(const string& filePath)
     if (!file.is_open())
     {
         log_warn_m << "Cannot open config file: " << _filePath;
+        _root = YAML::Node();
         return false;
     }
     _root = YAML::Load(file);
