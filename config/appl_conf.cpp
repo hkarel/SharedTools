@@ -243,7 +243,7 @@ void Observer::addFile(const QString& filePath)
     if (!found)
     {
         _files.append({modifyTime(filePath), filePath});
-        log_verbose_m << "Observer add file: " << filePath;
+        log_debug_m << "File added to observer: " << filePath;
     }
 }
 
@@ -255,7 +255,7 @@ void Observer::removeFile(const QString& filePath)
         if (_files[i].second == filePath)
         {
             _files.removeAt(i--);
-            log_verbose_m << "Observer remove file: " << filePath;
+            log_debug_m << "File removed from observer: " << filePath;
         }
 }
 
@@ -275,7 +275,7 @@ void Observer::clear()
     QMutexLocker locker {&_filesLock}; (void) locker;
 
     for (const auto& p : _files)
-        log_verbose_m << "Observer remove file: " << p.second;
+        log_debug_m << "File removed from observer: " << p.second;
     _files.clear();
 }
 
