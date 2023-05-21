@@ -208,7 +208,8 @@ Observer::Observer()
 time_t Observer::modifyTime(const QString& filePath)
 {
     struct stat st;
-    ::stat(filePath.toUtf8().constData(), &st);
+    if (::stat(filePath.toUtf8().constData(), &st) == -1)
+        return 0;
     return st.st_mtime;
 }
 
