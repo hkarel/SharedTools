@@ -244,7 +244,7 @@ void Observer::addFile(const QString& filePath)
     if (!found)
     {
         _files.append({modifyTime(filePath), filePath});
-        log_debug_m << "File added to observer: " << filePath;
+        log_debug_m << "The file added to observer: " << filePath;
     }
 }
 
@@ -256,7 +256,7 @@ void Observer::removeFile(const QString& filePath)
         if (_files[i].second == filePath)
         {
             _files.removeAt(i--);
-            log_debug_m << "File removed from observer: " << filePath;
+            log_debug_m << "The file removed from observer: " << filePath;
         }
 }
 
@@ -276,7 +276,7 @@ void Observer::clear()
     QMutexLocker locker {&_filesLock}; (void) locker;
 
     for (const auto& p : _files)
-        log_debug_m << "File removed from observer: " << p.second;
+        log_debug_m << "The file removed from observer: " << p.second;
     _files.clear();
 }
 
@@ -344,7 +344,7 @@ void ObserverBase::changedItem(const QString& filePath)
     {
         modify = true;
         base().rereadFile();
-        log_verbose_m << "Config file was reread: " << filePath;
+        log_verbose_m << "Config file reread: " << filePath;
         alog::configDefaultSaver();
     }
 
@@ -352,7 +352,7 @@ void ObserverBase::changedItem(const QString& filePath)
     if (!logConf.empty() && (filePath == logConf.c_str()))
     {
         modify = true;
-        log_verbose_m << "Logger config file was reread: " << filePath;
+        log_verbose_m << "Logger config file reread: " << filePath;
         alog::configExtendedSavers();
     }
 
