@@ -114,7 +114,7 @@ bool configDefaultSaver()
 
     if (logDir.empty())
     {
-        log_error_m << "Log directory is empty";
+        log_error_m << "Log directory path not set";
         return false;
     }
 
