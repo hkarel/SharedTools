@@ -1309,7 +1309,7 @@ void Logger::redefineLevel()
 
 Logger& logger()
 {
-    return ::safe_singleton<Logger>();
+    return safe::singleton<Logger>();
 }
 
 //------------------------------ Line operators ------------------------------

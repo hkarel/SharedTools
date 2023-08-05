@@ -29,6 +29,8 @@
 #include <mutex>
 #include <memory>
 
+namespace safe {
+
 /**
   Функция реализует механизм создания потокобезопасного singleton. Механизм
   основан на паттерне Double-Checked Locking Pattern (DCLP) описанном у
@@ -47,7 +49,7 @@
              -O2 и -O3 (g++ 4.7). Проблем в работе функции выявлено не было.
 */
 template<typename T, int = 0>
-T& safe_singleton()
+T& singleton()
 {
     static std::unique_ptr<T> t;
     static std::mutex lock;
@@ -69,7 +71,7 @@ T& safe_singleton()
   Возвращает smart-ptr экземпляр
 */
 template<typename T, int = 0>
-typename T::Ptr& safe_singleton_ptr()
+typename T::Ptr& singleton_ptr()
 {
     static typename T::Ptr t;
     static std::mutex lock;
@@ -85,3 +87,5 @@ typename T::Ptr& safe_singleton_ptr()
     }
     return t;
 }
+
+} // namespace safe

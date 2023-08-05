@@ -77,17 +77,17 @@ QString qpath(const QString& configFile)
 
 YamlConfig& base()
 {
-    return ::safe_singleton<YamlConfig, 0>();
+    return safe::singleton<YamlConfig, 0>();
 }
 
 YamlConfig& state()
 {
-    return ::safe_singleton<YamlConfig, 1>();
+    return safe::singleton<YamlConfig, 1>();
 }
 
 YamlConfig& work()
 {
-    return ::safe_singleton<YamlConfig, 2>();
+    return safe::singleton<YamlConfig, 2>();
 }
 
 void dirExpansion(std::string& filePath)
@@ -311,7 +311,7 @@ void Observer::timeout()
 
 Observer& observer()
 {
-    return safe_singleton<Observer>();
+    return safe::singleton<Observer>();
 }
 
 ObserverBase::ObserverBase()
@@ -365,7 +365,7 @@ void ObserverBase::changedItem(const QString& filePath)
 
 ObserverBase& observerBase()
 {
-    return safe_singleton<ObserverBase>();
+    return safe::singleton<ObserverBase>();
 }
 #endif // QT_CORE_LIB
 

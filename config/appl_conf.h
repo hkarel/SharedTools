@@ -147,7 +147,7 @@ private:
     QList<QPair<time_t, QString>> _files;
     mutable QMutex _filesLock;
 
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 Observer& observer();
 
@@ -176,7 +176,7 @@ private:
 
     Observer _observer;
 
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 ObserverBase& observerBase();
 

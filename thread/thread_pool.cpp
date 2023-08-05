@@ -31,7 +31,7 @@ namespace trd {
 
 ThreadPool& threadPool()
 {
-    return ::safe_singleton<ThreadPool>();
+    return safe::singleton<ThreadPool>();
 }
 
 ThreadPool::~ThreadPool()

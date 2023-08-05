@@ -694,7 +694,7 @@ private:
     volatile bool _on = {true};
 
     friend struct Line;
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 
 Logger& logger();

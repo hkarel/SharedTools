@@ -133,7 +133,7 @@ private:
     vector<Item*> _threads;
     mutex _threadsLock;
 
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 ThreadPool& threadPool();
 

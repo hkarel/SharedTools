@@ -339,7 +339,7 @@ private:
     // по не найденной ноде
     mutable string _nameNodeFunc;
 
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 
 //------------------------------ Implementation ------------------------------
