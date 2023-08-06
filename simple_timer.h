@@ -34,7 +34,7 @@
 */
 struct simple_timer
 {
-    typedef std::chrono::high_resolution_clock clock;
+    typedef std::chrono::system_clock clock;
 
     simple_timer() = default;
     simple_timer(const simple_timer&) = default;
