@@ -101,8 +101,9 @@ public:
     // Эмитирует событие изменения данных
     SimpleSignal<void ()> changeSignal;
 
-    template<typename T>
-    static char* typeName();
+    // Использовать abi_type_name()
+    // template<typename T>
+    // static char* typeName();
 
     // Выводит список настроек в систему логирования
     void print();
@@ -143,16 +144,15 @@ void Settings::setValue(const std::string& name, const T& value)
     changeSignal.emit_();
 }
 
-template<typename T>
-char* Settings::typeName()
-{
-#if defined(_MSC_VER)
-    return typeid(T).name();
-#else
-    return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
-#endif
-}
-
+//template<typename T>
+//char* Settings::typeName()
+//{
+//#if defined(_MSC_VER)
+//    return typeid(T).name();
+//#else
+//    return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
+//#endif
+//}
 
 #define SETTING_VALUE_NOT_FOUND(MODULE_NAME) \
     alog::logger().warn(alog_line_location, MODULE_NAME) \

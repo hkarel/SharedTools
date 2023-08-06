@@ -201,8 +201,9 @@ public:
 private:
     DISABLE_DEFAULT_COPY(Config)
 
-    template<typename T>
-    static char* typeName();
+    // Использовать abi_type_name()
+    // template<typename T>
+    // static char* typeName();
 
     // Используется для преобразования типов к строковому представлению
     template<typename T>
@@ -344,15 +345,15 @@ private:
 
 //------------------------------ Implementation ------------------------------
 
-template<typename T>
-inline char* Config::typeName()
-{
-#if defined(_MSC_VER)
-    return typeid(T).name();
-#else
-    return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
-#endif
-}
+//template<typename T>
+//inline char* Config::typeName()
+//{
+//#if defined(_MSC_VER)
+//    return typeid(T).name();
+//#else
+//    return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
+//#endif
+//}
 
 #define YAML_GET_FUNC 0
 #define YAML_SET_FUNC 1
