@@ -135,6 +135,7 @@ private:
 
     template<typename T, int> friend T& safe::singleton();
 };
+
 ThreadPool& threadPool();
 
 } // namespace trd

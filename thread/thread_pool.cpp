@@ -29,11 +29,6 @@
 
 namespace trd {
 
-ThreadPool& threadPool()
-{
-    return safe::singleton<ThreadPool>();
-}
-
 ThreadPool::~ThreadPool()
 {
     if (!_stopped) stop();
@@ -185,6 +180,11 @@ void ThreadPool::Item::join()
 //        })) ;
         _workCond.wait(locker, [this]{return !this->_working;});
     }
+}
+
+ThreadPool& threadPool()
+{
+    return safe::singleton<ThreadPool>();
 }
 
 } // namespace trd
