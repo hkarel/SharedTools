@@ -26,7 +26,6 @@
 
 #include "logger/logger.h"
 #include <cstdlib>
-#include <unistd.h>
 
 void prog_abort()
 {
@@ -34,5 +33,5 @@ void prog_abort()
     alog::logger().flush();
     alog::logger().waitingFlush();
     alog::logger().stop();
-    abort();
+    std::abort();
 }
