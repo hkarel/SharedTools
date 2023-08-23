@@ -39,8 +39,8 @@
 #include "thread/thread_base.h"
 #include "thread/thread_utils.h"
 
-#include <sys/types.h>
-#include <sys/time.h>
+#include <cctype>
+#include <ctime>
 #include <iostream>
 #include <atomic>
 #include <memory>
@@ -129,9 +129,9 @@ struct Message
     int         line   = {0};
     const char* module = {0};
 
-    timeval timeVal;
-    pid_t   threadId;
-    string  str;
+    timespec    timeSpec;
+    pid_t       threadId;
+    string      str;
 
     Something::Ptr something;
 
@@ -268,7 +268,7 @@ private:
 
     // Список идентификаторов потоков, используется для фильтрации сообщений
     // по контексту потока
-    mutable map<pid_t, timeval> _threadContextIds;
+    mutable map<pid_t, timespec> _threadContextIds;
 
     friend class Saver;
 };

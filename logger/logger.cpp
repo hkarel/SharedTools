@@ -114,10 +114,10 @@ string levelToString(Level level)
 // файла, номер строки, имя модуля
 void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Message::prefix1)])
 {
-    if (lastTime != message.timeVal.tv_sec)
+    if (lastTime != message.timeSpec.tv_sec)
     {
         std::tm tm;
-        lastTime = message.timeVal.tv_sec;
+        lastTime = message.timeSpec.tv_sec;
 
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
         localtime_s(&tm, &lastTime);
@@ -207,7 +207,7 @@ void usecToString(int usec, char* result)
 void prefixFormatter2(Message& message)
 {
     char buff[sizeof(Message::prefix2)];
-    usecToString<sizeof(buff)>(message.timeVal.tv_usec, buff);
+    usecToString<sizeof(buff)>(message.timeSpec.tv_nsec / 1000, buff);
 
     memcpy(message.prefix2, buff, sizeof(buff));
 }
@@ -467,7 +467,7 @@ Filter::Check Filter::check(const Message& m) const
         if (_followThreadContext)
         {
             if (_mode == Mode::Include)
-                _threadContextIds[m.threadId] = m.timeVal;
+                _threadContextIds[m.threadId] = m.timeSpec;
 
             if (_mode == Mode::Exclude)
             {
@@ -481,7 +481,7 @@ Filter::Check Filter::check(const Message& m) const
     if (_followThreadContext)
     {
         if (_mode == Mode::Exclude)
-            _threadContextIds[m.threadId] = m.timeVal;
+            _threadContextIds[m.threadId] = m.timeSpec;
 
         if (_mode == Mode::Include)
         {
@@ -497,17 +497,17 @@ void Filter::removeIdsTimeoutThreads()
     if (_threadContextIds.empty())
         return;
 
-    timeval curTime;
-    gettimeofday(&curTime, NULL);
+    timespec curTime;
+    timespec_get(&curTime, TIME_UTC);
 
     vector<pid_t> tids;
     for (const auto& tci : _threadContextIds)
     {
-        const timeval& timeVal = tci.second;
+        const timespec& timeSpec = tci.second;
         // Таймаут в 3 сек.
-        if (curTime.tv_sec > (timeVal.tv_sec + 3)
-            || ((curTime.tv_sec == (timeVal.tv_sec + 3))
-                && (curTime.tv_usec > timeVal.tv_usec)))
+        if (curTime.tv_sec > (timeSpec.tv_sec + 3)
+            || ((curTime.tv_sec == (timeSpec.tv_sec + 3))
+                && (curTime.tv_nsec > timeSpec.tv_nsec)))
         {
             tids.push_back(tci.first);
         }
@@ -979,7 +979,7 @@ Line::~Line()
 
         message->level = impl->level;
         message->str = std::move(impl->buff);
-        gettimeofday(&message->timeVal, nullptr);
+        timespec_get(&message->timeSpec, TIME_UTC);
         message->threadId = trd::gettid();
         message->something = std::move(impl->something);
 
