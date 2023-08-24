@@ -37,7 +37,7 @@
 #pragma once
 
 #include "defmac.h"
-#include <sys/types.h>
+#include <cctype>
 #include <atomic>
 #include <functional>
 #include <vector>

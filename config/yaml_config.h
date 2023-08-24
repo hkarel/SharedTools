@@ -96,7 +96,11 @@ public:
     // Пример использования:
     //   auto locker {сonfig.locker()}; (void) locker;
     //   YAML::Node node = сonfig.node("node_name");
+#ifdef __GNUC__
     Locker locker() const __attribute__ ((warn_unused_result)) {return Locker(this);}
+#else
+    Locker locker() const {return Locker(this);}
+#endif
 
     Config() = default;
 

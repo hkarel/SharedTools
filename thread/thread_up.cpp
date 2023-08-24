@@ -26,9 +26,11 @@
 
 #include "thread_up.h"
 
+#ifdef __GNUC__
 #include <cstdio>
 #include <unistd.h>
 #include <pthread.h>
+#endif
 
 namespace trd {
 

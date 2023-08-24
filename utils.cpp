@@ -28,11 +28,17 @@
 #include "break_point.h"
 
 #include <cmath>
-#include <cctype>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
+
+#if defined(_MSC_VER)
+//#include <io.h> Нужен ли? Проверить
+#include <direct.h>
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 namespace utl {
 
@@ -68,7 +74,11 @@ bool setCurrentDir(char* binaryPath)
     if ((x = strrchr(binaryPath, '/')))
     {
         *x = '\0';
+#if defined(_MSC_VER)
+        ret = (_chdir(binaryPath) == 0);
+#else
         ret = (chdir(binaryPath) == 0);
+#endif
         *x = '/';
     }
     return ret;
@@ -80,7 +90,11 @@ void savePidFile(const string& fileName)
     {
         if (FILE * pf = fopen(fileName.c_str(), "w"))
         {
+#if defined(_MSC_VER)
+            fprintf(pf, "%d\n", _getpid());
+#else
             fprintf(pf, "%d\n", getpid());
+#endif
             fclose(pf);
         }
         else
@@ -174,7 +188,7 @@ string uuidToString(const uint8_t uuid[])
 
     uint8_t buff[40];
     uuidToString(uuid, buff);
-    return std::string((const char*)buff);
+    return string((const char*)buff);
 }
 
 void uuidToString(const uint8_t uuid[], uint8_t result[])
@@ -214,7 +228,7 @@ string uuidToHexString(const uint8_t uuid[], bool addHexPrefix)
 
     uint8_t buff[40];
     uuidToHexString(uuid, buff, addHexPrefix);
-    return std::string((const char*)buff);
+    return string((const char*)buff);
 }
 
 void uuidToHexString(const uint8_t uuid[], uint8_t result[], bool addHexPrefix)
@@ -266,25 +280,31 @@ double round(double number, int signCount)
     return std::round(number * n) / n;
 }
 
-void timeAdd(const timeval& a, const timeval& b, timeval& result)
+void timeAdd(const timespec& a, const timespec& b, timespec& result)
 {
+    // Отладить
+    break_point
+
     result.tv_sec = a.tv_sec + b.tv_sec;
-    result.tv_usec = a.tv_usec + b.tv_usec;
-    if (result.tv_usec >= 1000000)
+    result.tv_nsec = a.tv_nsec + b.tv_nsec;
+    if ((result.tv_nsec) >= 1000000000)
     {
         ++result.tv_sec;
-        result.tv_usec -= 1000000;
+        result.tv_nsec -= 1000000000;
     }
 }
 
-void timeSub(const timeval& a, const timeval& b, timeval& result)
+void timeSub(const timespec& a, const timespec& b, timespec& result)
 {
+    // Отладить
+    break_point
+
     result.tv_sec = a.tv_sec - b.tv_sec;
-    result.tv_usec = a.tv_usec - b.tv_usec;
-    if (result.tv_usec < 0)
+    result.tv_nsec = a.tv_nsec - b.tv_nsec;
+    if (result.tv_nsec < 0)
     {
         --result.tv_sec;
-        result.tv_usec += 1000000;
+        result.tv_nsec += 1000000000;
     }
 }
 

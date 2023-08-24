@@ -25,10 +25,10 @@
 
 #include "network/logger_operators.h"
 
-#ifndef MINGW
+#if !defined(MINGW) && !defined(_MSC_VER)
 #ifndef FREEBSD
 #include <netinet/ether.h>
-#endif
+#endif // FREEBSD
 #endif // MINGW
 
 namespace alog {
@@ -48,7 +48,7 @@ Line& operator<< (Line& line, const sockaddr_in& in)
     return line;
 }
 
-#ifndef MINGW
+#if !defined(MINGW) && !defined(_MSC_VER)
 Line& operator<< (Line& line, const ether_addr& addr)
 {
     if (line.toLogger())
@@ -71,7 +71,7 @@ Line& operator<< (Line& line, const sockaddr_nl& nl)
     }
     return line;
 }
-#endif
+#endif // FREEBSD
 #endif // MINGW
 
 } // namespace alog

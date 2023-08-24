@@ -33,28 +33,26 @@
 #include "logger/logger.h"
 #include <sys/types.h>
 
-#ifdef MINGW
+#if defined(MINGW) || defined(_MSC_VER)
 #include <winsock2.h>
 #else
 #include <netinet/in.h>
 #include <net/ethernet.h>
-
 #ifndef FREEBSD
 #include <linux/netlink.h>
-#endif
+#endif // FREEBSD
 #endif // MINGW
-
 
 namespace alog {
 
 Line& operator<< (Line& line, const sockaddr_in&);
 
-#ifndef MINGW
+#if !defined(MINGW) && !defined(_MSC_VER)
 Line& operator<< (Line& line, const ether_addr&);
 
 #ifndef FREEBSD
 Line& operator<< (Line& line, const sockaddr_nl&);
-#endif
+#endif // FREEBSD
 #endif // MINGW
 
 } // namespace alog

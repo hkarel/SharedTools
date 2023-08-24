@@ -30,8 +30,8 @@
 
 #pragma once
 
-#include <sys/types.h>
-#include <sys/time.h>
+#include <cctype>
+#include <ctime>
 #include <atomic>
 #include <string>
 #include <cstdarg>
@@ -74,8 +74,13 @@ void savePidFile(const string& fileName);
 
 // Аналог функции sprintf, в качестве результата возвращает отформатированную
 // строку
+#ifdef __GNUC__
 template<typename std::size_t BuffSize = 1024>
 string formatMessage(const char* format, ...)  __attribute__ ((format (printf, 1, 2)));
+#else
+template<typename std::size_t BuffSize = 1024>
+string formatMessage(const char* format, ...);
+#endif
 
 // Функция изменяет значение атомарного  флага, используется в тех случаях,
 // когда нужно избежать постоянного  присвоения  одного и того же значения
@@ -149,8 +154,8 @@ double round(double number, int signCount);
 
 // Функции сложения/вычитания структур timeval. Они повторяют макросы
 // timeradd/timersub, но в MinGW эти макросы не реализованы.
-void timeAdd(const timeval& a, const timeval& b, timeval& result);
-void timeSub(const timeval& a, const timeval& b, timeval& result);
+void timeAdd(const timespec& a, const timespec& b, timespec& result);
+void timeSub(const timespec& a, const timespec& b, timespec& result);
 
 // Возвращает сумму элементов списка
 template<typename T>
