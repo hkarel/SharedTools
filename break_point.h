@@ -63,7 +63,7 @@ int main ()
   #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     #include <intrin.h>
     #define break_point {__debugbreak();}
-  #elif defined(__arm__) || defined(__ANDROID__)
+  #elif defined(__arm__) || defined(__ANDROID__) || defined(__aarch64__)
     #define break_point {}
   #else
     #include <stdio.h>
