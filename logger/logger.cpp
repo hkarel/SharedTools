@@ -498,7 +498,12 @@ void Filter::removeIdsTimeoutThreads()
         return;
 
     timespec curTime;
+
+#if defined(__MINGW32__)
+    clock_gettime(CLOCK_REALTIME, &curTime);
+#else
     timespec_get(&curTime, TIME_UTC);
+#endif
 
     vector<pid_t> tids;
     for (const auto& tci : _threadContextIds)
@@ -979,7 +984,12 @@ Line::~Line()
 
         message->level = impl->level;
         message->str = std::move(impl->buff);
+
+#if defined(__MINGW32__)
+        clock_gettime(CLOCK_REALTIME, &message->timeSpec);
+#else
         timespec_get(&message->timeSpec, TIME_UTC);
+#endif
         message->threadId = trd::gettid();
         message->something = std::move(impl->something);
 
