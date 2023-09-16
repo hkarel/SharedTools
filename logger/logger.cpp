@@ -344,10 +344,10 @@ void prefixFormatter3(Message& message)
 // файла, номер строки, имя модуля
 void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Message::prefix1)])
 {
-    if (lastTime != message.timeVal.tv_sec)
+    if (lastTime != message.timeSpec.tv_sec)
     {
         std::tm tm;
-        lastTime = message.timeVal.tv_sec;
+        lastTime = message.timeSpec.tv_sec;
 
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
         localtime_s(&tm, &lastTime);
@@ -371,7 +371,7 @@ void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Messa
 void prefixFormatter2(Message& message)
 {
     char buff[sizeof(Message::prefix2)]; // = {0};
-    long tv_usec = long(message.timeVal.tv_usec);
+    long tv_usec = long(message.timeSpec.tv_nsec / 1000);
 
     snprintf(buff, sizeof(buff), ".%06ld", tv_usec);
     memcpy(message.prefix2, buff, sizeof(buff));
