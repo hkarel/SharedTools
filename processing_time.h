@@ -49,6 +49,7 @@
 
 #pragma once
 
+#include "shared/utils.h"
 #include "shared/steady_timer.h"
 #include "shared/logger/logger.h"
 #include <vector>
