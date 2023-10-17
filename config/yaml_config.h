@@ -46,6 +46,7 @@
 #include "qt/quuidex.h"
 #include <QList>
 #include <QPair>
+#include <QPoint>
 #include <QSize>
 #include <QString>
 #include <QVector>
@@ -262,6 +263,9 @@ private:
                           QPair<T1, T2>& value, bool logWarn) const;
 
     bool getValueInternal(const YAML::Node& node, const string& name,
+                          QPoint& value, bool logWarn) const;
+
+    bool getValueInternal(const YAML::Node& node, const string& name,
                           QSize& value, bool logWarn) const;
 #endif
 
@@ -310,6 +314,9 @@ private:
     template<typename T1, typename T2>
     bool setValueInternal(YAML::Node& node, const string& name,
                           const QPair<T1, T2>& value);
+
+    bool setValueInternal(YAML::Node& node, const string& name,
+                          const QPoint& value);
 
     bool setValueInternal(YAML::Node& node, const string& name,
                           const QSize& value);

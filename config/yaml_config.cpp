@@ -433,6 +433,22 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
 }
 
 bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              QPoint& value, bool logWarn) const
+{
+    Config::Func func = [&value](Config* c, YAML::Node& n, bool logWarn)
+    {
+        int x, y;
+        bool r1 = c->getValue(n, "x", x,  logWarn);
+        bool r2 = c->getValue(n, "y", y, logWarn);
+        if (r1 && r2)
+            value = {x, y};
+
+        return r1 && r2;
+    };
+    return getValueInternal(node, name, func, logWarn);
+}
+
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
                               QSize& value, bool logWarn) const
 {
     Config::Func func = [&value](Config* c, YAML::Node& n, bool logWarn)
@@ -458,6 +474,19 @@ bool Config::setValueInternal(YAML::Node& node, const string& name, Func func)
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return res;
+}
+
+bool Config::setValueInternal(YAML::Node& node, const string& name,
+                              const QPoint& value)
+{
+    Config::Func func = [&value] (Config* c, YAML::Node& n, bool /*logWarn*/)
+    {
+        n.SetStyle(YAML::EmitterStyle::Flow);
+        bool r1 = c->setValue(n, "x", value.x());
+        bool r2 = c->setValue(n, "y", value.y());
+        return r1 && r2;
+    };
+    return setValueInternal(node, name, func);
 }
 
 bool Config::setValueInternal(YAML::Node& node, const string& name,
