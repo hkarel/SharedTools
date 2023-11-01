@@ -91,7 +91,8 @@ Config::Locker::~Locker()
 
 bool Config::readFile(const string& filePath)
 {
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this}; (void) locker;
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath = filePath;
@@ -115,7 +116,8 @@ bool Config::readFile(const string& filePath)
 
 bool Config::readString(const string& str)
 {
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this}; (void) locker;
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath.clear();
@@ -173,7 +175,8 @@ bool Config::saveFile(const string& filePath, YAML::EmitterStyle::value nodeStyl
         return false;
     }
 
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this}; (void) locker;
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     if (!filePath.empty())
@@ -247,7 +250,8 @@ bool Config::saveString(const string& str, YAML::EmitterStyle::value nodeStyle)
         return false;
     }
 
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this}; (void) locker;
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     ostringstream stream {str, ios_base::out};
@@ -264,7 +268,7 @@ string Config::filePath() const
 
 bool Config::remove(const string& name, bool /*logWarn*/)
 {
-    Locker locker {this->locker()}; (void) locker;
+    Locker locker {this}; (void) locker;
     //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
@@ -377,7 +381,7 @@ YAML::EmitterStyle::value Config::nodeStyle(const std::string& name) const
 YAML::EmitterStyle::value Config::nodeStyle(const YAML::Node& baseNode,
                                             const std::string& name) const
 {
-    Locker locker {this->locker()}; (void) locker;
+    Locker locker {this}; (void) locker;
     //std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, true);
@@ -406,7 +410,7 @@ void Config::setNodeStyle(YAML::Node& baseNode, const std::string& name,
         return;
     }
 
-    Locker locker {this->locker()}; (void) locker;
+    Locker locker {this}; (void) locker;
     //std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     // Исходим из того, что стиль устанавливается для уже существующей ноды,

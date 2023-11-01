@@ -445,7 +445,7 @@ template<typename T>
 bool Config::getValue(const YAML::Node& baseNode, const string& name, T& value,
                       bool logWarn) const
 {
-    Locker locker {this->locker()}; (void) locker;
+    Locker locker {this}; (void) locker;
     //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, logWarn);
@@ -562,7 +562,8 @@ bool Config::setValue(YAML::Node& baseNode, const string& name, const T& value)
 {
     YAML_CONFIG_CHECK_READONLY
 
-    lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+    Locker locker {this}; (void) locker;
+    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
     return setValueProxy(const_cast<Config*>(this), node, name, value);
