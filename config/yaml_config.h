@@ -634,6 +634,28 @@ bool Config::setValueInternal(YAML::Node& node, const string& name,
 }
 #endif
 
+// Вспомогательная функция, используется для последовательного чтения параметров
+// из узлов node, baseNode.
+template<typename T>
+bool getValue(Config* config, const YAML::Node& node, const YAML::Node& baseNode,
+              const string& name, T& value)
+{
+    // Читаем параметр из основного узла
+    if (config->getValue(node, name, value, false))
+        return true;
+
+    // Если параметра нет в основном узле, пробуем прочитать базовый узел
+    if (config->getValue(baseNode, name, value, false))
+        return true;
+
+    // Если параметр не найден, то вновь читаем основной узел чтобы вывести
+    // сообщение в лог
+    T dummy; (void) dummy;
+    config->getValue(node, name, dummy, true /*пишем в лог*/);
+
+    return false;
+}
+
 } // namespace yaml
 
 typedef yaml::Config YamlConfig;
