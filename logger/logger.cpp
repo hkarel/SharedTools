@@ -934,8 +934,8 @@ void SaverFile::flushImpl(const MessageList& messages)
         }
         if ((maxLineSize() > 0) && (maxLineSize() < int(pstr->size())))
         {
-            strncpy(&lineBuff[0], pstr->c_str(), maxLineSize());
-            fputs(&lineBuff[0], f);
+            strncpy(lineBuff.data(), pstr->c_str(), maxLineSize());
+            fputs(lineBuff.data(), f);
         }
         else
             fputs(pstr->c_str(), f);
