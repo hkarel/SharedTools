@@ -539,7 +539,7 @@ public:
 
   /// @brief Доступ к элементу списка по индексу.
   ///
-  /// @return Возвращает ссылку на элемент, аналогичен функции itemRef()
+  /// @return Возвращает ссылку на элемент, аналогично функции itemRef()
   T&       operator[] (int index) {return *item(index);}
   const T& operator[] (int index) const {return *item(index);}
 
