@@ -27,6 +27,8 @@
 
 #include <QMetaType>
 #include <QUuid>
+#include <QPair>
+#include <QString>
 
 /**
   Класс QUuidT полностью повторяет функционал QUuid, за исключением  переопреде-
@@ -63,6 +65,11 @@ public:
     {}
     explicit QUuidT(const QByteArray& uuidStr) noexcept : QUuid(uuidStr)
     {}
+    explicit QUuidT(quint64 ui1, quint64 ui2) noexcept
+    {
+        ((quint64*) this)[0] = ui1;
+        ((quint64*) this)[1] = ui2;
+    }
     QUuidT& operator= (const QUuid &u) noexcept
     {
         QUuid::operator= (u);
@@ -92,6 +99,15 @@ public:
     }
 
 #undef COMPARE
+
+#if defined(__SIZEOF_INT128__)
+    bool isNull() const noexcept {return (*((__uint128_t*) this) == 0);}
+#elif defined(__x86_64__)
+    bool isNull() const noexcept
+    {
+        return (((quint64*) this)[0] == 0) && (((quint64*) this)[1] == 0);
+    }
+#endif
 
     // equal
     template<typename UuidT1, typename UuidT2>
@@ -186,6 +202,20 @@ template<int N>
 inline QString toString(const QUuidT<N>& u)
 {
     return toString(static_cast<const QUuid&>(u));
+}
+
+/**
+  Сервисные функции, возвращают пару значений UInt64
+*/
+inline QPair<quint64, quint64> toUIntUInt64(const QUuid& u)
+{
+    return {((quint64*) &u)[0], ((quint64*) &u)[1]};
+}
+
+template<int N>
+inline QPair<quint64, quint64> toUIntUInt64(const QUuidT<N>& u)
+{
+    return toUIntUInt64(static_cast<const QUuid&>(u));
 }
 
 typedef QUuidT<0> QUuidEx;
