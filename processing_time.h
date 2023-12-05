@@ -57,11 +57,14 @@
 
 #define DECL_PROCESSING_TIME_BEGIN(COUNT) \
     struct { \
+        bool enabled = {true}; \
         size_t index = {0}; \
         const size_t count = {COUNT}; \
         steady_timer timer; \
         struct time_array : std::vector<int64_t> \
-            {time_array(size_t num) {reserve(num);}};
+        { \
+            time_array(size_t num) {reserve(num);} \
+        };
 
 #define DECL_PROCESSING_TIME_LABEL(LABEL) \
         time_array test##LABEL {count};
@@ -69,18 +72,21 @@
 #define DECL_PROCESSING_TIME_END \
     } __processing_time__;
 
+#define ENABLED_PROCESSING_TIME(VAL) \
+    __processing_time__.enabled = VAL;
+
 #define RESET_PROCESSING_TIME \
-    if (alog::logger().level() == alog::Level::Debug2) { \
+    if (__processing_time__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         __processing_time__.timer.reset(); \
     }
 
 #define TRACE_PROCESSING_TIME(LABEL) \
-    if (alog::logger().level() == alog::Level::Debug2) { \
+    if (__processing_time__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         __processing_time__.test##LABEL.push_back(__processing_time__.timer.elapsed<chrono::microseconds>()); \
     }
 
 #define PRINT_PROCESSING_TIME(LABEL) \
-    if (alog::logger().level() == alog::Level::Debug2) { \
+    if (__processing_time__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         if (__processing_time__.index == (__processing_time__.count - 1)) { \
             log_debug2_m << "Processing time (average) "#LABEL << ": " \
                          << alog::round(utl::average(__processing_time__.test##LABEL), 3) << " us"; \
@@ -91,7 +97,7 @@
   LOG_PROCESSING_TIME объединяет два макроса: TRACE_PROCESSING_TIME и PRINT_PROCESSING_TIME
 */
 #define LOG_PROCESSING_TIME(LABEL) \
-    if (alog::logger().level() == alog::Level::Debug2) { \
+    if (__processing_time__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         /* TRACE_PROCESSING_TIME */ \
         __processing_time__.test##LABEL.push_back(__processing_time__.timer.elapsed<chrono::microseconds>()); \
         /* PRINT_PROCESSING_TIME */ \
@@ -102,7 +108,7 @@
     }}
 
 #define INDEXUP_PROCESSING_TIME \
-    if (alog::logger().level() == alog::Level::Debug2) { \
+    if (__processing_time__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         if (++__processing_time__.index == __processing_time__.count) \
             __processing_time__.index = 0; \
     }
