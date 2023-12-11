@@ -744,7 +744,7 @@ Line& operator<< (Line&, char*);
 Line& operator<< (Line&, const char*);
 Line& operator<< (Line&, const string&);
 Line& operator<< (Line&, const string*);
-Line& operator<< (Line&, const timeval&);
+Line& operator<< (Line&, const timespec&);
 
 namespace detail {
 

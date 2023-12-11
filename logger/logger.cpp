@@ -1366,13 +1366,16 @@ Line& operator<< (Line& line, const string* s)
     return line;
 }
 
-Line& operator<< (Line& line, const timeval& tv)
+Line& operator<< (Line& line, const timespec& ts)
 {
     if (line.toLogger())
     {
+        // Отладить
+        break_point
+
 #if __cplusplus >= 201703L && !defined(LOGGER_USE_SNPRINTF)
         // tv_sec
-        detail::stream_operator(line, tv.tv_sec);
+        detail::stream_operator(line, ts.tv_sec);
 
         // tv_usec
         // При размере буфера в 8 символов функция usecToString() может вернуть
@@ -1380,11 +1383,12 @@ Line& operator<< (Line& line, const timeval& tv)
         // чем 6 знаков. Чтобы этого  избежать  размер  буфера  увеличен  до 16
         // символов
         char buff[16];
-        usecToString<sizeof(buff)>(tv.tv_usec, buff);
+        long tv_usec = long(ts.tv_nsec / 1000);
+        usecToString<sizeof(buff)>(tv_usec, buff);
         line.impl->buff += buff;
 #else
         char buff[8];
-        long tv_usec = long(tv.tv_usec);
+        long tv_usec = long(ts.tv_nsec / 1000);
         snprintf(buff, sizeof(buff), ".%06ld", tv_usec);
         line.impl->buff += to_string(tv.tv_sec);
         line.impl->buff += buff;
