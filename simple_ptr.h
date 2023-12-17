@@ -41,9 +41,9 @@ template<
 class simple_ptr
 {
 public:
-    typedef T  element_t;
-    typedef Allocator<T>  allocator_t;
-    typedef simple_ptr<T, Allocator>  self_t;
+    typedef T element_t;
+    typedef Allocator<T> allocator_t;
+    typedef simple_ptr<T, Allocator> self_t;
 
 public:
     simple_ptr() noexcept {}
