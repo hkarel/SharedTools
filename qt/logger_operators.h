@@ -63,19 +63,22 @@ namespace detail {
 template<typename Array>
 Line& printArray(Line& line, const Array& array)
 {
-    line << '[';
-    bool first = true;
-    for (auto it = array.begin(); it != array.end(); ++it)
+    if (line.toLogger())
     {
-        const char* comma = ", ";
-        if (first)
+        line << '[';
+        bool first = true;
+        for (auto it = array.begin(); it != array.end(); ++it)
         {
-            first = false;
-            comma = nullptr;
+            const char* comma = ", ";
+            if (first)
+            {
+                first = false;
+                comma = nullptr;
+            }
+            line << comma << *it;
         }
-        line << comma << *it;
+        line << ']';
     }
-    line << ']';
     return line;
 }
 
