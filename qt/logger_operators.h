@@ -81,6 +81,14 @@ Line& printArray(Line& line, const Array& array)
 
 } // namespace detail
 
+template<typename T, typename U>
+Line& operator<< (Line& line, const QPair<T, U>& p)
+{
+    if (line.toLogger())
+        line << '{' << p.first << ", " << p.second << '}';
+    return line;
+}
+
 #if QT_VERSION < 0x060000
 template<typename T>
 Line& operator<< (Line& line, const QVector<T>& v)
