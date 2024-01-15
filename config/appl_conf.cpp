@@ -285,6 +285,7 @@ void Observer::timeout()
     QStringList files;
     { //Block for QMutexLocker
         QMutexLocker locker {&_filesLock}; (void) locker;
+
         for (auto& p : _files)
         {
             if (::access(p.second.toUtf8().constData(), F_OK) == -1)
