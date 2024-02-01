@@ -205,17 +205,17 @@ inline QString toString(const QUuidT<N>& u)
 }
 
 /**
-  Сервисные функции, возвращают пару значений UInt64
+  Сервисные функции, возвращают пару значений uint64
 */
-inline QPair<quint64, quint64> toUIntUInt64(const QUuid& u)
+inline QPair<quint64, quint64> uint64pair(const QUuid& u)
 {
     return {((quint64*) &u)[0], ((quint64*) &u)[1]};
 }
 
 template<int N>
-inline QPair<quint64, quint64> toUIntUInt64(const QUuidT<N>& u)
+inline QPair<quint64, quint64> uint64pair(const QUuidT<N>& u)
 {
-    return toUIntUInt64(static_cast<const QUuid&>(u));
+    return uint64pair(static_cast<const QUuid&>(u));
 }
 
 typedef QUuidT<0> QUuidEx;
