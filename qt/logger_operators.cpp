@@ -49,6 +49,11 @@ Line& operator<< (Line& line, const QByteArray& b)
     return line;
 }
 
+Line& operator<< (Line& line, const QChar& c)
+{
+    return operator<< (line, QString(c));
+}
+
 Line& operator<< (Line& line, const QUuid& u)
 {
     if (line.toLogger())

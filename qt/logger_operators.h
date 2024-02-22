@@ -41,6 +41,7 @@ namespace alog {
 
 Line& operator<< (Line&, const QString&);
 Line& operator<< (Line&, const QByteArray&);
+Line& operator<< (Line&, const QChar&);
 Line& operator<< (Line&, const QUuid&);
 Line& operator<< (Line&, const QTime&);
 Line& operator<< (Line&, const QDate&);
