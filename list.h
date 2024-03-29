@@ -1578,9 +1578,6 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   if (this == &list)
       return;
 
-  // Отладить
-  break_point
-
   clear();
   DataType* d = d_func();
   //
