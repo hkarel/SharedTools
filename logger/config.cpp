@@ -299,15 +299,17 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
         for (string::value_type& c : file)
             if (c == '\\') c = '/';
     }
+    if (file.empty())
+        throw std::logic_error("In a saver-node a field 'file_win' can not be empty");
 #else
     if (ysaver["file"].IsDefined())
     {
         checkFiedType("file", YAML::NodeType::Scalar);
         file = ysaver["file"].as<string>();
     }
-#endif
     if (file.empty())
         throw std::logic_error("In a saver-node a field 'file' can not be empty");
+#endif
 
     if (file[0] == '~')
     {
