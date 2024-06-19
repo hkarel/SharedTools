@@ -35,6 +35,7 @@
 #include <atomic>
 #include <mutex>
 #include <exception>
+#include <map>
 #include <string>
 #include <vector>
 #include <functional>
@@ -81,6 +82,7 @@ template<typename T> using not_yaml_type = std::enable_if<!(YAML_TYPES(T)), int>
 class Config
 {
 public:
+    typedef map<string, string> Substitutes;
     typedef function<bool (Config*, YAML::Node&, bool /*logWarn*/)> Func;
 
     struct Locker
@@ -203,6 +205,14 @@ public:
     template<typename T>
     bool setValue(YAML::Node& baseNode, const string& name, const T& value);
 
+    // Функции по работе с подстановочными параметрами
+    void addSubstitute(const string& keyval /* "key=value" */);
+    void addSubstitute(const string& key, const string& value);
+    void removeSubstitute(const string& key);
+
+    Substitutes substitutes() const;
+    void setSubstitutes(const Substitutes&);
+
 private:
     DISABLE_DEFAULT_COPY(Config)
 
@@ -216,7 +226,7 @@ private:
     {
         typedef T Type;
         static  T setter(T t) {return t;}
-        static  T getter(T t) {return t;}
+        static  T getter(T t, const Config*) {return t;}
     };
 
     // Используется в функциях setValue(). Строит иерархию нод согласно
@@ -337,15 +347,18 @@ private:
         return config->setValueInternal(node, name, value);
     }
 
+    void performSubstitute(string&) const;
+
 private:
     atomic_bool _changed = {false};
     atomic_bool _readOnly = {false};
     atomic_bool _saveDisabled = {false};
     string _filePath;
     YAML::Node _root;
+    Substitutes _substitutes;
 
     mutable recursive_mutex _configLock;
-    mutable atomic_int _lockedCount = {0};
+    thread_local static map<int64_t /*config*/, int /*count*/> _lockedCount;
 
     // Вспомогательная переменная, используется для вывода в лог информации
     // по не найденной ноде
@@ -406,13 +419,31 @@ private:
             return false; \
         }
 
+template<>
+struct Config::ProxyType<string>
+{
+    typedef string Type;
+    static string setter(const string& s) {
+        return s;
+    }
+    static string getter(string s, const Config* c) {
+        c->performSubstitute(s);
+        return s;
+    }
+};
+
 #if defined(QT_CORE_LIB)
 template<>
 struct Config::ProxyType<QString>
 {
     typedef string Type;
-    static Type setter(const QString& s) {return Type(s.toUtf8().constData());}
-    static QString getter(const Type& s) {return QString::fromUtf8(s.c_str());}
+    static Type setter(const QString& s) {
+        return Type(s.toUtf8().constData());
+    }
+    static QString getter(string s, const Config* c) {
+        c->performSubstitute(s);
+        return QString::fromUtf8(s.c_str());
+    }
 };
 template<>
 struct Config::ProxyType<QUuid>
@@ -422,7 +453,7 @@ struct Config::ProxyType<QUuid>
         QByteArray ba = u.toByteArray(); ba.remove(0, 1); ba.chop(1);
         return Type(ba.constData());
     }
-    static QUuid getter(const Type& s) {
+    static QUuid getter(const string& s, const Config*) {
         return QUuid(QByteArray::fromRawData(s.c_str(), int(s.size())));
     }
 };
@@ -430,8 +461,12 @@ template<>
 struct Config::ProxyType<QUuidEx>
 {
     typedef string Type;
-    static Type setter(const QUuidEx& u) {return ProxyType<QUuid>::setter(u);}
-    static QUuidEx getter(const Type& s) {return ProxyType<QUuid>::getter(s);}
+    static Type setter(const QUuidEx& u) {
+        return ProxyType<QUuid>::setter(u);
+    }
+    static QUuidEx getter(const string& s, const Config*) {
+        return ProxyType<QUuid>::getter(s, nullptr);
+    }
 };
 #endif
 
@@ -446,7 +481,6 @@ bool Config::getValue(const YAML::Node& baseNode, const string& name, T& value,
                       bool logWarn) const
 {
     Locker locker {this}; (void) locker;
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, logWarn);
     if (!node || node.IsNull())
@@ -469,7 +503,7 @@ bool Config::getValueBase(const YAML::Node& node, const string& name, T& value,
 
     YAML_CONFIG_TRY
     // было так: value = node.as<T>();
-    value = ProxyType<T>::getter(node.as<typename ProxyType<T>::Type>());
+    value = ProxyType<T>::getter(node.as<typename ProxyType<T>::Type>(), this);
     YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     return true;
 }
@@ -501,7 +535,7 @@ bool Config::getValueVector(const YAML::Node& node, const string& name,
         typedef typename VectorT::value_type ValueType;
         // было так: v.push_back(n.as<ValueType>());
         v.push_back(ProxyType<ValueType>::getter(
-                    n.as<typename ProxyType<ValueType>::Type>()));
+                    n.as<typename ProxyType<ValueType>::Type>(), this));
         YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     }
     value.swap(v);
@@ -563,7 +597,6 @@ bool Config::setValue(YAML::Node& baseNode, const string& name, const T& value)
     YAML_CONFIG_CHECK_READONLY
 
     Locker locker {this}; (void) locker;
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeSet(baseNode, name);
     return setValueProxy(const_cast<Config*>(this), node, name, value);

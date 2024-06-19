@@ -48,6 +48,8 @@
 
 namespace yaml {
 
+thread_local map<int64_t, int> Config::_lockedCount;
+
 #define YAML_CONFIG_CATCH_FILE \
     } catch (YAML::Exception& e) { \
         alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
@@ -81,18 +83,17 @@ namespace yaml {
 Config::Locker::Locker(const Config* c) : config(c)
 {
     config->_configLock.lock();
-    ++config->_lockedCount;
+    ++config->_lockedCount[reinterpret_cast<int64_t>(config)];
 }
 Config::Locker::~Locker()
 {
     config->_configLock.unlock();
-    --config->_lockedCount;
+    --config->_lockedCount[reinterpret_cast<int64_t>(config)];
 }
 
 bool Config::readFile(const string& filePath)
 {
     Locker locker {this}; (void) locker;
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath = filePath;
@@ -117,7 +118,6 @@ bool Config::readFile(const string& filePath)
 bool Config::readString(const string& str)
 {
     Locker locker {this}; (void) locker;
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath.clear();
@@ -176,7 +176,6 @@ bool Config::saveFile(const string& filePath, YAML::EmitterStyle::value nodeStyl
     }
 
     Locker locker {this}; (void) locker;
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     if (!filePath.empty())
@@ -251,7 +250,6 @@ bool Config::saveString(const string& str, YAML::EmitterStyle::value nodeStyle)
     }
 
     Locker locker {this}; (void) locker;
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
     ostringstream stream {str, ios_base::out};
@@ -269,7 +267,6 @@ string Config::filePath() const
 bool Config::remove(const string& name, bool /*logWarn*/)
 {
     Locker locker {this}; (void) locker;
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML_CONFIG_TRY
      size_t pos = name.find_last_of('.');
@@ -304,12 +301,11 @@ YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
     if (parts.empty())
         return YAML::Node();
 
-    if (_lockedCount == 0)
+    if (_lockedCount[reinterpret_cast<int64_t>(this)] == 0)
     {
         log_error_m << "Yaml config not locked. Use function Config::locker()";
         prog_abort();
     }
-    //lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
 
     typedef function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
     NodeFunc get_node = [&](const YAML::Node& node, size_t i)
@@ -422,6 +418,70 @@ void Config::setNodeStyle(YAML::Node& baseNode, const std::string& name,
     YAML_CONFIG_TRY
     node.SetStyle(style);
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN((void)0))
+}
+
+void Config::addSubstitute(const string& keyval)
+{
+    Locker locker {this}; (void) locker;
+
+    vector<string> kv = utl::split(keyval, '=');
+    if (kv.size() != 2)
+    {
+        log_error_m << log_format("Incorrect substitute pair (key/value) : %?", keyval);
+        return;
+    }
+
+    _substitutes[kv[0]] = kv[1];
+    log_verbose_m << log_format("Substitute added (key/value) : %?/%?", kv[0], kv[1]);
+}
+
+void Config::addSubstitute(const string& key, const string& value)
+{
+    Locker locker {this}; (void) locker;
+
+    _substitutes[key] = value;
+    log_verbose_m << log_format("Substitute added (key/value) : %?/%?", key, value);
+}
+
+void Config::removeSubstitute(const string& key)
+{
+    Locker locker {this}; (void) locker;
+
+    _substitutes.erase(key);
+    log_verbose_m << log_format("Substitute removed (key) : %?", key);
+}
+
+Config::Substitutes Config::substitutes() const
+{
+    Locker locker {this}; (void) locker;
+    return _substitutes;
+}
+
+void Config::setSubstitutes(const Substitutes& val)
+{
+    Locker locker {this}; (void) locker;
+    _substitutes = val;
+}
+
+void Config::performSubstitute(string& str) const
+{
+    for (auto it : _substitutes)
+    {
+        string key = '%' + it.first + '%';
+        const string& value = it.second;
+
+        size_t pos = 0;
+        while ((pos = str.find(key, pos)) != std::string::npos)
+        {
+            string before = str;
+            str.replace(pos, key.length(), value);
+            pos += value.length();
+
+            log_debug_m << log_format(
+                "Substitution performed (key/value) : %?/%?. Before: %?. After: %?",
+                it.first, value, before, str);
+        }
+    }
 }
 
 bool Config::getValueInternal(const YAML::Node& node, const string& name,
