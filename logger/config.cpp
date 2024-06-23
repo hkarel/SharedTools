@@ -25,6 +25,7 @@
 *****************************************************************************/
 
 #include "logger/config.h"
+#include "logger/format.h"
 #include <stdexcept>
 
 #define log_error_m   alog::logger().error   (alog_line_location, "LogConfig")
@@ -240,7 +241,8 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     return filter;
 }
 
-SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
+SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters,
+                     const Substitutes& substitutes)
 {
     auto checkFiedType = [&ysaver](const string& field, YAML::NodeType::value type)
     {
@@ -321,6 +323,25 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters)
         file.replace(0, 1, home);
         for (string::value_type& c : file)
             if (c == '\\') c = '/';
+    }
+
+    // Выполняем подстановку в поле 'file'
+    for (auto it : substitutes)
+    {
+        string key = '%' + it.first + '%';
+        const string& value = it.second;
+
+        size_t pos = 0;
+        while ((pos = file.find(key, pos)) != std::string::npos)
+        {
+            string before = file;
+            file.replace(pos, key.length(), value);
+            pos += value.length();
+
+            log_debug_m << log_format(
+                "Substitution performed (key=value) : %?=%?. Before: %?. After: %?",
+                it.first, value, before, file);
+        }
     }
 
     bool isContinue = true;
@@ -409,7 +430,7 @@ bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
     return result;
 }
 
-bool loadSavers(const string& confFile, SaverList& savers)
+bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& substitutes)
 {
     bool result = false;
     try
@@ -432,7 +453,7 @@ bool loadSavers(const string& confFile, SaverList& savers)
             throw std::logic_error("Savers node must have sequence type");
 
         for (const YAML::Node& ysaver : ysavers)
-            if (SaverPtr s = createSaver(ysaver, filters))
+            if (SaverPtr s = createSaver(ysaver, filters, substitutes))
                 savers.add(s.detach());
 
         result = true;
@@ -455,10 +476,10 @@ bool loadSavers(const string& confFile, SaverList& savers)
     return result;
 }
 
-bool loadSavers(const string& confFile)
+bool loadSavers(const string& confFile, const Substitutes& substitutes)
 {
     SaverList savers;
-    if (alog::loadSavers(confFile, savers))
+    if (alog::loadSavers(confFile, savers, substitutes))
     {
         for (Saver* saver : savers)
             logger().addSaver(SaverPtr(saver));

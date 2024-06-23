@@ -159,13 +159,15 @@ savers:
 ...
 */
 
+typedef map<string, string> Substitutes;
+
 // Получает список фильтров из указанной yaml-ноды
 bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
                  const string& confFile);
 
 // Загрузка сэйверов из отдельного файла конфигурации
-bool loadSavers(const string& confFile, SaverList& savers);
-bool loadSavers(const string& confFile);
+bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& = {});
+bool loadSavers(const string& confFile, const Substitutes& = {});
 
 // Выводит в лог информацию об используемых фильтрах и сэйверах
 void printSaversInfo();

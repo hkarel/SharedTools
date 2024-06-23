@@ -176,7 +176,13 @@ void configExtendedSavers()
     {
         config::dirExpansion(logConf);
         if (::access(logConf.c_str(), F_OK) != -1)
-            loadSavers(logConf);
+        {
+            alog::Substitutes substitutes;
+            for (const auto& sbt : config::base().substitutes())
+                substitutes.emplace(sbt);
+
+            loadSavers(logConf, substitutes);
+        }
         else
             log_error_m << "Logger config file not exists: " << logConf;
     }

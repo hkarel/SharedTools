@@ -427,12 +427,12 @@ void Config::addSubstitute(const string& keyval)
     vector<string> kv = utl::split(keyval, '=');
     if (kv.size() != 2)
     {
-        log_error_m << log_format("Incorrect substitute pair (key/value) : %?", keyval);
+        log_error_m << log_format("Incorrect substitute pair (key=value) : %?", keyval);
         return;
     }
 
     _substitutes[kv[0]] = kv[1];
-    log_verbose_m << log_format("Substitute added (key/value) : %?/%?", kv[0], kv[1]);
+    log_verbose_m << log_format("Substitute added (key=value) : %?=%?", kv[0], kv[1]);
 }
 
 void Config::addSubstitute(const string& key, const string& value)
@@ -440,7 +440,7 @@ void Config::addSubstitute(const string& key, const string& value)
     Locker locker {this}; (void) locker;
 
     _substitutes[key] = value;
-    log_verbose_m << log_format("Substitute added (key/value) : %?/%?", key, value);
+    log_verbose_m << log_format("Substitute added (key=value) : %?=%?", key, value);
 }
 
 void Config::removeSubstitute(const string& key)
@@ -478,7 +478,7 @@ void Config::performSubstitute(string& str) const
             pos += value.length();
 
             log_debug_m << log_format(
-                "Substitution performed (key/value) : %?/%?. Before: %?. After: %?",
+                "Substitution performed (key=value) : %?=%?. Before: %?. After: %?",
                 it.first, value, before, str);
         }
     }
