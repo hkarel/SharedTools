@@ -59,7 +59,7 @@
     struct { \
         bool enabled = {true}; \
         size_t index = {0}; \
-        const size_t count = {COUNT}; \
+        size_t count = {COUNT}; \
         steady_timer timer; \
         struct time_array : std::vector<int64_t> \
         { \
