@@ -154,12 +154,13 @@ constexpr const char* ERR_NOCREATE_OBJ =
 
 /**
   @brief Класс BreakCompare. Используется в функциях/стратегиях сравнения
-  элементов для прерырания процессов сортировки или поиска
+         элементов для прерырания процессов сортировки или поиска
 */
 struct BreakCompare {};
 
 /**
   @brief Класс FindResult - результат функций поиска.
+
   Для отсортированного списка:
     - если элемент найден, то success() == true,  а index() вернет позицию эле-
       мента в списке;
@@ -167,7 +168,8 @@ struct BreakCompare {};
       в которую можно вставить ненайденный элемент, и список при этом останется
       отсортированным.
       Для  вставки  элемента в отсортированный список используется функция
-      List::addInSort().
+      List::addInSort()
+
   Для неотсортированного списка:
     - если элемент найден, то  success() == true, а функция index() вернет
       позицию элемента в списке;
@@ -246,7 +248,7 @@ struct SortExtParams
   /// сортировку по указанному диапазону. При назначении диапазона соблюдаются
   /// следующие требования:
   /// 1) 0 <= loSortBorder < count(), в противном случае loSortBorder
-  ///    выставляется в 0.
+  ///    выставляется в 0;
   /// 2) loSortBorder < hiSortBorder <= count(), в противном случае
   ///    hiSortBorder выставляется в count (количество элементов в списке).
   /// Значения по умолчанию {0, -1} предполагают сортировку по всему диапазону
@@ -344,29 +346,30 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
 /**
   @brief Макрос  используется  в  классе-стратегии  сортировки и поиска в тех
          случаях,  когда сортировка или поиск выполняются по нескольким полям.
-         Ниже приведен пример  использования.  Здесь  сортировка  выполняется
-         по трем полям с убывающим приоритетом сравнения от field1 к field3.
-         struct Compare
-         {
-           int operator() (const Type* item1, const Type* item2) const
-           {
-             LIST_COMPARE_MULTI_ITEM( item1->field1, item2->field1)
-             LIST_COMPARE_MULTI_ITEM( item1->field2, item2->field2)
-             return LIST_COMPARE_ITEM(item1->field3, item2->field3);
-           }
-         };
 
-         Альтернативный вариант записи
-         struct Compare
-         {
-           int operator() (const Type* item1, const Type* item2) const
-           {
-             LIST_COMPARE_MULTI_ITEM(item1->field1, item2->field1)
-             LIST_COMPARE_MULTI_ITEM(item1->field2, item2->field2)
-             LIST_COMPARE_MULTI_ITEM(item1->field3, item2->field3)
-             return 0;
-           }
-         };
+  Ниже приведен пример  использования.  Здесь  сортировка  выполняется по трем
+  полям с убывающим приоритетом сравнения от field1 к field3.
+  struct Compare
+  {
+    int operator() (const Type* item1, const Type* item2) const
+    {
+      LIST_COMPARE_MULTI_ITEM( item1->field1, item2->field1)
+      LIST_COMPARE_MULTI_ITEM( item1->field2, item2->field2)
+      return LIST_COMPARE_ITEM(item1->field3, item2->field3);
+    }
+  };
+
+  Альтернативный вариант записи
+  struct Compare
+  {
+    int operator() (const Type* item1, const Type* item2) const
+    {
+      LIST_COMPARE_MULTI_ITEM(item1->field1, item2->field1)
+      LIST_COMPARE_MULTI_ITEM(item1->field2, item2->field2)
+      LIST_COMPARE_MULTI_ITEM(item1->field3, item2->field3)
+      return 0;
+    }
+  };
 */
 #define LIST_COMPARE_MULTI_ITEM(ITEM1, ITEM2) \
   if (ITEM1 != ITEM2) return (ITEM1 < ITEM2) ? -1 : 1;
@@ -390,8 +393,8 @@ template<typename T> struct CompareItem
 };
 
 /**
-  @brief Фиктивный класс-стратегия используется в тех случаях,  когда  нужно
-  явно указать, что никакие стратегии сортировки использовать не планируется
+  @brief Фиктивный класс-стратегия используется в тех случаях, когда нужно явно
+         указать, что никакие стратегии сортировки использовать не планируется
 */
 struct CompareItemDummy {};
 
@@ -403,14 +406,14 @@ template<typename T> struct AllocItem
   /// @brief Функция создания объектов.
   ///
   /// Примечания:
-  /// 1. Должно быть  две  функции  create().  Если  использовать  только  одну
+  /// 1) Должно быть  две  функции  create().  Если  использовать  только  одну
   ///    функцию вида:
   ///      T* create(const T* x = 0) {return (x) ? new T(*x) : new T();}
   ///    то  компилятор  будет  требовать   обязательное  наличие  конструктора
-  ///    копирования у инстанциируемого класса.
-  /// 2. Функции  create()/destroy()  не  могут  быть  статическими,  так  как
-  ///    аллокатор может иметь состояния.
-  /// 3. Функции create()/destroy() должны быть  неконстантными,  так  как  их
+  ///    копирования у инстанциируемого класса;
+  /// 2) Функции  create()/destroy()  не  могут  быть  статическими,  так  как
+  ///    аллокатор может иметь состояния;
+  /// 3) Функции create()/destroy() должны быть  неконстантными,  так  как  их
   ///    вызов в конкретных реализациях может приводить к изменению  состояния
   ///    экземпляра распределителя памяти
   T* create() {return new T();}
@@ -550,20 +553,22 @@ public:
   const T& at(int index) const {return *item(index);}
 
   /// @brief Возвращает указатель на адрес первого элемента в линейном массиве
-  /// указателей на элементы
+  ///        указателей на элементы
   T** listBegin() const {return d_func()->list;}
 
   /// @brief Возвращает указатель на адрес идущий за последним элементом
-  /// в линейном массиве указателей на элементы
+  ///        в линейном массиве указателей на элементы
   T** listEnd() const {return (d_func()->list + d_func()->count);}
 
   /// @brief Возвращает указатель на адрес первого элемента в линейном массиве
-  /// указателей на элементы.
+  ///        указателей на элементы.
+  ///
   /// Используется в конструкции вида: for (T* t : List)
   T** begin() const {return listBegin();}
 
   /// @brief Возвращает указатель на адрес идущий за последним элементом
-  /// в линейном массиве указателей на элементы.
+  ///        в линейном массиве указателей на элементы.
+  ///
   /// Используется в конструкции вида: for (T* t : List)
   T** end() const {return listEnd();}
 
@@ -596,18 +601,18 @@ public:
   const Allocator& allocator() const {return d_func()->allocator;}
 
   /// @brief Возвращает количество элементов в списке. Функция обеспечивает
-  /// совместимость с STL
+  ///        совместимость с STL
   int size() const {return count();}
 
   /// @brief Возвращает true если список пуст
   bool empty() const {return (count() == 0);}
 
-  /// @brief Возвращает первый элемент в списке.
-  /// Если список пустой, то возвращает нуль
+  /// @brief Возвращает первый элемент в списке. Если список пустой,
+  ///        то возвращает нуль
   T* first() const {return (d_func()->count) ? d->list[0] : nullptr;}
 
-  /// @brief Возвращает последний элемент в списке.
-  /// Если список пустой, то возвращает нуль
+  /// @brief Возвращает последний элемент в списке. Если список пустой,
+  ///        то возвращает нуль
   T* last() const {return (d_func()->count) ? d->list[d->count - 1] : nullptr;}
 
   template<typename IteratorT> class Range
@@ -721,6 +726,7 @@ public:
   T* add(T* item);
 
   /// @brief Добавляет копию элемента T в конец списка.
+  ///
   /// @return Возвращает указатель на добавленный элемент
   T* addCopy(const T& item);
 
@@ -810,7 +816,7 @@ public:
   int releaseItem(T* item, CompressList compressList = CompressList::Yes);
 
   /// @brief Удаляет последний элемент из списка при этом разрушения элемента
-  /// не происходит.
+  ///        не происходит.
   ///
   /// Типичное использование этого оператора в конструкциях вида:
   /// while (T* t = list.releaseLast()) {
@@ -906,8 +912,7 @@ public:
   void sort(CompareU& compare, SortMode sortMode = SortMode::Up,
             const SortExtParams& extParams = SortExtParams());
 
-  /// @brief Функция сортировки, используется стратегия сортировки по умолчанию.
-  ///
+  /// @brief Функция сортировки (используется стратегия сортировки по умолчанию)
   void sort(SortMode sortMode = SortMode::Up,
             const SortExtParams& extParams = SortExtParams());
 
@@ -1024,7 +1029,6 @@ DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, CompareU)::find(const U* item,
   };
   return findL(l, extParams);
 }
-
 
 DECL_IMPL_CUSTLIST_SUBTMPL2(T*, U, CompareU)::findItem(const U* item,
                                                        const CompareU& compare,
