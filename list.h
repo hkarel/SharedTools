@@ -1025,7 +1025,6 @@ DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, CompareU)::find(const U* item,
   return findL(l, extParams);
 }
 
-
 DECL_IMPL_CUSTLIST_SUBTMPL2(T*, U, CompareU)::findItem(const U* item,
                                                        const CompareU& compare,
                                                        const FindExtParams& extParams) const
