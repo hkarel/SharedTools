@@ -706,18 +706,12 @@ public:
 
   explicit List(Container container);
 
-  List(CustomListType&&);
   List(SelfListType&&);
-
-  List(const CustomListType&) = delete;
   List(const SelfListType&) = delete;
 
   ~List();
 
-  SelfListType& operator= (CustomListType&&);
   SelfListType& operator= (SelfListType&&);
-
-  SelfListType& operator= (const CustomListType&) = delete;
   SelfListType& operator= (const SelfListType&) = delete;
 
   /// @brief Добавляет новый элемент T в конец списка.
@@ -1235,12 +1229,6 @@ DECL_IMPL_LIST_CONSTR::List(const Allocator& allocator, Container container)
   setAllocator(allocator);
 }
 
-DECL_IMPL_LIST_CONSTR::List(CustomListType&& list)
-{
-  CustomListType::d = list.d;
-  list.d = nullptr;
-}
-
 DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
 {
   CustomListType::d = list.d;
@@ -1251,15 +1239,6 @@ DECL_IMPL_LIST_DESTR::~List()
 {
   clear();
   deinit();
-}
-
-DECL_IMPL_LIST_OPERATOR::operator= (CustomListType&& list)
-{
-  clear();
-  deinit();
-  CustomListType::d = list.d;
-  list.d = nullptr;
-  return *this;
 }
 
 DECL_IMPL_LIST_OPERATOR::operator= (SelfListType&& list)
