@@ -701,16 +701,23 @@ public:
   typedef typename CustomListType::value_type       value_type;
 
 public:
-  explicit List(Container container = Container::Yes);
-  explicit List(const Allocator&, Container container = Container::Yes);
+  List();
+  List(const Allocator&, Container container = Container::Yes);
+
+  explicit List(Container container);
 
   List(CustomListType&&);
   List(SelfListType&&);
 
+  List(const CustomListType&) = delete;
+  List(const SelfListType&) = delete;
+
   ~List();
 
-  List(const SelfListType&) = delete;
-  SelfListType& operator= (SelfListType&&) = delete;
+  SelfListType& operator= (CustomListType&&);
+  SelfListType& operator= (SelfListType&&);
+
+  SelfListType& operator= (const CustomListType&) = delete;
   SelfListType& operator= (const SelfListType&) = delete;
 
   /// @brief Добавляет новый элемент T в конец списка.
@@ -941,6 +948,7 @@ private:
 
   /// Инициализирует основные параметры контейнера, используется в конструкторах
   void init(Container container);
+  void deinit();
 
   template<typename CompareU>
   static void qsort(T** sortList, int L, int R, CompareU& compare,
@@ -1198,6 +1206,10 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
 
 #define DECL_IMPL_LIST_DESTR  DECL_IMPL_LIST_CONSTR
 
+#define DECL_IMPL_LIST_OPERATOR \
+  template<typename T, typename Compare, typename Allocator> \
+  List<T, Compare, Allocator>& List<T, Compare, Allocator>
+
 #define DECL_IMPL_LIST(TYPE) \
   template<typename T, typename Compare, typename Allocator> \
   TYPE List<T, Compare, Allocator>
@@ -1207,6 +1219,10 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
     template<typename SUBT1> \
   TYPE List<T, Compare, Allocator>
 
+DECL_IMPL_LIST_CONSTR::List()
+{
+  init(Container::Yes);
+}
 
 DECL_IMPL_LIST_CONSTR::List(Container container)
 {
@@ -1219,14 +1235,40 @@ DECL_IMPL_LIST_CONSTR::List(const Allocator& allocator, Container container)
   setAllocator(allocator);
 }
 
+DECL_IMPL_LIST_CONSTR::List(CustomListType&& list)
+{
+  CustomListType::d = list.d;
+  list.d = nullptr;
+}
+
+DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
+{
+  CustomListType::d = list.d;
+  list.d = nullptr;
+}
+
 DECL_IMPL_LIST_DESTR::~List()
 {
-  if (DataType* d = CustomListType::d)
-  {
-    clear();
-    delete [] d->list;
-    delete d;
-  }
+  clear();
+  deinit();
+}
+
+DECL_IMPL_LIST_OPERATOR::operator= (CustomListType&& list)
+{
+  clear();
+  deinit();
+  CustomListType::d = list.d;
+  list.d = nullptr;
+  return *this;
+}
+
+DECL_IMPL_LIST_OPERATOR::operator= (SelfListType&& list)
+{
+  clear();
+  deinit();
+  CustomListType::d = list.d;
+  list.d = nullptr;
+  return *this;
 }
 
 DECL_IMPL_LIST(void)::init(Container container)
@@ -1239,16 +1281,11 @@ DECL_IMPL_LIST(void)::init(Container container)
   CustomListType::d->container = container;
 }
 
-DECL_IMPL_LIST_CONSTR::List(CustomListType&& list)
+DECL_IMPL_LIST(void)::deinit()
 {
-  CustomListType::d = list.d;
-  list.d = nullptr;
-}
-
-DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
-{
-  CustomListType::d = list.d;
-  list.d = nullptr;
+  DataType* d = d_func();
+  delete [] d->list;
+  delete d;
 }
 
 DECL_IMPL_LIST(T*)::add()
@@ -1896,6 +1933,7 @@ FindResultRange rangeFindResult(const ListT& list, const CompareT& compare,
 
 #undef DECL_IMPL_LIST_CONSTR
 #undef DECL_IMPL_LIST_DESTR
+#undef DECL_IMPL_LIST_OPERATOR
 #undef DECL_IMPL_LIST
 #undef DECL_IMPL_LIST_SUBTMPL1
 
