@@ -477,7 +477,7 @@ void Config::performSubstitute(string& str) const
             str.replace(pos, key.length(), value);
             pos += value.length();
 
-            log_debug_m << log_format(
+            log_debug2_m << log_format(
                 "Substitution performed (key=value) : %?=%?. Before: %?. After: %?",
                 it.first, value, before, str);
         }
