@@ -378,7 +378,6 @@ YAML::EmitterStyle::value Config::nodeStyle(const YAML::Node& baseNode,
                                             const std::string& name) const
 {
     Locker locker {this}; (void) locker;
-    //std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, true);
     if (!node || node.IsNull())
@@ -407,7 +406,6 @@ void Config::setNodeStyle(YAML::Node& baseNode, const std::string& name,
     }
 
     Locker locker {this}; (void) locker;
-    //std::lock_guard<std::recursive_mutex> locker {_configLock}; (void) locker;
 
     // Исходим из того, что стиль устанавливается для уже существующей ноды,
     // поэтому вызываем nodeGet()
