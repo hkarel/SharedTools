@@ -942,7 +942,6 @@ private:
 
   /// Инициализирует основные параметры контейнера, используется в конструкторах
   void init(Container container);
-  void deinit();
 
   template<typename CompareU>
   static void qsort(T** sortList, int L, int R, CompareU& compare,
@@ -1237,16 +1236,18 @@ DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
 
 DECL_IMPL_LIST_DESTR::~List()
 {
-  clear();
-  deinit();
+  if (DataType* d = CustomListType::d)
+  {
+    clear();
+    delete [] d->list;
+    delete d;
+  }
 }
 
 DECL_IMPL_LIST_OPERATOR::operator= (SelfListType&& list)
 {
-  clear();
-  deinit();
-  CustomListType::d = list.d;
-  list.d = nullptr;
+  swap(list);
+  list.clear();
   return *this;
 }
 
@@ -1258,13 +1259,6 @@ DECL_IMPL_LIST(void)::init(Container container)
   CustomListType::d->capacity = 0;
   CustomListType::d->sortState = SortState::Unknown;
   CustomListType::d->container = container;
-}
-
-DECL_IMPL_LIST(void)::deinit()
-{
-  DataType* d = d_func();
-  delete [] d->list;
-  delete d;
 }
 
 DECL_IMPL_LIST(T*)::add()
@@ -1721,9 +1715,9 @@ DECL_IMPL_LIST(void)::sort(SortMode sortMode,
 
 DECL_IMPL_LIST(void)::swap(SelfListType& list)
 {
-  DataType* p = list.d;
+  DataType* d = list.d;
   list.d = CustomListType::d;
-  CustomListType::d = p;
+  CustomListType::d = d;
 }
 
 /*
