@@ -48,7 +48,11 @@
 
 namespace yaml {
 
-thread_local map<int64_t, int> Config::_lockedCount;
+#ifdef MINGW
+map<pid_t, Config::LockedCount> Config::_lockedCount;
+#else
+thread_local Config::LockedCount Config::_lockedCount;
+#endif
 
 #define YAML_CONFIG_CATCH_FILE \
     } catch (YAML::Exception& e) { \
@@ -83,12 +87,21 @@ thread_local map<int64_t, int> Config::_lockedCount;
 Config::Locker::Locker(const Config* c) : config(c)
 {
     config->_configLock.lock();
+#ifdef MINGW
+    ++config->_lockedCount[trd::gettid()][reinterpret_cast<int64_t>(config)];
+#else
     ++config->_lockedCount[reinterpret_cast<int64_t>(config)];
+#endif
+
 }
 Config::Locker::~Locker()
 {
-    config->_configLock.unlock();
+#ifdef MINGW
+    --config->_lockedCount[trd::gettid()][reinterpret_cast<int64_t>(config)];
+#else
     --config->_lockedCount[reinterpret_cast<int64_t>(config)];
+#endif
+    config->_configLock.unlock();
 }
 
 bool Config::readFile(const string& filePath)
@@ -301,10 +314,17 @@ YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
     if (parts.empty())
         return YAML::Node();
 
-    if (_lockedCount[reinterpret_cast<int64_t>(this)] == 0)
-    {
-        log_error_m << "Yaml config not locked. Use function Config::locker()";
-        prog_abort();
+    { //Block for lock_guard
+        lock_guard<recursive_mutex> locker {_configLock}; (void) locker;
+#ifdef MINGW
+        if (_lockedCount[trd::gettid()][reinterpret_cast<int64_t>(this)] == 0)
+#else
+        if (_lockedCount[reinterpret_cast<int64_t>(this)] == 0)
+#endif
+        {
+            log_error_m << "Yaml config not locked. Use function Config::locker()";
+            prog_abort();
+        }
     }
 
     typedef function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;

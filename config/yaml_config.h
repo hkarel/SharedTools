@@ -31,6 +31,10 @@
 #include "logger/logger.h"
 #include "logger/format.h"
 
+#ifdef MINGW
+#include "thread/thread_utils.h"
+#endif
+
 #include <yaml-cpp/yaml.h>
 #include <atomic>
 #include <mutex>
@@ -358,7 +362,13 @@ private:
     Substitutes _substitutes;
 
     mutable recursive_mutex _configLock;
-    thread_local static map<int64_t /*config*/, int /*count*/> _lockedCount;
+
+    typedef map<int64_t /*config*/, int /*count*/> LockedCount;
+#ifdef MINGW
+    static map<pid_t /*thread id*/, LockedCount> _lockedCount;
+#else
+    static thread_local LockedCount _lockedCount;
+#endif
 
     // Вспомогательная переменная, используется для вывода в лог информации
     // по не найденной ноде
