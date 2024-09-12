@@ -167,17 +167,17 @@ public:
                        bool logWarn = true) const;
 
     // Возвращает стиль записи для ноды с именем name
-    YAML::EmitterStyle::value nodeStyle(const std::string& name) const;
+    YAML::EmitterStyle::value nodeStyle(const string& name) const;
 
     // Возвращает стиль записи для ноды с именем name относительно базовой ноды
     YAML::EmitterStyle::value nodeStyle(const YAML::Node& baseNode,
-                                        const std::string& name) const;
+                                        const string& name) const;
 
     // Устанавливает стиль записи для ноды с именем name
-    void setNodeStyle(const std::string& name, YAML::EmitterStyle::value);
+    void setNodeStyle(const string& name, YAML::EmitterStyle::value);
 
     // Устанавливает стиль записи для ноды с именем name относительно базовой ноды
-    void setNodeStyle(YAML::Node& baseNode, const std::string& name,
+    void setNodeStyle(YAML::Node& baseNode, const string& name,
                       YAML::EmitterStyle::value);
 
     // Используется для получения значения из ноды с именем  name. Имя может

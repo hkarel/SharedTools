@@ -369,13 +369,13 @@ YAML::Node Config::nodeSet(YAML::Node& baseNode, const string& name)
     return get_node(baseNode, 0);
 }
 
-YAML::EmitterStyle::value Config::nodeStyle(const std::string& name) const
+YAML::EmitterStyle::value Config::nodeStyle(const string& name) const
 {
     return nodeStyle(_root, name);
 }
 
 YAML::EmitterStyle::value Config::nodeStyle(const YAML::Node& baseNode,
-                                            const std::string& name) const
+                                            const string& name) const
 {
     Locker locker {this}; (void) locker;
 
@@ -390,12 +390,12 @@ YAML::EmitterStyle::value Config::nodeStyle(const YAML::Node& baseNode,
     return style;
 }
 
-void Config::setNodeStyle(const std::string& name, YAML::EmitterStyle::value style)
+void Config::setNodeStyle(const string& name, YAML::EmitterStyle::value style)
 {
     setNodeStyle(_root, name, style);
 }
 
-void Config::setNodeStyle(YAML::Node& baseNode, const std::string& name,
+void Config::setNodeStyle(YAML::Node& baseNode, const string& name,
                           YAML::EmitterStyle::value style)
 {
     if (_readOnly)
@@ -469,7 +469,7 @@ void Config::performSubstitute(string& str) const
         const string& value = it.second;
 
         size_t pos = 0;
-        while ((pos = str.find(key, pos)) != std::string::npos)
+        while ((pos = str.find(key, pos)) != string::npos)
         {
             string before = str;
             str.replace(pos, key.length(), value);
