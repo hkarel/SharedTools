@@ -1078,11 +1078,7 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
     {
       T** it = listBegin() + startFindIndex;
       T** end = listEnd();
-      // При сравнении it и end не использовать оператор !=,  т.к. потенциально
-      // может возникнуть ситуация,  когда it изначально  окажется  больше  end,
-      // т.е. если startFindIndex окажется  больше чем число элементов в списке,
-      // то условие it != end никогда не наступит
-      while (it < /*не использовать оператор != */ end)
+      while (it != end)
       {
         if (compare(*it) == 0)
           return FindResult(true, BruteForce::Yes, int(it - listBegin()));
