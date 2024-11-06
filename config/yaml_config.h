@@ -270,6 +270,10 @@ private:
 
     template<typename T>
     bool getValueInternal(const YAML::Node& node, const string& name,
+                          QSet<T>& value, bool logWarn) const;
+
+    template<typename T>
+    bool getValueInternal(const YAML::Node& node, const string& name,
                           QList<T>& value, bool logWarn) const;
 
     template<typename T1, typename T2>
@@ -320,6 +324,10 @@ private:
     bool setValueInternal(YAML::Node& node, const string& name,
                           const QVector<T>& value);
 #endif
+
+    template<typename T>
+    bool setValueInternal(YAML::Node& node, const string& name,
+                          const QSet<T>& value);
 
     template<typename T>
     bool setValueInternal(YAML::Node& node, const string& name,
@@ -572,6 +580,16 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
 
 template<typename T>
 bool Config::getValueInternal(const YAML::Node& node, const string& name,
+                              QSet<T>& value, bool logWarn) const
+{
+    QList<T> list;
+    bool res = getValueVector(node, name, list, logWarn);
+    value = list.toSet();
+    return res;
+}
+
+template<typename T>
+bool Config::getValueInternal(const YAML::Node& node, const string& name,
                               QList<T>& value, bool logWarn) const
 {
     return getValueVector(node, name, value, logWarn);
@@ -654,6 +672,13 @@ bool Config::setValueInternal(YAML::Node& node, const string& name,
     return setValueVector(node, name, value);
 }
 #endif
+
+template<typename T>
+bool Config::setValueInternal(YAML::Node& node, const string& name,
+                              const QSet<T>& value)
+{
+    return setValueVector(node, name, value.toList());
+}
 
 template<typename T>
 bool Config::setValueInternal(YAML::Node& node, const string& name,
