@@ -307,6 +307,9 @@ YAML::Node Config::node(const string& name) const
 
 YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
 {
+    if (!baseNode || baseNode.IsNull())
+        return baseNode;
+
     if (name == ".")
         return baseNode;
 
@@ -330,8 +333,8 @@ YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
     typedef function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
     NodeFunc get_node = [&](const YAML::Node& node, size_t i)
     {
-        if (!node.IsDefined() || node.IsNull())
-            return YAML::Node();
+        if (!node || node.IsNull())
+            return node;
 
         if (i == parts.size())
             return node;
@@ -357,7 +360,7 @@ YAML::Node Config::nodeGet(const YAML::Node& baseNode, const string& name,
                            bool logWarn) const
 {
     YAML::Node node = this->node(baseNode, name);
-    if (node.IsNull() && logWarn)
+    if ((!node || node.IsNull()) && logWarn)
     {
         log_warn_m << log_format("Parameter '%?' is undefined. Config file: %?",
                                  _nameNodeFunc + name, _filePath);
