@@ -1610,8 +1610,11 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   {
     try
     {
-      *dstIt = (d->container == Container::Yes)
-               ? d->allocator.create(*srcIt) : *srcIt;
+      if (d->container == Container::Yes)
+        *dstIt = (*srcIt) ? d->allocator.create(*srcIt) : nullptr;
+      else
+        *dstIt = *srcIt;
+
       ++dstIt, ++srcIt, ++count;
     }
     catch (...)
