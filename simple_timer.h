@@ -49,10 +49,11 @@ struct simple_timer
         return std::chrono::duration_cast<DurationT>(clock::now() - time).count();
     }
 
-    // Сбрасывает время на указанное, по умолчанию сбрасывает на текущее время
-    void reset(time_t seconds = 0) {
-        time = (seconds == 0) ? clock::now() : clock::from_time_t(seconds);
-    }
+    // Сбрасывает время на текущее время
+    void reset() {time = clock::now();}
+
+    // Сбрасывает время на указанное время
+    void reset(time_t seconds) {time = clock::from_time_t(seconds);}
 
     // В качестве начального времени берется текущее время
     clock::time_point time = {clock::now()};
