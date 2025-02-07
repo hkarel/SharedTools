@@ -176,10 +176,11 @@ time_t loggerModifyTime()
 }
 
 #ifdef QT_NETWORK_LIB
-bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
+bool readHostAddress(const YamlConfig& conf, const YAML::Node& baseNode,
+                     const QString& confHostStr, QHostAddress& hostAddress)
 {
     QString hostAddressStr;
-    if (!config::base().getValue(confHostStr.toStdString(), hostAddressStr))
+    if (!conf.getValue(baseNode, confHostStr.toStdString(), hostAddressStr))
         return false;
 
     hostAddressStr = hostAddressStr.toLower().trimmed();
@@ -196,6 +197,14 @@ bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
     else                                  hostAddress = QHostAddress(hostAddressStr);
 
     return true;
+}
+
+bool readHostAddress(const QString& confHostStr, QHostAddress& hostAddress)
+{
+    const YamlConfig& conf = config::base();
+    auto locker {conf.locker()}; (void) locker;
+    const YAML::Node root = conf.node(".");
+    return readHostAddress(conf, root, confHostStr, hostAddress);
 }
 #endif // QT_NETWORK_LIB
 

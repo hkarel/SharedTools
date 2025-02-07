@@ -96,6 +96,10 @@ time_t loggerModifyTime();
 
 #ifdef QT_NETWORK_LIB
 // Возвращает host-адрес из файла конфигурации
+bool readHostAddress(const YamlConfig& conf, const YAML::Node& baseNode,
+                     const QString& confHostStr, QHostAddress&);
+
+// Возвращает host-адрес из базового файла конфигурации
 bool readHostAddress(const QString& confHostStr, QHostAddress&);
 #endif
 

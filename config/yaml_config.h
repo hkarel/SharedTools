@@ -30,12 +30,12 @@
 #include "safe_singleton.h"
 #include "logger/logger.h"
 #include "logger/format.h"
+#include "yaml-cpp/yaml.h"
 
 #ifdef MINGW
 #include "thread/thread_utils.h"
 #endif
 
-#include <yaml-cpp/yaml.h>
 #include <atomic>
 #include <mutex>
 #include <exception>
