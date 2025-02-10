@@ -360,7 +360,7 @@ YAML::Node Config::nodeGet(const YAML::Node& baseNode, const string& name,
                            bool logWarn) const
 {
     YAML::Node node = this->node(baseNode, name);
-    if ((!node || node.IsNull()) && logWarn)
+    if (!node && logWarn)
     {
         log_warn_m << log_format("Parameter '%?' is undefined. Config file: %?",
                                  _nameNodeFunc + name, _filePath);
