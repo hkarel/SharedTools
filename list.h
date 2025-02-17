@@ -1263,9 +1263,7 @@ DECL_IMPL_LIST(T*)::add()
   if (d->container == Container::No)
     throw LIST_EXCEPT(ERR_NOCREATE_OBJ);
 
-  // Функция create() должна вызываться без параметров,
-  // см. комментарии в типовом аллокаторе AllocItem
-  return add(d->allocator.create(/*0*/));
+  return add(d->allocator.create());
 }
 
 DECL_IMPL_LIST(T*)::add(T* item)
