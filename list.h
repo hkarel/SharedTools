@@ -578,7 +578,7 @@ public:
   /// @brief Возвращает зарезервированную длинну массива list()
   int capacity() const {return d_func()->capacity;}
 
-  /// @brief Признак того, что список является контейнером.
+  /// @brief Признак определяет является список контейнером или нет.
   ///
   /// Если container() == Container::Yes, то при разрушении или очистке списка
   /// все элементы будут автоматически разрушены, в противном случае  элементы
@@ -707,12 +707,12 @@ public:
   explicit List(Container container);
 
   List(SelfListType&&);
-  List(const SelfListType&) = delete;
+  List(const SelfListType&);
 
   ~List();
 
   SelfListType& operator= (SelfListType&&);
-  SelfListType& operator= (const SelfListType&) = delete;
+  SelfListType& operator= (const SelfListType&);
 
   /// @brief Добавляет новый элемент T в конец списка.
   ///
@@ -1230,6 +1230,12 @@ DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
   list.d = nullptr;
 }
 
+DECL_IMPL_LIST_CONSTR::List(const SelfListType& list)
+{
+  init(list.container());
+  assign(list);
+}
+
 DECL_IMPL_LIST_DESTR::~List()
 {
   if (DataType* d = CustomListType::d)
@@ -1247,6 +1253,16 @@ DECL_IMPL_LIST_OPERATOR::operator= (SelfListType&& list)
 
   clear();
   swap(list);
+  return *this;
+}
+
+DECL_IMPL_LIST_OPERATOR::operator= (const SelfListType& list)
+{
+  if (this == &list)
+    return *this;
+
+  clear();
+  assign(list);
   return *this;
 }
 
@@ -1587,7 +1603,7 @@ DECL_IMPL_LIST(void)::compressList()
 DECL_IMPL_LIST(void)::assign(const CustomListType& list)
 {
   if (this == &list)
-      return;
+    return;
 
   clear();
   DataType* d = d_func();
