@@ -1242,8 +1242,11 @@ DECL_IMPL_LIST_DESTR::~List()
 
 DECL_IMPL_LIST_OPERATOR::operator= (SelfListType&& list)
 {
+  if (this == &list)
+    return *this;
+
+  clear();
   swap(list);
-  list.clear();
   return *this;
 }
 
