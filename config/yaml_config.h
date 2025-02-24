@@ -290,17 +290,14 @@ private:
     template<typename T>
     static bool getValueProxy(const Config* config, YAML::Node& node,
                               const string& name, T& value, bool logWarn,
-                              typename detail::is_yaml_type<T>::type = 0)
-    {
-        return config->getValueBase(node, name, value, logWarn);
-    }
+                              typename detail::is_yaml_type<T>::type = 0);
     template<typename T>
     static bool getValueProxy(const Config* config, YAML::Node& node,
                               const string& name, T& value, bool logWarn,
-                              typename detail::not_yaml_type<T>::type = 0)
-    {
-        return config->getValueInternal(node, name, value, logWarn);
-    }
+                              typename detail::not_yaml_type<T>::type = 0);
+
+    static bool getValueProxy(const Config* config, YAML::Node& node,
+                              const string& name, Func func, bool logWarn);
 
 private:
     template<typename T>
@@ -501,7 +498,7 @@ bool Config::getValue(const YAML::Node& baseNode, const string& name, T& value,
     Locker locker {this}; (void) locker;
 
     YAML::Node node = nodeGet(baseNode, name, logWarn);
-    if (!node || node.IsNull())
+    if (!node /*|| node.IsNull()*/)
         return false;
 
     return getValueProxy(this, node, name, value, logWarn);
@@ -612,6 +609,32 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
     return getValueInternal(node, name, func, logWarn);
 }
 #endif
+
+template<typename T>
+bool Config::getValueProxy(const Config* config, YAML::Node& node,
+                           const string& name, T& value, bool logWarn,
+                           typename detail::is_yaml_type<T>::type)
+{
+    if (node.IsNull())
+    {
+        value = T{};
+        return true;
+    }
+    return config->getValueBase(node, name, value, logWarn);
+}
+
+template<typename T>
+bool Config::getValueProxy(const Config* config, YAML::Node& node,
+                           const string& name, T& value, bool logWarn,
+                           typename detail::not_yaml_type<T>::type)
+{
+    if (node.IsNull())
+    {
+        value = T{};
+        return true;
+    }
+    return config->getValueInternal(node, name, value, logWarn);
+}
 
 template<typename T>
 bool Config::setValue(const string& name, const T& value)

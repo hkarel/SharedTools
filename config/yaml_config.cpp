@@ -292,7 +292,7 @@ bool Config::remove(const string& name, bool /*logWarn*/)
      string nameKey = name.substr(pos + 1);
 
      YAML::Node node = this->node(namePre);
-     if (!node || node.IsNull())
+     if (!node /*|| node.IsNull()*/)
          return false;
 
     node.remove(nameKey);
@@ -515,6 +515,12 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
     _nameNodeFunc.clear();
     YAML_CONFIG_CATCH(YAML_GET_FUNC, YAML_RETURN(false))
     return res;
+}
+
+bool Config::getValueProxy(const Config* config, YAML::Node& node,
+                           const string& name, Func func, bool logWarn)
+{
+    return config->getValueInternal(node, name, func, logWarn);
 }
 
 bool Config::getValueInternal(const YAML::Node& node, const string& name,
