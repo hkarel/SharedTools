@@ -661,6 +661,9 @@ public:
     // Возвращает snapshot сэйверов
     SaverList savers(bool withStd = true) const;
 
+    // Устанавливает новый список сэйверов
+    void setSavers(const SaverList&);
+
     // Возвращает максимальный уровень логирования для сэйверов зарегистриро-
     // ванных на данный момент в логгере
     Level level() const {return _level;}

@@ -1306,6 +1306,27 @@ SaverList Logger::savers(bool withStd) const
     return savers;
 }
 
+void Logger::setSavers(const SaverList& savers)
+{
+    { //Block for SpinLocker
+        SpinLocker locker {_saversLock}; (void) locker;
+        for (Saver* saver : _savers)
+            saver->setLogger(0);
+        _savers.clear();
+        for (Saver* saver : savers)
+        {
+            lst::FindResult fr = _savers.findRef(saver->name(), {lst::BruteForce::Yes});
+            if (fr.success())
+                _savers.remove(fr.index());
+
+            saver->add_ref();
+            saver->setLogger(this);
+            _savers.add(saver);
+        }
+    }
+    redefineLevel();
+}
+
 void Logger::redefineLevel()
 {
     Level level = None;
