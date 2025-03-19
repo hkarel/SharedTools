@@ -709,9 +709,26 @@ Saver::Saver(const string& name, Level level)
 
 void Saver::setActive(bool val)
 {
+    if (locked())
+        return;
+
     _active = val;
-    if (Logger* logger = _logger.load())
-        logger->redefineLevel();
+}
+
+void Saver::setLevel(Level val)
+{
+    if (locked())
+        return;
+
+    _level = val;
+}
+
+void Saver::setMaxLineSize(int val)
+{
+    if (locked())
+        return;
+
+    _maxLineSize = val;
 }
 
 void Saver::flush(const MessageList& messages)
@@ -1190,7 +1207,7 @@ void Logger::addSaverStdOut(Level level, bool shortMessages)
     { //Block for SpinLocker
         SpinLocker locker {_saversLock}; (void) locker;
         _saverOut = SaverPtr(new SaverStdOut("stdout", level, shortMessages));
-        _saverOut->setLogger(this);
+        _saverOut->lock();
     }
     redefineLevel();
 }
@@ -1201,7 +1218,7 @@ void Logger::addSaverStdErr(Level level, bool shortMessages)
     { //Block for SpinLocker
         SpinLocker locker {_saversLock}; (void) locker;
         _saverErr = SaverPtr(new SaverStdErr("stderr", level, shortMessages));
-        _saverErr->setLogger(this);
+        _saverErr->lock();
     }
     redefineLevel();
 }
@@ -1234,8 +1251,8 @@ void Logger::addSaver(SaverPtr saver)
         if (fr.success())
             _savers.remove(fr.index());
 
+        saver->lock();
         saver->add_ref();
-        saver->setLogger(this);
         _savers.add(saver.get());
     }
     redefineLevel();
@@ -1248,10 +1265,7 @@ void Logger::removeSaver(const string& name)
         SpinLocker locker {_saversLock}; (void) locker;
         lst::FindResult fr = _savers.findRef(name, {lst::BruteForce::Yes});
         if (fr.success())
-        {
-            _savers.item(fr.index())->setLogger(0);
             _savers.remove(fr.index());
-        }
     }
     redefineLevel();
 }
@@ -1272,8 +1286,6 @@ void Logger::clearSavers(bool clearStd)
             _saverOut.reset();
             _saverErr.reset();
         }
-        for (Saver* saver : _savers)
-            saver->setLogger(0);
         _savers.clear();
     }
     redefineLevel();
@@ -1310,8 +1322,6 @@ void Logger::setSavers(const SaverList& savers)
 {
     { //Block for SpinLocker
         SpinLocker locker {_saversLock}; (void) locker;
-        for (Saver* saver : _savers)
-            saver->setLogger(0);
         _savers.clear();
         for (Saver* saver : savers)
         {
@@ -1319,8 +1329,8 @@ void Logger::setSavers(const SaverList& savers)
             if (fr.success())
                 _savers.remove(fr.index());
 
+            saver->lock();
             saver->add_ref();
-            saver->setLogger(this);
             _savers.add(saver);
         }
     }

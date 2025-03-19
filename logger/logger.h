@@ -209,7 +209,7 @@ public:
     // Определяет будут ли сообщения об ошибках фильтроваться так же, как и все
     // остальные сообщения. По умолчанию  сообщения  об ошибках  не фильтруются
     bool filteringErrors() const {return _filteringErrors;}
-    void setFilteringErrors(bool val);
+    void setFilteringErrors(bool);
 
     // Определяет будут ли в лог-файл включены  дополнительные  сообщения
     // которые находятся в одном и том же потоке с основными фильтруемыми
@@ -228,7 +228,7 @@ public:
     // потока не будут выводиться в лог-файл.
     // По умолчанию сообщения по контексту потока не фильтруются
     virtual bool followThreadContext() const;
-    void setFollowThreadContext(bool val);
+    void setFollowThreadContext(bool);
 
     enum class Check
     {
@@ -416,11 +416,11 @@ public:
     // в конфиг-файле, что сэйвер является неактивным. При неактивном сэйвере
     // запись в лог-файл не производится
     bool active() const {return _active;}
-    void setActive(bool val);
+    void setActive(bool);
 
     // Уровень логирования
     Level level() const {return _level;}
-    void  setLevel(Level val) {_level = val;}
+    void  setLevel(Level);
 
     // Устанавливает ограничение на максимальную длину строки сообщения.
     // Длина строки не ограничивается если значение меньше либо равно 0.
@@ -428,10 +428,7 @@ public:
     // TODO: Для utf8 кодировки учесть, чтобы обрезка не происходила
     //       посередине символов
     int  maxLineSize() const {return _maxLineSize;}
-    void setMaxLineSize(int val) {_maxLineSize = val;}
-
-    Logger* logger() const {return _logger;}
-    void setLogger(Logger* val) {_logger = val;}
+    void setMaxLineSize(int);
 
     // Выполняет запись буфера сообщений
     void flush(const MessageList&);
@@ -452,6 +449,12 @@ public:
 
     // Очищает список фильтров
     void clearFilters();
+
+    // Возвращает статус сэйвера: заперт/не заперт
+    bool locked() const {return _locked;}
+
+    // Запирает сэйвер
+    void lock() {_locked = true;}
 
 protected:
     virtual void flushImpl(const MessageList&) = 0;
@@ -475,14 +478,13 @@ private:
 private:
     string _name;
     bool   _active = {true};
+    bool   _locked = {false};
     Level  _level = {Error};
     int    _maxLineSize = {5000};
 
     FilterList  _filters;
     atomic_bool _filtersActive = {true};
     mutable atomic_flag _filtersLock = ATOMIC_FLAG_INIT;
-
-    atomic<Logger*> _logger = {0};
 
     friend class SaverStdOut;
     friend class SaverStdErr;
