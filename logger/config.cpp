@@ -476,18 +476,6 @@ bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& su
     return result;
 }
 
-bool loadSavers(const string& confFile, const Substitutes& substitutes)
-{
-    SaverList savers;
-    if (alog::loadSavers(confFile, savers, substitutes))
-    {
-        for (Saver* saver : savers)
-            logger().addSaver(SaverPtr(saver));
-        return true;
-    }
-    return false;
-}
-
 void printSaversInfo()
 {
     log_info_m << "---";

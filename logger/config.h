@@ -167,7 +167,6 @@ bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
 
 // Загрузка сэйверов из отдельного файла конфигурации
 bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& = {});
-bool loadSavers(const string& confFile, const Substitutes& = {});
 
 // Выводит в лог информацию об используемых фильтрах и сэйверах
 void printSaversInfo();

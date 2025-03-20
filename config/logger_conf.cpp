@@ -181,7 +181,12 @@ void configExtendedSavers()
             for (const auto& sbt : config::base().substitutes())
                 substitutes.emplace(sbt);
 
-            loadSavers(logConf, substitutes);
+            SaverList savers;
+            if (SaverPtr default_ = logger().findSaver("default"))
+                savers.add(default_.detach());
+
+            if (loadSavers(logConf, savers, substitutes))
+                logger().setSavers(savers);
         }
         else
             log_error_m << "Logger config file not exists: " << logConf;
