@@ -356,6 +356,7 @@ void ObserverBase::changedItem(const QString& filePath)
         base().rereadFile();
         log_verbose_m << "Config file reread: " << filePath;
         alog::configDefaultSaver();
+        alog::configExtendedSavers();
     }
 
     string logConf = loggerConfFile();

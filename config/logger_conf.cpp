@@ -160,7 +160,9 @@ bool configDefaultSaver()
     for (Filter* filter : filters)
         saver->addFilter(FilterPtr(filter));
 
-    logger().addSaver(saver);
+    SaverList savers;
+    savers.add(saver.detach());
+    logger().setSavers(savers);
     return true;
 }
 
