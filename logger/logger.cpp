@@ -47,7 +47,7 @@ using namespace std;
 // Функция записывает сообщения об ошибке произошедшей в самом логгере.
 // Информация сохраняется в файл /tmp/alogger.log для Linux/Unix,
 // и в файл %TEMP%\\alogger.log для Windows
-void loggerPanic(const char* saverName, const char* error)
+void loggerPanic(const string& saverName, const string& error)
 {
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
     char filePath[MAX_PATH + 12 /*alogger.log*/] = {0};
@@ -59,10 +59,10 @@ void loggerPanic(const char* saverName, const char* error)
 #endif
     {
         fputs("Saver name: ", f);
-        fputs(saverName, f);
+        fputs(saverName.c_str(), f);
         fputs("; ", f);
         fputs("Error: ", f);
-        fputs(error, f);
+        fputs(error.c_str(), f);
         fputs("\n", f);
         fclose(f);
     }
@@ -904,7 +904,7 @@ SaverFile::SaverFile(const string& name,
         if (FILE* f = fopen(_filePath.c_str(), "w"))
             fclose(f);
         else
-            throw std::logic_error("Could not open file: " + _filePath);
+            loggerPanic(name, "Could not open file: " + _filePath);
     }
 }
 
@@ -915,7 +915,10 @@ void SaverFile::flushImpl(const MessageList& messages)
 
     FILE* f = fopen(_filePath.c_str(), "a");
     if (f == 0)
-        throw std::logic_error("Could not open file: " + _filePath);
+    {
+        loggerPanic(name(), "Could not open file: " + _filePath);
+        return;
+    }
 
     removeIdsTimeoutThreads();
 
@@ -1067,11 +1070,11 @@ void Logger::run()
         }
         catch (std::exception& e)
         {
-            loggerPanic(saver->name().c_str(), e.what());
+            loggerPanic(saver->name(), e.what());
         }
         catch (...)
         {
-            loggerPanic(saver->name().c_str(), "unknown error");
+            loggerPanic(saver->name(), "unknown error");
         }
     };
 
