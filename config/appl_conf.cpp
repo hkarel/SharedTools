@@ -332,19 +332,23 @@ ObserverBase::ObserverBase()
 
 void ObserverBase::start(int timeout)
 {
-    _observer.clear();
-    _observer.addFile(base().filePath().c_str());
-
-    string logConf = loggerConfFile();
-    if (!logConf.empty())
-        _observer.addFile(logConf.c_str());
-
+    updateFiles();
     _observer.start(timeout);
 }
 
 void ObserverBase::stop()
 {
     _observer.stop();
+}
+
+void ObserverBase::updateFiles()
+{
+    _observer.clear();
+    _observer.addFile(base().filePath().c_str());
+
+    string logConf = loggerConfFile();
+    if (!logConf.empty())
+        _observer.addFile(logConf.c_str());
 }
 
 void ObserverBase::changedItem(const QString& filePath)
@@ -355,6 +359,7 @@ void ObserverBase::changedItem(const QString& filePath)
         modify = true;
         base().rereadFile();
         log_verbose_m << "Config file reread: " << filePath;
+        updateFiles();
         alog::configDefaultSaver();
         alog::configExtendedSavers();
     }

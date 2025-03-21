@@ -171,6 +171,7 @@ signals:
     void changed();
 
 private slots:
+    void updateFiles();
     void changedItem(const QString& filePath);
 
 private:
