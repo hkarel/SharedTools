@@ -168,8 +168,7 @@ template<typename T> struct AllocItem
 /**
   Функтор поиска, используется для поиска объектов Filter и Saver
 */
-template<typename T>
-struct FindItem
+template<typename T> struct FindItem
 {
     int operator() (const string* name, const T* item2) const
         {return name->compare(item2->name());}
@@ -192,6 +191,9 @@ struct FindItem
 class Filter : public clife_base
 {
 public:
+    typedef clife_ptr<Filter> Ptr;
+    typedef lst::List<Filter, FindItem<Filter>, AllocItem<Filter>> List;
+
     // Режим работы фильта: включающий/исключающий
     enum class Mode {Include, Exclude};
 
@@ -272,8 +274,6 @@ private:
 
     friend class Saver;
 };
-typedef lst::List<Filter, FindItem<Filter>, AllocItem<Filter>> FilterList;
-typedef clife_ptr<Filter> FilterPtr;
 
 /**
   Фильтр по именам модулей
@@ -281,6 +281,8 @@ typedef clife_ptr<Filter> FilterPtr;
 class FilterModule : public Filter
 {
 public:
+    typedef clife_ptr<FilterModule> Ptr;
+
     const StringList& modules() const {return _modules;}
 
     // Добавляет модули на которые будет распространяться действие фильтра
@@ -296,7 +298,6 @@ private:
     StringList _modules;
     bool _filteringNoNameModules = {false};
 };
-typedef clife_ptr<FilterModule> FilterModulePtr;
 
 /**
   Фильтр по уровню логирования
@@ -304,6 +305,8 @@ typedef clife_ptr<FilterModule> FilterModulePtr;
 class FilterLevel : public FilterModule
 {
 public:
+    typedef clife_ptr<FilterLevel> Ptr;
+
     Level leve() const {return _level;}
     void setLevel(Level);
 
@@ -311,7 +314,6 @@ private:
     bool checkImpl(const Message&) const override;
     Level _level = {None};
 };
-typedef clife_ptr<FilterLevel> FilterLevelPtr;
 
 /**
   Фильтр по именам файлов
@@ -319,6 +321,8 @@ typedef clife_ptr<FilterLevel> FilterLevelPtr;
 class FilterFile : public Filter
 {
 public:
+    typedef clife_ptr<FilterFile> Ptr;
+
     struct FileLine
     {
         string   file;
@@ -345,7 +349,6 @@ private:
     bool checkImpl(const Message&) const override;
     Files _files;
 };
-typedef clife_ptr<FilterFile> FilterFilePtr;
 
 /**
   Фильтр по именам функций
@@ -353,6 +356,8 @@ typedef clife_ptr<FilterFile> FilterFilePtr;
 class FilterFunc : public Filter
 {
 public:
+    typedef clife_ptr<FilterFunc> Ptr;
+
     const StringList& funcs() const {return _funcs;}
 
     // Добавляет функции на которые будет распространяться действие фильтра
@@ -362,7 +367,6 @@ private:
     bool checkImpl(const Message&) const override;
     StringList _funcs;
 };
-typedef clife_ptr<FilterFunc> FilterFuncPtr;
 
 /**
   Фильтр по идентификаторам потока
@@ -370,6 +374,8 @@ typedef clife_ptr<FilterFunc> FilterFuncPtr;
 class FilterThread : public Filter
 {
 public:
+    typedef clife_ptr<FilterThread> Ptr;
+
     bool followThreadContext() const override;
     const set<pid_t>& threads() const {return _threads;}
 
@@ -380,7 +386,6 @@ private:
     bool checkImpl(const Message&) const override;
     set<pid_t> _threads;
 };
-typedef clife_ptr<FilterThread> FilterThreadPtr;
 
 /**
   Фильтр по содержимому лог-сообщения
@@ -388,6 +393,8 @@ typedef clife_ptr<FilterThread> FilterThreadPtr;
 class FilterContent : public Filter
 {
 public:
+    typedef clife_ptr<FilterContent> Ptr;
+
     const StringList& contents() const {return _contents;}
 
     // Добавляет элемент контента на который будет распространяться действие
@@ -398,7 +405,6 @@ private:
     bool checkImpl(const Message&) const override;
     StringList _contents;
 };
-typedef clife_ptr<FilterContent> FilterContentPtr;
 
 /**
   Базовый класс механизма сохранения
@@ -406,6 +412,9 @@ typedef clife_ptr<FilterContent> FilterContentPtr;
 class Saver : public clife_base
 {
 public:
+    typedef clife_ptr<Saver> Ptr;
+    typedef lst::List<Saver, FindItem<Saver>, AllocItem<Saver>> List;
+
     Saver(const string& name, Level level = Error);
     virtual ~Saver() = default;
 
@@ -434,11 +443,11 @@ public:
     void flush(const MessageList&);
 
     // Возвращает snapshot-список фильтров
-    FilterList filters() const;
+    Filter::List filters() const;
 
     // Добавляет фильтр в список фильтров. Если фильтр с указанным именем уже
     // существует, то он будет заменен новым
-    void addFilter(FilterPtr);
+    void addFilter(Filter::Ptr);
 
     // Признак активности системы фильтрации
     bool filtersActive() const {return _filtersActive;}
@@ -464,7 +473,7 @@ protected:
     // Порядок работы функции: сообщение m последовательно обрабатывается всеми
     // фильтрами filters. Если сообщение не удовлетворяет критериям  фильтрации
     // очередного фильтра, то функция завершает работу с результатом TRUE
-    bool skipMessage(const Message& m, const FilterList& filters);
+    bool skipMessage(const Message& m, const Filter::List& filters);
 
     void removeIdsTimeoutThreads();
 
@@ -482,15 +491,13 @@ private:
     Level  _level = {Error};
     int    _maxLineSize = {5000};
 
-    FilterList  _filters;
+    Filter::List  _filters;
     atomic_bool _filtersActive = {true};
     mutable atomic_flag _filtersLock = ATOMIC_FLAG_INIT;
 
     friend class SaverStdOut;
     friend class SaverStdErr;
 };
-typedef lst::List<Saver, FindItem<Saver>, AllocItem<Saver>> SaverList;
-typedef clife_ptr<Saver> SaverPtr;
 
 /**
   Вывод в stdout
@@ -498,6 +505,8 @@ typedef clife_ptr<Saver> SaverPtr;
 class SaverStdOut : public Saver
 {
 public:
+    typedef clife_ptr<SaverStdOut> Ptr;
+
     // Если параметр shortMessages = TRUE, то в консоль будут выводятся только
     // сами  сообщения,  а расширенные  параметры  сообщения  такие  как  дата,
     // уровень логирования, идентификатор потока и пр. выводиться не будут
@@ -524,6 +533,8 @@ public:
 class SaverFile : public Saver
 {
 public:
+    typedef clife_ptr<SaverFile> Ptr;
+
     SaverFile(const string& name,
               const string& filePath,
               Level level = Error,
@@ -542,7 +553,6 @@ private:
     string _filePath;
     bool   _isContinue = {true};
 };
-typedef clife_ptr<SaverFile> SaverFilePtr;
 
 /**
   Базовая структура, используется для формирования строки вида:
@@ -649,22 +659,22 @@ public:
 
     // Добавляет сэйвер в список сэйверов. Если сэйвер с указанным именем уже
     // существует, то он будет заменен новым
-    void addSaver(SaverPtr);
+    void addSaver(Saver::Ptr);
 
     // Удаляет сэйвер
     void removeSaver(const string& name);
 
     // Выполняет поиск сэйвера по имени
-    SaverPtr findSaver(const string& name);
+    Saver::Ptr findSaver(const string& name);
 
     // Очищает список сэйверов
     void clearSavers(bool clearStd = true);
 
     // Возвращает snapshot сэйверов
-    SaverList savers(bool withStd = true) const;
+    Saver::List savers(bool withStd = true) const;
 
     // Устанавливает новый список сэйверов
-    void setSavers(const SaverList&);
+    void setSavers(const Saver::List&);
 
     // Возвращает максимальный уровень логирования для сэйверов зарегистриро-
     // ванных на данный момент в логгере
@@ -686,9 +696,9 @@ private:
     MessageList _messages;
     mutable atomic_flag  _messagesLock = ATOMIC_FLAG_INIT;
 
-    SaverPtr  _saverOut;  // Сэйвер для STDOUT
-    SaverPtr  _saverErr;  // Сэйвер для STDERR
-    SaverList _savers;    // Список CUSTOM-сэйверов
+    Saver::Ptr  _saverOut;  // Сэйвер для STDOUT
+    Saver::Ptr  _saverErr;  // Сэйвер для STDERR
+    Saver::List _savers;    // Список CUSTOM-сэйверов
     mutable atomic_flag  _saversLock = ATOMIC_FLAG_INIT;
 
     volatile Level _level = {None};

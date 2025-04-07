@@ -143,7 +143,7 @@ bool configDefaultSaver()
     config::base().getValue("logger.continue", logContinue);
 
     Level logLevel = levelFromString(logLevelStr);
-    SaverPtr saver {new SaverFile("default", logFile, logLevel, logContinue)};
+    Saver::Ptr saver {new SaverFile("default", logFile, logLevel, logContinue)};
 
     int maxLineSize = -1;
     config::base().getValue("logger.max_line_size", maxLineSize, false);
@@ -151,16 +151,16 @@ bool configDefaultSaver()
         saver->setMaxLineSize(maxLineSize);
 
     // Загружаем фильтры для дефолтного сэйвера
-    FilterList filters;
+    Filter::List filters;
     { //Block for locker
         auto locker {config::base().locker()}; (void) locker;
         const YAML::Node filtersNode = config::base().node("logger.filters");
         loadFilters(filtersNode, filters, config::base().filePath());
     }
     for (Filter* filter : filters)
-        saver->addFilter(FilterPtr(filter));
+        saver->addFilter(Filter::Ptr(filter));
 
-    SaverList savers;
+    Saver::List savers;
     savers.add(saver.detach());
     logger().setSavers(savers);
     return true;
@@ -183,8 +183,8 @@ void configExtendedSavers()
             for (const auto& sbt : config::base().substitutes())
                 substitutes.emplace(sbt);
 
-            SaverList savers;
-            if (SaverPtr default_ = logger().findSaver("default"))
+            Saver::List savers;
+            if (Saver::Ptr default_ = logger().findSaver("default"))
                 savers.add(default_.detach());
 
             if (loadSavers(logConf, savers, substitutes))

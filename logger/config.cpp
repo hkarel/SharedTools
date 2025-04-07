@@ -50,7 +50,7 @@ const char* yamlTypeName(YAML::NodeType::value type)
     }
 }
 
-FilterPtr createFilter(const YAML::Node& yfilter)
+Filter::Ptr createFilter(const YAML::Node& yfilter)
 {
     auto checkFiedType = [&yfilter](const string& field, YAML::NodeType::value type)
     {
@@ -176,10 +176,10 @@ FilterPtr createFilter(const YAML::Node& yfilter)
             contents.insert(ycont.as<string>());
     }
 
-    FilterPtr filter;
+    Filter::Ptr filter;
     if (type == "module_name")
     {
-        FilterModulePtr filterMod {new FilterModule};
+        FilterModule::Ptr filterMod {new FilterModule};
         filterMod->setFilteringNoNameModules(filteringNonameModules);
 
         for (const string& module : modules)
@@ -189,7 +189,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "log_level")
     {
-        FilterLevelPtr filterLevel {new FilterLevel};
+        FilterLevel::Ptr filterLevel {new FilterLevel};
         filterLevel->setFilteringNoNameModules(filteringNonameModules);
         filterLevel->setLevel(levelFromString(logLevel));
 
@@ -200,7 +200,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "func_name")
     {
-        FilterFuncPtr filterFunc {new FilterFunc};
+        FilterFunc::Ptr filterFunc {new FilterFunc};
         for (const string& function : functions)
             filterFunc->addFunc(function);
 
@@ -208,7 +208,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "file_name")
     {
-        FilterFilePtr filterFile {new FilterFile};
+        FilterFile::Ptr filterFile {new FilterFile};
         for (const string& file : files)
             filterFile->addFile(file);
 
@@ -216,7 +216,7 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "thread_id")
     {
-        FilterThreadPtr filterThread {new FilterThread};
+        FilterThread::Ptr filterThread {new FilterThread};
         for (long tid : threads)
             filterThread->addThread(tid);
 
@@ -224,14 +224,14 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     }
     else if (type == "content")
     {
-        FilterContentPtr filterCont {new FilterContent};
+        FilterContent::Ptr filterCont {new FilterContent};
         for (const string& cont : contents)
             filterCont->addContent(cont);
 
         filter = filterCont;
     }
     if (filter.empty())
-        return FilterPtr();
+        return Filter::Ptr();
 
     filter->setName(name);
     filter->setMode((mode == "include") ? Filter::Mode::Include : Filter::Mode::Exclude);
@@ -241,8 +241,8 @@ FilterPtr createFilter(const YAML::Node& yfilter)
     return filter;
 }
 
-SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters,
-                     const Substitutes& substitutes)
+Saver::Ptr createSaver(const YAML::Node& ysaver, const Filter::List& filters,
+                       const Substitutes& substitutes)
 {
     auto checkFiedType = [&ysaver](const string& field, YAML::NodeType::value type)
     {
@@ -361,7 +361,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters,
     }
 
     Level level = levelFromString(logLevel);
-    SaverPtr saver {new SaverFile(name, file, level, isContinue)};
+    Saver::Ptr saver {new SaverFile(name, file, level, isContinue)};
 
     if (active >= 0)
         saver->setActive(active);
@@ -374,7 +374,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters,
         for (Filter* filter : filters)
             if (filter->name() == filterName)
             {
-                saver->addFilter(FilterPtr(filter));
+                saver->addFilter(Filter::Ptr(filter));
                 found = true;
                 break;
             }
@@ -388,7 +388,7 @@ SaverPtr createSaver(const YAML::Node& ysaver, const FilterList& filters,
     return saver;
 }
 
-bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
+bool loadFilters(const YAML::Node& filtersNode, Filter::List& filters,
                  const string& confFile)
 {
     bool result = false;
@@ -404,7 +404,7 @@ bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
             throw std::logic_error("Filters node must have sequence type");
 
         for (const YAML::Node& yfilter : filtersNode)
-            if (FilterPtr f = createFilter(yfilter))
+            if (Filter::Ptr f = createFilter(yfilter))
                 filters.add(f.detach());
 
         result = true;
@@ -430,7 +430,8 @@ bool loadFilters(const YAML::Node& filtersNode, FilterList& filters,
     return result;
 }
 
-bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& substitutes)
+bool loadSavers(const string& confFile, Saver::List& savers,
+                const Substitutes& substitutes)
 {
     bool result = false;
     try
@@ -438,7 +439,7 @@ bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& su
         YAML::Node conf = YAML::LoadFile(confFile);
 
         const YAML::Node& yfilters = conf["filters"];
-        FilterList filters;
+        Filter::List filters;
         loadFilters(yfilters, filters, confFile);
 
         const YAML::Node& ysavers = conf["savers"];
@@ -453,7 +454,7 @@ bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& su
             throw std::logic_error("Savers node must have sequence type");
 
         for (const YAML::Node& ysaver : ysavers)
-            if (SaverPtr s = createSaver(ysaver, filters, substitutes))
+            if (Saver::Ptr s = createSaver(ysaver, filters, substitutes))
                 savers.add(s.detach());
 
         result = true;
@@ -479,7 +480,7 @@ bool loadSavers(const string& confFile, SaverList& savers, const Substitutes& su
 void printSaversInfo()
 {
     log_info_m << "---";
-    SaverList savers = alog::logger().savers();
+    Saver::List savers = alog::logger().savers();
 
     // Отключаем фильтрацию для default-сэйвера
     bool defaultFiltersActive = true;
@@ -517,7 +518,7 @@ void printSaversInfo()
                 << "; level: " << levelToString(saver->level())
                 << "; max_line_size: " << saver->maxLineSize();
 
-        FilterList filters = saver->filters();
+        Filter::List filters = saver->filters();
         logLine << "; filters: [";
         nextCommaVal = false;
         for (Filter* filter : filters)
@@ -529,10 +530,10 @@ void printSaversInfo()
     }
 
     // Составляем список фильтров
-    FilterList filters;
+    Filter::List filters;
     for (Saver* saver : savers)
     {
-        FilterList saverFilters = saver->filters();
+        Filter::List saverFilters = saver->filters();
         for (Filter* filter : saverFilters)
         {
             lst::FindResult fr = filters.findRef(filter->name());
