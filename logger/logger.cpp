@@ -810,7 +810,7 @@ void Saver::removeIdsTimeoutThreads()
 
 //------------------------------- SaverStdOut --------------------------------
 
-SaverStdOut::SaverStdOut(const char* name, Level level, bool shortMessages)
+SaverStdOut::SaverStdOut(const string& name, Level level, bool shortMessages)
     : Saver(name, level)
 {
     _out = &std::cout;
@@ -875,7 +875,7 @@ void SaverStdOut::flushImpl(const MessageList& messages)
 
 //------------------------------- SaverStdErr --------------------------------
 
-SaverStdErr::SaverStdErr(const char* name, Level level, bool shortMessages)
+SaverStdErr::SaverStdErr(const string& name, Level level, bool shortMessages)
     : SaverStdOut(name, level, shortMessages)
 {
     _out = &std::cerr;
@@ -1241,6 +1241,7 @@ void Logger::removeSaverStdErr()
 
 void Logger::addSaver(Saver::Ptr saver)
 {
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker {_saversLock}; (void) locker;
         lst::FindResult fr = _savers.findRef(saver->name(), {lst::BruteForce::Yes});
@@ -1275,6 +1276,7 @@ Saver::Ptr Logger::findSaver(const string& name)
 
 void Logger::clearSavers(bool clearStd)
 {
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker {_saversLock}; (void) locker;
         if (clearStd)
@@ -1309,6 +1311,7 @@ Saver::List Logger::savers(bool withStd) const
 
 void Logger::setSavers(const Saver::List& savers)
 {
+    waitingFlush();
     { //Block for SpinLocker
         SpinLocker locker {_saversLock}; (void) locker;
         _savers.clear();

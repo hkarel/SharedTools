@@ -503,7 +503,7 @@ public:
     // Если параметр shortMessages = TRUE, то в консоль будут выводятся только
     // сами  сообщения,  а расширенные  параметры  сообщения  такие  как  дата,
     // уровень логирования, идентификатор потока и пр. выводиться не будут
-    SaverStdOut(const char* name, Level level, bool shortMessages);
+    SaverStdOut(const string& name, Level level, bool shortMessages);
     void flushImpl(const MessageList&) override;
 
 protected:
@@ -517,7 +517,7 @@ protected:
 class SaverStdErr : public SaverStdOut
 {
 public:
-    SaverStdErr(const char* name, Level level, bool shortMessages);
+    SaverStdErr(const string& name, Level level, bool shortMessages);
 };
 
 /**
