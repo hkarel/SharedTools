@@ -34,6 +34,7 @@
 #include "list.h"
 #include "clife_base.h"
 #include "clife_ptr.h"
+#include "clife_alloc.h"
 #include "simple_ptr.h"
 #include "safe_singleton.h"
 #include "thread/thread_base.h"
@@ -158,14 +159,6 @@ struct StringCompare
 typedef lst::List<string, StringCompare> StringList;
 
 /**
-  Аллокатор используется для управления жизнью объектов Filter и Saver
-*/
-template<typename T> struct AllocItem
-{
-    void destroy(T* x) {if (x) x->release();}
-};
-
-/**
   Функтор поиска, используется для поиска объектов Filter и Saver
 */
 template<typename T> struct FindItem
@@ -192,7 +185,7 @@ class Filter : public clife_base
 {
 public:
     typedef clife_ptr<Filter> Ptr;
-    typedef lst::List<Filter, FindItem<Filter>, AllocItem<Filter>> List;
+    typedef lst::List<Filter, FindItem<Filter>, clife_alloc_ref<Filter>> List;
 
     // Режим работы фильта: включающий/исключающий
     enum class Mode {Include, Exclude};
@@ -413,7 +406,7 @@ class Saver : public clife_base
 {
 public:
     typedef clife_ptr<Saver> Ptr;
-    typedef lst::List<Saver, FindItem<Saver>, AllocItem<Saver>> List;
+    typedef lst::List<Saver, FindItem<Saver>, clife_alloc_ref<Saver>> List;
 
     Saver(const string& name, Level level = Error);
     virtual ~Saver() = default;

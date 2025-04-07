@@ -744,15 +744,8 @@ void Saver::flush(const MessageList& messages)
 
 Filter::List Saver::filters() const
 {
-    Filter::List filters;
     SpinLocker locker {_filtersLock}; (void) locker;
-    for (int i = 0; i < _filters.count(); ++i)
-    {
-        Filter* f = _filters.item(i);
-        f->add_ref();
-        filters.add(f);
-    }
-    return filters;
+    return _filters;
 }
 
 void Saver::addFilter(Filter::Ptr filter)
@@ -1296,26 +1289,19 @@ void Logger::clearSavers(bool clearStd)
 
 Saver::List Logger::savers(bool withStd) const
 {
-    Saver::List savers;
-    { //Block for SpinLocker
-        SpinLocker locker {_saversLock}; (void) locker;
-        for (Saver* s : _savers)
+    SpinLocker locker {_saversLock}; (void) locker;
+    Saver::List savers = _savers;
+    if (withStd)
+    {
+        if (_saverOut)
         {
-            s->add_ref();
-            savers.add(s);
+            _saverOut->add_ref();
+            savers.add(_saverOut.get());
         }
-        if (withStd)
+        if (_saverErr)
         {
-            if (_saverOut)
-            {
-                _saverOut->add_ref();
-                savers.add(_saverOut.get());
-            }
-            if (_saverErr)
-            {
-                _saverErr->add_ref();
-                savers.add(_saverErr.get());
-            }
+            _saverErr->add_ref();
+            savers.add(_saverErr.get());
         }
     }
     return savers;
