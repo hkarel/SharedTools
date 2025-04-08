@@ -126,15 +126,6 @@ bool configDefaultSaver()
         return false;
     }
 
-    //QFileInfo logFileInfo {logFile};
-    //QString logFileDir = logFileInfo.absolutePath();
-    //if (!QDir(logFileDir).exists())
-    //    if (!QDir().mkpath(logFileDir))
-    //    {
-    //        log_error << "Failed create log directory: " << logFileDir;
-    //        return false;
-    //    }
-
     // Создаем дефолтный сэйвер для логгера
     string logLevelStr = "info";
     config::base().getValue("logger.level", logLevelStr);
