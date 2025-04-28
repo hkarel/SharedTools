@@ -176,17 +176,17 @@ inline quint64 hash64(const QUuidT<N>& u)
 }
 
 /**
-  Дайжест-функции, возвращают первые 8 символов строкового представления uuid-а
+  Дайджест-функции, возвращают первые n символов строкового представления uuid-а
 */
-inline QString digest(const QUuid& u)
+inline QString digest(const QUuid& u, int n = 8)
 {
-    return u.toString().mid(1, 8);
+    return u.toString().mid(1, n);
 }
 
 template<int N>
-inline QString digest(const QUuidT<N>& u)
+inline QString digest(const QUuidT<N>& u, int n = 8)
 {
-    return digest(static_cast<const QUuid&>(u));
+    return digest(static_cast<const QUuid&>(u), n);
 }
 
 /**
