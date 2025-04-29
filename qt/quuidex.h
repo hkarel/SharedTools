@@ -189,6 +189,9 @@ inline QString digest(const QUuidT<N>& u, int n = 8)
     return digest(static_cast<const QUuid&>(u), n);
 }
 
+template<typename UuidT>
+inline QString digest4(const UuidT& u) {return digest(u, 4);}
+
 /**
   Сервисные функции, возвращают строковое представление uuid без обрамляющих
   фигурных скобок
