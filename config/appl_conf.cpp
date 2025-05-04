@@ -238,9 +238,13 @@ void Observer::stop()
     _timer.stop();
 }
 
-void Observer::addFile(const QString& filePath)
+void Observer::addFile(QString filePath)
 {
     QMutexLocker locker {&_filesLock}; (void) locker;
+
+    filePath = filePath.trimmed();
+    if (filePath.isEmpty())
+        return;
 
     bool found = false;
     for (const auto& p : _files)
@@ -257,10 +261,11 @@ void Observer::addFile(const QString& filePath)
     }
 }
 
-void Observer::removeFile(const QString& filePath)
+void Observer::removeFile(QString filePath)
 {
     QMutexLocker locker {&_filesLock}; (void) locker;
 
+    filePath = filePath.trimmed();
     for (int i = 0; i < _files.count(); ++i)
         if (_files[i].second == filePath)
         {

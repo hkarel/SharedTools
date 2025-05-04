@@ -117,8 +117,8 @@ public:
     void start(int timeout = 15 /*сек*/);
     void stop();
 
-    void addFile(const QString& filePath);
-    void removeFile(const QString& filePath);
+    void addFile(QString filePath);
+    void removeFile(QString filePath);
 
     // Список наблюдаемых файлов
     QStringList files() const;
