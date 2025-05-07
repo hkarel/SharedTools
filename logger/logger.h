@@ -504,9 +504,10 @@ public:
     // сами  сообщения,  а расширенные  параметры  сообщения  такие  как  дата,
     // уровень логирования, идентификатор потока и пр. выводиться не будут
     SaverStdOut(const string& name, Level level, bool shortMessages);
-    void flushImpl(const MessageList&) override;
 
 protected:
+    void flushImpl(const MessageList&) override;
+
     ostream* _out;
     bool _shortMessages = {false};
 };
@@ -528,11 +529,8 @@ class SaverFile : public Saver
 public:
     typedef clife_ptr<SaverFile> Ptr;
 
-    SaverFile(const string& name,
-              const string& filePath,
-              Level level = Error,
+    SaverFile(const string& name, const string& filePath, Level level = Error,
               bool isContinue = true);
-    void flushImpl(const MessageList&) override;
 
     // Возвращает полный путь до лог-файла
     string filePath() const {return _filePath;}
@@ -541,6 +539,9 @@ public:
     // в существующий лог-файл, в противном случае  лог-файл будет очищен
     // при создании сэйвера
     bool isContinue() const {return _isContinue;}
+
+protected:
+    void flushImpl(const MessageList&) override;
 
 private:
     string _filePath;
@@ -862,6 +863,11 @@ Line operator<< (Line&& line, const T& t)
     operator<< (line, t);
     return std::move(line);
 }
+
+// Вспомогательная функция, используется для записи сообщения об ошибке произо-
+// шедшей в самом логгере.  Информация  сохраняется  в  файл  /tmp/alogger.log
+// для Linux/Unix, в файл %TEMP%\\alogger.log для Windows
+void loggerPanic(const string& saverName, const string& error);
 
 // Вспомогательная функция, используется в тех случаях, когда  значение  file
 // для функций логирования не является фиксированным  константным  параметром.

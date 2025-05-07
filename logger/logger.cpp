@@ -44,9 +44,6 @@ namespace alog {
 
 using namespace std;
 
-// Функция записывает сообщения об ошибке произошедшей в самом логгере.
-// Информация сохраняется в файл /tmp/alogger.log для Linux/Unix,
-// и в файл %TEMP%\\alogger.log для Windows
 void loggerPanic(const string& saverName, const string& error)
 {
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -883,9 +880,7 @@ SaverStdErr::SaverStdErr(const string& name, Level level, bool shortMessages)
 
 //-------------------------------- SaverFile ---------------------------------
 
-SaverFile::SaverFile(const string& name,
-                     const string& filePath,
-                     Level level,
+SaverFile::SaverFile(const string& name, const string& filePath, Level level,
                      bool isContinue)
     : Saver(name, level),
       _filePath(filePath),
