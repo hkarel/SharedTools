@@ -228,9 +228,9 @@ private:
     template<typename T>
     struct ProxyType
     {
-        typedef T Type;
-        static  T setter(T t) {return t;}
-        static  T getter(T t, const Config*) {return t;}
+        typedef remove_volatile_t<T> Type;
+        static  Type setter(Type t) {return t;}
+        static  Type getter(Type t, const Config*) {return t;}
     };
 
     // Используется в функциях setValue(). Строит иерархию нод согласно
