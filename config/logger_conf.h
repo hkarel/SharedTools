@@ -38,10 +38,10 @@ namespace alog {
 // для работы функции configDefaultSaver()
 bool createLoggerParams(const std::string& loggerFile);
 
-// Конфигурирование сэйвера по умолчанию для логгера
+// Конфигурирование сейвера по умолчанию для логгера
 bool configDefaultSaver();
 
-// Конфигурирование расширенных/дополнительных сэйверов для логгера
+// Конфигурирование расширенных/дополнительных сейверов для логгера
 void configExtendedSavers();
 
 } // namespace alog

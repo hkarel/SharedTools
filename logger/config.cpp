@@ -483,7 +483,7 @@ void printSaversInfo()
     log_info_m << "---";
     Saver::List savers = alog::logger().savers();
 
-    // Отключаем фильтрацию для default-сэйвера
+    // Отключаем фильтрацию для default-сейвера
     bool defaultFiltersActive = true;
     if (lst::FindResult fr = savers.findRef(string("default")))
     {
@@ -617,7 +617,7 @@ void printSaversInfo()
     logger().flush(2);
     logger().waitingFlush();
 
-    // Включаем фильтрацию для default-сэйвера
+    // Включаем фильтрацию для default-сейвера
     if (lst::FindResult fr = savers.findRef(string("default")))
         savers.item(fr.index())->setFiltersActive(defaultFiltersActive);
 }

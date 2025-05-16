@@ -126,7 +126,7 @@ bool configDefaultSaver()
         return false;
     }
 
-    // Создаем дефолтный сэйвер для логгера
+    // Создаем дефолтный сейвер для логгера
     string logLevelStr = "info";
     config::base().getValue("logger.level", logLevelStr);
 
@@ -141,7 +141,7 @@ bool configDefaultSaver()
     if (maxLineSize >= 0)
         saver->setMaxLineSize(maxLineSize);
 
-    // Загружаем фильтры для дефолтного сэйвера
+    // Загружаем фильтры для дефолтного сейвера
     Filter::List filters;
     { //Block for locker
         auto locker {config::base().locker()}; (void) locker;
