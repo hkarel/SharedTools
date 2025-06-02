@@ -125,18 +125,19 @@ void prefixFormatter1(Message& message, time_t& lastTime, char buff[sizeof(Messa
         char* end = begin + sizeof(Message::prefix1);
         to_chars_result res;
 
-        // Формат: "%02d.%02d.%04d %02d:%02d:%02d"
+        // Формат: "%04d.%02d.%02d %02d:%02d:%02d"
 
-        if (tm.tm_mday < 10) *begin++ = '0';
-        res = to_chars(begin, end, tm.tm_mday);
+        res = to_chars(begin, end, tm.tm_year + 1900);
         begin = res.ptr;
         *begin++ = '.';
+
         if ((tm.tm_mon + 1) < 10) *begin++ = '0';
         res = to_chars(begin, end, tm.tm_mon + 1);
         begin = res.ptr;
         *begin++ = '.';
 
-        res = to_chars(begin, end, tm.tm_year + 1900);
+        if (tm.tm_mday < 10) *begin++ = '0';
+        res = to_chars(begin, end, tm.tm_mday);
         begin = res.ptr;
         *begin++ = ' ';
 
