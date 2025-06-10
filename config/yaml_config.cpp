@@ -33,6 +33,7 @@
 #include <cerrno>
 #include <chrono>
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 
 #if defined(QT_CORE_LIB)
@@ -58,17 +59,17 @@ thread_local Config::LockedCount Config::_lockedCount;
     } catch (YAML::Exception& e) { \
         alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
         if (!_filePath.empty()) \
-            logLine << ". File: " << _filePath; \
+            logLine << ". File " << _filePath; \
         return false; \
     } catch (exception& e) { \
         alog::Line logLine = log_error_m << "YAML error. Detail: " << e.what(); \
         if (!_filePath.empty()) \
-            logLine << ". File: " << _filePath; \
+            logLine << ". File " << _filePath; \
         return false; \
     } catch (...) { \
         alog::Line logLine = log_error_m << "YAML error. Detail: Unknown error"; \
         if (!_filePath.empty()) \
-            logLine << ". File: " << _filePath; \
+            logLine << ". File " << _filePath; \
         return false; \
     }
 
@@ -104,18 +105,29 @@ Config::Locker::~Locker()
     config->_configLock.unlock();
 }
 
-bool Config::readFile(const string& filePath)
+bool Config::readFile(const string& filePath, bool checkBeginHyphens)
 {
     Locker locker {this}; (void) locker;
 
     YAML_CONFIG_TRY
     _filePath = filePath;
-    ifstream file(_filePath, ifstream::in);
+    ifstream file {_filePath, ifstream::in};
     if (!file.is_open())
     {
         log_warn_m << "Cannot open config file: " << _filePath;
-        _root = YAML::Node();
         return false;
+    }
+    if (checkBeginHyphens)
+    {
+        string line;
+        std::getline(file, line);
+        if (utl::trim(line) != "---")
+        {
+            log_error_m << "YAML-config must contain '---' (three hyphens) "
+                        << "in first line of file. See " << _filePath;
+            return false;
+        }
+        file.seekg(0, std::ios::beg);
     }
     _root = YAML::Load(file);
     if (!_root.IsDefined())
@@ -128,11 +140,23 @@ bool Config::readFile(const string& filePath)
     return true;
 }
 
-bool Config::readString(const string& str)
+bool Config::readString(const string& str, bool checkBeginHyphens)
 {
     Locker locker {this}; (void) locker;
 
     YAML_CONFIG_TRY
+    if (checkBeginHyphens)
+    {
+        string line;
+        istringstream iss {str};
+        std::getline(iss, line);
+        if (utl::trim(line) != "---")
+        {
+            log_error_m << "YAML-config must contain '---' (three hyphens) "
+                        << "in first line of input string";
+            return false;
+        }
+    }
     _filePath.clear();
     _root = YAML::Load(str);
     if (!_root.IsDefined())
@@ -145,9 +169,9 @@ bool Config::readString(const string& str)
     return true;
 }
 
-bool Config::rereadFile()
+bool Config::rereadFile(bool checkBeginHyphens)
 {
-    return readFile(_filePath);
+    return readFile(_filePath, checkBeginHyphens);
 }
 
 bool Config::changed() const
@@ -184,7 +208,7 @@ bool Config::saveFile(const string& filePath, YAML::EmitterStyle::value nodeStyl
 {
     if (_saveDisabled)
     {
-        log_warn_m << "Save data is disabled. File: " << _filePath;
+        log_warn_m << "Save data is disabled. File " << _filePath;
         return false;
     }
 
@@ -274,6 +298,7 @@ bool Config::saveString(const string& str, YAML::EmitterStyle::value nodeStyle)
 
 string Config::filePath() const
 {
+    Locker locker {this}; (void) locker;
     return _filePath;
 }
 
@@ -298,6 +323,12 @@ bool Config::remove(const string& name, bool /*logWarn*/)
     node.remove(nameKey);
     YAML_CONFIG_CATCH_FILE
     return true;
+}
+
+void Config::reset()
+{
+    Locker locker {this}; (void) locker;
+    _root = YAML::Node();
 }
 
 YAML::Node Config::node(const string& name) const

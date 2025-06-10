@@ -111,20 +111,28 @@ public:
 
     Config() = default;
 
-    // Читает yaml-структуру из файла. filePath - полное имя файла
-    bool readFile(const string& filePath);
+    // Читает yaml-структуру из файла.
+    // Параметры:
+    //   filePath - полное имя файла;
+    //   checkBeginHyphens - определяет нужно ли проверять первую строку конфи-
+    //      гурационного файла на маркер начала yaml-документа. Маркером начала
+    //      yaml-документа являются три дефиса '---'.
+    // В случае неудачного чтения конфигурационного файла текущая yaml-структура
+    // документа не обнуляется, для явного сброса текущей  структуры  необходимо
+    // использовать функцию reset()
+    bool readFile(const string& filePath, bool checkBeginHyphens = false);
 
-    // Читает yaml-структуру из строки
-    bool readString(const string&);
+    // Читает yaml-структуру из строки. Смотри описание функции readFile()
+    bool readString(const string&, bool checkBeginHyphens = false);
 
-    // Перечитывает yaml-структуру из файла
-    bool rereadFile();
+    // Перечитывает yaml-структуру из файла. Смотри описание функции readFile()
+    bool rereadFile(bool checkBeginHyphens = false);
 
     // Возвращает TRUE если параметры конфигурации были изменены, устанавливается
     // в FALSE после сохранения данных в файл
     bool changed() const;
 
-    // Сбрасывает флаг изменений в FALSE. Смотри пояснения для функции saveString()
+    // Сбрасывает флаг изменений в FALSE. Смотри описание функции saveString()
     void resetChanged();
 
     // Определяет, что параметры конфигурации не могут изменяться
@@ -150,6 +158,9 @@ public:
 
     // Удаляет ноду по имени
     bool remove(const string& name, bool logWarn = true);
+
+    // Обнуляет внутреннюю yaml-структуру. Смотри описание функции readFile()
+    void reset();
 
     // Возвращает ноду с именем name. Результат может быть использован
     // в качестве базовой ноды (baseNode).

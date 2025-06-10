@@ -26,6 +26,8 @@
 
 #include "logger/config.h"
 #include "logger/format.h"
+
+#include <fstream>
 #include <stdexcept>
 
 #define log_error_m   alog::logger().error   (alog_line_location, "LogConfig")
@@ -437,6 +439,27 @@ bool loadSavers(const string& confFile, Saver::List& savers,
     bool result = false;
     try
     {
+        { //Block for ifstream
+            ifstream file {confFile, ifstream::in};
+            if (!file.is_open())
+                throw std::logic_error("Failed open file");
+
+            string line;
+            std::getline(file, line);
+
+            // См. реализацию  utl::ltrim(), utl::rtrim(), минимизация зависимости
+            // от модуля utils
+            line.erase(line.begin(), std::find_if_not(line.begin(), line.end(),
+                [](unsigned char c){return std::isspace(c);}));
+
+            line.erase(std::find_if_not(line.rbegin(), line.rend(),
+                [](unsigned char c){return std::isspace(c);}).base(), line.end());
+
+            if (line != "---")
+                throw std::logic_error("YAML-config must contain '---' (three hyphens)"
+                                       "in first line of file");
+        }
+
         YAML::Node conf = YAML::LoadFile(confFile);
 
         const YAML::Node& yfilters = conf["filters"];

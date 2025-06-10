@@ -362,7 +362,11 @@ void ObserverBase::changedItem(const QString& filePath)
     if (filePath == base().filePath().c_str())
     {
         modify = true;
-        base().rereadFile();
+        if (!base().rereadFile(true))
+        {
+            log_error_m << "Failed reread config file: " << filePath;
+            return;
+        }
         log_verbose_m << "Config file reread: " << filePath;
         updateFiles();
         alog::configDefaultSaver();
