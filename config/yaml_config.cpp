@@ -364,14 +364,24 @@ YAML::Node Config::node(const YAML::Node& baseNode, const string& name) const
     typedef function<YAML::Node (const YAML::Node&, size_t)> NodeFunc;
     NodeFunc get_node = [&](const YAML::Node& node, size_t i)
     {
-        if (!node || node.IsNull())
+        if (!node || (i == parts.size()))
             return node;
 
-        if (i == parts.size())
+        if (node.IsNull())
+        {
+            if (i < parts.size())
+            {
+                // Возвращаем ZombieNode (node.IsDefined() == false)
+                return node["__dummy__name__ZombieNode__"];
+            }
             return node;
+        }
 
         if (!node.IsMap())
-            return YAML::Node();
+        {
+            // Возвращаем ZombieNode (node.IsDefined() == false)
+            return YAML::Node()["__dummy__name__ZombieNode__"];
+        }
 
         YAML_CONFIG_TRY
         string s = parts[i];
