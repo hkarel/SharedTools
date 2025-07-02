@@ -220,6 +220,10 @@ public:
     template<typename T>
     bool setValue(YAML::Node& baseNode, const string& name, const T& value);
 
+    // Устанавливает NULL значение (~) в ноду с именем name
+    bool setNull(const string& name);
+    bool setNull(YAML::Node& baseNode, const string& name);
+
     // Функции по работе с подстановочными параметрами
     void addSubstitute(const string& keyval /* "key=value" */);
     void addSubstitute(const string& key, const string& value);

@@ -482,6 +482,20 @@ void Config::setNodeStyle(YAML::Node& baseNode, const string& name,
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN((void)0))
 }
 
+bool Config::setNull(const string& name)
+{
+    return setNull(_root, name);
+}
+
+bool Config::setNull(YAML::Node& baseNode, const string& name)
+{
+    return setValue(name, [](YamlConfig*, YAML::Node& n, bool)
+    {
+        n = YAML::Node(YAML::NodeType::Null);
+        return true;
+    });
+}
+
 void Config::addSubstitute(const string& keyval)
 {
     Locker locker {this}; (void) locker;
