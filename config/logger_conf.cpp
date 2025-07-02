@@ -75,20 +75,37 @@ bool createLoggerParams(const string& loggerFile)
         modify = true;
     }
 
-    string logFile;
+    string dummyStr;
+
 #ifdef MINGW
-    if (!config::base().getValue("logger.file_win", logFile))
+    if (!config::base().getValue("logger.file_win", dummyStr))
     {
         config::base().setValue("logger.file_win", loggerFile);
         modify = true;
     }
+    if (!config::base().getValue("logger.conf_win", dummyStr))
+    {
+        config::base().setNull("logger.conf_win");
+        modify = true;
+    }
 #else
-    if (!config::base().getValue("logger.file", logFile))
+    if (!config::base().getValue("logger.file", dummyStr))
     {
         config::base().setValue("logger.file", loggerFile);
         modify = true;
     }
+    if (!config::base().getValue("logger.conf", dummyStr))
+    {
+        config::base().setNull("logger.conf");
+        modify = true;
+    }
 #endif
+
+    if (!config::base().getValue("logger.filters", dummyStr))
+    {
+        config::base().setNull("logger.filters");
+        modify = true;
+    }
 
     bool ret = true;
     if (modify)
