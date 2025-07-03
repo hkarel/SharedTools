@@ -458,7 +458,10 @@ Filter::Check Filter::check(const Message& m) const
         return Check::NoLock;
 
     if ((m.level == Error) && !_filteringErrors)
-        return Check::MessError;
+    {
+        //return Check::MessError;
+        return Check::Success;
+    }
 
     if (checkImpl(m))
     {
@@ -783,12 +786,12 @@ bool Saver::skipMessage(const Message& m, const Filter::List& filters)
     for (Filter* filter : filters)
     {
         Filter::Check res = filter->check(m);
-        if (res == Filter::Check::MessError)
-        {
-            // Прерываем фильтрацию на первом фильтре, который не фильтрует
-            // сообщения об ошибках
-            return false;
-        }
+        //if (res == Filter::Check::MessError)
+        //{
+        //    // Прерываем фильтрацию на первом фильтре, который не фильтрует
+        //    // сообщения об ошибках
+        //    return false;
+        //}
         if (res == Filter::Check::Fail)
             return true;
     }
