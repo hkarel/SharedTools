@@ -550,7 +550,10 @@ void printSaversInfo()
         logLine << "]";
 
         if (SaverFile* fsaver = dynamic_cast<SaverFile*>(saver))
+        {
+            logLine << "; continue: " << fsaver->isContinue();
             logLine << "; file: " << fsaver->filePath();
+        }
     }
 
     // Составляем список фильтров
