@@ -732,6 +732,14 @@ void Saver::setMaxLineSize(int val)
     _maxLineSize = val;
 }
 
+void Saver::setConfigured(bool val)
+{
+    if (locked())
+        return;
+
+    _configured = val;
+}
+
 void Saver::flush(const MessageList& messages)
 {
     if (!_active)

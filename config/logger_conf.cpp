@@ -158,6 +158,8 @@ bool configDefaultSaver()
     if (maxLineSize >= 0)
         saver->setMaxLineSize(maxLineSize);
 
+    saver->setConfigured(true);
+
     // Загружаем фильтры для дефолтного сейвера
     Filter::List filters;
     { //Block for locker
@@ -170,6 +172,15 @@ bool configDefaultSaver()
 
     Saver::List savers;
     savers.add(saver.detach());
+
+    // Сохраняем сейверы созданные программно
+    for (Saver* saver : logger().savers(false))
+        if (!saver->configured())
+        {
+            saver->add_ref();
+            savers.add(saver);
+        }
+
     logger().setSavers(savers);
     return true;
 }
@@ -192,8 +203,18 @@ void configExtendedSavers()
                 substitutes.emplace(sbt);
 
             Saver::List savers;
+
+            // Сохраняем сейвер по умолчанию
             if (Saver::Ptr default_ = logger().findSaver("default"))
                 savers.add(default_.detach());
+
+            // Сохраняем сейверы созданные программно
+            for (Saver* saver : logger().savers(false))
+                if (!saver->configured())
+                {
+                    saver->add_ref();
+                    savers.add(saver);
+                }
 
             if (loadSavers(logConf, savers, substitutes))
                 logger().setSavers(savers);
