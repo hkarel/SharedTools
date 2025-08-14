@@ -366,10 +366,14 @@ Saver::Ptr createSaver(const YAML::Node& ysaver, const Filter::List& filters,
     Saver::Ptr saver = (file == "stdout")
                        ? Saver::Ptr(new SaverStdOut(name, level, false))
                        : Saver::Ptr(new SaverFile(name, file, level, isContinue));
+
     if (active >= 0)
         saver->setActive(active);
+
     if (maxLineSize >= 0)
         saver->setMaxLineSize(maxLineSize);
+
+    saver->setConfigured(true);
 
     for (const string& filterName : filterNames)
     {

@@ -432,6 +432,11 @@ public:
     int  maxLineSize() const {return _maxLineSize;}
     void setMaxLineSize(int);
 
+    // Признак определяет, что настройки сейвера взяты из конфигурационного
+    // файла
+    bool configured() const {return _configured;}
+    void setConfigured(bool);
+
     // Выполняет запись буфера сообщений
     void flush(const MessageList&);
 
@@ -483,6 +488,7 @@ private:
     bool   _locked = {false};
     Level  _level = {Error};
     int    _maxLineSize = {5000};
+    bool   _configured = {false};
 
     Filter::List  _filters;
     atomic_bool _filtersActive = {true};
