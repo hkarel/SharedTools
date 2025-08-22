@@ -297,6 +297,7 @@ public:
 
     // Динамическое преобразование типа
     template<typename other_cptrT>
+    [[deprecated("Unsafe use of dynamic_cast_to() in container_ptr, use clife_ptr instead")]]
     other_cptrT dynamic_cast_to() const {
         return (dynamic_cast_is_possible<other_cptrT>())
                ? other_cptrT(_counter, 0, 0)
