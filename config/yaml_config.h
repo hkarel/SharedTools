@@ -110,6 +110,7 @@ public:
 #endif
 
     Config() = default;
+    ~Config();
 
     // Читает yaml-структуру из файла.
     // Параметры:

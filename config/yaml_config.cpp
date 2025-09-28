@@ -105,6 +105,11 @@ Config::Locker::~Locker()
     config->_configLock.unlock();
 }
 
+Config::~Config()
+{
+    _root.destroy_cross_references();
+}
+
 bool Config::readFile(const string& filePath, bool checkBeginHyphens)
 {
     Locker locker {this}; (void) locker;
