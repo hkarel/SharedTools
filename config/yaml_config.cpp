@@ -414,6 +414,18 @@ YAML::Node Config::nodeGet(const YAML::Node& baseNode, const string& name,
     return node;
 }
 
+bool Config::nodeExists(const string& name) const
+{
+    Locker locker {this}; (void) locker;
+    return (bool)this->node(_root, name);
+}
+
+bool Config::nodeExists(const YAML::Node& baseNode, const string& name) const
+{
+    Locker locker {this}; (void) locker;
+    return (bool)this->node(baseNode, name);
+}
+
 YAML::Node Config::nodeSet(YAML::Node& baseNode, const string& name)
 {
     vector<string> parts = utl::split(name, '.');

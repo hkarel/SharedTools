@@ -182,6 +182,12 @@ public:
     YAML::Node nodeGet(const YAML::Node& baseNode, const string& name,
                        bool logWarn = true) const;
 
+    // Проверяет существование ноды с именем name
+    bool nodeExists(const string& name) const;
+
+    // Проверяет существование ноды с именем name относительно базовой ноды
+    bool nodeExists(const YAML::Node& baseNode, const string& name) const;
+
     // Возвращает стиль записи для ноды с именем name
     YAML::EmitterStyle::value nodeStyle(const string& name) const;
 
