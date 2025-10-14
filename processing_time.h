@@ -112,3 +112,65 @@
         if (++__processing_time__.index == __processing_time__.count) \
             __processing_time__.index = 0; \
     }
+
+//----------------------------------------------------------------------------
+
+#define DECL_PROCESSING_TIME2_BEGIN(TIMEOUT /*сек*/) \
+    struct { \
+        bool enabled = {true}; \
+        bool print_times = {true}; \
+        int64_t timeout = {TIMEOUT*1000*1000}; \
+        steady_timer print_timer; \
+        steady_timer timer; \
+        struct time_array : std::vector<int64_t> \
+        { \
+            time_array(size_t num) {reserve(num);} \
+        };
+
+#define DECL_PROCESSING_TIME2_LABEL(LABEL) \
+        time_array test##LABEL {500};
+
+#define DECL_PROCESSING_TIME2_END \
+    } __processing_time2__;
+
+#define ENABLED_PROCESSING_TIME2(VAL) \
+    __processing_time2__.enabled = VAL;
+
+#define RESET_PROCESSING_TIME2 \
+    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
+        if (__processing_time2__.print_times) { \
+            __processing_time2__.print_timer.reset(); \
+            __processing_time2__.print_times = false; \
+        } \
+        __processing_time2__.timer.reset(); \
+        if (__processing_time2__.print_timer.elapsed<chrono::microseconds>() > __processing_time2__.timeout) \
+            __processing_time2__.print_times = true; \
+    }
+
+#define TRACE_PROCESSING_TIME2(LABEL) \
+    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
+        __processing_time2__.test##LABEL.push_back(__processing_time2__.timer.elapsed<chrono::microseconds>()); \
+    }
+
+#define PRINT_PROCESSING_TIME2(LABEL) \
+    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
+        if (__processing_time2__.print_times) { \
+            log_debug2_m << "Processing time (average) "#LABEL << ": " \
+                         << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
+            __processing_time2__.test##LABEL.clear(); \
+    }}
+
+/**
+  LOG_PROCESSING_TIME2 объединяет два макроса: TRACE_PROCESSING_TIME2 и PRINT_PROCESSING_TIME2
+*/
+#define LOG_PROCESSING_TIME2(LABEL) \
+    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
+        /* TRACE_PROCESSING_TIME2 */ \
+        __processing_time2__.test##LABEL.push_back(__processing_time2__.timer.elapsed<chrono::microseconds>()); \
+        /* PRINT_PROCESSING_TIME2 */ \
+        if (__processing_time2__.print_times) { \
+            log_debug2_m << "Processing time (average) "#LABEL << ": " \
+                         << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
+            __processing_time2__.test##LABEL.clear(); \
+    }}
+
