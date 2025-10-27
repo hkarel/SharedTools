@@ -115,7 +115,6 @@ inline bool checkBounds(int index, const ListType& list)
 */
 class ListExcept : public std::exception
 {
-  char _msg[512];
 public:
   ListExcept(const char* msg, const char*  func)
   {
@@ -126,6 +125,9 @@ public:
     strcat(_msg, msg);
   }
   virtual const char* what() const noexcept {return _msg;}
+
+private:
+  char _msg[512];
 };
 
 constexpr const char* ERR_NOCREATE_OBJ =
@@ -644,7 +646,6 @@ private:
   CustomList() {}
   ~CustomList() {}
 
-private:
   CustomList(CustomListType&&) = delete;
   CustomList(const CustomListType&) = delete;
 
