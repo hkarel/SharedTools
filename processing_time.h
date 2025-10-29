@@ -88,8 +88,11 @@
 #define PRINT_PROCESSING_TIME(LABEL) \
     if (__processing_time__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         if (__processing_time__.index == (__processing_time__.count - 1)) { \
-            log_debug2_m << "Processing time (average) "#LABEL << ": " \
-                         << alog::round(utl::average(__processing_time__.test##LABEL), 3) << " us"; \
+            if (__processing_time__.test##LABEL.size()) \
+                log_debug2_m << "Processing time (average) "#LABEL << ": " \
+                             << alog::round(utl::average(__processing_time__.test##LABEL), 3) << " us"; \
+            else \
+                log_debug2_m << "Processing time (average) "#LABEL << ": none"; \
             __processing_time__.test##LABEL.clear(); \
     }}
 
@@ -102,8 +105,11 @@
         __processing_time__.test##LABEL.push_back(__processing_time__.timer.elapsed<chrono::microseconds>()); \
         /* PRINT_PROCESSING_TIME */ \
         if (__processing_time__.index == (__processing_time__.count - 1)) { \
-            log_debug2_m << "Processing time (average) "#LABEL << ": " \
-                         << alog::round(utl::average(__processing_time__.test##LABEL), 3) << " us"; \
+            if (__processing_time__.test##LABEL.size()) \
+                log_debug2_m << "Processing time (average) "#LABEL << ": " \
+                             << alog::round(utl::average(__processing_time__.test##LABEL), 3) << " us"; \
+            else \
+                log_debug2_m << "Processing time (average) "#LABEL << ": none"; \
             __processing_time__.test##LABEL.clear(); \
     }}
 
@@ -155,8 +161,11 @@
 #define PRINT_PROCESSING_TIME2(LABEL) \
     if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         if (__processing_time2__.print_times) { \
-            log_debug2_m << "Processing time (average) "#LABEL << ": " \
-                         << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
+            if (__processing_time2__.test##LABEL.size()) \
+                log_debug2_m << "Processing time (average) "#LABEL << ": " \
+                             << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
+            else \
+                log_debug2_m << "Processing time (average) "#LABEL << ": none"; \
             __processing_time2__.test##LABEL.clear(); \
     }}
 
@@ -169,8 +178,11 @@
         __processing_time2__.test##LABEL.push_back(__processing_time2__.timer.elapsed<chrono::microseconds>()); \
         /* PRINT_PROCESSING_TIME2 */ \
         if (__processing_time2__.print_times) { \
-            log_debug2_m << "Processing time (average) "#LABEL << ": " \
-                         << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
+            if (__processing_time2__.test##LABEL.size()) \
+                log_debug2_m << "Processing time (average) "#LABEL << ": " \
+                             << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
+            else \
+                log_debug2_m << "Processing time (average) "#LABEL << ": none"; \
             __processing_time2__.test##LABEL.clear(); \
     }}
 
