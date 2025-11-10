@@ -126,8 +126,10 @@
         bool enabled = {true}; \
         bool print_times = {true}; \
         int64_t timeout = {TIMEOUT*1000*1000}; \
+        int64_t diff_sum = {0}; \
         steady_timer print_timer; \
         steady_timer timer; \
+        steady_timer diff_timer; \
         struct time_array : std::vector<int64_t> \
         { \
             time_array(size_t num) {reserve(num);} \
@@ -142,12 +144,13 @@
 #define ENABLED_PROCESSING_TIME2(VAL) \
     __processing_time2__.enabled = VAL;
 
-#define RESET_PROCESSING_TIME2 \
+#define BEGIN_PROCESSING_TIME2 \
     if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         if (__processing_time2__.print_times) { \
             __processing_time2__.print_timer.reset(); \
             __processing_time2__.print_times = false; \
         } \
+        __processing_time2__.diff_sum = 0;  \
         __processing_time2__.timer.reset(); \
         if (__processing_time2__.print_timer.elapsed<chrono::microseconds>() > __processing_time2__.timeout) \
             __processing_time2__.print_times = true; \
@@ -186,3 +189,24 @@
             __processing_time2__.test##LABEL.clear(); \
     }}
 
+#define BEGIN_PROCESSING_DIFF_TIME2 \
+    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
+        __processing_time2__.diff_sum = 0; \
+        __processing_time2__.diff_timer.reset(); \
+    }
+
+#define TRACE_PROCESSING_DIFF_TIME2(LABEL, ITERATION_COUNT) \
+    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
+        int64_t t = __processing_time2__.diff_timer.elapsed<chrono::microseconds>(); \
+        __processing_time2__.test##LABEL.push_back(t * ITERATION_COUNT); \
+        __processing_time2__.diff_sum += t; \
+        __processing_time2__.diff_timer.reset(); \
+    }
+
+#define TRACE_PROCESSING_DIFF_SUM2(LABEL, ITERATION_COUNT) \
+    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
+        __processing_time2__.test##LABEL.push_back(__processing_time2__.diff_sum * ITERATION_COUNT); \
+    }
+
+#define PRINT_PROCESSING_DIFF_TIME2(LABEL) PRINT_PROCESSING_TIME2(LABEL)
+#define PRINT_PROCESSING_DIFF_SUM2(LABEL)  PRINT_PROCESSING_TIME2(LABEL)
