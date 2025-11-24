@@ -1047,6 +1047,9 @@ DECL_IMPL_CUSTLIST_SUBTMPL2(FindResult, U, CompareU)::findRef(const U& item,
   return find<U, CompareU>(&item, compare, extParams);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare,
                                                          const FindExtParams& extParams) const
 {
@@ -1141,6 +1144,8 @@ DECL_IMPL_CUSTLIST_SUBTMPL1(FindResult, CompareL)::findL(const CompareL& compare
   {}
   return FindResult(false, BruteForce::Yes, d->count);
 }
+
+#pragma GCC diagnostic pop
 
 DECL_IMPL_CUSTLIST_SUBTMPL1(T*, CompareL)::findItemL(const CompareL& compare,
                                                      const FindExtParams& extParams) const
@@ -1644,6 +1649,9 @@ DECL_IMPL_LIST(void)::assign(const CustomListType& list)
   setSortState(list.sortState());
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::qsort(T** sortList,
                                                int L, int R,
                                                CompareU& compare,
@@ -1676,6 +1684,8 @@ DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::qsort(T** sortList,
   if (L < j) qsort(sortList, L, j, compare, sortMode);
   if (i < R) qsort(sortList, i, R, compare, sortMode);
 }
+
+#pragma GCC diagnostic pop
 
 DECL_IMPL_LIST_SUBTMPL1(void, CompareU)::sort(CompareU& compare,
                                               SortMode sortMode,

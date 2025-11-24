@@ -603,7 +603,11 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
 {
     QList<T> list;
     bool res = getValueVector(node, name, list, logWarn);
+#if QT_VERSION > QT_VERSION_CHECK(5, 14, 0)
+    value = QSet<T>(list.begin(), list.end());
+#else
     value = list.toSet();
+#endif
     return res;
 }
 
@@ -722,7 +726,7 @@ template<typename T>
 bool Config::setValueInternal(YAML::Node& node, const string& name,
                               const QSet<T>& value)
 {
-    return setValueVector(node, name, value.toList());
+    return setValueVector(node, name, value.values());
 }
 
 template<typename T>

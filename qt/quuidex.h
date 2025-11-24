@@ -70,7 +70,8 @@ public:
         ((quint64*) this)[0] = ui1;
         ((quint64*) this)[1] = ui2;
     }
-    QUuidT& operator= (const QUuid &u) noexcept
+    QUuidT& operator= (const QUuidT &u) = default;
+    QUuidT& operator= (const QUuid  &u) noexcept
     {
         QUuid::operator= (u);
         return *this;
