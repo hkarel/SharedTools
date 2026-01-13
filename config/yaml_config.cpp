@@ -283,7 +283,7 @@ bool Config::saveFile(const string& filePath, YAML::EmitterStyle::value nodeStyl
     return true;
 }
 
-bool Config::saveString(const string& str, YAML::EmitterStyle::value nodeStyle)
+bool Config::saveString(string& str, YAML::EmitterStyle::value nodeStyle)
 {
     if (_saveDisabled)
     {
@@ -294,9 +294,10 @@ bool Config::saveString(const string& str, YAML::EmitterStyle::value nodeStyle)
     Locker locker {this}; (void) locker;
 
     YAML_CONFIG_TRY
-    ostringstream stream {str, ios_base::out};
+    ostringstream stream;
     _root.SetStyle(nodeStyle);
     stream << _root;
+    str = stream.str();
     YAML_CONFIG_CATCH_STRING
     return true;
 }

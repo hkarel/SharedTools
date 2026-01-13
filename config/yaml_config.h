@@ -149,9 +149,10 @@ public:
     bool saveFile(const string& filePath = string(),
             YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Block);
 
-    // Сохраняет данные в строку, при этом флаг изменений (changed) не сбрасывается
-    // в FALSE. Для сброса флага изменений нужно явно вызвать функцию resetChanged()
-    bool saveString(const string&,
+    // Сохраняет данные  в строку  str,  при  этом  флаг  изменений  (changed)
+    // не сбрасывается в FALSE. Для сброса флага изменений нужно явно  вызвать
+    // функцию resetChanged()
+    bool saveString(string& str,
             YAML::EmitterStyle::value nodeStyle = YAML::EmitterStyle::Block);
 
     // Возвращает полное имя файла конфигурации
