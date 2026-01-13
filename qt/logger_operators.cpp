@@ -27,7 +27,7 @@
 
 namespace alog {
 
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 inline std::string QStringToUtf8(const QString& s) {return s.toStdString();}
 inline std::string QByteArrayToUtf8(const QByteArray& b) {return b.toStdString();}
 #else
@@ -127,7 +127,7 @@ Line& operator<< (Line& line, const QVariant& v)
     if (!line.toLogger())
         return line;
 
-#if QT_VERSION >= 0x060000
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     const int vType = v.typeId();
     if (vType == qMetaTypeId<float>())
 #else
@@ -214,7 +214,7 @@ Line& operator<< (Line& line, const QVariant& v)
                 line << "Invalid QDateTime";
             break;
         }
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         case QVariant::Uuid:
         {
             const QUuid& u = v.toUuid();
@@ -229,7 +229,7 @@ Line& operator<< (Line& line, const QVariant& v)
                 const QUuidEx& u = v.value<QUuidEx>();
                 line << u;
             }
-#if QT_VERSION < 0x050000
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
             else if (v.userType() == qMetaTypeId<QUuid>())
             {
                 const QUuid& u = v.value<QUuid>();

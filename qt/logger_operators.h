@@ -93,7 +93,7 @@ Line& operator<< (Line& line, const QPair<T, U>& p)
     return line;
 }
 
-#if QT_VERSION < 0x060000
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 template<typename T>
 Line& operator<< (Line& line, const QVector<T>& v)
 {

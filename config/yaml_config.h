@@ -284,7 +284,7 @@ private:
 
 #if defined(QT_CORE_LIB)
 
-#if QT_VERSION < 0x060000
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     template<typename T>
     bool getValueInternal(const YAML::Node& node, const string& name,
                           QVector<T>& value, bool logWarn) const;
@@ -338,7 +338,7 @@ private:
 
 #if defined(QT_CORE_LIB)
 
-#if QT_VERSION < 0x060000
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     template<typename T>
     bool setValueInternal(YAML::Node& node, const string& name,
                           const QVector<T>& value);
@@ -588,7 +588,7 @@ bool Config::getValueInternal(const YAML::Node& node, const string& name,
 
 #if defined(QT_CORE_LIB)
 
-#if QT_VERSION < 0x060000
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 template<typename T>
 bool Config::getValueInternal(const YAML::Node& node, const string& name,
                               QVector<T>& value, bool logWarn) const
@@ -713,7 +713,7 @@ bool Config::setValueInternal(YAML::Node& node, const string& name,
 
 #if defined(QT_CORE_LIB)
 
-#if QT_VERSION < 0x060000
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 template<typename T>
 bool Config::setValueInternal(YAML::Node& node, const string& name,
                               const QVector<T>& value)

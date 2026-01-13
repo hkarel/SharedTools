@@ -187,7 +187,7 @@ bool readHostAddress(const YamlConfig& conf, const YAML::Node& baseNode,
 
     if (hostAddressStr == "localhost")    hostAddress = QHostAddress::LocalHost;
     else if (hostAddressStr == "any")     hostAddress = QHostAddress::Any;
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     else if (hostAddressStr == "any_ip4") hostAddress = QHostAddress::AnyIPv4;
     else if (hostAddressStr == "any_ip6") hostAddress = QHostAddress::AnyIPv6;
 #else
