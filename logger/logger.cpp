@@ -833,13 +833,6 @@ void SaverStdOut::flushImpl(const MessageList& messages)
 
     removeIdsTimeoutThreads();
 
-    vector<char> lineBuff;
-    if (maxLineSize() > 0)
-    {
-        lineBuff.resize(maxLineSize() + 1);
-        lineBuff[maxLineSize()] = '\0';
-    }
-
     unsigned flushCount = 0;
     Filter::List filters = this->filters();
 
@@ -868,8 +861,38 @@ void SaverStdOut::flushImpl(const MessageList& messages)
         }
         if ((maxLineSize() > 0) && (maxLineSize() < int(pstr->size())))
         {
-            strncpy(&lineBuff[0], pstr->c_str(), maxLineSize());
-            (*_out) << (char*) &lineBuff[0];
+            const unsigned char u8trait = (1 << 7);
+            const unsigned char u8begin = (1 << 7) | (1 << 6);
+
+            const char* cb = pstr->c_str();
+            const char* ce = cb + maxLineSize();
+
+            // Корректная обрезка по границе utf8-символа
+            if ((*ce & u8trait) == u8trait)
+                while (true)
+                {
+                    if ((*ce & u8begin) == u8begin)
+                        break;
+                    if (--ce <= cb)
+                        break;
+                }
+
+            bool u8err = false;
+            int lineSize = maxLineSize();
+            if (ce > cb)
+                lineSize = ce - cb;
+            else
+                u8err = true;
+
+            vector<char> lineBuff;
+            lineBuff.resize(lineSize + 1);
+            lineBuff[lineSize] = '\0';
+
+            strncpy(lineBuff.data(), pstr->c_str(), lineSize);
+            (*_out) << (char*) lineBuff.data();
+
+            if (u8err)
+                (*_out) << "\nERROR Bad cropping along utf8-character border";
         }
         else
             (*_out) << *pstr;
@@ -922,13 +945,6 @@ void SaverFile::flushImpl(const MessageList& messages)
 
     removeIdsTimeoutThreads();
 
-    vector<char> lineBuff;
-    if (maxLineSize() > 0)
-    {
-        lineBuff.resize(maxLineSize() + 1);
-        lineBuff[maxLineSize()] = '\0';
-    }
-
     unsigned flushCount = 0;
     Filter::List filters = this->filters();
 
@@ -954,8 +970,38 @@ void SaverFile::flushImpl(const MessageList& messages)
         }
         if ((maxLineSize() > 0) && (maxLineSize() < int(pstr->size())))
         {
-            strncpy(lineBuff.data(), pstr->c_str(), maxLineSize());
+            const unsigned char u8trait = (1 << 7);
+            const unsigned char u8begin = (1 << 7) | (1 << 6);
+
+            const char* cb = pstr->c_str();
+            const char* ce = cb + maxLineSize();
+
+            // Корректная обрезка по границе utf8-символа
+            if ((*ce & u8trait) == u8trait)
+                while (true)
+                {
+                    if ((*ce & u8begin) == u8begin)
+                        break;
+                    if (--ce <= cb)
+                        break;
+                }
+
+            bool u8err = false;
+            int lineSize = maxLineSize();
+            if (ce > cb)
+                lineSize = ce - cb;
+            else
+                u8err = true;
+
+            vector<char> lineBuff;
+            lineBuff.resize(lineSize + 1);
+            lineBuff[lineSize] = '\0';
+
+            strncpy(lineBuff.data(), pstr->c_str(), lineSize);
             fputs(lineBuff.data(), f);
+
+            if (u8err)
+                fputs("\nERROR Bad cropping along utf8-character border", f);
         }
         else
             fputs(pstr->c_str(), f);
