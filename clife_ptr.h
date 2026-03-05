@@ -142,6 +142,9 @@ public:
         return other_cptrT();
     }
 
+    static self_t create() {return self_t(new T);}
+    static self_t create(const T& x) {return self_t(new T(x));}
+
     void release() {if (_ptr) {release(_ptr); _ptr = nullptr;}}
     void reset()   {if (_ptr) {release(_ptr); _ptr = nullptr;}}
 
