@@ -1215,16 +1215,19 @@ DECL_IMPL_CUSTLIST_INTERN_TYPE(RangeType)::range(const FindResultRange& frr) con
   TYPE List<T, Compare, Allocator>
 
 DECL_IMPL_LIST_CONSTR::List()
+  : CustomList<T, Compare, Allocator>()
 {
   init(Container::Yes);
 }
 
 DECL_IMPL_LIST_CONSTR::List(Container container)
+  : CustomList<T, Compare, Allocator>()
 {
   init(container);
 }
 
 DECL_IMPL_LIST_CONSTR::List(const Allocator& allocator, Container container)
+  : CustomList<T, Compare, Allocator>()
 {
   init(container);
   setAllocator(allocator);
@@ -1237,6 +1240,7 @@ DECL_IMPL_LIST_CONSTR::List(SelfListType&& list)
 }
 
 DECL_IMPL_LIST_CONSTR::List(const SelfListType& list)
+  : CustomList<T, Compare, Allocator>()
 {
   init(list.container());
   assign(list);
