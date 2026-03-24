@@ -28,7 +28,6 @@
 #include "break_point.h"
 #include "spin_locker.h"
 #include "prog_abort.h"
-#include "utils.h"
 
 #include <cerrno>
 #include <chrono>
@@ -555,6 +554,18 @@ void Config::setSubstitutes(const Substitutes& val)
 {
     Locker locker {this}; (void) locker;
     _substitutes = val;
+}
+
+int Config::rounding() const
+{
+    Locker locker {this}; (void) locker;
+    return _rounding;
+}
+
+void Config::setRounding(int val)
+{
+    Locker locker {this}; (void) locker;
+    _rounding = val;
 }
 
 void Config::performSubstitute(string& str) const

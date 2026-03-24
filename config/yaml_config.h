@@ -27,6 +27,7 @@
 #pragma once
 
 #include "defmac.h"
+#include "utils.h"
 #include "safe_singleton.h"
 #include "logger/logger.h"
 #include "logger/format.h"
@@ -64,7 +65,7 @@ using namespace std;
 namespace detail {
 
 #if defined(QT_CORE_LIB)
-#define YAML_TYPES(TYPE) is_fundamental<TYPE>::value \
+#define YAML_TYPES(TYPE) std::is_fundamental<TYPE>::value \
                          || std::is_same<TYPE, std::string>::value \
                          || std::is_same<TYPE, QString>::value \
                          || std::is_same<TYPE, QUuid>::value \
@@ -240,6 +241,12 @@ public:
     Substitutes substitutes() const;
     void setSubstitutes(const Substitutes&);
 
+    // Ограничивает количество знаков после запятой при сохранении в файл дей-
+    // ствительных чисел. По умолчанию значение параметра равно -1 (количество
+    // знаков не ограничивается)
+    int rounding() const;
+    void setRounding(int);
+
 private:
     DISABLE_DEFAULT_COPY(Config)
 
@@ -252,7 +259,7 @@ private:
     struct ProxyType
     {
         typedef remove_volatile_t<T> Type;
-        static  Type setter(Type t) {return t;}
+        static  Type setter(Type t, const Config*) {return t;}
         static  Type getter(Type t, const Config*) {return t;}
     };
 
@@ -388,6 +395,7 @@ private:
     string _filePath;
     YAML::Node _root;
     Substitutes _substitutes;
+    int _rounding = {-1};
 
     mutable recursive_mutex _configLock;
 
@@ -461,7 +469,7 @@ template<>
 struct Config::ProxyType<string>
 {
     typedef string Type;
-    static string setter(const string& s) {
+    static string setter(const string& s, const Config*) {
         return s;
     }
     static string getter(string s, const Config* c) {
@@ -470,12 +478,38 @@ struct Config::ProxyType<string>
     }
 };
 
+template<>
+struct Config::ProxyType<float>
+{
+    typedef float Type;
+    static float setter(float f, const Config* c) {
+        int rounding = c->rounding();
+        return (rounding >= 0) ? utl::round(f, rounding) : f;
+    }
+    static float getter(float f, const Config*) {
+        return f;
+    }
+};
+
+template<>
+struct Config::ProxyType<double>
+{
+    typedef double Type;
+    static double setter(double d, const Config* c) {
+        int rounding = c->rounding();
+        return (rounding >= 0) ? utl::round(d, rounding) : d;
+    }
+    static double getter(double d, const Config*) {
+        return d;
+    }
+};
+
 #if defined(QT_CORE_LIB)
 template<>
 struct Config::ProxyType<QString>
 {
     typedef string Type;
-    static Type setter(const QString& s) {
+    static string setter(const QString& s, const Config*) {
         return Type(s.toUtf8().constData());
     }
     static QString getter(string s, const Config* c) {
@@ -487,9 +521,9 @@ template<>
 struct Config::ProxyType<QUuid>
 {
     typedef string Type;
-    static Type setter(const QUuid& u) {
+    static string setter(const QUuid& u, const Config*) {
         QByteArray ba = u.toByteArray(); ba.remove(0, 1); ba.chop(1);
-        return Type(ba.constData());
+        return string(ba.constData());
     }
     static QUuid getter(const string& s, const Config*) {
         return QUuid(QByteArray::fromRawData(s.c_str(), int(s.size())));
@@ -499,8 +533,8 @@ template<>
 struct Config::ProxyType<QUuidEx>
 {
     typedef string Type;
-    static Type setter(const QUuidEx& u) {
-        return ProxyType<QUuid>::setter(u);
+    static string setter(const QUuidEx& u, const Config*) {
+        return ProxyType<QUuid>::setter(u, nullptr);
     }
     static QUuidEx getter(const string& s, const Config*) {
         return ProxyType<QUuid>::getter(s, nullptr);
@@ -684,7 +718,7 @@ template<typename T>
 bool Config::setValueBase(YAML::Node& node, const string& name, const T& value)
 {
     YAML_CONFIG_TRY
-    node = YAML::Node(ProxyType<T>::setter(value));
+    node = YAML::Node(ProxyType<T>::setter(value, this));
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return true;
@@ -699,7 +733,7 @@ bool Config::setValueVector(YAML::Node& node, const string& name,
     node.SetStyle(YAML::EmitterStyle::Flow);
     typedef typename VectorT::value_type ValueType;
     for (const ValueType& v : value)
-        node.push_back(ProxyType<ValueType>::setter(v));
+        node.push_back(ProxyType<ValueType>::setter(v, this));
     YAML_CONFIG_CATCH(YAML_SET_FUNC, YAML_RETURN(false))
     _changed = true;
     return true;
