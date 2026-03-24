@@ -50,7 +50,7 @@ using namespace std;
 
 /**
   Сервисная структура, позволяет ассоциировать линейный буфер в памяти
-  с потоковыми механизмами.
+  с потоковыми механизмами
 */
 struct MemBuff : std::streambuf
 {
@@ -66,10 +66,10 @@ string& ltrim(string&);
 string& rtrim(string&);
 string& trim(string&);
 
-// Устанавливает текущую директорию по имени исполняемого файла.
+// Устанавливает текущую директорию по имени исполняемого файла
 bool setCurrentDir(char* binaryPath);
 
-// Записывает PID в файл.
+// Записывает PID в файл
 void savePidFile(const string& fileName);
 
 // Аналог функции sprintf, в качестве результата возвращает отформатированную
@@ -86,12 +86,12 @@ string formatMessage(const char* format, ...);
 // когда нужно избежать постоянного  присвоения  одного и того же значения
 // атомарной переменной. В примере ниже  переменной  atomic_val  постоянно
 // присваивается значения true. Каждое присвоение приводит к сбросу  линии
-// кеша процессора, что снижает производительность.
-// while (true) {
-//    ...
-//    if (true)
-//        atomic_val = true
-// }
+// кеша процессора, что снижает производительность:
+//   while (true) {
+//      ...
+//      if (true)
+//          atomic_val = true
+//   }
 inline bool assign(atomic_bool& a, bool value)
 {
     bool b = !value;
@@ -126,26 +126,26 @@ string toString(long long val);
 string toString(unsigned long long val);
 #endif
 
-// Выполняет преобразование UUID в строковое представление.
+// Выполняет преобразование UUID в строковое представление
 string uuidToString(const uint8_t uuid[16]);
 
 // Аналогична функции uuidToString(const uint8_t uuid[16]), но результат пишется
-// в параметр result.
+// в параметр result
 void uuidToString(const uint8_t uuid[16], uint8_t result[40]);
 
 // Выполняет преобразование UUID в шестнадцатеричное строковое представление.
 // Параметр addHexPrefix определяет будет ли в начало результирующей строки
-// добавлен признак шестнадцатеричного представления '0x'.
+// добавлен признак шестнадцатеричного представления '0x'
 string uuidToHexString(const uint8_t uuid[16], bool addHexPrefix = true);
 
 // Аналог функции uuidToHexString(const uint8_t uuid[16], bool addHexPrefix),
-// но результат пишется в параметр result.
+// но результат пишется в параметр result
 void uuidToHexString(const uint8_t uuid[16], uint8_t result[40], bool addHexPrefix);
 
 // Разделяет строку на список строк согласно указанному разделителю.
 //   str - исходная строка;
 //   delim - разделитель;
-//   keepEmptyParts - сохранять в результирующем списке пустые строки.
+//   keepEmptyParts - сохранять в результирующем списке пустые строки
 vector<string> split(const string& str, char delim, bool keepEmptyParts = false);
 
 // Выполняет математическое округление действительного числа number до signCount
@@ -153,7 +153,7 @@ vector<string> split(const string& str, char delim, bool keepEmptyParts = false)
 double round(double number, int signCount);
 
 // Функции сложения/вычитания структур timeval. Они повторяют макросы
-// timeradd/timersub, но в MinGW эти макросы не реализованы.
+// timeradd/timersub, но в MinGW эти макросы не реализованы
 void timeAdd(const timespec& a, const timespec& b, timespec& result);
 void timeSub(const timespec& a, const timespec& b, timespec& result);
 
