@@ -545,6 +545,16 @@ struct Config::ProxyType<QUuidEx>
 template<typename T>
 bool Config::getValue(const string& name, T& value, bool logWarn) const
 {
+    Locker locker {this}; (void) locker;
+
+    if (!_root || _root.IsNull())
+    {
+        if (logWarn)
+            alog::logger().warn(alog_line_location, "Config") << log_format(
+                "Root node is undefined. Impossible get parameter '%?'"
+                ". Config file: %?", name, _filePath);
+        return false;
+    }
     return getValue(_root, name, value, logWarn);
 }
 
@@ -568,8 +578,9 @@ bool Config::getValueBase(const YAML::Node& node, const string& name, T& value,
     if (!node.IsScalar())
     {
         if (logWarn)
-            alog::logger().warn(alog_line_location, "Config")
-                << "Parameter " << (_nameNodeFunc + name) << " is not scalar type";
+            alog::logger().warn(alog_line_location, "Config") << log_format(
+                "Parameter '%?' is not scalar type. Config file: %?",
+                (_nameNodeFunc + name), _filePath);
         return false;
     }
 
@@ -587,8 +598,9 @@ bool Config::getValueVector(const YAML::Node& node, const string& name,
     if (!node.IsSequence())
     {
         if (logWarn)
-            alog::logger().warn(alog_line_location, "Config")
-                << "Parameter " << name << " is not sequence type";
+            alog::logger().warn(alog_line_location, "Config") << log_format(
+                "Parameter '%?' is not sequence type. Config file: %?",
+                name, _filePath);
         return false;
     }
 
@@ -598,9 +610,9 @@ bool Config::getValueVector(const YAML::Node& node, const string& name,
         if (!n.IsScalar())
         {
             if (logWarn)
-                alog::logger().warn(alog_line_location, "Config")
-                    << "Parameter " << name
-                    << ". The elements of sequence are not a scalar type";
+                alog::logger().warn(alog_line_location, "Config")  << log_format(
+                    "Parameter '%?'. The elements of sequence are not a scalar type"
+                    ". Config file: %?", name, _filePath);
             return false;
         }
         YAML_CONFIG_TRY
