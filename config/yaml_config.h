@@ -484,7 +484,7 @@ struct Config::ProxyType<float>
     typedef float Type;
     static float setter(float f, const Config* c) {
         int rounding = c->rounding();
-        return (rounding >= 0) ? utl::round(f, rounding) : f;
+        return (rounding >= 0) ? float(utl::round(f, rounding)) : f;
     }
     static float getter(float f, const Config*) {
         return f;
