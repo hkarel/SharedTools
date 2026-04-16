@@ -899,7 +899,8 @@ string round(double value, int signCount = 2);
 
 } // namespace alog
 
-#define alog_line_location alog::detail::file_name(__FILE__), __func__, __LINE__
+#define alog_line_location   alog::detail::file_name(__FILE__), __func__, __LINE__
+#define alog_line_(LOG_LINE) alog::detail::file_name(__FILE__), __func__, LOG_LINE
 
 #define log_error   alog::logger().error   (alog_line_location)
 #define log_warn    alog::logger().warn    (alog_line_location)
