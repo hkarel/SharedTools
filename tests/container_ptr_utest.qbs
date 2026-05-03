@@ -9,7 +9,7 @@ CppApplication {
     Depends { name: "cpp" }
 
     cpp.cxxFlags: [
-        "-std=c++11",
+        "-std=c++17",
     ]
 
     cpp.defines: [
@@ -17,17 +17,18 @@ CppApplication {
     ]
 
     files: [
+        "../allocator_ptr.h",
         "../container_ptr.h",
         "container_ptr_utest.cpp"
     ]
 
-    property bool testData: {
-        print("=== test ===");
-        for (var i in cpp.includePaths) {
-            print(cpp.includePaths[i]);
-        }
-        for (var i in cpp.systemIncludePaths) {
-            print(cpp.systemIncludePaths[i]);
-        }
-    }
+    // property bool testData: {
+    //     print("=== test ===");
+    //     for (var i in cpp.includePaths) {
+    //         print(cpp.includePaths[i]);
+    //     }
+    //     for (var i in cpp.systemIncludePaths) {
+    //         print(cpp.systemIncludePaths[i]);
+    //     }
+    // }
 }

@@ -15,7 +15,8 @@
 // clang++ -v -std=c++11 -ggdb3 container_ptr_utest.cpp -DCONTAINER_PTR_DEBUG -I/usr/include/c++/4.7 -I/usr/include/x86_64-linux-gnu/c++/4.7 -L/usr/lib/gcc/x86_64-redhat-linux/4.4.4  -o container_ptr_utest
 
 
-struct A {
+struct A
+{
     A() {}
     A(int a) {
         this->a = a;
@@ -29,8 +30,7 @@ struct A {
         a = A_.a;
         A_.a = -1;
     }
-    ~A() {
-    }
+    virtual ~A() {}
     int a = {5};
 };
 struct B : A {};
@@ -54,6 +54,16 @@ struct D
     A a;
 };
 
+struct E
+{
+    virtual ~E() {}
+    int e = {10};
+};
+
+struct F : A, E
+{
+    int f = {15};
+};
 
 template<typename T> struct allocator_ptr_m
 {
@@ -80,6 +90,9 @@ typedef container_ptr<A, other_allocator_ptr> a_other_ptr_t;
 
 typedef container_ptr<B, allocator_ptr_m> b_ptr_t;
 typedef container_ptr<C, allocator_ptr_m> c_ptr_t;
+
+//typedef container_ptr<E, allocator_ptr_m> e_ptr_t;
+//typedef container_ptr<F, allocator_ptr_m> f_ptr_t;
 
 a_ptr_t create_ptr()
 {
@@ -128,15 +141,33 @@ int main()
     a.reset();
     //---
 
-    container_ptr<D> d1 = container_ptr<D>::create_join_ptr(A(1));
+    container_ptr<D> d1 = container_ptr<D>::create_join(A(1));
 
     A aa(2);
-    container_ptr<D> d2 = container_ptr<D>::create_join_ptr(aa);
+    container_ptr<D> d2 = container_ptr<D>::create_join(aa);
 
     const A aa_const(3);
-    container_ptr<D> d3 = container_ptr<D>::create_join_ptr(aa_const);
+    container_ptr<D> d3 = container_ptr<D>::create_join(aa_const);
 
 
+    container_ptr<F> f = container_ptr<F>::create_join();
+
+    container_ptr<A> af = f;
+    std::cout << "af->a: " << af->a << "\n";
+
+
+    container_ptr<E> ef = f;
+    std::cout << "ef->e: " << ef->e << "\n";
+
+    if (container_ptr<F> fa = af.dynamic_cast_to<container_ptr<F>>())
+    {
+        std::cout << "fa->f: " << fa->f << "\n";
+    }
+
+    if (container_ptr<F> fe = ef.dynamic_cast_to<container_ptr<F>>())
+    {
+        std::cout << "fe->f: " << fe->f << "\n";
+    }
 
     //create_ptr();
 
@@ -150,8 +181,5 @@ int main()
 //    c_ptr_t c(new C());
 //    //a = c;
 
-
-
-    //std::cout << "hello\n";
     return 0;
 }

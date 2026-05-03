@@ -47,14 +47,6 @@
 //#include "_memalloc.h"
 //#endif
 
-#if !defined(NDEBUG) || defined(DEBUGGING_ON_RELEASE)
-#define GET_DEBUG  _dbg = get();
-#define GET_DEBUG2 self._dbg = self.get();
-#else
-#define GET_DEBUG
-#define GET_DEBUG2
-#endif
-
 #ifdef CONTAINER_PTR_DEBUG
 #define PRINT_DEBUG(PRINT, VALUE) std::cout << (PRINT) << (VALUE) << "\n";
 #else
@@ -105,17 +97,8 @@ struct counter_ptr_t
     // Зарезервировано
     unsigned int reserved : 30;
 
-    // Указатель на целевой объект.  Используем тип void*  чтобы не возникло
-    // проблем с преобразованием типов.
-    // Параметр ptr должен идти последним в списке параметров, это позволит
-    // сэкономить 4/8 байт при выделении единого сегмента памяти
-    // (см. описание join)
-    void* ptr;
-
-    void* __ptr() {return (join) ? &ptr : ptr;}
-
     counter_ptr_t() noexcept
-        : count(1), dummy(false), join(false), reserved(0), ptr(nullptr)
+        : count(1), dummy(false), join(false), reserved(0)
     {}
 
     ~counter_ptr_t() noexcept = default;
@@ -198,20 +181,16 @@ public:
         // числа экземпляров container_ptr такое  решение  позволит  меньше
         // фрагментировать память
         // _counter = nullptr;
-        GET_DEBUG
     }
 
-    container_ptr(std::nullptr_t) noexcept {
-        GET_DEBUG
-    }
+    container_ptr(std::nullptr_t) noexcept {}
 
     container_ptr(T* p, bool dummy /*см. counter_ptr_t::dummy*/) {
         PRINT_DEBUG("container_ptr(T* p, bool dummy). dummy = ", dummy)
         _counter = create_counter();
-        _counter->ptr = p;
         _counter->join = false;
         _counter->dummy = dummy;
-        GET_DEBUG
+        _data = p;
     }
 
     explicit container_ptr(T* p) : container_ptr(p, false /*dummy*/)
@@ -220,7 +199,7 @@ public:
     ~container_ptr() {
         PRINT_DEBUG("~container_ptr(), container_ptr_check_join: ",
                     (container_ptr_check_join<T, Allocator>::Yes))
-        release(_counter);
+        release();
     }
 
     // Дефолтные функции должны быть определены, иначе компилятор создаст их
@@ -239,16 +218,16 @@ public:
     template<typename otherT, template<typename> class otherA>
     container_ptr(const container_ptr<otherT, otherA>& p) {
         PRINT_DEBUG("container_ptr(const container_ptr<otherT, otherA> &)", "")
-        check_allocators_is_equal(p);
-        check_converting_to_self_type(p);
+        check_allocators_is_equal(&p);
+        check_converting_to_self_type(&p);
         assign(p);
     }
 
     template<typename otherT, template<typename> class otherA>
     self_t& operator= (const container_ptr<otherT, otherA>& p) {
         PRINT_DEBUG("operator= (const container_ptr<otherT, otherA> &)", "")
-        check_allocators_is_equal(p);
-        check_converting_to_self_type(p);
+        check_allocators_is_equal(&p);
+        check_converting_to_self_type(&p);
         assign(p);
         return *this;
     }
@@ -269,16 +248,16 @@ public:
     template<typename otherT, template<typename> class otherA>
     container_ptr(container_ptr<otherT, otherA>&& p) {
         PRINT_DEBUG("container_ptr(container_ptr<otherT, otherA> &&)", "")
-        check_allocators_is_equal(p);
-        check_converting_to_self_type(p);
+        check_allocators_is_equal(&p);
+        check_converting_to_self_type(&p);
         assign_rvalue(p);
     }
 
     template<typename otherT, template<typename> class otherA>
     self_t& operator= (container_ptr<otherT, otherA>&& p) {
         PRINT_DEBUG("operator= (container_ptr<otherT, otherA> &&)", "")
-        check_allocators_is_equal(p);
-        check_converting_to_self_type(p);
+        check_allocators_is_equal(&p);
+        check_converting_to_self_type(&p);
         assign_rvalue(p);
         return *this;
     }
@@ -286,8 +265,7 @@ public:
     // Проверяет возможность динамического преобразования к указанному типу
     template<typename other_cptrT>
     bool dynamic_cast_is_possible() const {
-        other_cptrT p;
-        check_allocators_is_equal(p);
+        check_allocators_is_equal((other_cptrT*)nullptr);
         if (!empty()) {
             typedef typename other_cptrT::element_t other_element_t;
             return dynamic_cast<other_element_t*>(get());
@@ -297,18 +275,19 @@ public:
 
     // Динамическое преобразование типа
     template<typename other_cptrT>
-    [[deprecated("Unsafe use of dynamic_cast_to() in container_ptr, use clife_ptr instead")]]
     other_cptrT dynamic_cast_to() const {
-        return (dynamic_cast_is_possible<other_cptrT>())
-               ? other_cptrT(_counter, 0, 0)
-               : other_cptrT();
+        check_allocators_is_equal((other_cptrT*)nullptr);
+        typedef typename other_cptrT::element_t other_element_t;
+        if (other_element_t* data = dynamic_cast<other_element_t*>(get()))
+            return other_cptrT(_counter, data, 0);
+        return other_cptrT();
     }
 
     //self_t clone() const {
     //    STATIC_CHECK_CPTR(1, No_implement)
     //}
 
-    T* get() const noexcept {return get(_counter);}
+    T* get() const noexcept {return _data;}
 
     T* operator-> () const noexcept {return  get();}
     T& operator*  () const noexcept {return *get();}
@@ -345,16 +324,17 @@ public:
         static_assert(join_yes, "Allocator must have function "
                                 "with signature: destroy(T* x, bool join)");
         self_t self;
-        const int size = sizeof(counter_ptr_t)
-                         - sizeof(((counter_ptr_t*)0)->ptr) + sizeof(T);
+        const int size = sizeof(counter_ptr_t) + sizeof(T);
         void* ptr = malloc(size);
         if (ptr == nullptr)
             throw std::bad_alloc();
+
         self._counter = allocate_counter(ptr);
         self._counter->join = true;
         self._counter->dummy = false;
-        new (get(self._counter)) T(std::forward<Args>(args)...);
-        GET_DEBUG2
+
+        void* ptr_data = (char*)ptr + sizeof(counter_ptr_t);
+        self._data = new (ptr_data) T(std::forward<Args>(args)...);
         return self;
     }
 
@@ -364,14 +344,14 @@ public:
     }
 
 private:
-    // Вспомогательный конструктор, используется в функции dynamic_cast_to().
-    // Добавлены два фиктивных параметра,  чтобы  избежать  неоднозначностей
-    // подстановки при компиляции
-    container_ptr(/*const*/ counter_ptr_t* counter, int, int) {
+    // Вспомогательный конструктор, используется  в  функции dynamic_cast_to().
+    // Добавлен фиктивный параметр int, чтобы избежать неоднозначностей подста-
+    // новки при компиляции
+    container_ptr(/*const*/ counter_ptr_t* counter, T* data, int) {
         _counter = counter;
+        _data = data;
         if (_counter)
             _counter->add_ref();
-        GET_DEBUG
     }
 
 #pragma GCC diagnostic push
@@ -391,42 +371,37 @@ private:
         return (counter_ptr_t*) ptr;
     }
 
-    static void release(counter_ptr_t* counter) {
+    void release() {
         enum {join_yes = container_ptr_check_join<T, Allocator>::Yes};
-        if (counter)
-            if (counter->release() == 0) {
-                if (counter->join) {
-                    container_ptr_destroy<join_yes>::template
-                        destroy<T, Allocator>(get(counter), true);
-                }
-                else {
-                    if (!counter->dummy)
-                        container_ptr_destroy<join_yes>::template
-                            destroy<T, Allocator>(get(counter), false);
-                }
-                counter->~counter_ptr_t();
-                free(counter);
+        if (_counter && (_counter->release() == 0)) {
+            if (_counter->join) {
+                container_ptr_destroy<join_yes>::template
+                    destroy<T, Allocator>(_data, true);
             }
+            else {
+                if (!_counter->dummy)
+                    container_ptr_destroy<join_yes>::template
+                        destroy<T, Allocator>(_data, false);
+            }
+            _counter->~counter_ptr_t();
+            free(_counter);
+        }
     }
 
 #pragma GCC diagnostic pop
 
-    static T* get(counter_ptr_t* counter) noexcept {
-        return static_cast<T*>(counter ? counter->__ptr() : nullptr);
-    }
-
     // Проверяет эквивалентность аллокаторов
     template<typename otherT, template<typename> class otherA>
-    static void check_allocators_is_equal(
-                                      const container_ptr<otherT, otherA>&) {
+    constexpr void check_allocators_is_equal(
+                                 const container_ptr<otherT, otherA>*) const {
         static_assert(allocator_ptr_equal<Allocator, otherA>::Yes,
                       "Allocators must be identical");
     }
 
     // Проверяет корректность преобразования типа otherT к типу T
     template<typename otherT, template<typename> class otherA>
-    static void check_converting_to_self_type(
-                                      const container_ptr<otherT, otherA>&) {
+    constexpr void check_converting_to_self_type(
+                                 const container_ptr<otherT, otherA>*) const {
         static_assert(std::is_base_of<T, otherT>::value,
                       "Type otherT must be derived from T");
     }
@@ -441,30 +416,26 @@ private:
     // Для использования в обычных операторах присваивания и копирования
     template<typename otherT, template<typename> class otherA>
     void assign(const container_ptr<otherT, otherA>& p) {
-        release(_counter);
+        release();
         _counter = p._counter;
+        _data = p._data;
         if (_counter)
             _counter->add_ref();
-        GET_DEBUG
     }
 
     // Для использования в rvalue-операторах присваивания и копирования
     template<typename otherT, template<typename> class otherA>
     void assign_rvalue(container_ptr<otherT, otherA>& p) {
-        release(_counter);
+        release();
         _counter = p._counter;
+        _data = p._data;
         p._counter = nullptr;
-        GET_DEBUG
+        p._data = nullptr;
     }
 
 private:
     counter_ptr_t* _counter = {nullptr};
-
-#if !defined(NDEBUG) || defined(DEBUGGING_ON_RELEASE)
-    // Используется для просмотра в отладчике параметров типа Т,
-    // counter_ptr_t этого делать не позволяет, так как возвращает void*
-    mutable T* _dbg = {nullptr};
-#endif
+    T* _data = {nullptr};
 
     template<typename, template<typename> class> friend class container_ptr;
 };
@@ -472,6 +443,4 @@ private:
 // GCC diagnostic ignored "-Wfree-nonheap-object"
 #pragma GCC diagnostic pop
 
-#undef GET_DEBUG
-#undef GET_DEBUG2
 #undef PRINT_DEBUG
