@@ -27,7 +27,7 @@
 #pragma once
 
 #include "allocator_ptr.h"
-#include <cassert>
+#include <cstddef>
 
 /**
   @brief simple_ptr - почти полный аналог auto_ptr и выполнен на его основе.
@@ -152,4 +152,3 @@ private:
 private:
     T* _ptr = {nullptr};
 };
-
