@@ -164,9 +164,22 @@
 #define PRINT_PROCESSING_TIME2(LABEL) \
     if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
         if (__processing_time2__.print_times) { \
-            if (__processing_time2__.test##LABEL.size()) \
-                log_debug2_m << "Processing time (average) "#LABEL << ": " \
-                             << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
+            if (__processing_time2__.test##LABEL.size()) { \
+                double average = utl::average(__processing_time2__.test##LABEL); \
+                double averageScore = average * 2; \
+                std::vector<int64_t> worst; \
+                for (int64_t v : __processing_time2__.test##LABEL) \
+                    if (v > averageScore) worst.push_back(v); \
+                if (!worst.empty()) \
+                    std::sort(worst.begin(), worst.end(), std::greater<int64_t>()); \
+                alog::Line logLine = log_debug2_m << "Processing time (average) "#LABEL << ": " \
+                                                  << alog::round(average, 3) << " us"; \
+                if (!worst.empty()) { \
+                    logLine << log_format("; worst (%?/%?) :", worst.size(), __processing_time2__.test##LABEL.size()); \
+                    for (size_t i = 0; i < std::min(size_t(5), worst.size()); ++i) \
+                        logLine << " " << worst[i]; \
+                } \
+            } \
             else \
                 log_debug2_m << "Processing time (average) "#LABEL << ": none"; \
             __processing_time2__.test##LABEL.clear(); \
@@ -176,18 +189,8 @@
   LOG_PROCESSING_TIME2 объединяет два макроса: TRACE_PROCESSING_TIME2 и PRINT_PROCESSING_TIME2
 */
 #define LOG_PROCESSING_TIME2(LABEL) \
-    if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
-        /* TRACE_PROCESSING_TIME2 */ \
-        __processing_time2__.test##LABEL.push_back(__processing_time2__.timer.elapsed<chrono::microseconds>()); \
-        /* PRINT_PROCESSING_TIME2 */ \
-        if (__processing_time2__.print_times) { \
-            if (__processing_time2__.test##LABEL.size()) \
-                log_debug2_m << "Processing time (average) "#LABEL << ": " \
-                             << alog::round(utl::average(__processing_time2__.test##LABEL), 3) << " us"; \
-            else \
-                log_debug2_m << "Processing time (average) "#LABEL << ": none"; \
-            __processing_time2__.test##LABEL.clear(); \
-    }}
+    TRACE_PROCESSING_TIME2(LABEL) \
+    PRINT_PROCESSING_TIME2(LABEL)
 
 #define BEGIN_PROCESSING_DIFF_TIME2 \
     if (__processing_time2__.enabled && (alog::logger().level() == alog::Level::Debug2)) { \
