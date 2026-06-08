@@ -27,7 +27,6 @@
 #pragma once
 
 #include "allocator_ptr.h"
-#include <cstddef>
 
 /**
   @brief simple_ptr - почти полный аналог auto_ptr и выполнен на его основе.
@@ -131,6 +130,11 @@ public:
     // Вспомогательные функции
     static self_t create() {return self_t(allocator_t::create());}
     static self_t create(const T& x) {return self_t(allocator_t::create(&x));}
+
+    template<typename... Args>
+    static self_t create(Args&&... args) {
+        return self_t(allocator_t::create(std::forward<Args>(args)...));
+    }
 
     [[deprecated]] static self_t create_ptr() {return self_t(allocator_t::create());}
     [[deprecated]] static self_t create_ptr(const T& x) {return self_t(allocator_t::create(&x));}

@@ -30,6 +30,8 @@
 
 #pragma once
 
+#include <utility>
+
 /**
   Типовой распределитель памяти для еденичного объекта.
   Распределитель памяти не может иметь состояний  и все его  члены  должны
@@ -46,6 +48,9 @@ template<typename T> struct allocator_ptr
     // копирования у инстанциируемого класса
     static T* create() {return new T();}
     static T* create(const T* x) {return (x) ? new T(*x) : new T();}
+
+    template<typename... Args>
+    static T* create(Args&&... args) {return new T(std::forward<Args>(args)...);}
 
     // Функция разрушения объектов
     static void destroy(T* x) {
