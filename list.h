@@ -92,13 +92,13 @@ FindResult lastFindResultL(const ListT&, const CompareL&, const FindResult&);
 template<typename, typename, typename> class CustomList;
 template<typename, typename, typename> class List;
 
-/// @brief Проверяет принадлежность значения index диапазону [minVal-maxVal)
+/// @brief Проверяет принадлежность значения value диапазону [minVal-maxVal)
 ///
 /// Значение minVal включено в диапазон проверки, maxVal - нет
 template<typename T>
-inline bool inRange(T index, T minVal, T maxVal)
+inline bool inRange(T value, T minVal, T maxVal)
 {
-  return ((index >= minVal) && (index < maxVal));
+  return ((value >= minVal) && (value < maxVal));
 }
 
 /// @brief Функция проверяет находится ли значение index в границах списка
