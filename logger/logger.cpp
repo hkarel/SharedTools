@@ -1486,7 +1486,7 @@ const char* __file__cache(const char* file)
         f = file;
 
     if (*f == '\0')
-        return 0;
+        return nullptr;
 
     SpinLocker locker {lock}; (void) locker;
     if (lst::FindResult fr = list.find(f))
