@@ -28,8 +28,8 @@
 
 #include "shared/list.h"
 #include "shared/clife_base.h"
-#include "shared/clife_alloc.h"
 #include "shared/clife_ptr.h"
+#include "shared/clife_alloc.h"
 
 #include <QtCore>
 #include <QHostAddress>
