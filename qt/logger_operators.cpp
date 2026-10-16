@@ -110,22 +110,22 @@ Line& operator<< (Line& line, const QHostAddress::SpecialAddress specialAddr)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
-#define ELSE_IF__QVARIANT_VECTOR(TYPE) \
-    else if (v.userType() == qMetaTypeId<QVector<TYPE>>()) { \
-        const QVector<TYPE>& vect = v.value<QVector<TYPE>>(); \
-        line << vect; \
-    }
-
-#define ELSE_IF__QVARIANT_LIST(TYPE) \
-    else if (v.userType() == qMetaTypeId<QList<TYPE>>()) { \
-        const QList<TYPE>& lst = v.value<QList<TYPE>>(); \
-        line << lst; \
-    }
-
 Line& operator<< (Line& line, const QVariant& v)
 {
     if (!line.toLogger())
         return line;
+
+    #define ELSE_IF__QVARIANT_VECTOR(TYPE) \
+        else if (v.userType() == qMetaTypeId<QVector<TYPE>>()) {  \
+            const QVector<TYPE>& vect = v.value<QVector<TYPE>>(); \
+            line << vect; \
+        }
+
+    #define ELSE_IF__QVARIANT_LIST(TYPE) \
+        else if (v.userType() == qMetaTypeId<QList<TYPE>>()) { \
+            const QList<TYPE>& lst = v.value<QList<TYPE>>();   \
+            line << lst; \
+        }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     const int vType = v.typeId();
@@ -273,12 +273,20 @@ Line& operator<< (Line& line, const QVariant& v)
             line << "Unsupported QVariant type for logger"
                  << "; Type name: " << v.typeName();
     }
+
+    #undef ELSE_IF__QVARIANT_VECTOR
+    #undef ELSE_IF__QVARIANT_LIST
+
     return line;
 }
 
-#undef ELSE_IF__QVARIANT_VECTOR
-#undef ELSE_IF__QVARIANT_LIST
-
 #pragma GCC diagnostic pop
+
+Line& operator<< (Line& line, const Identity& identity)
+{
+    if (line.toLogger())
+        line << identity.toString();
+    return line;
+}
 
 } // namespace alog
